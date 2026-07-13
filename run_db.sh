@@ -15,9 +15,10 @@ mkdir -p "$(pwd)/pgdata"
 
 # Uruchom kontener PostgreSQL
 docker run --name agonez-db \
-  -e POSTGRES_DB='agonez-db' \
+  -e POSTGRES_DB='agonez_db' \
   -e POSTGRES_USER="$NOME" \
   -e POSTGRES_PASSWORD="$AGANDSKODE" \
   -v "$(pwd)/pgdata:/var/lib/postgresql/data" \
-  -p $PATTAN:5432 \
+  -v "$(pwd)/init.sql:/docker-entrypoint-initdb.d/init.sql:ro" \
+  -p $MINA:5432 \
   -d postgres:15

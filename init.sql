@@ -55,7 +55,8 @@ CREATE TYPE core.leverage_peak_enum AS ENUM ('Lengthened_Range', 'Mid_Range', 'S
 -- 1. TABELA MIĘŚNI (Muscles Catalogue)
 CREATE TABLE core.muscles (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE, -- Klucz unikalny mapowany bezpośrednio na Twój MUSCLES_SET
+    slug VARCHAR(100) NOT NULL UNIQUE, -- Klucz unikalny mapowany bezpośrednio na Twój MUSCLES_SET
+    name VARCHAR(100) NOT NULL UNIQUE,
     body_part core.body_part_enum NOT NULL,
     complex core.muscle_complex_enum NOT NULL,
     mass_g NUMERIC(8, 2) NOT NULL CHECK (mass_g > 0),
@@ -68,9 +69,13 @@ CREATE TABLE core.muscles (
     strength_curve core.strength_curve_enum NOT NULL DEFAULT 'Bell-shaped',
     leverage_peak core.leverage_peak_enum NOT NULL DEFAULT 'Mid_Range',
 
-
     -- Giga pole tekstowe na Twoją muscle-bible (Markdown)
     bible_markdown TEXT NOT NULL DEFAULT '',
+
+        -- Tablica stringów przechowująca linki URL (np. exrx.net)
+    article_links TEXT[] NOT NULL DEFAULT '{}',
+        -- Tablica stringów przechowująca linki URL (np. YouTube)
+    video_links TEXT[] NOT NULL DEFAULT '{}',
     
     -- Zapewnienie, że suma typów włókien wynosi dokładnie 100% (1.0)
     CONSTRAINT check_fiber_sum_100 CHECK (ABS((fiber_bias_type_i + fiber_bias_type_ii) - 1.0) < 0.001)
@@ -79,6 +84,7 @@ CREATE TABLE core.muscles (
 -- 2. TABELA ĆWICZEŃ (Exercises Catalogue)
 CREATE TABLE core.exercises (
     id SERIAL PRIMARY KEY,
+    slug VARCHAR(100) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL UNIQUE,
     body_part core.body_part_enum NOT NULL,
     target_category core.target_category_enum NOT NULL,
