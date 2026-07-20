@@ -19,7 +19,8 @@ CREATE TYPE core.muscle_complex_enum AS ENUM (
 -- Architektura strukturalna włókien
 CREATE TYPE core.muscle_architecture_enum AS ENUM (
     'Converged/Fan-shaped', 'Flat/Convergent', 'Multipenate', 'Fusiform/Parallel-like', 
-    'Convergent/Pennate', 'Parallel', 'Fusiform', 'Pennate', 'Fusiform/Pennate', 'Fusiform/Quadrilateral'
+    'Convergent/Pennate', 'Parallel', 'Fusiform', 'Pennate', 'Fusiform/Pennate', 'Fusiform/Quadrilateral',
+    'Parallel/Convergent', 'Undefined'
 );
 
 -- Podatność mięśnia na hipertrofię wywołaną rozciągnięciem
@@ -39,15 +40,16 @@ CREATE TYPE core.mechanics_tier_enum AS ENUM (
     'Heavy_Compound', 'Secondary_Compound', 'Isolation', 'Stability_Isometric'
 );
 
-
-
 -- Typy krzywych siły (anatomiczna cecha możliwości skurczowych mięśnia)
+-- TODO: To pole trzeba przebudować, lepiej rozeznać temat. Krzywe siły są wzdłuż danych ruchów, wzdłuż danych stawów i płaszczyzn.
+-- Te krzywe to też wektor i to po przestrzeni ruchu/line_of_pull/joint_articulations mięśnia. Dla każdego mięśnia osobnej.
 CREATE TYPE core.strength_curve_enum AS ENUM ('Ascending', 'Descending', 'Bell-shaped');
 
 -- Profile oporu / dociążenia (zwektoryzowana relacja ćwiczenia względem konkretnego mięśnia)
 CREATE TYPE core.resistance_profile_enum AS ENUM ('Lengthened-biased', 'Mid-range-biased', 'Shortened-biased');
 
 -- Szczyt wewnętrznej dźwigni mechanicznej (geometria przyczepu kostnego)
+-- TODO: To samo co strength_curve_enum.
 CREATE TYPE core.leverage_peak_enum AS ENUM ('Lengthened_Range', 'Mid_Range', 'Shortened_Range', 'Flat_Profile');
 
 ------------------------------------------------ T A B L E S ------------------------------------------------

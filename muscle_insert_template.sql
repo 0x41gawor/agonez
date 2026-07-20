@@ -24,8 +24,8 @@ INSERT INTO core.muscles (
     video_links
 )
 VALUES (
-    'pectoralis_major',
-    'Musculus pectoralis major',
+    'pectoralis_major_clavicular_head',
+    'Musculus pectoralis major clavicularis',
 
     -- body_part_enum:
     -- Upper | Lower | Core | Full
@@ -37,9 +37,9 @@ VALUES (
     -- Hip_FA | Calves | Shin
     'Chest',
 
-    0.00,      -- Muscle mass [g]
-    0.00,      -- Muscle volume [cm³]
-    0.00,      -- PCSA [cm²]
+    120,      -- Muscle mass [g]
+    125,      -- Muscle volume [cm³]
+    13,      -- PCSA [cm²]
 
     -- muscle_architecture_enum:
     -- Converged/Fan-shaped
@@ -54,8 +54,8 @@ VALUES (
     -- Fusiform/Quadrilateral
     'Converged/Fan-shaped',
 
-    0.500,     -- Type I
-    0.500,     -- Type II
+    0.40,     -- Type I
+    0.60,     -- Type II
 
     -- smh_factor_enum:
     -- zero
@@ -111,14 +111,14 @@ $$
 $$,
 
     ARRAY[
-        -- 'https://exrx.net/...'
+        'https://exrx.net/...'
     ],
 
     ARRAY[
-        -- 'https://pubmed.ncbi.nlm.nih.gov/...'
+        'https://pubmed.ncbi.nlm.nih.gov/...'
     ],
 
     ARRAY[
-        -- 'https://youtu.be/...'
+        'https://youtu.be/...'
     ]
 );
