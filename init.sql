@@ -35,9 +35,25 @@ CREATE TYPE core.target_category_enum AS ENUM (
     'Hamstrings', 'Lower_P', 'Calves', 'Tibialis', 'Global_P'
 );
 
--- Klasyfikacja mechaniki i złożoności ruchu
+-- Klasyfikacja mechaniki i złożoności ruchu ćwiczenia
 CREATE TYPE core.mechanics_tier_enum AS ENUM (
     'Heavy_Compound', 'Secondary_Compound', 'Isolation', 'Stability_Isometric'
+);
+
+-- Resistance source (źródło oporu) dla ćwiczenia
+CREATE TYPE core.resistance_source_enum AS ENUM (
+    'Bodyweight',
+    'Barbell',
+    'Dumbbell',
+    'Kettlebell',
+    'Cable',
+    'Selectorized_Machine',
+    'Plate_Loaded_Machine',
+    'Smith_Machine',
+    'Resistance_Band',
+    'Suspension',
+    'Partner_Resistance',
+    'Other'
 );
 
 -- Typy krzywych siły (anatomiczna cecha możliwości skurczowych mięśnia)
@@ -88,9 +104,11 @@ CREATE TABLE core.exercises (
     id SERIAL PRIMARY KEY,
     slug VARCHAR(100) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL UNIQUE,
+    name_full VARCHAR(255) NOT NULL UNIQUE,
     body_part core.body_part_enum NOT NULL,
     target_category core.target_category_enum NOT NULL,
     mechanics_tier core.mechanics_tier_enum NOT NULL,
+    resistance_source core.resistance_source_enum NOT NULL,
     load_capacity NUMERIC(5, 2) NOT NULL CHECK (load_capacity >= 0),
     recruitment_budget NUMERIC(3, 2) NOT NULL CHECK (recruitment_budget >= 1.0 AND recruitment_budget <= 3.0),
     
@@ -101,6 +119,8 @@ CREATE TABLE core.exercises (
     -- Struktura techniczna spakowana w obiekt JSONB dla czystości modelu architektonicznego
     -- Zawiera klucze: plane_of_movement, starting_position, internal_cues, technical_failure, rir0_detection, common_mistakes
     technique JSONB NOT NULL,
+    -- Zawiera klucze: general comment, role_in_plan
+    comments JSONB NOT NULL,
     
     -- Tablica stringów przechowująca linki URL (np. YouTube)
     video_links TEXT[] NOT NULL DEFAULT '{}',
@@ -136,27 +156,54 @@ CREATE TABLE core.muscle_exercise_mappings (
 -- 3. TRIGGER DO WALIDACJI SUMY ALOKACJI MIĘŚNI (Muscle Allocation Sum Validation Trigger)
 
 CREATE OR REPLACE FUNCTION core.validate_muscle_allocation_sum()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
 DECLARE
-    calculated_sum NUMERIC(4,2);
+    calculated_sum NUMERIC;
 BEGIN
-    -- Sumowanie wszystkich wartości numerycznych ukrytych wewnątrz słownika JSONB
-    SELECT COALESCE(SUM(value::text::numeric), 0)
-    INTO calculated_sum
-    FROM jsonb_each(NEW.muscle_allocation);
+    -- muscle_allocation musi być obiektem JSON, np.
+    -- {"anterior_deltoid": 0.45, "triceps_long_head": 0.25}
+    IF jsonb_typeof(NEW.muscle_allocation) <> 'object' THEN
+        RAISE EXCEPTION
+            'muscle_allocation must be a JSON object, received JSON type: %',
+            COALESCE(jsonb_typeof(NEW.muscle_allocation), 'null');
+    END IF;
 
-    -- Sprawdzenie, czy suma alokacji zgadza się z zadeklarowanym budżetem (z tolerancją na zaokrąglenia maszynowe)
-    IF ABS(calculated_sum - NEW.recruitment_budget) > 0.01 THEN
-        RAISE EXCEPTION 'Matematyczny błąd alokacji: suma składowych (%) musi być równa recruitment_budget (%)', 
-            calculated_sum, NEW.recruitment_budget;
+    -- Każda wartość musi być liczbą JSON, a nie stringiem, tablicą itd.
+    IF EXISTS (
+        SELECT 1
+        FROM jsonb_each(NEW.muscle_allocation) AS allocation(muscle, allocation_value)
+        WHERE jsonb_typeof(allocation_value) <> 'number'
+    ) THEN
+        RAISE EXCEPTION
+            'muscle_allocation may contain only numeric JSON values: %',
+            NEW.muscle_allocation;
+    END IF;
+
+    SELECT COALESCE(SUM(allocation_value::text::numeric), 0)
+    INTO calculated_sum
+    FROM jsonb_each(NEW.muscle_allocation)
+        AS allocation(muscle, allocation_value);
+
+    -- Dane przechowujemy z dokładnością do dwóch miejsc.
+    IF ROUND(calculated_sum, 2) <> ROUND(NEW.recruitment_budget, 2) THEN
+        RAISE EXCEPTION
+            'Muscle allocation error: allocation sum (%) must equal recruitment_budget (%). Exercise slug: %',
+            calculated_sum,
+            NEW.recruitment_budget,
+            NEW.slug;
     END IF;
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
--- Przypisanie triggera do tabeli exercises wewnątrz schemy core
+DROP TRIGGER IF EXISTS trigger_validate_exercise_allocation
+ON core.exercises;
+
 CREATE TRIGGER trigger_validate_exercise_allocation
-    BEFORE INSERT OR UPDATE ON core.exercises
+    BEFORE INSERT OR UPDATE OF muscle_allocation, recruitment_budget
+    ON core.exercises
     FOR EACH ROW
     EXECUTE FUNCTION core.validate_muscle_allocation_sum();
