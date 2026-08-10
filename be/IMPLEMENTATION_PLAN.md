@@ -1,0 +1,101 @@
+# Agonez Backend Implementation Plan
+
+Status: complete implementation and handoff record (2026-08-10)  
+Scope: public, read-only Atlas API; no authentication or per-user state
+
+## Context verified
+
+- Frontend contract: the attached `api-contract.md` (v0.1).
+- PostgreSQL: database `agonez_db`, exposed on host port `33327`.
+- Credentials: user must come from `NOME`; password must come from `AGANDSKODE`.
+- Source schemas: `core.exercises`, `core.muscles`, `core.muscle_exercise_mappings`, and optional evaluation data in `engine.exercises`.
+- Existing reference service: `/home/jacques` uses independently deployable services, factory wiring, repository/service/HTTP separation, direct psycopg access, health checks, and Docker images.
+- Existing exercise artwork is present in `/home/agonez/media/exercises`; this service will define a portable `media/` contract so content can be mounted or copied without database changes.
+
+## Architecture
+
+One independently deployable FastAPI service now, with module boundaries that can later be split into services:
+
+```text
+be/
+  src/agonez_api/
+    app.py                 # application factory and lifespan
+    main.py                # ASGI entry point
+    core/                  # settings, database pool, logging, errors
+    modules/
+      atlas/               # public Atlas router/service/repository/schemas
+      plans/               # reserved package boundary (future, authenticated)
+  media/
+    exercises/             # {exercise_slug}.{png|webp|jpg|jpeg|avif}
+    muscles/               # {muscle_slug}.{ext} and {slug}/ gallery files
+  tests/
+  Dockerfile
+  compose.yml
+  pyproject.toml
+```
+
+The Atlas HTTP layer depends on an Atlas service, which depends on an Atlas repository. Database SQL and schema knowledge stay in the repository. Media URL resolution is isolated from the database so images can live in a bind mount, object store, or CDN later.
+
+## API work
+
+1. Implement `/api/atlas/exercises` with repeatable filters, validated sorting, pagination, facets, engine-vector presence, and slug-based image URLs.
+2. Implement `/api/atlas/exercises/{slug}` with the core vector and the optional engine vector bundle. Preserve the distinction between `null` (not evaluated) and `{}` (evaluated but empty).
+3. Implement `/api/atlas/muscles` with repeatable filters, sorting, pagination, facets, display names, and image URLs.
+4. Implement `/api/atlas/muscles/{slug}` with all morphology, architecture, programming, article/video, gallery, and image fields.
+5. Implement related exercises from measured `engine.exercises.etu_vector` entries, followed by conservative target-category fallbacks.
+6. Implement `/api/atlas/meta`, `/health/live`, and `/health/ready`.
+7. Mount media at `/media`, expose `media/anatomy.svg` at `/assets/anatomy.svg`, and
+   return `null` for absent files; never advertise broken URLs.
+
+## Configuration and deployment
+
+- Required exported shell variables: `NOME`, `AGANDSKODE`, `MINA`, and `MAMMOONE`.
+- Database port: `MINA` (`DB_PORT` remains a direct-deployment fallback); database name
+  defaults to `agonez_db` and host to `127.0.0.1`.
+- API host port: `MAMMOONE`; the container continues listening on port 8000.
+- Compose inherits variables exported by the invoking shell (for example via `.bashrc`)
+  and does not use an `env_file`.
+- Docker Compose uses `host.docker.internal` plus Linux `host-gateway` to reach the already-running PostgreSQL host port.
+- Runtime image: unprivileged user, health check, deterministic dependency install, one Uvicorn worker by default (configurable).
+- CORS origins and public media base URL are environment-configurable for the future Vue deployment.
+
+## Verification checklist
+
+- Unit tests for media resolution, response shaping, settings validation, and related-exercise logic.
+- Static/type/style checks via Ruff and mypy where practical.
+- Import/startup test without opening a database connection.
+- Live read-only smoke tests against the PostgreSQL host port resolved from `MINA` when
+  local tooling/container access permits.
+- Docker image build and container health smoke test when Docker daemon access permits.
+- Compare OpenAPI response models and query parameters against all six contract sections.
+
+## Handoff notes
+
+- Do not add authentication to Atlas. Future `plans`/dashboard modules should use a separate router/service boundary and can become separate images without changing Atlas URLs.
+- Do not bake credentials into the image, Compose file, examples, logs, or DSNs shown in errors.
+- Keep `media/` writable by the operator but read-only inside the API container.
+- The database dump is descriptive, not an application migration: this API must not mutate or recreate the existing database.
+
+## Verification results
+
+- `pytest`: 10 passed.
+- `ruff check .`: passed.
+- strict `mypy src`: passed with no issues across 16 source files.
+- Live PostgreSQL validation: all repository/service queries passed against 49 exercises,
+  47 muscles, and the available engine rows.
+- End-to-end HTTP validation: lists, filters, sorting, both details, related exercises,
+  metadata, 404 behavior, an exercise PNG, and the anatomy SVG all returned expected
+  statuses and content types.
+- Docker: final image built from the pinned runtime lock, started as an unprivileged
+  user, reached the host PostgreSQL port, served media from the read-only bind mount,
+  and reported healthy. PostgreSQL returned `default_transaction_read_only=on` from
+  inside the image. The image is tagged `agonez-atlas-api:local`; temporary validation
+  containers were removed.
+
+## Progress
+
+- [x] Inspect design handoff, API contract, database dump, repository, and Jacques conventions.
+- [x] Decide service boundaries and deployment approach.
+- [x] Implement application and Atlas endpoints.
+- [x] Add media directories and deployment artifacts.
+- [x] Run automated, live-database, HTTP, and Docker validation.

@@ -1,0 +1,1 @@
+"""Public Atlas module."""

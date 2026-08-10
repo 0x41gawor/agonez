@@ -1,0 +1,21 @@
+# Example ~/.bashrc entries. Replace the credential values.
+export NOME="replace_with_database_user"
+export AGANDSKODE="replace_with_database_password"
+
+# PostgreSQL host port and FastAPI host port.
+export MINA=33327
+export MAMMOONE=8000
+
+# Optional overrides.
+export DB_NAME="agonez_db"
+export DB_POOL_MIN_SIZE=1
+export DB_POOL_MAX_SIZE=10
+export DB_CONNECT_TIMEOUT_SECONDS=5
+export DB_STARTUP_WAIT_SECONDS=10
+export LOG_LEVEL="INFO"
+export CORS_ORIGINS="http://localhost:5173,http://127.0.0.1:5173"
+export MEDIA_URL_PREFIX="/media"
+export WEB_CONCURRENCY=1
+
+# Host directory mounted read-only into the API container.
+export MEDIA_HOST_PATH="../media"

@@ -1,0 +1,30 @@
+services:
+  atlas-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: agonez-atlas-api:local
+    environment:
+      NOME: "${NOME:?NOME must be exported in the shell environment}"
+      AGANDSKODE: "${AGANDSKODE:?AGANDSKODE must be exported in the shell environment}"
+      MINA: "${MINA:?MINA must be exported in the shell environment}"
+      DB_HOST: host.docker.internal
+      DB_NAME: "${DB_NAME:-agonez_db}"
+      DB_POOL_MIN_SIZE: "${DB_POOL_MIN_SIZE:-1}"
+      DB_POOL_MAX_SIZE: "${DB_POOL_MAX_SIZE:-10}"
+      DB_CONNECT_TIMEOUT_SECONDS: "${DB_CONNECT_TIMEOUT_SECONDS:-5}"
+      DB_STARTUP_WAIT_SECONDS: "${DB_STARTUP_WAIT_SECONDS:-10}"
+      MEDIA_ROOT: /app/media
+      MEDIA_URL_PREFIX: "${MEDIA_URL_PREFIX:-/media}"
+      PUBLIC_MEDIA_BASE_URL: "${PUBLIC_MEDIA_BASE_URL:-}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      WEB_CONCURRENCY: "${WEB_CONCURRENCY:-1}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${MAMMOONE:?MAMMOONE must be exported in the shell environment}:8000"
+    volumes:
+      - "${MEDIA_HOST_PATH:-../media}:/app/media:ro"
+    restart: unless-stopped
+    init: true
