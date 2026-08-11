@@ -1,0 +1,8 @@
+# These are shell environment variables. Do not commit real credentials here.
+# The backend variables NOME, AGANDSKODE, and MINA are not needed by the browser app.
+
+MAMMOONE=8000
+MERSAA=8088
+
+# Optional only when bypassing the local Vite/Docker reverse proxy:
+# VITE_API_BASE_URL=http://127.0.0.1:8000

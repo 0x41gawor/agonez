@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0e1013" />
+    <meta name="description" content="Agonez Atlas — exercises, muscles, and modeled training exposure." />
+    <link rel="icon" type="image/png" href="/logo-mark.png" />
+    <script>
+      (() => {
+        const forced = new URLSearchParams(location.search).get('theme')
+        const saved = localStorage.getItem('agonez-theme')
+        const theme = forced === 'light' || forced === 'dark' ? forced : saved === 'light' ? 'light' : 'dark'
+        document.documentElement.dataset.theme = theme
+      })()
+    </script>
+    <title>Agonez Atlas</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

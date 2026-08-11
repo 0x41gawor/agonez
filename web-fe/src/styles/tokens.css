@@ -1,0 +1,74 @@
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/geist-latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/geist-mono-latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0e1013;
+  --bg2: #12151a;
+  --panel: #14181d;
+  --panel2: #191e24;
+  --border: #232930;
+  --border2: #2e353d;
+  --text: #e7eaed;
+  --text2: #9aa3ac;
+  --text3: #66717b;
+  --accent: #d0b487;
+  --accent2: #e6d3b0;
+  --accentDim: rgba(208, 180, 135, 0.13);
+  --etu: #25b581;
+  --rec: #f4635e;
+  --joint: #e5a13c;
+  --anatBody: #1c2127;
+  --anatFar: #171c21;
+  --anatLine: #3d4650;
+  --anatMuscle: #2b333c;
+  --anatStroke: #505b66;
+  --rowHover: #1a2028;
+  --inputBg: #101419;
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  --chipBg: #1c2229;
+  --focus: #e6d3b0;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f7f6f3;
+  --bg2: #f0eeea;
+  --panel: #fdfdfc;
+  --panel2: #f3f1ed;
+  --border: #e5e2db;
+  --border2: #d3cfc6;
+  --text: #22262b;
+  --text2: #5b636c;
+  --text3: #8d949c;
+  --accent: #8f6f38;
+  --accent2: #6e5527;
+  --accentDim: rgba(143, 111, 56, 0.11);
+  --etu: #0d9d6d;
+  --rec: #dd4f4a;
+  --joint: #bf7c14;
+  --anatBody: #edeae5;
+  --anatFar: #f5f3ef;
+  --anatLine: #b6b1a8;
+  --anatMuscle: #d9d5cd;
+  --anatStroke: #98928a;
+  --rowHover: #f0eee9;
+  --inputBg: #fbfaf8;
+  --shadow: 0 10px 28px rgba(40, 32, 15, 0.09);
+  --chipBg: #efece7;
+  --focus: #6e5527;
+}

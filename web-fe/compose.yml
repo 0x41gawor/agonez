@@ -1,0 +1,14 @@
+services:
+  atlas-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: agonez-atlas-web:local
+    container_name: agonez-atlas-web
+    restart: unless-stopped
+    ports:
+      - "${MERSAA:?MERSAA must contain the frontend host port}:8080"
+    environment:
+      MAMMOONE: "${MAMMOONE:?MAMMOONE must contain the backend host port}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

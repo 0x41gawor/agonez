@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="./data.js"></script>
+<style>
+html,body{margin:0;padding:0}
+body{background:#0e1013;
+--bg:#0e1013;--bg2:#12151a;--panel:#14181d;--panel2:#191e24;--border:#232930;--border2:#2e353d;
+--text:#e7eaed;--text2:#9aa3ac;--text3:#66717b;--accent:#d0b487;--accent2:#e6d3b0;--accentDim:rgba(208,180,135,.13);
+--etu:#25b581;--rec:#f4635e;--joint:#e5a13c;
+--anatBody:#1c2127;--anatFar:#171c21;--anatLine:#3d4650;--anatMuscle:#2b333c;--anatStroke:#505b66;
+--rowHover:#1a2028;--inputBg:#101419;--shadow:0 10px 28px rgba(0,0,0,.45);--chipBg:#1c2229}
+body[data-theme="light"]{background:#f7f6f3;
+--bg:#f7f6f3;--bg2:#f0eeea;--panel:#fdfdfc;--panel2:#f3f1ed;--border:#e5e2db;--border2:#d3cfc6;
+--text:#22262b;--text2:#5b636c;--text3:#8d949c;--accent:#8f6f38;--accent2:#6e5527;--accentDim:rgba(143,111,56,.11);
+--etu:#0d9d6d;--rec:#dd4f4a;--joint:#bf7c14;
+--anatBody:#edeae5;--anatFar:#f5f3ef;--anatLine:#b6b1a8;--anatMuscle:#d9d5cd;--anatStroke:#98928a;
+--rowHover:#f0eee9;--inputBg:#fbfaf8;--shadow:0 10px 28px rgba(40,32,15,.09);--chipBg:#efece7}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent2);text-decoration:underline}
+button{font-family:inherit}
+input,select{font-family:inherit;outline:none}
+input:focus,select:focus{border-color:var(--accent) !important}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-track{background:transparent}
+@keyframes agzfade{from{opacity:0}to{opacity:1}}
+.agz-row:hover{background:var(--rowHover) !important}
+.agz-card:hover{border-color:var(--border2) !important;transform:translateY(-1px)}
+.agz-navdead{cursor:not-allowed}
+svg.agz-body{display:block}
+svg.agz-body .body-base{fill:var(--anatBody);stroke:var(--anatStroke);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+svg.agz-body .body-far{fill:var(--anatFar);stroke:var(--anatLine);stroke-width:1.4;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+svg.agz-body .body-line{fill:none;stroke:var(--anatLine);stroke-width:1.1;stroke-linecap:round;opacity:.6;vector-effect:non-scaling-stroke}
+svg.agz-body .surface-line{fill:none;stroke:var(--anatLine);stroke-width:1;opacity:.42;vector-effect:non-scaling-stroke;pointer-events:none}
+svg.agz-body .fiber-line{fill:none;stroke:var(--anatLine);stroke-width:.8;opacity:.22;vector-effect:non-scaling-stroke;pointer-events:none}
+svg.agz-body .fiber-strong{fill:none;stroke:var(--anatLine);stroke-width:1;opacity:.28;vector-effect:non-scaling-stroke;pointer-events:none}
+svg.agz-body .silhouette-detail{fill:none;stroke:var(--anatLine);stroke-width:1;opacity:.5;vector-effect:non-scaling-stroke}
+svg.agz-body .gap-mask{fill:var(--panel);stroke:none;pointer-events:none}
+svg.agz-body .ground{display:none}
+svg.agz-body .muscle{fill:var(--anatMuscle);cursor:pointer}
+svg.agz-body .muscle path{transition:fill .18s,opacity .18s}
+svg.agz-body .region{stroke:var(--anatStroke);stroke-width:1;stroke-linejoin:round;opacity:.91;vector-effect:non-scaling-stroke}
+svg.agz-body .deep .region{opacity:.32;stroke-dasharray:4.5 3.5}
+svg.agz-body .joint{display:none;cursor:pointer}
+svg.agz-body.agz-joints-on .joint{display:inline}
+svg.agz-body .joint-region{fill:none;stroke:var(--joint);stroke-width:2;stroke-dasharray:none;opacity:.8;vector-effect:non-scaling-stroke}
+svg.agz-body .spine-region{fill:none;stroke:var(--joint);stroke-width:4.5;stroke-linecap:round;opacity:.7;vector-effect:non-scaling-stroke}
+</style>
+</helmet>
+<div data-screen-label="Agonez" style="min-height:100vh;background:var(--bg);color:var(--text);font-family:'Geist',system-ui,sans-serif;font-size:13px;line-height:1.45">
+
+  <!-- ============ APP BAR ============ -->
+  <header style="display:flex;align-items:center;gap:20px;height:52px;padding:0 20px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:40">
+    <div style="display:flex;align-items:center;gap:10px;cursor:pointer" onClick="{{ goHome }}">
+      <img src="assets/logo-mark.png" alt="Agonez" style="width:26px;height:26px;border-radius:6px;background:#efe6d8;object-fit:cover">
+      <span style="font-weight:700;letter-spacing:3px;font-size:13px">AGONEZ</span>
+    </div>
+    <nav style="display:flex;align-items:center;gap:2px;margin-left:8px">
+      <button onClick="{{ goHome }}" style="border:none;background:{{ atlasNavBg }};color:var(--text);padding:6px 12px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer">Atlas</button>
+      <sc-if value="{{ showPlanned }}" hint-placeholder-val="{{ true }}">
+        <span class="agz-navdead" title="Planned module" style="color:var(--text3);padding:6px 12px;font-size:12.5px;font-weight:500">My Plans</span>
+        <span class="agz-navdead" title="Planned module" style="color:var(--text3);padding:6px 12px;font-size:12.5px;font-weight:500">Dashboard</span>
+      </sc-if>
+    </nav>
+    <div style="flex:1"></div>
+    <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--text3);letter-spacing:.5px">ATLAS v0.1 · {{ dbCounts }}</span>
+    <button onClick="{{ toggleTheme }}" title="Toggle theme" style="display:flex;align-items:center;gap:7px;border:1px solid var(--border);background:var(--panel);color:var(--text2);padding:5px 10px;border-radius:6px;font-size:11.5px;cursor:pointer">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ themeDotBg }};border:1px solid var(--border2)"></span>
+      {{ themeLabel }}
+    </button>
+  </header>
+
+  <!-- ============ INDEX SCREEN ============ -->
+  <sc-if value="{{ isIndex }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="Atlas index" style="max-width:1560px;margin:0 auto;padding:16px 20px 48px">
+
+    <!-- toolbar -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0 12px;position:relative">
+      <div style="display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:var(--panel)">
+        <button onClick="{{ tabExercises }}" style="border:none;cursor:pointer;padding:7px 14px;font-size:12.5px;font-weight:600;background:{{ exTabBg }};color:{{ exTabColor }}">Exercises <span style="font-family:'Geist Mono',monospace;font-size:10.5px;opacity:.65">{{ exCount }}</span></button>
+        <button onClick="{{ tabMuscles }}" style="border:none;cursor:pointer;padding:7px 14px;font-size:12.5px;font-weight:600;background:{{ muTabBg }};color:{{ muTabColor }};border-left:1px solid var(--border)">Muscles <span style="font-family:'Geist Mono',monospace;font-size:10.5px;opacity:.65">{{ muCount }}</span></button>
+      </div>
+      <input value="{{ search }}" onChange="{{ onSearch }}" placeholder="{{ searchPlaceholder }}" style="width:240px;background:var(--inputBg);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:7px 11px;font-size:12.5px">
+      <button onClick="{{ toggleFilters }}" style="display:flex;align-items:center;gap:7px;border:1px solid {{ filterBtnBorder }};background:var(--panel);color:var(--text2);padding:7px 12px;border-radius:7px;font-size:12.5px;cursor:pointer">
+        Filter
+        <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
+          <span style="font-family:'Geist Mono',monospace;font-size:10.5px;background:var(--accentDim);color:var(--accent);border-radius:5px;padding:1px 6px">{{ activeFilterCount }}</span>
+        </sc-if>
+      </button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="color:var(--text3);font-size:11.5px">Sort</span>
+        <select value="{{ sortKey }}" onChange="{{ onSortChange }}" style="background:var(--inputBg);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:6px 8px;font-size:12px;cursor:pointer">
+          <sc-for list="{{ sortOptions }}" as="opt" hint-placeholder-count="3">
+            <option value="{{ opt.key }}">{{ opt.label }}</option>
+          </sc-for>
+        </select>
+        <button onClick="{{ toggleSortDir }}" title="Direction" style="border:1px solid var(--border);background:var(--panel);color:var(--text2);border-radius:7px;padding:6px 9px;font-size:12px;cursor:pointer;font-family:'Geist Mono',monospace">{{ sortDirGlyph }}</button>
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden">
+        <button onClick="{{ setListView }}" title="List view" style="border:none;cursor:pointer;padding:7px 11px;background:{{ listBtnBg }};color:{{ listBtnColor }};font-size:12px">List</button>
+        <button onClick="{{ setGridView }}" title="Grid view" style="border:none;cursor:pointer;padding:7px 11px;background:{{ gridBtnBg }};color:{{ gridBtnColor }};font-size:12px;border-left:1px solid var(--border)">Grid</button>
+      </div>
+
+      <!-- filter popover -->
+      <sc-if value="{{ filtersOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;top:44px;left:260px;z-index:50;background:var(--panel);border:1px solid var(--border2);border-radius:10px;box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:22px;animation:agzfade .12s ease">
+          <sc-for list="{{ filterGroups }}" as="grp" hint-placeholder-count="2">
+            <div style="min-width:130px">
+              <div style="font-size:10.5px;font-weight:600;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:8px">{{ grp.label }}</div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <sc-for list="{{ grp.options }}" as="o" hint-placeholder-count="3">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12.5px;color:var(--text2)">
+                    <input type="checkbox" checked="{{ o.active }}" onChange="{{ o.toggle }}" style="accent-color:var(--accent);margin:0">
+                    <span>{{ o.label }}</span>
+                  </label>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <button onClick="{{ toggleFilters }}" style="position:absolute;top:8px;right:10px;border:none;background:none;color:var(--text3);cursor:pointer;font-size:14px">×</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- active filter chips -->
+    <sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-bottom:12px">
+        <sc-for list="{{ activeChips }}" as="chip" hint-placeholder-count="2">
+          <button onClick="{{ chip.remove }}" style="display:flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--chipBg);color:var(--text2);border-radius:20px;padding:3px 10px;font-size:11.5px;cursor:pointer">{{ chip.label }} <span style="color:var(--text3)">×</span></button>
+        </sc-for>
+        <button onClick="{{ clearFilters }}" style="border:none;background:none;color:var(--accent);font-size:11.5px;cursor:pointer">Clear all</button>
+      </div>
+    </sc-if>
+
+    <!-- main split -->
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:18px;align-items:start">
+
+      <!-- content -->
+      <div onMouseLeave="{{ clearHover }}">
+        <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px dashed var(--border2);border-radius:10px;padding:56px 20px;text-align:center;color:var(--text3)">
+            <div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">No entries match</div>
+            <div style="font-size:12px;margin-bottom:14px">Adjust the search or remove filters.</div>
+            <button onClick="{{ clearFilters }}" style="border:1px solid var(--border);background:var(--panel);color:var(--text);padding:6px 14px;border-radius:7px;font-size:12px;cursor:pointer">Clear filters</button>
+          </div>
+        </sc-if>
+
+        <!-- LIST VIEW -->
+        <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px solid var(--border);border-radius:10px;overflow-x:auto;background:var(--panel)">
+            <sc-if value="{{ isExTab }}" hint-placeholder-val="{{ true }}"><div style="min-width:900px">
+              <div style="display:grid;grid-template-columns:minmax(200px,1.7fr) 64px 118px 118px 128px 80px 158px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--panel2);font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3)">
+                <span>Exercise</span><span>Body</span><span>Target</span><span>Mechanics</span><span>Resistance</span><span style="text-align:right">Load kg</span><span>FCSA demand cm²</span>
+              </div>
+              <sc-for list="{{ exItems }}" as="it" hint-placeholder-count="10">
+                <div class="agz-row" onClick="{{ it.open }}" onMouseEnter="{{ it.hover }}" data-comment-anchor="exrow-{{ it.slug }}" style="display:grid;grid-template-columns:minmax(200px,1.7fr) 64px 118px 118px 128px 80px 158px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--border);cursor:pointer;align-items:center;background:{{ it.rowBg }}">
+                  <div style="min-width:0">
+                    <div style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px">{{ it.name }}
+                      <sc-if value="{{ it.hasVector }}" hint-placeholder-val="{{ false }}"><span title="Engine vectors available" style="width:6px;height:6px;border-radius:50%;background:var(--etu);display:inline-block"></span></sc-if>
+                    </div>
+                    <div style="color:var(--text3);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.nameFull }}</div>
+                  </div>
+                  <span style="color:var(--text2);font-size:12px">{{ it.bodyPart }}</span>
+                  <span style="font-size:11px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 7px;justify-self:start;white-space:nowrap">{{ it.cat }}</span>
+                  <span style="color:var(--text2);font-size:12px">{{ it.tier }}</span>
+                  <span style="color:var(--text2);font-size:12px">{{ it.resistance }}</span>
+                  <span style="font-family:'Geist Mono',monospace;font-size:12px;text-align:right">{{ it.load }}</span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="flex:1;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden"><div style="height:100%;border-radius:2px;background:var(--accent);opacity:.75;width:{{ it.demandPct }}"></div></div>
+                    <span style="font-family:'Geist Mono',monospace;font-size:11.5px;min-width:44px;text-align:right">{{ it.demand }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div></sc-if>
+            <sc-if value="{{ isMuTab }}" hint-placeholder-val="{{ false }}"><div style="min-width:900px">
+              <div style="display:grid;grid-template-columns:minmax(200px,1.7fr) 64px 100px 138px 84px 118px 148px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--panel2);font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3)">
+                <span>Muscle</span><span>Body</span><span>Complex</span><span>Mass g</span><span>Vol cm³</span><span>Fiber I / II</span><span>Proj. FCSA cm²</span>
+              </div>
+              <sc-for list="{{ muItems }}" as="it" hint-placeholder-count="10">
+                <div class="agz-row" onClick="{{ it.open }}" onMouseEnter="{{ it.hover }}" data-comment-anchor="murow-{{ it.slug }}" style="display:grid;grid-template-columns:minmax(200px,1.7fr) 64px 100px 138px 84px 118px 148px;gap:12px;padding:8px 14px;border-bottom:1px solid var(--border);cursor:pointer;align-items:center;background:{{ it.rowBg }}">
+                  <div style="min-width:0">
+                    <div style="font-weight:600;font-size:13px">{{ it.display }}</div>
+                    <div style="color:var(--text3);font-size:11px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.latin }}</div>
+                  </div>
+                  <span style="color:var(--text2);font-size:12px">{{ it.bodyPart }}</span>
+                  <span style="font-size:11px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 7px;justify-self:start;white-space:nowrap">{{ it.complex }}</span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="flex:1;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden"><div style="height:100%;border-radius:2px;background:var(--accent);opacity:.75;width:{{ it.massPct }}"></div></div>
+                    <span style="font-family:'Geist Mono',monospace;font-size:11.5px;min-width:40px;text-align:right">{{ it.mass }}</span>
+                  </div>
+                  <span style="font-family:'Geist Mono',monospace;font-size:11.5px;text-align:right">{{ it.mv }}</span>
+                  <div style="display:flex;align-items:center;gap:7px" title="Type I vs Type II bias">
+                    <div style="flex:1;height:5px;border-radius:3px;overflow:hidden;display:flex;background:var(--bg2)">
+                      <div style="height:100%;background:var(--text3);width:{{ it.f1Pct }}"></div>
+                      <div style="height:100%;background:var(--rec);opacity:.8;width:{{ it.f2Pct }}"></div>
+                    </div>
+                    <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--text3)">{{ it.f2Label }}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="flex:1;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden"><div style="height:100%;border-radius:2px;background:var(--etu);opacity:.8;width:{{ it.projPct }}"></div></div>
+                    <span style="font-family:'Geist Mono',monospace;font-size:11.5px;min-width:44px;text-align:right">{{ it.proj }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div></sc-if>
+          </div>
+        </sc-if>
+
+        <!-- GRID VIEW -->
+        <sc-if value="{{ showGrid }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">
+            <sc-if value="{{ isExTab }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ exItems }}" as="it" hint-placeholder-count="8">
+                <div class="agz-card" onClick="{{ it.open }}" onMouseEnter="{{ it.hover }}" style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s">
+                  <div style="aspect-ratio:16/9;background:repeating-linear-gradient(45deg,var(--panel2) 0 9px,var(--panel) 9px 18px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center">
+                    <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.5px">exercise visual · pending</span>
+                  </div>
+                  <div style="padding:11px 13px 12px">
+                    <div style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px">{{ it.name }}
+                      <sc-if value="{{ it.hasVector }}" hint-placeholder-val="{{ false }}"><span style="width:6px;height:6px;border-radius:50%;background:var(--etu);display:inline-block"></span></sc-if>
+                    </div>
+                    <div style="color:var(--text3);font-size:11px;margin:2px 0 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.nameFull }}</div>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
+                      <span style="font-size:10.5px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 7px">{{ it.cat }}</span>
+                      <span style="font-size:10.5px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 7px">{{ it.tier }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text2)">
+                      <span title="Load capacity">{{ it.load }} kg</span>
+                      <span title="Systemic propulsive FCSA demand">{{ it.demand }} cm²</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ isMuTab }}" hint-placeholder-val="{{ false }}">
+              <sc-for list="{{ muItems }}" as="it" hint-placeholder-count="8">
+                <div class="agz-card" onClick="{{ it.open }}" onMouseEnter="{{ it.hover }}" style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s">
+                  <div style="aspect-ratio:16/9;background:repeating-linear-gradient(45deg,var(--panel2) 0 9px,var(--panel) 9px 18px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center">
+                    <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.5px">muscle visual · pending</span>
+                  </div>
+                  <div style="padding:11px 13px 12px">
+                    <div style="font-weight:600;font-size:13px">{{ it.display }}</div>
+                    <div style="color:var(--text3);font-size:11px;font-style:italic;margin:2px 0 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.latin }}</div>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
+                      <span style="font-size:10.5px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 7px">{{ it.complex }}</span>
+                      <span style="font-size:10.5px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 7px">{{ it.bodyPart }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text2)">
+                      <span title="Mass">{{ it.mass }} g</span>
+                      <span title="Projected FCSA">{{ it.proj }} cm²</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- anatomy rail -->
+      <div style="position:sticky;top:68px">
+        <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)">
+            <span style="font-size:10.5px;font-weight:600;letter-spacing:1.2px;color:var(--text3)">ANATOMY</span>
+            <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3)">front · rear <span title="Side view arrives in v2" style="opacity:.5">· side v2</span></span>
+          </div>
+          <div ref="{{ railBodyRef }}" style="display:grid;grid-template-columns:1fr 1fr;gap:0;padding:10px 6px 4px;min-height:360px"></div>
+          <div style="padding:9px 14px;border-top:1px solid var(--border);min-height:34px">
+            <sc-if value="{{ railHasLegend }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
+                <span style="font-size:11px;color:var(--text2);font-weight:600">{{ railLegendTitle }}</span>
+                <div style="flex:1;height:6px;border-radius:3px;background:{{ railLegendGradient }};border:1px solid var(--border)"></div>
+                <span style="font-family:'Geist Mono',monospace;font-size:9.5px;color:var(--text3)">low → high</span>
+              </div>
+            </sc-if>
+            <div style="font-size:11px;color:var(--text3)">{{ railStatus }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ MUSCLE DETAIL ============ -->
+  <sc-if value="{{ isMuscleDetail }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Muscle detail" style="max-width:1560px;margin:0 auto;padding:14px 20px 64px">
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);padding-bottom:14px">
+      <a onClick="{{ goHome }}" style="cursor:pointer">Atlas</a><span>/</span>
+      <a onClick="{{ goMuscles }}" style="cursor:pointer">Muscles</a><span>/</span>
+      <span style="color:var(--text2)">{{ md.display }}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:18px;align-items:start">
+      <div>
+        <!-- header -->
+        <div style="display:flex;gap:18px;align-items:flex-start;border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:18px">
+          <div style="width:108px;height:108px;border-radius:10px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 8px,var(--panel) 8px 16px);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);text-align:center;padding:0 8px">signature visual · pending</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+              <h1 style="margin:0;font-size:24px;font-weight:650;letter-spacing:-.3px">{{ md.display }}</h1>
+              <span style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--text3);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 8px">{{ md.slug }}</span>
+            </div>
+            <div style="font-style:italic;color:var(--text2);font-size:13px;margin:3px 0 12px">{{ md.latin }}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+              <span style="font-size:11px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 8px">{{ md.bodyPart }} body</span>
+              <span style="font-size:11px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 8px">{{ md.complex }} complex</span>
+              <span style="font-size:11px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 8px">{{ md.architecture }}</span>
+            </div>
+            <div style="display:flex;gap:26px;flex-wrap:wrap">
+              <sc-for list="{{ md.heroStats }}" as="st" hint-placeholder-count="4">
+                <div>
+                  <div style="font-family:'Geist Mono',monospace;font-size:16px;font-weight:600">{{ st.v }}<span style="font-size:11px;color:var(--text3)"> {{ st.u }}</span></div>
+                  <div style="font-size:10.5px;color:var(--text3);letter-spacing:.4px;text-transform:uppercase">{{ st.k }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- structured data -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:14px">
+          <sc-for list="{{ md.groups }}" as="grp" hint-placeholder-count="4">
+            <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:13px 15px">
+              <div style="font-size:10.5px;font-weight:600;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:9px">{{ grp.title }}</div>
+              <sc-for list="{{ grp.rows }}" as="r" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3.5px 0;border-bottom:1px dotted var(--border)">
+                  <span style="font-size:12px;color:var(--text2)">{{ r.k }}</span>
+                  <span style="font-family:'Geist Mono',monospace;font-size:12px;text-align:right">{{ r.v }}<span style="color:var(--text3);font-size:10.5px"> {{ r.u }}</span></span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- fiber composition -->
+        <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:13px 15px;margin-top:12px">
+          <div style="font-size:10.5px;font-weight:600;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:10px">Fiber composition</div>
+          <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;border:1px solid var(--border)">
+            <div title="Type I" style="background:var(--text3);width:{{ md.f1Pct }}"></div>
+            <div title="Type II" style="background:var(--rec);opacity:.85;width:{{ md.f2Pct }}"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text2)">
+            <span>Type I · {{ md.f1Pct }}</span><span>Type II · {{ md.f2Pct }}</span>
+          </div>
+        </div>
+
+        <!-- related exercises -->
+        <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);margin-top:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--border)">
+            <span style="font-size:13px;font-weight:600">Exercises targeting this muscle</span>
+            <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3)">endpoint pending · computed client-side</span>
+          </div>
+          <sc-if value="{{ md.hasRelated }}" hint-placeholder-val="{{ true }}">
+            <sc-for list="{{ md.related }}" as="re" hint-placeholder-count="4">
+              <div class="agz-row" onClick="{{ re.open }}" style="display:grid;grid-template-columns:minmax(150px,1.5fr) 96px minmax(150px,1fr);gap:12px;align-items:center;padding:8px 15px;border-bottom:1px solid var(--border);cursor:pointer">
+                <div style="min-width:0">
+                  <div style="font-weight:600;font-size:12.5px">{{ re.name }}</div>
+                  <div style="color:var(--text3);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ re.tier }} · {{ re.nameFull }}</div>
+                </div>
+                <span style="font-size:11px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 7px;justify-self:start">{{ re.cat }}</span>
+                <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                  <sc-if value="{{ re.measured }}" hint-placeholder-val="{{ false }}">
+                    <div style="width:90px;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden"><div style="height:100%;background:var(--etu);width:{{ re.pct }}"></div></div>
+                    <span style="font-family:'Geist Mono',monospace;font-size:11px;min-width:64px;text-align:right">{{ re.val }} cm²</span>
+                  </sc-if>
+                  <sc-if value="{{ re.byTarget }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3)">by target category</span>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{ md.noRelated }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:22px 15px;color:var(--text3);font-size:12px">No exercises mapped to this muscle yet.</div>
+          </sc-if>
+        </div>
+
+        <!-- media: gallery / videos / articles -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+          <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:13px 15px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:10px">Image gallery</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div style="aspect-ratio:1;border-radius:7px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 7px,var(--panel) 7px 14px);display:flex;align-items:center;justify-content:center"><span style="font-family:'Geist Mono',monospace;font-size:8.5px;color:var(--text3);text-align:center">origin /<br>insertion</span></div>
+              <div style="aspect-ratio:1;border-radius:7px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 7px,var(--panel) 7px 14px);display:flex;align-items:center;justify-content:center"><span style="font-family:'Geist Mono',monospace;font-size:8.5px;color:var(--text3);text-align:center">fiber<br>architecture</span></div>
+              <div style="aspect-ratio:1;border-radius:7px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 7px,var(--panel) 7px 14px);display:flex;align-items:center;justify-content:center"><span style="font-family:'Geist Mono',monospace;font-size:8.5px;color:var(--text3);text-align:center">cross<br>section</span></div>
+            </div>
+            <div style="font-size:10.5px;color:var(--text3);margin-top:8px">Imagery not yet in database — layout reserved.</div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:13px 15px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:10px">Videos</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="aspect-ratio:16/9;border-radius:7px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 7px,var(--panel) 7px 14px);display:flex;align-items:center;justify-content:center;position:relative">
+                <span style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--text3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:10px">▶</span>
+              </div>
+              <div style="aspect-ratio:16/9;border-radius:7px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 7px,var(--panel) 7px 14px);display:flex;align-items:center;justify-content:center">
+                <span style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--text3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:10px">▶</span>
+              </div>
+            </div>
+            <div style="font-size:10.5px;color:var(--text3);margin-top:8px">Stored link is a placeholder — embeds activate when real URLs land.</div>
+            <div style="font-size:13px;font-weight:600;margin:14px 0 8px">References</div>
+            <sc-for list="{{ md.articles }}" as="ar" hint-placeholder-count="1">
+              <a href="{{ ar.url }}" target="_blank" style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:7px;padding:8px 11px;margin-bottom:6px;text-decoration:none">
+                <span style="font-size:12px;color:var(--text)">{{ ar.title }}</span>
+                <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--text3)">{{ ar.domain }} ↗</span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- bible -->
+        <div style="border:1px solid var(--border);border-radius:12px;background:var(--panel);margin-top:14px;padding:26px 34px 30px">
+          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:6px">
+            <span style="font-size:10.5px;font-weight:600;letter-spacing:1.4px;color:var(--text3)">MUSCLE BIBLE</span>
+            <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3)">{{ md.bibleNote }}</span>
+          </div>
+          <div style="max-width:720px;font-size:14px;line-height:1.7;color:var(--text)">{{ md.bibleContent }}</div>
+        </div>
+      </div>
+
+      <!-- muscle rail -->
+      <div style="position:sticky;top:68px">
+        <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)">
+            <span style="font-size:10.5px;font-weight:600;letter-spacing:1.2px;color:var(--text3)">LOCATION</span>
+            <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3)">front · rear</span>
+          </div>
+          <div ref="{{ muscleRailRef }}" style="display:grid;grid-template-columns:1fr 1fr;padding:10px 6px 4px;min-height:360px"></div>
+          <div style="padding:9px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)">{{ md.railNote }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ EXERCISE DETAIL ============ -->
+  <sc-if value="{{ isExerciseDetail }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Exercise detail" style="max-width:1560px;margin:0 auto;padding:14px 20px 64px">
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);padding-bottom:14px">
+      <a onClick="{{ goHome }}" style="cursor:pointer">Atlas</a><span>/</span>
+      <a onClick="{{ goExercises }}" style="cursor:pointer">Exercises</a><span>/</span>
+      <span style="color:var(--text2)">{{ ed.name }}</span>
+    </div>
+
+    <!-- header -->
+    <div style="display:flex;gap:18px;align-items:flex-start;border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:18px">
+      <div style="width:108px;height:108px;border-radius:10px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 8px,var(--panel) 8px 16px);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-family:'Geist Mono',monospace;font-size:9px;color:var(--text3);text-align:center;padding:0 8px">signature visual · pending</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <h1 style="margin:0;font-size:24px;font-weight:650;letter-spacing:-.3px">{{ ed.name }}</h1>
+          <span style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--text3);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 8px">{{ ed.slug }}</span>
+        </div>
+        <div style="color:var(--text2);font-size:13px;margin:3px 0 12px">{{ ed.nameFull }}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <sc-for list="{{ ed.chips }}" as="c" hint-placeholder-count="4">
+            <span style="font-size:11px;color:var(--text2);background:var(--chipBg);border:1px solid var(--border);border-radius:5px;padding:2px 8px">{{ c }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:26px;flex-wrap:wrap">
+          <div>
+            <div style="font-family:'Geist Mono',monospace;font-size:16px;font-weight:600">{{ ed.load }}<span style="font-size:11px;color:var(--text3)"> kg</span></div>
+            <div style="font-size:10.5px;color:var(--text3);letter-spacing:.4px;text-transform:uppercase">Load capacity</div>
+          </div>
+          <div>
+            <div style="font-family:'Geist Mono',monospace;font-size:16px;font-weight:600">{{ ed.demand }}<span style="font-size:11px;color:var(--text3)"> cm²</span></div>
+            <div style="font-size:10.5px;color:var(--text3);letter-spacing:.4px;text-transform:uppercase">Systemic FCSA demand</div>
+          </div>
+          <sc-if value="{{ ed.hasEngine }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="font-family:'Geist Mono',monospace;font-size:16px;font-weight:600">{{ ed.etuSum }}<span style="font-size:11px;color:var(--text3)"> cm²</span></div>
+              <div style="font-size:10.5px;color:var(--text3);letter-spacing:.4px;text-transform:uppercase">Total ETU</div>
+            </div>
+            <div>
+              <div style="font-family:'Geist Mono',monospace;font-size:16px;font-weight:600">{{ ed.maxJointName }}</div>
+              <div style="font-size:10.5px;color:var(--text3);letter-spacing:.4px;text-transform:uppercase">Peak joint exposure</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- viz split -->
+    <div style="display:grid;grid-template-columns:minmax(380px,460px) minmax(0,1fr);gap:14px;margin-top:14px;align-items:start">
+      <!-- body viz -->
+      <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden;position:sticky;top:68px">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+          <div style="display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden">
+            <button onClick="{{ setModeEtu }}" style="border:none;cursor:pointer;padding:5px 12px;font-size:11.5px;font-weight:600;background:{{ etuBtnBg }};color:{{ etuBtnColor }}">ETU</button>
+            <button onClick="{{ setModeRec }}" style="border:none;cursor:pointer;padding:5px 12px;font-size:11.5px;font-weight:600;background:{{ recBtnBg }};color:{{ recBtnColor }};border-left:1px solid var(--border)">Recovery</button>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);cursor:pointer;margin-left:2px">
+            <input type="checkbox" checked="{{ showJoints }}" onChange="{{ toggleJoints }}" style="accent-color:var(--joint);margin:0">
+            Joint load
+          </label>
+          <div style="flex:1"></div>
+          <span style="font-family:'Geist Mono',monospace;font-size:9.5px;color:var(--text3)">normalized / proj. FCSA</span>
+        </div>
+        <sc-if value="{{ ed.hasEngine }}" hint-placeholder-val="{{ true }}">
+          <div ref="{{ exVizRef }}" style="display:grid;grid-template-columns:1fr 1fr;padding:10px 6px 2px;min-height:420px"></div>
+          <div style="padding:9px 14px;border-top:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="font-size:11px;color:var(--text2);font-weight:600">{{ vizLegendTitle }}</span>
+              <div style="flex:1;height:6px;border-radius:3px;background:{{ vizLegendGradient }};border:1px solid var(--border)"></div>
+              <span style="font-family:'Geist Mono',monospace;font-size:9.5px;color:var(--text3)">0 → max</span>
+            </div>
+            <sc-if value="{{ showJoints }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:9px;margin-top:6px">
+                <span style="font-size:11px;color:var(--text2);font-weight:600">Joint load</span>
+                <span style="width:14px;height:14px;border-radius:50%;border:2px solid var(--joint);display:inline-block"></span>
+                <span style="font-family:'Geist Mono',monospace;font-size:9.5px;color:var(--text3)">ring weight ∝ exposure index</span>
+              </div>
+            </sc-if>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px">{{ vizHint }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ ed.noEngine }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:36px 24px;text-align:center">
+            <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px">Engine vectors pending</div>
+            <div style="font-size:11.5px;color:var(--text3);max-width:300px;margin:0 auto">ETU, recovery and joint-load exposure for this exercise have not been evaluated by the engine yet.</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- data column -->
+      <div>
+        <sc-if value="{{ ed.hasEngine }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid var(--border)">
+              <span style="font-size:13px;font-weight:600">{{ vizTableTitle }}</span>
+              <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3)">{{ vizTableSub }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(150px,1.4fr) 90px 100px 1fr;gap:12px;padding:7px 15px;border-bottom:1px solid var(--border);background:var(--panel2);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3)">
+              <span>Muscle</span><span style="text-align:right">Raw cm²</span><span style="text-align:right">/ capacity</span><span>Relative intensity</span>
+            </div>
+            <sc-for list="{{ vecRows }}" as="vr" hint-placeholder-count="8">
+              <div class="agz-row" onClick="{{ vr.open }}" onMouseEnter="{{ vr.hover }}" onMouseLeave="{{ clearHover }}" style="display:grid;grid-template-columns:minmax(150px,1.4fr) 90px 100px 1fr;gap:12px;align-items:center;padding:6px 15px;border-bottom:1px solid var(--border);cursor:pointer;background:{{ vr.rowBg }}">
+                <span style="font-size:12.5px;font-weight:500">{{ vr.name }}</span>
+                <span style="font-family:'Geist Mono',monospace;font-size:11.5px;text-align:right">{{ vr.raw }}</span>
+                <span style="font-family:'Geist Mono',monospace;font-size:11.5px;text-align:right;color:var(--text2)">{{ vr.normPct }}</span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="flex:1;height:5px;border-radius:3px;background:var(--bg2);overflow:hidden"><div style="height:100%;border-radius:3px;background:{{ vizBarColor }};width:{{ vr.relPct }}"></div></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ showJoints }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden;margin-top:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid var(--border)">
+                <span style="font-size:13px;font-weight:600">Joint load exposure</span>
+                <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3)">model-derived index · not a safety score</span>
+              </div>
+              <sc-for list="{{ jointRows }}" as="jr" hint-placeholder-count="4">
+                <div style="display:grid;grid-template-columns:minmax(160px,1fr) 70px 2fr;gap:12px;align-items:center;padding:6px 15px;border-bottom:1px solid var(--border)">
+                  <span style="font-size:12.5px">{{ jr.name }}</span>
+                  <span style="font-family:'Geist Mono',monospace;font-size:11.5px;text-align:right">{{ jr.val }}</span>
+                  <div style="height:5px;border-radius:3px;background:var(--bg2);overflow:hidden"><div style="height:100%;border-radius:3px;background:var(--joint);width:{{ jr.pct }}"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ ed.hasPropOnly }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid var(--border)">
+              <span style="font-size:13px;font-weight:600">Propulsive FCSA contribution</span>
+              <span style="font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3)">from core schema · engine vectors pending</span>
+            </div>
+            <sc-for list="{{ vecRows }}" as="vr" hint-placeholder-count="4">
+              <div class="agz-row" onClick="{{ vr.open }}" style="display:grid;grid-template-columns:minmax(150px,1.4fr) 90px 1fr;gap:12px;align-items:center;padding:6px 15px;border-bottom:1px solid var(--border);cursor:pointer">
+                <span style="font-size:12.5px;font-weight:500">{{ vr.name }}</span>
+                <span style="font-family:'Geist Mono',monospace;font-size:11.5px;text-align:right">{{ vr.raw }}</span>
+                <div style="height:5px;border-radius:3px;background:var(--bg2);overflow:hidden"><div style="height:100%;border-radius:3px;background:var(--accent);opacity:.8;width:{{ vr.relPct }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- metadata -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+          <sc-for list="{{ ed.groups }}" as="grp" hint-placeholder-count="2">
+            <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:13px 15px">
+              <div style="font-size:10.5px;font-weight:600;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:9px">{{ grp.title }}</div>
+              <sc-for list="{{ grp.rows }}" as="r" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3.5px 0;border-bottom:1px dotted var(--border)">
+                  <span style="font-size:12px;color:var(--text2)">{{ r.k }}</span>
+                  <span style="font-family:'Geist Mono',monospace;font-size:12px;text-align:right">{{ r.v }}<span style="color:var(--text3);font-size:10.5px"> {{ r.u }}</span></span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- technique / comments / videos -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+          <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:13px 15px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px">Technique</div>
+            <div style="border:1px dashed var(--border2);border-radius:7px;padding:16px;color:var(--text3);font-size:11.5px">Canonical execution instructions have not been authored for this exercise yet.</div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:13px 15px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px">Comments</div>
+            <div style="border:1px dashed var(--border2);border-radius:7px;padding:16px;color:var(--text3);font-size:11.5px">No contextual comments or caveats stored yet — kept separate from canonical technique.</div>
+          </div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:13px 15px;margin-top:12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px">Demonstration videos</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="aspect-ratio:16/9;border-radius:7px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 7px,var(--panel) 7px 14px);display:flex;align-items:center;justify-content:center"><span style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--text3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:10px">▶</span></div>
+            <div style="aspect-ratio:16/9;border-radius:7px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 7px,var(--panel) 7px 14px);display:flex;align-items:center;justify-content:center"><span style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--text3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:10px">▶</span></div>
+            <div style="aspect-ratio:16/9;border-radius:7px;border:1px solid var(--border);background:repeating-linear-gradient(45deg,var(--panel2) 0 7px,var(--panel) 7px 14px);display:flex;align-items:center;justify-content:center"><span style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--text3);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:10px">▶</span></div>
+          </div>
+          <div style="font-size:10.5px;color:var(--text3);margin-top:8px">No video links stored for this exercise yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- tooltip -->
+  <div ref="{{ tipRef }}" style="position:fixed;z-index:90;pointer-events:none;display:none;background:var(--panel);border:1px solid var(--border2);border-radius:8px;box-shadow:var(--shadow);padding:8px 11px;max-width:240px"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark' | 'light'&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;showPlannedNav&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Navigation&quot;}}">
+class Component extends DCLogic {
+  state = {
+    theme: null, screen: 'index', tab: 'ex',
+    viewEx: 'list', viewMu: 'list',
+    searchEx: '', searchMu: '',
+    filtersEx: { bodyPart: [], cat: [], tier: [], res: [] },
+    filtersMu: { bodyPart: [], complex: [] },
+    sortEx: { key: 'name', dir: 1 }, sortMu: { key: 'display', dir: 1 },
+    filtersOpen: false, hoverEx: null, hoverMu: null, hoverSlug: null,
+    selMuscle: null, selExercise: null,
+    vizMode: 'etu', showJoints: false, svgReady: false
+  };
+
+  DB2SVG = { deltoid_anterior: 'anterior_deltoid', deltoid_lateral: 'lateral_deltoid', deltoid_posterior: 'posterior_deltoid', rotator_cuffs: 'rotator_cuff' };
+  SVG2DB = { anterior_deltoid: 'deltoid_anterior', lateral_deltoid: 'deltoid_lateral', posterior_deltoid: 'deltoid_posterior', rotator_cuff: 'rotator_cuffs' };
+
+  CAT2MU = {
+    Quads: ['rectus_femoris','vastus_lateralis','vastus_medialis','vastus_intermedius'],
+    Hamstrings: ['biceps_femoris_long_head','biceps_femoris_short_head','semitendinosus','semimembranosus'],
+    Glutes: ['gluteus_maximus','gluteus_medius','gluteus_minimus'],
+    Calves: ['gastrocnemius','soleus'], Shin: ['tibialis_anterior'],
+    Hip_AF: ['gluteus_medius','gluteus_minimus','adductor_longus_brevis','adductor_magnus'],
+    Hip_FA: ['iliopsoas','adductor_longus_brevis','adductor_magnus','sartorius'],
+    Biceps: ['biceps_brachii','brachialis','brachioradialis'],
+    Triceps: ['triceps_long_head','triceps_lateral_head','triceps_medial_head'],
+    Forearms: ['wrist_flexors','wrist_extensors','pronators_supinators','brachioradialis'],
+    Back_V: ['latissimus_dorsi','teres_major'],
+    Back_3D: ['trapezius_middle','trapezius_lower','rhomboids','deltoid_posterior'],
+    Chest_Sternal: ['pectoralis_major_sternal'],
+    Chest_Clav_AD: ['pectoralis_major_clavicular','deltoid_anterior'],
+    Lateral_Delt: ['deltoid_lateral'], Upper_Traps: ['trapezius_upper'],
+    Core: ['rectus_abdominis','obliques','transverse_abdominis'],
+    Neck: ['sternocleidomastoid','deep_neck_extensors'],
+    Global_P: ['erector_spinae','gluteus_maximus','biceps_femoris_long_head','semitendinosus','semimembranosus']
+  };
+
+  BIBLE_LATS = "# Overview\nThe latissimus dorsi is the widest muscle of the human body and the primary engine of vertical pulling. Its broad, fan-shaped fibers converge from the thoracolumbar fascia, pelvis and lower thoracic spine into a narrow tendon on the humerus \u2014 a mechanical funnel that lets a very large origin act on a single, small insertion.\n\n> Draft content authored for design review \u2014 pending scientific verification.\n\n# Anatomy\n- **Origin** \u2014 spinous processes T7\u2013L5 via thoracolumbar fascia, posterior iliac crest, ribs 9\u201312, inferior angle of scapula (variable slip)\n- **Insertion** \u2014 floor of the intertubercular (bicipital) groove of the humerus\n\nThe fiber orientation fans nearly 90\u00b0: upper fibers run almost horizontally, lower fibers nearly vertically. Different pulling angles therefore bias different regions of the muscle.\n\n# Innervation\nThoracodorsal nerve (C6\u2013C8), a branch of the posterior cord of the brachial plexus.\n\n# Function\n| Action | Role | Typical loading |\n| --- | --- | --- |\n| Shoulder extension | prime mover | rows, pull-overs |\n| Shoulder adduction | prime mover | pull-ups, pulldowns |\n| Internal rotation | synergist | most pulls |\n| Lumbar extension assist | stabilizer | deadlifts, carries |\n\n# Stretch-Mediated Hypertrophy\nThe lat has a **very high** SMH factor in the Agonez model. Its long parallel-fiber architecture (25.3 cm optimal fiber length) and the deep stretch available at full shoulder flexion make lengthened-position loading unusually productive. Movements that resist the bottom half of the stroke \u2014 pulldown and pull-over variants with meaningful tension at full reach \u2014 exploit this.\n\n# Training Notes\n- Vertical pulls bias the outer/lower fibers; elbow-close rows bias the upper fibers.\n- The lat shortens through a huge excursion; partial reps at short length leave most of its working range untrained.\n- Grip width changes the resistance curve more than the target: moment arms at the shoulder matter, not hand spacing per se.\n\n# Interesting Facts\nSwimmers and climbers show some of the largest recorded lat cross-sections. Because the muscle crosses the lumbar fascia, hard bracing measurably increases its force transfer.";
+
+  constructor(p) { super(p); this.bodies = {}; this._tip = null; }
+
+  componentDidMount() {
+    this.applyTheme();
+    fetch('assets/human.svg').then(r => r.text()).then(t => {
+      const doc = new DOMParser().parseFromString(t, 'image/svg+xml');
+      this.svgRoot = doc.documentElement;
+      this.setState({ svgReady: true }, () => this.mountAll());
+    });
+  }
+  componentDidUpdate() { this.applyTheme(); this.repaintAll(); }
+  applyTheme() { document.body.dataset.theme = this.theme(); }
+  theme() { return this.state.theme || this.props.theme || 'dark'; }
+  data() { return window.AGONEZ_DATA || { muscles: [], exercises: [], engine: {}, coreVectors: {} }; }
+  muscleBy(slug) { return this.data().muscles.find(m => m.slug === slug); }
+  exBy(slug) { return this.data().exercises.find(e => e.slug === slug); }
+  pretty(s) { if (!s) return ''; const t = s.replace(/_/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1); }
+  prettyCat(s) { return (s || '').replace(/_/g, ' '); }
+  fmt(n) { if (n == null) return '—'; return (Math.round(n * 100) / 100).toLocaleString('en-US'); }
+  fmt0(n) { return n == null ? '—' : Math.round(n).toLocaleString('en-US'); }
+
+  // ---------- SVG BODY VIEWER ----------
+  buildView(view) {
+    const c = this.svgRoot.cloneNode(true);
+    c.querySelectorAll('style,text,metadata,title,desc,.ground,sodipodi\\:namedview').forEach(n => n.remove());
+    c.querySelectorAll('g').forEach(g => { if (!g.querySelector('[data-view]') && !g.closest('[data-type]') && !g.getAttribute('data-type')) { const kids = g.querySelectorAll('circle,rect'); if (kids.length && !g.querySelector('path')) g.remove(); } });
+    c.querySelectorAll('[data-view]').forEach(n => { if (n.getAttribute('data-view') !== view) n.remove(); });
+    c.querySelectorAll('[style]').forEach(n => { n.style.removeProperty('fill'); n.style.removeProperty('stroke'); n.style.removeProperty('display'); });
+    c.setAttribute('class', 'agz-body');
+    c.setAttribute('data-body-view', view);
+    c.removeAttribute('width'); c.removeAttribute('height');
+    c.style.width = '100%'; c.style.height = 'auto';
+    return c;
+  }
+  attachBody(key, el) {
+    if (!el) { delete this.bodies[key]; return; }
+    this.bodies[key] = el;
+    this.mountBody(key);
+  }
+  mountAll() { Object.keys(this.bodies).forEach(k => this.mountBody(k)); this.repaintAll(); }
+  mountBody(key) {
+    const el = this.bodies[key];
+    if (!el || !this.svgRoot || el.dataset.mounted) return;
+    el.dataset.mounted = '1';
+    ['front', 'rear'].forEach(v => {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;min-width:0';
+      const svg = this.buildView(v);
+      wrap.appendChild(svg);
+      const cap = document.createElement('div');
+      cap.textContent = v.toUpperCase();
+      cap.style.cssText = "font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);padding:4px 0 6px";
+      wrap.appendChild(cap);
+      el.appendChild(wrap);
+    });
+    this.cropViews(el, 0);
+    requestAnimationFrame(() => this.repaintAll());
+    el.addEventListener('mouseover', e => this.onBodyOver(key, e));
+    el.addEventListener('mouseout', e => this.onBodyOut(key, e));
+    el.addEventListener('mousemove', e => this.moveTip(e));
+    el.addEventListener('click', e => this.onBodyClick(key, e));
+  }
+  cropViews(el, attempt) {
+    const FALLBACK = { front: '20 15 495 990', rear: '505 15 530 990' };
+    let pending = false;
+    el.querySelectorAll('svg.agz-body').forEach(svg => {
+      if (svg.dataset.cropped) return;
+      const view = svg.getAttribute('data-body-view');
+      let box = null;
+      try {
+        let u = null;
+        svg.querySelectorAll('.body-base,.body-far,.region').forEach(p => {
+          const b = p.getBBox();
+          if (!b || !(b.width > 0)) return;
+          if (!u) u = { x1: b.x, y1: b.y, x2: b.x + b.width, y2: b.y + b.height };
+          else { u.x1 = Math.min(u.x1, b.x); u.y1 = Math.min(u.y1, b.y); u.x2 = Math.max(u.x2, b.x + b.width); u.y2 = Math.max(u.y2, b.y + b.height); }
+        });
+        if (u && (u.x2 - u.x1) > 50) box = `${u.x1 - 12} ${u.y1 - 12} ${u.x2 - u.x1 + 24} ${u.y2 - u.y1 + 24}`;
+      } catch (e) {}
+      if (box) { svg.setAttribute('viewBox', box); svg.dataset.cropped = '1'; }
+      else if (attempt >= 8) { svg.setAttribute('viewBox', FALLBACK[view] || '0 0 1500 1020'); svg.dataset.cropped = '1'; }
+      else pending = true;
+    });
+    if (pending) requestAnimationFrame(() => this.cropViews(el, attempt + 1));
+  }
+  onBodyOver(key, e) {
+    const g = e.target.closest('g[data-type]');
+    if (!g) return;
+    const slug = this.SVG2DB[g.id] || g.id;
+    if (g.getAttribute('data-type') === 'muscle') this.setState({ hoverSlug: slug });
+    this.showTip(key, g.getAttribute('data-type'), slug, e);
+  }
+  onBodyOut(key, e) {
+    const g = e.target.closest('g[data-type]');
+    if (g) { this.setState({ hoverSlug: null }); this.hideTip(); }
+  }
+  onBodyClick(key, e) {
+    const g = e.target.closest('g[data-type="muscle"]');
+    if (!g) return;
+    const slug = this.SVG2DB[g.id] || g.id;
+    if (this.muscleBy(slug)) this.openMuscle(slug);
+  }
+  showTip(key, type, slug, e) {
+    const tip = this._tip; if (!tip) return;
+    let html = '';
+    if (type === 'muscle') {
+      const m = this.muscleBy(slug);
+      const name = m ? this.pretty(m.slug) : this.pretty(slug);
+      html = `<div style="font-weight:600;font-size:12px;margin-bottom:2px">${name}</div>`;
+      const vec = this.currentTipVector();
+      if (vec && vec.map[slug] != null) {
+        const raw = vec.map[slug];
+        const cap = m ? m.pcsaProjFcsa : null;
+        const norm = cap ? raw / cap : null;
+        html += `<div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--text2)">${vec.label}: ${this.fmt(raw)} cm²</div>`;
+        if (norm != null) html += `<div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--text2)">/ capacity: ${(norm * 100).toFixed(1)}%</div>`;
+      } else if (m) {
+        html += `<div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--text2)">${this.fmt0(m.massG)} g · proj. FCSA ${this.fmt(m.pcsaProjFcsa)} cm²</div>`;
+      }
+      if (m) html += `<div style="font-size:10px;color:var(--text3);margin-top:3px">click to open muscle</div>`;
+    } else {
+      const ed = this.state.selExercise && this.data().engine[this.state.selExercise];
+      const v = ed && ed.jointLoad ? ed.jointLoad[slug] : null;
+      html = `<div style="font-weight:600;font-size:12px">${this.pretty(slug)}</div>`;
+      if (v != null) html += `<div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:var(--text2)">load exposure index: ${v.toFixed(2)}</div>`;
+    }
+    tip.innerHTML = html;
+    tip.style.display = 'block';
+    this.moveTip(e);
+  }
+  moveTip(e) {
+    const tip = this._tip; if (!tip || tip.style.display === 'none') return;
+    const x = Math.min(e.clientX + 14, window.innerWidth - 250);
+    const y = Math.min(e.clientY + 14, window.innerHeight - 90);
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+  hideTip() { if (this._tip) this._tip.style.display = 'none'; }
+
+  currentTipVector() {
+    const s = this.state;
+    if (s.screen === 'exercise' && s.selExercise) {
+      const v = this.exerciseVector(s.selExercise, s.vizMode);
+      if (v) return v;
+    }
+    if (s.screen === 'index' && s.tab === 'ex' && s.hoverEx) {
+      const v = this.exerciseVector(s.hoverEx, 'etu');
+      if (v) return v;
+    }
+    return null;
+  }
+
+  exerciseVector(slug, mode) {
+    const d = this.data();
+    const eng = d.engine[slug];
+    if (eng) {
+      if (mode === 'rec') {
+        const map = {};
+        for (const k in eng.activeTension) map[k] = eng.activeTension[k] * ((eng.recoveryMod && eng.recoveryMod[k]) || 1);
+        return { map, label: 'Recovery exposure', mode: 'rec' };
+      }
+      return { map: eng.etu, label: 'ETU', mode: 'etu' };
+    }
+    const cv = d.coreVectors[slug];
+    if (cv) return { map: cv, label: 'Propulsive FCSA', mode: 'prop' };
+    return null;
+  }
+  normalizeVector(vec) {
+    const out = {}; let max = 0;
+    for (const k in vec.map) {
+      const m = this.muscleBy(k);
+      const cap = m && m.pcsaProjFcsa ? m.pcsaProjFcsa : null;
+      const rel = cap ? vec.map[k] / cap : 0;
+      out[k] = rel; if (rel > max) max = rel;
+    }
+    if (max > 0) for (const k in out) out[k] = out[k] / max;
+    return out;
+  }
+
+  heatColor(mode, i) {
+    const base = mode === 'rec' ? 'var(--rec)' : mode === 'prop' ? 'var(--accent)' : 'var(--etu)';
+    const pct = Math.round(12 + 88 * Math.pow(i, 0.75));
+    return `color-mix(in oklab, var(--anatMuscle), ${base} ${pct}%)`;
+  }
+
+  repaintAll() {
+    const s = this.state;
+    for (const key in this.bodies) {
+      const el = this.bodies[key]; if (!el || !el.isConnected) continue;
+      if (key === 'rail') this.paintRail(el);
+      else if (key === 'mrail') this.paintMuscleRail(el);
+      else if (key === 'eviz') this.paintExViz(el);
+    }
+  }
+  eachMuscleGroup(el, fn) { el.querySelectorAll('g.muscle').forEach(g => fn(g, this.SVG2DB[g.id] || g.id)); }
+  clearPaint(el) {
+    this.eachMuscleGroup(el, g => { g.style.fill = ''; g.style.opacity = ''; });
+    el.querySelectorAll('svg.agz-body').forEach(svg => svg.classList.remove('agz-joints-on'));
+  }
+  paintRail(el) {
+    this.clearPaint(el);
+    const s = this.state;
+    if (s.tab === 'mu') {
+      const filterSet = this.filteredMuscleSlugs();
+      const filtering = this.hasFiltersMu() || s.searchMu;
+      this.eachMuscleGroup(el, (g, slug) => {
+        if (s.hoverSlug === slug || s.hoverMu === slug) { g.style.fill = 'var(--etu)'; }
+        else if (filtering && filterSet.has(slug)) { g.style.fill = 'color-mix(in oklab, var(--anatMuscle), var(--etu) 26%)'; }
+        else if (filtering) { g.style.opacity = '.45'; }
+      });
+    } else if (s.hoverEx) {
+      const vec = this.exerciseVector(s.hoverEx, 'etu');
+      if (vec) {
+        const norm = this.normalizeVector(vec);
+        this.eachMuscleGroup(el, (g, slug) => {
+          const i = norm[slug];
+          if (i != null && i > 0.02) g.style.fill = this.heatColor(vec.mode, i);
+          else g.style.opacity = '.6';
+        });
+      }
+    }
+  }
+  paintMuscleRail(el) {
+    this.clearPaint(el);
+    const sel = this.state.selMuscle;
+    this.eachMuscleGroup(el, (g, slug) => {
+      if (slug === sel) g.style.fill = 'var(--etu)';
+      else g.style.opacity = '.5';
+    });
+  }
+  paintExViz(el) {
+    this.clearPaint(el);
+    const s = this.state;
+    const vec = this.exerciseVector(s.selExercise, s.vizMode);
+    if (vec) {
+      const norm = this.normalizeVector(vec);
+      this.eachMuscleGroup(el, (g, slug) => {
+        const i = norm[slug];
+        if (i != null && i > 0.02) {
+          g.style.fill = this.heatColor(vec.mode, i);
+          if (s.hoverSlug === slug) g.style.filter = 'brightness(1.25)'; else g.style.filter = '';
+        } else { g.style.opacity = s.hoverSlug === slug ? '.9' : '.55'; g.style.filter = ''; }
+      });
+    }
+    const eng = this.data().engine[s.selExercise];
+    if (s.showJoints && eng && eng.jointLoad) {
+      el.querySelectorAll('svg.agz-body').forEach(svg => svg.classList.add('agz-joints-on'));
+      el.querySelectorAll('g.joint').forEach(g => {
+        const v = eng.jointLoad[g.id];
+        if (v == null) { g.style.display = 'none'; return; }
+        g.style.display = 'inline'; g.style.opacity = String(0.35 + 0.65 * v);
+        g.querySelectorAll('.joint-region,.spine-region').forEach(p => { p.style.strokeWidth = (1.5 + 4 * v).toFixed(1); });
+      });
+    }
+  }
+
+  // ---------- FILTERING / SORTING ----------
+  hasFiltersEx() { const f = this.state.filtersEx; return f.bodyPart.length + f.cat.length + f.tier.length + f.res.length > 0; }
+  hasFiltersMu() { const f = this.state.filtersMu; return f.bodyPart.length + f.complex.length > 0; }
+  filteredExercises() {
+    const s = this.state; const f = s.filtersEx; const q = s.searchEx.toLowerCase();
+    let list = this.data().exercises.filter(e =>
+      (!f.bodyPart.length || f.bodyPart.includes(e.bodyPart)) &&
+      (!f.cat.length || f.cat.includes(e.targetCategory)) &&
+      (!f.tier.length || f.tier.includes(e.mechanicsTier)) &&
+      (!f.res.length || f.res.includes(e.resistanceSource)) &&
+      (!q || e.name.toLowerCase().includes(q) || e.nameFull.toLowerCase().includes(q) || e.slug.includes(q)));
+    const k = s.sortEx.key, d = s.sortEx.dir;
+    list.sort((a, b) => {
+      let va = a[k], vb = b[k];
+      if (typeof va === 'string') return va.localeCompare(vb) * d;
+      return (va - vb) * d;
+    });
+    return list;
+  }
+  filteredMuscles() {
+    const s = this.state; const f = s.filtersMu; const q = s.searchMu.toLowerCase();
+    let list = this.data().muscles.filter(m =>
+      (!f.bodyPart.length || f.bodyPart.includes(m.bodyPart)) &&
+      (!f.complex.length || f.complex.includes(m.complex)) &&
+      (!q || m.slug.includes(q) || m.name.toLowerCase().includes(q)));
+    const k = s.sortMu.key, d = s.sortMu.dir;
+    list.sort((a, b) => {
+      let va = k === 'display' ? a.slug : a[k], vb = k === 'display' ? b.slug : b[k];
+      if (typeof va === 'string') return va.localeCompare(vb) * d;
+      return (va - vb) * d;
+    });
+    return list;
+  }
+  filteredMuscleSlugs() { return new Set(this.filteredMuscles().map(m => m.slug)); }
+  uniq(list, key) { return [...new Set(list.map(x => x[key]))].sort(); }
+
+  // ---------- NAV ----------
+  openMuscle(slug) { this.setState({ screen: 'muscle', selMuscle: slug, hoverSlug: null, filtersOpen: false }); window.scrollTo(0, 0); this.resetBodies(); }
+  openExercise(slug) { this.setState({ screen: 'exercise', selExercise: slug, hoverSlug: null, filtersOpen: false, showJoints: false, vizMode: 'etu' }); window.scrollTo(0, 0); this.resetBodies(); }
+  resetBodies() { setTimeout(() => this.mountAll(), 30); }
+
+  // ---------- RELATED ----------
+  relatedExercises(muSlug) {
+    const d = this.data(); const out = []; const seen = new Set();
+    for (const e of d.exercises) {
+      const eng = d.engine[e.slug];
+      const vec = eng ? eng.etu : d.coreVectors[e.slug];
+      if (vec && vec[muSlug] != null && vec[muSlug] > 0.5) { out.push({ ex: e, val: vec[muSlug], measured: true }); seen.add(e.slug); }
+    }
+    for (const e of d.exercises) {
+      if (seen.has(e.slug)) continue;
+      const mus = this.CAT2MU[e.targetCategory] || [];
+      if (mus.includes(muSlug)) out.push({ ex: e, val: 0, measured: false });
+    }
+    out.sort((a, b) => (b.measured - a.measured) || (b.val - a.val));
+    return out.slice(0, 8);
+  }
+
+  // ---------- MARKDOWN ----------
+  renderMd(text) {
+    const R = React.createElement;
+    const lines = (text || '').split('\n');
+    const blocks = []; let i = 0; let key = 0;
+    const inline = (s) => {
+      const parts = []; let rest = s; let k = 0;
+      const rx = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/;
+      while (rest) {
+        const m = rest.match(rx);
+        if (!m) { parts.push(rest); break; }
+        if (m.index > 0) parts.push(rest.slice(0, m.index));
+        const t = m[0];
+        if (t.startsWith('**')) parts.push(R('strong', { key: 'i' + (k++) }, t.slice(2, -2)));
+        else if (t.startsWith('`')) parts.push(R('code', { key: 'i' + (k++), style: { fontFamily: "'Geist Mono',monospace", fontSize: '12px', background: 'var(--chipBg)', padding: '1px 5px', borderRadius: '4px' } }, t.slice(1, -1)));
+        else parts.push(R('em', { key: 'i' + (k++) }, t.slice(1, -1)));
+        rest = rest.slice(m.index + t.length);
+      }
+      return parts;
+    };
+    let pendingHeading = null; let sectionHasContent = true;
+    const flushEmpty = () => {
+      if (pendingHeading && !sectionHasContent) {
+        blocks.push(R('div', { key: 'e' + (key++), style: { border: '1px dashed var(--border2)', borderRadius: '7px', padding: '10px 14px', color: 'var(--text3)', fontSize: '12px', margin: '8px 0 4px' } }, 'Section not yet written.'));
+      }
+    };
+    while (i < lines.length) {
+      const l = lines[i];
+      if (/^#{1,3}\s/.test(l)) {
+        flushEmpty();
+        const lvl = l.match(/^#+/)[0].length;
+        const txt = l.replace(/^#+\s*/, '');
+        blocks.push(R('h' + (lvl + 1), { key: 'h' + (key++), style: { fontSize: lvl === 1 ? '19px' : '15px', fontWeight: 650, margin: '26px 0 8px', letterSpacing: '-.2px', borderBottom: lvl === 1 ? '1px solid var(--border)' : 'none', paddingBottom: lvl === 1 ? '6px' : 0 } }, txt));
+        pendingHeading = txt; sectionHasContent = false; i++; continue;
+      }
+      if (/^>\s?/.test(l)) {
+        sectionHasContent = true;
+        const q = [];
+        while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, '')); i++; }
+        blocks.push(R('div', { key: 'q' + (key++), style: { borderLeft: '3px solid var(--accent)', background: 'var(--accentDim)', borderRadius: '0 7px 7px 0', padding: '9px 14px', margin: '10px 0', fontSize: '12.5px', color: 'var(--text2)' } }, q.join(' ')));
+        continue;
+      }
+      if (/^\|/.test(l)) {
+        sectionHasContent = true;
+        const rows = [];
+        while (i < lines.length && /^\|/.test(lines[i])) { rows.push(lines[i]); i++; }
+        const parse = r => r.split('|').slice(1, -1).map(c => c.trim());
+        const head = parse(rows[0]);
+        const body = rows.slice(2).map(parse);
+        blocks.push(R('table', { key: 't' + (key++), style: { borderCollapse: 'collapse', width: '100%', margin: '10px 0', fontSize: '12.5px' } },
+          R('thead', {}, R('tr', {}, head.map((h, x) => R('th', { key: x, style: { textAlign: 'left', padding: '6px 10px', borderBottom: '1px solid var(--border2)', color: 'var(--text3)', fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '.8px' } }, h)))),
+          R('tbody', {}, body.map((r, y) => R('tr', { key: y }, r.map((c, x) => R('td', { key: x, style: { padding: '6px 10px', borderBottom: '1px solid var(--border)' } }, inline(c))))))));
+        continue;
+      }
+      if (/^-\s/.test(l)) {
+        sectionHasContent = true;
+        const items = [];
+        while (i < lines.length && /^-\s/.test(lines[i])) { items.push(lines[i].replace(/^-\s*/, '')); i++; }
+        blocks.push(R('ul', { key: 'u' + (key++), style: { margin: '8px 0', paddingLeft: '22px' } }, items.map((t, x) => R('li', { key: x, style: { margin: '3px 0' } }, inline(t)))));
+        continue;
+      }
+      if (l.trim()) {
+        sectionHasContent = true;
+        blocks.push(R('p', { key: 'p' + (key++), style: { margin: '8px 0', textWrap: 'pretty' } }, inline(l.trim())));
+      }
+      i++;
+    }
+    flushEmpty();
+    return blocks;
+  }
+
+  // ---------- RENDER ----------
+  renderVals() {
+    const s = this.state; const d = this.data();
+    const isEx = s.tab === 'ex';
+    const view = isEx ? s.viewEx : s.viewMu;
+    const search = isEx ? s.searchEx : s.searchMu;
+    const sort = isEx ? s.sortEx : s.sortMu;
+    const setF = (patch, cb) => this.setState(patch, cb);
+
+    const exList = this.filteredExercises();
+    const muList = this.filteredMuscles();
+    const maxDemand = Math.max(...d.exercises.map(e => e.fcsaDemand), 1);
+    const maxMass = Math.max(...d.muscles.map(m => m.massG), 1);
+    const maxProj = Math.max(...d.muscles.map(m => m.pcsaProjFcsa || 0), 1);
+
+    const exItems = exList.map(e => ({
+      slug: e.slug, name: e.name, nameFull: e.nameFull, bodyPart: e.bodyPart,
+      cat: this.prettyCat(e.targetCategory), tier: this.prettyCat(e.mechanicsTier),
+      resistance: this.prettyCat(e.resistanceSource),
+      load: this.fmt0(e.loadCapacity), demand: this.fmt(e.fcsaDemand),
+      demandPct: Math.round(100 * e.fcsaDemand / maxDemand) + '%',
+      hasVector: !!d.engine[e.slug],
+      rowBg: s.hoverEx === e.slug ? 'var(--rowHover)' : 'transparent',
+      open: () => this.openExercise(e.slug),
+      hover: () => { if (s.hoverEx !== e.slug) this.setState({ hoverEx: e.slug, hoverMu: null }); }
+    }));
+    const muItems = muList.map(m => ({
+      slug: m.slug, display: this.pretty(m.slug), latin: m.name, bodyPart: m.bodyPart, complex: this.prettyCat(m.complex),
+      mass: this.fmt0(m.massG), massPct: Math.round(100 * m.massG / maxMass) + '%',
+      mv: this.fmt0(m.mvCm3),
+      f1Pct: Math.round(m.fiberI * 100) + '%', f2Pct: Math.round(m.fiberII * 100) + '%',
+      f2Label: 'II ' + Math.round(m.fiberII * 100) + '%',
+      proj: this.fmt(m.pcsaProjFcsa), projPct: Math.round(100 * (m.pcsaProjFcsa || 0) / maxProj) + '%',
+      rowBg: (s.hoverSlug === m.slug || s.hoverMu === m.slug) ? 'var(--rowHover)' : 'transparent',
+      open: () => this.openMuscle(m.slug),
+      hover: () => { if (s.hoverMu !== m.slug) this.setState({ hoverMu: m.slug, hoverEx: null }); }
+    }));
+
+    // filter groups
+    const mkOpt = (fkey, val, tabKey) => ({
+      label: this.prettyCat(val),
+      active: s[tabKey][fkey].includes(val),
+      toggle: () => {
+        const f = { ...s[tabKey] };
+        f[fkey] = f[fkey].includes(val) ? f[fkey].filter(x => x !== val) : [...f[fkey], val];
+        this.setState({ [tabKey]: f });
+      }
+    });
+    const filterGroups = isEx ? [
+      { label: 'Body part', options: this.uniq(d.exercises, 'bodyPart').map(v => mkOpt('bodyPart', v, 'filtersEx')) },
+      { label: 'Target category', options: this.uniq(d.exercises, 'targetCategory').map(v => mkOpt('cat', v, 'filtersEx')) },
+      { label: 'Mechanics tier', options: this.uniq(d.exercises, 'mechanicsTier').map(v => mkOpt('tier', v, 'filtersEx')) },
+      { label: 'Resistance', options: this.uniq(d.exercises, 'resistanceSource').map(v => mkOpt('res', v, 'filtersEx')) }
+    ] : [
+      { label: 'Body part', options: this.uniq(d.muscles, 'bodyPart').map(v => mkOpt('bodyPart', v, 'filtersMu')) },
+      { label: 'Complex', options: this.uniq(d.muscles, 'complex').map(v => mkOpt('complex', v, 'filtersMu')) }
+    ];
+    const chips = [];
+    const fobj = isEx ? s.filtersEx : s.filtersMu;
+    const fkey2 = isEx ? 'filtersEx' : 'filtersMu';
+    for (const k in fobj) for (const v of fobj[k]) chips.push({
+      label: this.prettyCat(v),
+      remove: () => { const f = { ...s[fkey2] }; f[k] = f[k].filter(x => x !== v); this.setState({ [fkey2]: f }); }
+    });
+    const activeFilterCount = chips.length;
+
+    const sortOptions = isEx ? [
+      { key: 'name', label: 'Name' }, { key: 'nameFull', label: 'Full name' },
+      { key: 'loadCapacity', label: 'Load capacity' }, { key: 'fcsaDemand', label: 'FCSA demand' }
+    ] : [
+      { key: 'display', label: 'Name' }, { key: 'massG', label: 'Mass' }, { key: 'mvCm3', label: 'Volume' },
+      { key: 'fiberII', label: 'Type II bias' }, { key: 'pcsaFiber', label: 'PCSA (fiber)' }, { key: 'pcsaProjFcsa', label: 'Projected FCSA' }
+    ];
+
+    // rail status
+    let railStatus = 'Hover an entry to preview it on the body. Click any muscle to open it.';
+    let railHasLegend = false, railLegendTitle = '', railLegendGradient = '';
+    if (isEx && s.hoverEx) {
+      const e = this.exBy(s.hoverEx);
+      const vec = this.exerciseVector(s.hoverEx, 'etu');
+      if (vec) {
+        railHasLegend = true;
+        railLegendTitle = vec.label;
+        const col = vec.mode === 'prop' ? 'var(--accent)' : 'var(--etu)';
+        railLegendGradient = `linear-gradient(to right, var(--anatMuscle), ${col})`;
+        railStatus = (e ? e.name : '') + ' — ' + (vec.mode === 'prop' ? 'propulsive contribution (engine ETU pending)' : 'modeled training-stimulus exposure, normalized per muscle capacity');
+      } else {
+        railStatus = (e ? e.name : '') + ' — no muscle vector evaluated yet.';
+      }
+    } else if (!isEx && (s.hoverMu || s.hoverSlug)) {
+      const m = this.muscleBy(s.hoverMu || s.hoverSlug);
+      if (m) railStatus = this.pretty(m.slug) + ' — ' + m.bodyPart + ' body · ' + this.prettyCat(m.complex) + ' complex';
+    }
+
+    // ----- muscle detail -----
+    let md = {};
+    if (s.screen === 'muscle' && s.selMuscle) {
+      const m = this.muscleBy(s.selMuscle) || {};
+      const rel = this.relatedExercises(s.selMuscle);
+      const isShowcase = m.slug === 'latissimus_dorsi';
+      const bibleText = isShowcase ? this.BIBLE_LATS : m.bible;
+      md = {
+        display: this.pretty(m.slug), latin: m.name, slug: m.slug, bodyPart: m.bodyPart,
+        complex: this.prettyCat(m.complex), architecture: m.architecture,
+        f1Pct: Math.round(m.fiberI * 100) + '%', f2Pct: Math.round(m.fiberII * 100) + '%',
+        heroStats: [
+          { k: 'Mass', v: this.fmt0(m.massG), u: 'g' },
+          { k: 'Volume', v: this.fmt0(m.mvCm3), u: 'cm³' },
+          { k: 'Proj. FCSA', v: this.fmt(m.pcsaProjFcsa), u: 'cm²' },
+          { k: 'Type II bias', v: Math.round(m.fiberII * 100), u: '%' }
+        ],
+        groups: [
+          { title: 'Morphology', rows: [
+            { k: 'Mass', v: this.fmt0(m.massG), u: 'g' },
+            { k: 'Muscle volume', v: this.fmt0(m.mvCm3), u: 'cm³' },
+            { k: 'Mass reference', v: m.massRef, u: '' } ] },
+          { title: 'Architecture', rows: [
+            { k: 'Type', v: m.architecture, u: '' },
+            { k: 'Optimal fiber length', v: this.fmt(m.fiberLenCm), u: 'cm' },
+            { k: 'Pennation angle', v: this.fmt(m.pennationDeg), u: '°' },
+            { k: 'cos(pennation)', v: m.pennationCos != null ? m.pennationCos.toFixed(3) : '—', u: '' } ] },
+          { title: 'Capacity', rows: [
+            { k: 'PCSA', v: this.fmt(m.pcsa), u: 'cm²' },
+            { k: 'PCSA (fiber)', v: this.fmt(m.pcsaFiber), u: 'cm²' },
+            { k: 'Projected FCSA', v: this.fmt(m.pcsaProjFcsa), u: 'cm²' } ] },
+          { title: 'Programming traits', rows: [
+            { k: 'SMH factor', v: this.prettyCat(m.smh), u: '' },
+            { k: 'Strength curve', v: m.strengthCurve, u: '' },
+            { k: 'Leverage peak', v: this.prettyCat(m.leveragePeak), u: '' } ] }
+        ],
+        related: rel.map(r => ({
+          name: r.ex.name, nameFull: r.ex.nameFull, cat: this.prettyCat(r.ex.targetCategory),
+          tier: this.prettyCat(r.ex.mechanicsTier),
+          measured: r.measured, byTarget: !r.measured,
+          val: this.fmt(r.val), pct: Math.round(100 * r.val / Math.max(...rel.map(x => x.val), 1)) + '%',
+          open: () => this.openExercise(r.ex.slug)
+        })),
+        hasRelated: rel.length > 0, noRelated: rel.length === 0,
+        articles: (m.articles || []).filter(a => a && a.startsWith('http')).map(a => {
+          let dom = 'link'; try { dom = new URL(a).hostname; } catch (e) {}
+          return { url: a, title: 'External reference', domain: dom };
+        }),
+        bibleNote: isShowcase ? 'draft article · pending review' : 'scaffolding from database · content pending',
+        bibleContent: this.renderMd(bibleText),
+        railNote: this.pretty(m.slug) + ' highlighted · unrelated anatomy de-emphasized'
+      };
+    }
+
+    // ----- exercise detail -----
+    let ed = {}; let vecRows = []; let jointRows = [];
+    let vizLegendTitle = '', vizLegendGradient = '', vizHint = '', vizTableTitle = '', vizTableSub = '', vizBarColor = 'var(--etu)';
+    if (s.screen === 'exercise' && s.selExercise) {
+      const e = this.exBy(s.selExercise) || {};
+      const eng = d.engine[s.selExercise];
+      const cv = d.coreVectors[s.selExercise];
+      const vec = this.exerciseVector(s.selExercise, s.vizMode);
+      const etuSum = eng ? Object.values(eng.etu).reduce((a, b) => a + b, 0) : 0;
+      let maxJointName = '—';
+      if (eng && eng.jointLoad) {
+        const mj = Object.entries(eng.jointLoad).sort((a, b) => b[1] - a[1])[0];
+        if (mj) maxJointName = this.pretty(mj[0]);
+      }
+      ed = {
+        name: e.name, nameFull: e.nameFull, slug: e.slug,
+        chips: [e.bodyPart + ' body', this.prettyCat(e.targetCategory), this.prettyCat(e.mechanicsTier), this.prettyCat(e.resistanceSource), e.executionPattern || 'Bilateral'].filter(Boolean),
+        load: this.fmt0(e.loadCapacity), demand: this.fmt(e.fcsaDemand),
+        hasEngine: !!eng, noEngine: !eng && !cv, hasPropOnly: !eng && !!cv,
+        etuSum: this.fmt(etuSum), maxJointName,
+        groups: [
+          { title: 'Classification', rows: [
+            { k: 'Body part', v: e.bodyPart, u: '' },
+            { k: 'Target category', v: this.prettyCat(e.targetCategory), u: '' },
+            { k: 'Mechanics tier', v: this.prettyCat(e.mechanicsTier), u: '' },
+            { k: 'Resistance source', v: this.prettyCat(e.resistanceSource), u: '' },
+            { k: 'Execution pattern', v: e.executionPattern || 'Bilateral', u: '' } ] },
+          { title: 'Quantitative', rows: [
+            { k: 'Load capacity', v: this.fmt0(e.loadCapacity), u: 'kg' },
+            { k: 'Systemic FCSA demand', v: this.fmt(e.fcsaDemand), u: 'cm²' },
+            { k: 'Total ETU', v: eng ? this.fmt(etuSum) : 'pending', u: eng ? 'cm²' : '' },
+            { k: 'Muscles exposed', v: eng ? String(Object.keys(eng.activeTension).length) : (cv ? String(Object.keys(cv).length) : 'pending'), u: '' } ] }
+        ]
+      };
+      if (vec) {
+        const norm = this.normalizeVector(vec);
+        const maxRel = 1;
+        vecRows = Object.entries(vec.map).sort((a, b) => b[1] - a[1]).map(([slug, raw]) => {
+          const m = this.muscleBy(slug);
+          const cap = m ? m.pcsaProjFcsa : null;
+          return {
+            name: this.pretty(slug), raw: this.fmt(raw),
+            normPct: cap ? ((raw / cap) * 100).toFixed(1) + '%' : '—',
+            relPct: Math.round(100 * (norm[slug] || 0)) + '%',
+            rowBg: s.hoverSlug === slug ? 'var(--rowHover)' : 'transparent',
+            open: () => { if (this.muscleBy(slug)) this.openMuscle(slug); },
+            hover: () => { if (s.hoverSlug !== slug) this.setState({ hoverSlug: slug }); }
+          };
+        });
+        vizBarColor = vec.mode === 'rec' ? 'var(--rec)' : vec.mode === 'prop' ? 'var(--accent)' : 'var(--etu)';
+        vizLegendTitle = vec.label;
+        vizLegendGradient = `linear-gradient(to right, var(--anatMuscle), ${vizBarColor})`;
+        vizTableTitle = vec.mode === 'rec' ? 'Muscle recovery exposure' : vec.mode === 'prop' ? 'Propulsive FCSA contribution' : 'Muscle ETU exposure';
+        vizTableSub = vec.mode === 'rec' ? 'active tension × recovery cost modifier' : vec.mode === 'prop' ? 'from core schema' : 'effective training units per muscle';
+        vizHint = 'Hover the body or the table — both stay in sync. Near-zero values recede into neutral anatomy.';
+      }
+      if (eng && eng.jointLoad) {
+        jointRows = Object.entries(eng.jointLoad).sort((a, b) => b[1] - a[1]).map(([j, v]) => ({
+          name: this.pretty(j), val: v.toFixed(2), pct: Math.round(v * 100) + '%'
+        }));
+      }
+    }
+
+    const t = this.theme();
+    return {
+      // shell
+      goHome: () => { this.setState({ screen: 'index', hoverSlug: null, hoverEx: null, hoverMu: null }); this.resetBodies(); },
+      goMuscles: () => { this.setState({ screen: 'index', tab: 'mu' }); this.resetBodies(); },
+      goExercises: () => { this.setState({ screen: 'index', tab: 'ex' }); this.resetBodies(); },
+      atlasNavBg: s.screen === 'index' ? 'var(--accentDim)' : 'transparent',
+      showPlanned: this.props.showPlannedNav ?? true,
+      dbCounts: d.exercises.length + ' exercises · ' + d.muscles.length + ' muscles',
+      toggleTheme: () => this.setState({ theme: t === 'dark' ? 'light' : 'dark' }),
+      themeLabel: t === 'dark' ? 'Dark' : 'Light',
+      themeDotBg: t === 'dark' ? '#0e1013' : '#f5d76e',
+      isIndex: s.screen === 'index', isMuscleDetail: s.screen === 'muscle', isExerciseDetail: s.screen === 'exercise',
+      // toolbar
+      tabExercises: () => setF({ tab: 'ex', filtersOpen: false, hoverMu: null, hoverSlug: null }),
+      tabMuscles: () => setF({ tab: 'mu', filtersOpen: false, hoverEx: null }),
+      exTabBg: isEx ? 'var(--accentDim)' : 'transparent', exTabColor: isEx ? 'var(--text)' : 'var(--text3)',
+      muTabBg: !isEx ? 'var(--accentDim)' : 'transparent', muTabColor: !isEx ? 'var(--text)' : 'var(--text3)',
+      exCount: String(d.exercises.length), muCount: String(d.muscles.length),
+      search, onSearch: ev => setF(isEx ? { searchEx: ev.target.value } : { searchMu: ev.target.value }),
+      searchPlaceholder: isEx ? 'Search exercises…' : 'Search muscles…',
+      toggleFilters: () => setF({ filtersOpen: !s.filtersOpen }),
+      filtersOpen: s.filtersOpen,
+      filterBtnBorder: s.filtersOpen ? 'var(--accent)' : 'var(--border)',
+      hasActiveFilters: activeFilterCount > 0, activeFilterCount: String(activeFilterCount),
+      filterGroups, activeChips: chips,
+      clearFilters: () => setF(isEx ? { filtersEx: { bodyPart: [], cat: [], tier: [], res: [] }, searchEx: '' } : { filtersMu: { bodyPart: [], complex: [] }, searchMu: '' }),
+      sortOptions, sortKey: sort.key,
+      onSortChange: ev => setF(isEx ? { sortEx: { ...s.sortEx, key: ev.target.value } } : { sortMu: { ...s.sortMu, key: ev.target.value } }),
+      toggleSortDir: () => setF(isEx ? { sortEx: { ...s.sortEx, dir: -s.sortEx.dir } } : { sortMu: { ...s.sortMu, dir: -s.sortMu.dir } }),
+      sortDirGlyph: sort.dir === 1 ? '↑' : '↓',
+      setListView: () => setF(isEx ? { viewEx: 'list' } : { viewMu: 'list' }),
+      setGridView: () => setF(isEx ? { viewEx: 'grid' } : { viewMu: 'grid' }),
+      listBtnBg: view === 'list' ? 'var(--accentDim)' : 'var(--panel)', listBtnColor: view === 'list' ? 'var(--text)' : 'var(--text3)',
+      gridBtnBg: view === 'grid' ? 'var(--accentDim)' : 'var(--panel)', gridBtnColor: view === 'grid' ? 'var(--text)' : 'var(--text3)',
+      showList: view === 'list' && (isEx ? exItems.length : muItems.length) > 0,
+      showGrid: view === 'grid' && (isEx ? exItems.length : muItems.length) > 0,
+      noResults: (isEx ? exItems.length : muItems.length) === 0,
+      isExTab: isEx, isMuTab: !isEx,
+      exItems, muItems,
+      clearHover: () => { if (s.hoverEx || s.hoverMu || s.hoverSlug) this.setState({ hoverEx: null, hoverMu: null, hoverSlug: null }); },
+      // rails
+      railBodyRef: el => this.attachBody('rail', el),
+      muscleRailRef: el => this.attachBody('mrail', el),
+      exVizRef: el => this.attachBody('eviz', el),
+      tipRef: el => { this._tip = el; },
+      railStatus, railHasLegend, railLegendTitle, railLegendGradient,
+      // detail
+      md, ed, vecRows, jointRows,
+      setModeEtu: () => this.setState({ vizMode: 'etu' }),
+      setModeRec: () => this.setState({ vizMode: 'rec' }),
+      etuBtnBg: s.vizMode === 'etu' ? 'color-mix(in oklab, var(--panel), var(--etu) 22%)' : 'var(--panel)',
+      etuBtnColor: s.vizMode === 'etu' ? 'var(--text)' : 'var(--text3)',
+      recBtnBg: s.vizMode === 'rec' ? 'color-mix(in oklab, var(--panel), var(--rec) 20%)' : 'var(--panel)',
+      recBtnColor: s.vizMode === 'rec' ? 'var(--text)' : 'var(--text3)',
+      showJoints: s.showJoints,
+      toggleJoints: () => this.setState({ showJoints: !s.showJoints }),
+      vizLegendTitle, vizLegendGradient, vizHint, vizTableTitle, vizTableSub, vizBarColor
+    };
+  }
+}
+</script>
+</body>
+</html>

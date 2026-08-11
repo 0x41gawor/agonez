@@ -1,0 +1,327 @@
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-bar {
+  position: sticky;
+  z-index: 80;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 52px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+.brand:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brand img {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #efe6d8;
+  object-fit: cover;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.main-nav a,
+.planned-nav {
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: var(--text3);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.main-nav a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.main-nav a.active {
+  background: var(--accentDim);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.planned-nav {
+  cursor: not-allowed;
+}
+
+.app-bar-spacer {
+  flex: 1;
+}
+
+.atlas-version {
+  color: var(--text3);
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.theme-toggle,
+.button,
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--text2);
+}
+
+.theme-toggle {
+  gap: 7px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+}
+
+.theme-dot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--border2);
+  border-radius: 50%;
+}
+
+.theme-dot.dark {
+  background: #0e1013;
+}
+
+.theme-dot.light {
+  background: #f5d76e;
+}
+
+.page-wrap {
+  width: min(100%, 1600px);
+  margin: 0 auto;
+  padding: 16px 20px 64px;
+}
+
+.button {
+  min-height: 34px;
+  gap: 7px;
+  padding: 6px 12px;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.button:hover {
+  border-color: var(--border2);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.button.primary {
+  border-color: var(--accent);
+  background: var(--accentDim);
+  color: var(--accent2);
+}
+
+.button.ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.button.active {
+  border-color: var(--accent);
+  background: var(--accentDim);
+  color: var(--text);
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.eyebrow,
+.section-label {
+  color: var(--text3);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--chipBg);
+  color: var(--text2);
+  font-size: 11px;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--etu);
+}
+
+.placeholder-media {
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(45deg, var(--panel2) 0 9px, var(--panel) 9px 18px);
+  color: var(--text3);
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.state-page,
+.inline-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.state-page {
+  min-height: calc(100vh - 52px);
+  padding: 40px 20px;
+}
+
+.state-page h1 {
+  margin: 8px 0;
+  font-size: 24px;
+}
+
+.state-page p,
+.inline-state p {
+  max-width: 520px;
+  margin: 0 0 18px;
+  color: var(--text3);
+}
+
+.inline-state {
+  min-height: 240px;
+  padding: 44px 20px;
+  border: 1px dashed var(--border2);
+  border-radius: 10px;
+}
+
+.inline-state h2 {
+  margin: 0 0 6px;
+  color: var(--text2);
+  font-size: 14px;
+}
+
+.skeleton {
+  overflow: hidden;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--panel2), var(--border), var(--panel2));
+  background-size: 220% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: -220% 0; }
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 14px;
+  color: var(--text3);
+  font-size: 12px;
+}
+
+.breadcrumbs a {
+  cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .app-bar {
+    gap: 10px;
+    padding: 0 14px;
+  }
+
+  .atlas-version {
+    display: none;
+  }
+
+  .main-nav {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .app-bar {
+    gap: 8px;
+    height: 52px;
+    padding: 0 12px;
+  }
+
+  .brand span,
+  .planned-nav {
+    display: none;
+  }
+
+  .brand {
+    gap: 0;
+  }
+
+  .main-nav a {
+    padding-inline: 10px;
+  }
+
+  .theme-toggle {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .theme-dot {
+    width: 13px;
+    height: 13px;
+  }
+
+  .page-wrap {
+    padding: 12px 12px 72px;
+  }
+
+  .button,
+  .icon-button {
+    min-height: 40px;
+  }
+}
