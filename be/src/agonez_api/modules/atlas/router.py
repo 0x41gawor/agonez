@@ -1,11 +1,13 @@
 from typing import Annotated, Literal, cast
 
-from fastapi import APIRouter, Depends, Path, Query, Request
+from fastapi import APIRouter, Depends, Path, Query, Request, status
 
 from agonez_api.modules.atlas.schemas import (
     AtlasMeta,
     ExerciseDetail,
     ExerciseListResponse,
+    ExerciseVideoCreate,
+    ExerciseVideoLinks,
     MuscleDetail,
     MuscleListResponse,
     RelatedExerciseResponse,
@@ -60,6 +62,19 @@ async def list_exercises(
 @router.get("/exercises/{slug}", response_model=ExerciseDetail)
 async def get_exercise(slug: Slug, service: AtlasServiceDependency) -> ExerciseDetail:
     return await service.get_exercise(slug)
+
+
+@router.post(
+    "/exercises/{slug}/videos",
+    response_model=ExerciseVideoLinks,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_exercise_video(
+    slug: Slug,
+    payload: ExerciseVideoCreate,
+    service: AtlasServiceDependency,
+) -> ExerciseVideoLinks:
+    return await service.add_exercise_video(slug=slug, url=payload.url)
 
 
 @router.get("/muscles", response_model=MuscleListResponse)

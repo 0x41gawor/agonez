@@ -1,6 +1,8 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from agonez_api.modules.atlas.youtube import normalize_youtube_url
 
 JsonObject = dict[str, Any]
 Vector = dict[str, float]
@@ -65,6 +67,19 @@ class ExerciseDetail(APIModel):
     video_links: list[str]
     image_url: str | None
     engine: ExerciseEngine | None
+
+
+class ExerciseVideoCreate(APIModel):
+    url: str = Field(min_length=1, max_length=2048)
+
+    @field_validator("url")
+    @classmethod
+    def validate_youtube_url(cls, value: str) -> str:
+        return normalize_youtube_url(value)
+
+
+class ExerciseVideoLinks(APIModel):
+    video_links: list[str]
 
 
 class MuscleListItem(APIModel):

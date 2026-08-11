@@ -1,9 +1,10 @@
-import { getJson } from './client'
+import { getJson, postJson } from './client'
 import type {
   AtlasMeta,
   ExerciseDetail,
   ExerciseListQuery,
   ExerciseListResponse,
+  ExerciseVideoLinks,
   MuscleDetail,
   MuscleListQuery,
   MuscleListResponse,
@@ -17,6 +18,12 @@ export const atlasApi = {
     getJson<ExerciseListResponse>('/api/atlas/exercises', query as QueryRecord, signal),
   exercise: (slug: string, signal?: AbortSignal) =>
     getJson<ExerciseDetail>(`/api/atlas/exercises/${encodeURIComponent(slug)}`, undefined, signal),
+  addExerciseVideo: (slug: string, url: string, signal?: AbortSignal) =>
+    postJson<ExerciseVideoLinks>(
+      `/api/atlas/exercises/${encodeURIComponent(slug)}/videos`,
+      { url },
+      signal,
+    ),
   muscles: (query: MuscleListQuery, signal?: AbortSignal) =>
     getJson<MuscleListResponse>('/api/atlas/muscles', query as QueryRecord, signal),
   muscle: (slug: string, signal?: AbortSignal) =>

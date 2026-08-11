@@ -60,7 +60,7 @@ def create_app(
         title=settings.app_name,
         version=settings.app_version,
         description=(
-            "Read-only REST API for the Agonez exercise and muscle Atlas. "
+            "REST API for the Agonez exercise and muscle Atlas. "
             "This module is intentionally public and has no per-user state."
         ),
         lifespan=lifespan,
@@ -74,7 +74,7 @@ def create_app(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=False,
-        allow_methods=["GET", "OPTIONS"],
+        allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Accept", "Content-Type", "X-Request-ID"],
         expose_headers=["X-Request-ID"],
     )

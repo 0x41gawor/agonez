@@ -26,12 +26,8 @@ export function buildQuery(params: QueryRecord = {}): string {
   return encoded ? `?${encoded}` : ''
 }
 
-export async function getJson<T>(path: string, params?: QueryRecord, signal?: AbortSignal): Promise<T> {
-  const request: RequestInit = {
-    headers: { Accept: 'application/json' },
-  }
-  if (signal) request.signal = signal
-  const response = await fetch(`${apiUrl(path)}${buildQuery(params)}`, request)
+async function requestJson<T>(path: string, request: RequestInit): Promise<T> {
+  const response = await fetch(apiUrl(path), request)
 
   if (!response.ok) {
     const raw = await response.text()
@@ -45,4 +41,22 @@ export async function getJson<T>(path: string, params?: QueryRecord, signal?: Ab
     throw new ApiError(detail || 'The Atlas request failed.', response.status, details)
   }
   return response.json() as Promise<T>
+}
+
+export async function getJson<T>(path: string, params?: QueryRecord, signal?: AbortSignal): Promise<T> {
+  const request: RequestInit = {
+    headers: { Accept: 'application/json' },
+  }
+  if (signal) request.signal = signal
+  return requestJson<T>(`${path}${buildQuery(params)}`, request)
+}
+
+export async function postJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  const request: RequestInit = {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }
+  if (signal) request.signal = signal
+  return requestJson<T>(path, request)
 }

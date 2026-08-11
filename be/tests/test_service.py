@@ -9,6 +9,8 @@ from agonez_api.modules.atlas.service import AtlasService
 
 
 class FakeRepository:
+    video_links = ["https://youtu.be/1Z-aEpjdphU?si=existing"]
+
     async def list_exercises(self, **kwargs: Any) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         del kwargs
         return (
@@ -44,6 +46,17 @@ class FakeRepository:
             "complex": "Back",
             "pcsa_projected_fcsa_cm2": 40.0,
         }
+
+    async def get_exercise(self, slug: str) -> dict[str, Any] | None:
+        if slug == "missing":
+            return None
+        return {"slug": slug, "video_links": list(self.video_links)}
+
+    async def add_exercise_video(self, *, slug: str, url: str) -> dict[str, Any] | None:
+        if slug == "missing":
+            return None
+        self.video_links = [*self.video_links, url]
+        return {"video_links": list(self.video_links)}
 
     async def measured_related_exercises(self, *, muscle_slug: str) -> list[dict[str, Any]]:
         del muscle_slug
@@ -123,3 +136,21 @@ async def test_related_exercises_put_measured_values_first(service: AtlasService
 async def test_related_exercises_404_for_missing_muscle(service: AtlasService) -> None:
     with pytest.raises(AtlasEntityNotFoundError):
         await service.related_exercises(muscle_slug="missing", limit=8, sort="etu")
+
+
+async def test_add_exercise_video_deduplicates_youtube_variants(service: AtlasService) -> None:
+    response = await service.add_exercise_video(
+        slug="barbell_pendlay_row",
+        url="https://www.youtube.com/watch?v=1Z-aEpjdphU",
+    )
+
+    assert response.video_links == ["https://youtu.be/1Z-aEpjdphU?si=existing"]
+
+
+async def test_add_exercise_video_appends_new_url(service: AtlasService) -> None:
+    response = await service.add_exercise_video(
+        slug="barbell_pendlay_row",
+        url="https://www.youtube.com/watch?v=YE7VzlLtp-4",
+    )
+
+    assert response.video_links[-1] == "https://www.youtube.com/watch?v=YE7VzlLtp-4"

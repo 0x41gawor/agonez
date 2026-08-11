@@ -5,6 +5,10 @@ the FastAPI application in `/home/agonez/be`, renders API-provided media, and im
 the Claude-designed anatomy, list/grid indexes, detail pages, heatmaps, and dark/light
 themes.
 
+Exercise detail pages embed stored YouTube demonstrations through the privacy-enhanced
+YouTube domain. The compact `Add video` action accepts a pasted YouTube URL, saves it
+through the Atlas API, and refreshes the section immediately.
+
 ## Architecture
 
 - Vue 3 + TypeScript + Vite

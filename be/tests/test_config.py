@@ -21,7 +21,8 @@ def test_settings_use_required_named_credentials(tmp_path: Path) -> None:
     assert settings.db_name == "agonez_db"
     assert settings.cors_origins == ["http://localhost:5173", "https://atlas.example"]
     assert "password='a password with spaces'" in settings.database_dsn
-    assert "default_transaction_read_only=on" in settings.database_dsn
+    assert "statement_timeout=10000" in settings.database_dsn
+    assert "default_transaction_read_only" not in settings.database_dsn
 
 
 def test_settings_reject_invalid_pool_range(tmp_path: Path) -> None:

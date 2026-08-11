@@ -155,6 +155,20 @@ class AtlasRepository:
             (slug,),
         )
 
+    async def add_exercise_video(self, *, slug: str, url: str) -> Row | None:
+        return await self._fetch_optional(
+            """
+            UPDATE core.exercises
+            SET video_links = CASE
+                WHEN %s = ANY(video_links) THEN video_links
+                ELSE array_append(video_links, %s)
+            END
+            WHERE slug = %s
+            RETURNING video_links
+            """,
+            (url, url, slug),
+        )
+
     async def list_muscles(
         self,
         *,

@@ -12,6 +12,7 @@ from agonez_api.modules.atlas.schemas import (
     ExerciseFacets,
     ExerciseListItem,
     ExerciseListResponse,
+    ExerciseVideoLinks,
     MuscleDetail,
     MuscleFacets,
     MuscleListItem,
@@ -19,6 +20,7 @@ from agonez_api.modules.atlas.schemas import (
     RelatedExercise,
     RelatedExerciseResponse,
 )
+from agonez_api.modules.atlas.youtube import normalize_youtube_url
 
 TARGET_CATEGORIES_BY_COMPLEX: dict[str, tuple[str, ...]] = {
     "Neck": ("Neck",),
@@ -126,6 +128,24 @@ class AtlasService:
             image_url=self._media.image_url("exercises", row["slug"]),
             engine=engine,
         )
+
+    async def add_exercise_video(self, *, slug: str, url: str) -> ExerciseVideoLinks:
+        exercise = await self._repository.get_exercise(slug)
+        if exercise is None:
+            raise AtlasEntityNotFoundError("exercise", slug)
+
+        current_links = list(exercise["video_links"] or [])
+        for current in current_links:
+            try:
+                if normalize_youtube_url(current) == url:
+                    return ExerciseVideoLinks(video_links=current_links)
+            except ValueError:
+                continue
+
+        row = await self._repository.add_exercise_video(slug=slug, url=url)
+        if row is None:
+            raise AtlasEntityNotFoundError("exercise", slug)
+        return ExerciseVideoLinks(video_links=list(row["video_links"] or []))
 
     async def list_muscles(
         self,

@@ -112,7 +112,7 @@ the parent repository.
 ## Final verification record
 
 - `npm run lint`: passed with zero warnings.
-- `npm test`: 4 files / 10 tests passed.
+- `npm test`: 5 files / 17 tests passed.
 - `npm run build`: strict Vue TypeScript check and Vite production build passed.
 - `docker compose config -q`: passed using shell-provided `MERSAA` and `MAMMOONE`.
 - Production container: healthy at `http://127.0.0.1:${MERSAA}`.
@@ -123,3 +123,5 @@ the parent repository.
 - Post-deployment fix: narrowed `/assets` proxying to the exact anatomy endpoint so
   Vite's local hashed JS/CSS retain their correct MIME types, and normalized built
   static-file permissions for the non-root Nginx worker.
+- Exercise videos: added a compact paste-and-save control, privacy-enhanced YouTube
+  embeds, immediate response-state refresh, URL parser tests, and responsive styling.

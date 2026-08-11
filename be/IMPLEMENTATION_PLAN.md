@@ -1,7 +1,7 @@
 # Agonez Backend Implementation Plan
 
 Status: complete implementation and handoff record (2026-08-10)  
-Scope: public, read-only Atlas API; no authentication or per-user state
+Scope: public Atlas API; no authentication or per-user state
 
 ## Context verified
 
@@ -64,7 +64,7 @@ The Atlas HTTP layer depends on an Atlas service, which depends on an Atlas repo
 - Unit tests for media resolution, response shaping, settings validation, and related-exercise logic.
 - Static/type/style checks via Ruff and mypy where practical.
 - Import/startup test without opening a database connection.
-- Live read-only smoke tests against the PostgreSQL host port resolved from `MINA` when
+- Live smoke tests against the PostgreSQL host port resolved from `MINA` when
   local tooling/container access permits.
 - Docker image build and container health smoke test when Docker daemon access permits.
 - Compare OpenAPI response models and query parameters against all six contract sections.
@@ -74,13 +74,15 @@ The Atlas HTTP layer depends on an Atlas service, which depends on an Atlas repo
 - Do not add authentication to Atlas. Future `plans`/dashboard modules should use a separate router/service boundary and can become separate images without changing Atlas URLs.
 - Do not bake credentials into the image, Compose file, examples, logs, or DSNs shown in errors.
 - Keep `media/` writable by the operator but read-only inside the API container.
-- The database dump is descriptive, not an application migration: this API must not mutate or recreate the existing database.
+- The database dump is descriptive, not an application migration: this API must not
+  recreate the existing database. The one approved mutation is appending validated
+  YouTube links to `core.exercises.video_links`.
 
 ## Verification results
 
-- `pytest`: 10 passed.
+- `pytest`: 19 passed after the video endpoint addition.
 - `ruff check .`: passed.
-- strict `mypy src`: passed with no issues across 16 source files.
+- strict `mypy src`: passed with no issues across 17 source files.
 - Live PostgreSQL validation: all repository/service queries passed against 49 exercises,
   47 muscles, and the available engine rows.
 - End-to-end HTTP validation: lists, filters, sorting, both details, related exercises,
@@ -88,9 +90,9 @@ The Atlas HTTP layer depends on an Atlas service, which depends on an Atlas repo
   statuses and content types.
 - Docker: final image built from the pinned runtime lock, started as an unprivileged
   user, reached the host PostgreSQL port, served media from the read-only bind mount,
-  and reported healthy. PostgreSQL returned `default_transaction_read_only=on` from
-  inside the image. The image is tagged `agonez-atlas-api:local`; temporary validation
-  containers were removed.
+  and reported healthy. The configured role has `UPDATE` permission on the exercise
+  `video_links` column. The image is tagged `agonez-atlas-api:local`; temporary
+  validation containers were removed.
 
 ## Progress
 
@@ -99,3 +101,9 @@ The Atlas HTTP layer depends on an Atlas service, which depends on an Atlas repo
 - [x] Implement application and Atlas endpoints.
 - [x] Add media directories and deployment artifacts.
 - [x] Run automated, live-database, HTTP, and Docker validation.
+
+## Post-v0.1 video feature
+
+- [x] Add a YouTube-only, canonicalizing exercise-video write endpoint.
+- [x] Deduplicate short/watch/embed variants by video ID.
+- [x] Keep media and future per-user modules outside this mutation boundary.

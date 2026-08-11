@@ -97,7 +97,7 @@ class Settings(BaseSettings):
             dbname=self.db_name,
             connect_timeout=self.db_connect_timeout_seconds,
             application_name="agonez_atlas_api",
-            options="-c default_transaction_read_only=on -c statement_timeout=10000",
+            options="-c statement_timeout=10000",
         )
 
 

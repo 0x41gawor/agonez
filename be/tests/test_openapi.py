@@ -16,6 +16,8 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
 
     assert "/api/atlas/exercises" in paths
     assert "/api/atlas/exercises/{slug}" in paths
+    assert "/api/atlas/exercises/{slug}/videos" in paths
+    assert "post" in paths["/api/atlas/exercises/{slug}/videos"]
     assert "/api/atlas/muscles" in paths
     assert "/api/atlas/muscles/{slug}" in paths
     assert "/api/atlas/muscles/{slug}/exercises" in paths

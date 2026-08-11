@@ -1,9 +1,9 @@
 # Agonez Atlas API
 
-Public, read-only FastAPI service bridging the existing Agonez PostgreSQL database and
-the future Vue 3 Atlas frontend. Atlas intentionally has no authentication or per-user
-state. The module boundary leaves room for future authenticated Plans and Dashboard
-services.
+Public FastAPI service bridging the existing Agonez PostgreSQL database and the Vue 3
+Atlas frontend. Atlas intentionally has no authentication or per-user state. Its only
+mutation is the narrowly validated addition of YouTube demonstration links. The module
+boundary leaves room for future authenticated Plans and Dashboard services.
 
 The implementation and handoff record is in `IMPLEMENTATION_PLAN.md`. The supplied
 frontend materials are preserved in `docs/api-contract.md` and
@@ -13,6 +13,7 @@ frontend materials are preserved in `docs/api-contract.md` and
 
 - `GET /api/atlas/exercises`
 - `GET /api/atlas/exercises/{slug}`
+- `POST /api/atlas/exercises/{slug}/videos`
 - `GET /api/atlas/muscles`
 - `GET /api/atlas/muscles/{slug}`
 - `GET /api/atlas/muscles/{slug}/exercises`
@@ -37,8 +38,9 @@ is the PostgreSQL host port, and `MAMMOONE` is the API host port. `DB_PORT` rema
 accepted compatibility fallback for direct Python deployments. Compose does not use an
 `env_file`; see `environment.example` for a `.bashrc` template. Secrets are never baked
 into the image or returned by health endpoints.
-The Atlas connection enforces PostgreSQL's read-only session mode and a 10-second
-statement timeout as defense in depth.
+The Atlas connection enforces a 10-second statement timeout. The configured database
+role needs `SELECT` access plus `UPDATE (video_links)` on `core.exercises` for the video
+link feature.
 
 The `.bashrc` assignments must use `export`, then be loaded in the current shell:
 

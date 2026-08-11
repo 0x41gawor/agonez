@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { atlasApi } from '@/api/atlas'
@@ -14,6 +14,7 @@ import ObjectDataCard from '@/components/detail/ObjectDataCard.vue'
 import { useAtlasStore } from '@/stores/atlas'
 import { domainLabel, formatNumber, prettyToken } from '@/utils/format'
 import { exerciseVector, normalizeVector, type VisualizationMode } from '@/utils/vectors'
+import { youtubeEmbedUrl } from '@/utils/youtube'
 
 const props = defineProps<{ slug: string }>()
 const router = useRouter()
@@ -24,6 +25,11 @@ const error = ref<Error | null>(null)
 const mode = ref<VisualizationMode>('etu')
 const showJoints = ref(false)
 const hoverSlug = ref<string | null>(null)
+const addingVideo = ref(false)
+const videoUrl = ref('')
+const videoSaving = ref(false)
+const videoError = ref('')
+const videoInput = ref<HTMLInputElement | null>(null)
 let controller: AbortController | null = null
 
 async function load(): Promise<void> {
@@ -31,6 +37,9 @@ async function load(): Promise<void> {
   controller = new AbortController()
   loading.value = true
   error.value = null
+  addingVideo.value = false
+  videoUrl.value = ''
+  videoError.value = ''
   try {
     const [detail] = await Promise.all([
       atlasApi.exercise(props.slug, controller.signal),
@@ -58,6 +67,10 @@ const vectorRows = computed(() => Object.entries(rawVector.value ?? {}).sort((a,
   const capacity = atlas.capacities[slug]
   return { slug, raw, capacityRatio: capacity && capacity > 0 ? raw / capacity : null, intensity: normalizedVector.value?.[slug] ?? 0 }
 }))
+const videos = computed(() => (exercise.value?.video_links ?? []).map((link) => ({
+  link,
+  embedUrl: youtubeEmbedUrl(link),
+})))
 const jointRows = computed(() => Object.entries(jointVector.value ?? {}).sort((a, b) => b[1] - a[1]))
 const totalEtu = computed(() => Object.values(exercise.value?.engine?.etu_vector ?? {}).reduce((sum, value) => sum + value, 0))
 const peakJoint = computed(() => jointRows.value[0]?.[0] ?? '—')
@@ -82,6 +95,37 @@ const groups = computed(() => exercise.value ? [
 
 function selectMuscle(slug: string): void {
   if (slug in atlas.capacities) void router.push({ name: 'muscle-detail', params: { slug } })
+}
+
+async function openVideoForm(): Promise<void> {
+  addingVideo.value = true
+  videoError.value = ''
+  await nextTick()
+  videoInput.value?.focus()
+}
+
+function closeVideoForm(): void {
+  addingVideo.value = false
+  videoUrl.value = ''
+  videoError.value = ''
+}
+
+async function saveVideo(): Promise<void> {
+  const url = videoUrl.value.trim()
+  if (!url || !exercise.value) return
+  videoSaving.value = true
+  videoError.value = ''
+  try {
+    const response = await atlasApi.addExerciseVideo(exercise.value.slug, url)
+    exercise.value.video_links = response.video_links
+    closeVideoForm()
+  } catch (caught) {
+    videoError.value = caught instanceof ApiError && caught.status === 422
+      ? 'Paste a valid YouTube video link.'
+      : caught instanceof Error ? caught.message : 'The video could not be saved.'
+  } finally {
+    videoSaving.value = false
+  }
 }
 </script>
 
@@ -179,9 +223,50 @@ function selectMuscle(slug: string): void {
             <ObjectDataCard title="Comments" :data="exercise.comments" empty-message="No contextual comments or caveats are stored yet — kept separate from canonical technique." />
           </div>
           <section class="media-section panel">
-            <header><h2>Demonstration videos</h2></header>
-            <div v-if="exercise.video_links.length" class="link-list">
-              <a v-for="link in exercise.video_links" :key="link" :href="link" target="_blank" rel="noopener noreferrer"><span class="play-icon">▶</span><span>{{ domainLabel(link) }}</span><b>↗</b></a>
+            <header>
+              <h2>Demonstration videos</h2>
+              <button
+                v-if="!addingVideo"
+                class="media-add-button"
+                type="button"
+                aria-label="Add a demonstration video"
+                @click="openVideoForm"
+              ><span aria-hidden="true">+</span> Add video</button>
+            </header>
+            <form v-if="addingVideo" class="video-add-form" @submit.prevent="saveVideo">
+              <label for="exercise-video-url">YouTube link</label>
+              <input
+                id="exercise-video-url"
+                ref="videoInput"
+                v-model="videoUrl"
+                type="url"
+                inputmode="url"
+                autocomplete="url"
+                placeholder="Paste a YouTube link"
+                required
+              />
+              <button class="button primary" type="submit" :disabled="videoSaving || !videoUrl.trim()">
+                {{ videoSaving ? 'Saving…' : 'Save' }}
+              </button>
+              <button class="button ghost" type="button" :disabled="videoSaving" @click="closeVideoForm">Cancel</button>
+              <p v-if="videoError" role="alert">{{ videoError }}</p>
+            </form>
+            <div v-if="videos.length" class="video-grid">
+              <article v-for="(video, index) in videos" :key="video.link" class="video-card">
+                <div v-if="video.embedUrl" class="video-frame">
+                  <iframe
+                    :src="video.embedUrl"
+                    :title="`${exercise.name} demonstration video ${index + 1}`"
+                    loading="lazy"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                  />
+                </div>
+                <a :href="video.link" target="_blank" rel="noopener noreferrer">
+                  <span>{{ video.embedUrl ? 'Watch on YouTube' : domainLabel(video.link) }}</span><b>↗</b>
+                </a>
+              </article>
             </div>
             <p v-else class="honest-empty">No video links stored for this exercise yet.</p>
           </section>

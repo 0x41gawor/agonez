@@ -83,6 +83,26 @@ Notes:
 - Recovery heatmap is computed client-side as `active_tension × recovery_cost_modifier`; alternatively precompute and add `recovery_exposure_vector`.
 - Eval-notes JSONBs (`*_eval_notes`) are NOT needed by the current UI — omit or expose behind `?include=eval_notes`.
 
+### POST /api/atlas/exercises/:slug/videos
+
+Adds a demonstration video. The API accepts YouTube watch, short, Shorts, Live, and
+embed URLs, stores a canonical watch URL, and deduplicates equivalent URL forms by
+video ID.
+
+```json
+{
+  "url": "https://youtu.be/1Z-aEpjdphU"
+}
+```
+
+Response (`201 Created`):
+
+```json
+{
+  "video_links": ["https://www.youtube.com/watch?v=1Z-aEpjdphU"]
+}
+```
+
 ## 3. GET /api/atlas/muscles
 
 Query params: `q`, `body_part`, `complex` (repeatable),

@@ -47,6 +47,10 @@ export interface ExerciseDetail extends Omit<ExerciseListItem, 'has_engine_vecto
   engine: ExerciseEngine | null
 }
 
+export interface ExerciseVideoLinks {
+  video_links: string[]
+}
+
 export interface MuscleListItem {
   slug: string
   name: string
