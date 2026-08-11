@@ -36,6 +36,11 @@ const tip = ref<{ visible: boolean; x: number; y: number; title: string; detail:
 
 let svgSource: SVGSVGElement | null = null
 
+const ANATOMY_SHEET_VIEW_BOX = {
+  front: '20 15 495 990',
+  rear: '505 15 530 990',
+} as const
+
 const heatColor = computed(() => {
   if (props.mode === 'recovery') return 'var(--rec)'
   if (props.mode === 'propulsive') return 'var(--accent)'
@@ -71,13 +76,20 @@ function cleanClone(view: 'front' | 'rear'): SVGSVGElement {
   clone.dataset.bodyView = view
   clone.removeAttribute('width')
   clone.removeAttribute('height')
+  // The supplied anatomy SVG has one untagged raster sheet containing the
+  // front, rear, and side figures. The muscle overlays are view-tagged, but
+  // the shared sheet is not, so it must be clipped to a stable per-view box.
+  if (clone.querySelector('image:not([data-view])')) {
+    clone.setAttribute('viewBox', ANATOMY_SHEET_VIEW_BOX[view])
+    clone.dataset.fixedViewBox = 'true'
+  }
+  clone.setAttribute('preserveAspectRatio', 'xMidYMid meet')
   clone.style.width = '100%'
   clone.style.height = 'auto'
   return clone
 }
 
 function cropSvg(svg: SVGSVGElement, view: 'front' | 'rear', attempt = 0): void {
-  const fallback = { front: '20 15 495 990', rear: '505 15 530 990' }
   let bounds: { x1: number; y1: number; x2: number; y2: number } | null = null
   try {
     for (const shape of svg.querySelectorAll<SVGGraphicsElement>('.body-base,.body-far,.region')) {
@@ -99,7 +111,7 @@ function cropSvg(svg: SVGSVGElement, view: 'front' | 'rear', attempt = 0): void 
   } else if (attempt < 8) {
     requestAnimationFrame(() => cropSvg(svg, view, attempt + 1))
   } else {
-    svg.setAttribute('viewBox', fallback[view])
+    svg.setAttribute('viewBox', ANATOMY_SHEET_VIEW_BOX[view])
   }
 }
 
@@ -111,8 +123,8 @@ function mountViews(): void {
   const rearSvg = cleanClone('rear')
   front.value.append(frontSvg)
   rear.value.append(rearSvg)
-  cropSvg(frontSvg, 'front')
-  cropSvg(rearSvg, 'rear')
+  if (!frontSvg.dataset.fixedViewBox) cropSvg(frontSvg, 'front')
+  if (!rearSvg.dataset.fixedViewBox) cropSvg(rearSvg, 'rear')
   paint()
 }
 
