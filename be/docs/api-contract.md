@@ -159,9 +159,17 @@ Query params: `q`, `body_part`, `complex` (repeatable),
   "article_links": ["https://exrx.net/"],
   "video_links": ["https://youtu.be/..."],
   "image_url": null,
-  "gallery": []
+  "gallery": [
+    "/media/galleries/muscles/latissimus_dorsi/01-origin.webp",
+    "/media/galleries/muscles/latissimus_dorsi/02-insertion.jpg"
+  ]
 }
 ```
+
+`gallery` is populated only on muscle detail. Files are discovered from
+`media/galleries/muscles/{slug}/`, filtered to supported image formats, and returned
+in case-insensitive filename order. Prefix filenames numerically when presentation
+order matters.
 
 ## 5. GET /api/atlas/muscles/:slug/exercises
 

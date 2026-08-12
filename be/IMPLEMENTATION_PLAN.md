@@ -27,7 +27,8 @@ be/
       plans/               # reserved package boundary (future, authenticated)
   media/
     exercises/             # {exercise_slug}.{png|webp|jpg|jpeg|avif}
-    muscles/               # {muscle_slug}.{ext} and {slug}/ gallery files
+    muscles/               # {muscle_slug}.{png|webp|jpg|jpeg|avif}
+    galleries/muscles/     # {muscle_slug}/{ordered gallery files}
   tests/
   Dockerfile
   compose.yml
@@ -107,3 +108,10 @@ The Atlas HTTP layer depends on an Atlas service, which depends on an Atlas repo
 - [x] Add a YouTube-only, canonicalizing exercise-video write endpoint.
 - [x] Deduplicate short/watch/embed variants by video ID.
 - [x] Keep media and future per-user modules outside this mutation boundary.
+
+## Post-v0.1 muscle galleries
+
+- [x] Resolve ordered supported images from
+  `media/galleries/muscles/{slug}/` on the muscle detail endpoint.
+- [x] Keep gallery enumeration detail-only so list browsing does not scan or transfer
+  unused image collections.

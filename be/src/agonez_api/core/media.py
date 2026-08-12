@@ -29,12 +29,12 @@ class MediaResolver:
 
     def gallery_urls(self, collection: str, slug: str) -> list[str]:
         self._validate(collection, slug)
-        directory = self._root / collection / slug
+        directory = self._root / "galleries" / collection / slug
         if not directory.is_dir():
             return []
 
         return [
-            self._url(f"{collection}/{slug}/{path.name}")
+            self._url(f"galleries/{collection}/{slug}/{path.name}")
             for path in sorted(directory.iterdir(), key=lambda item: item.name.casefold())
             if path.is_file() and path.suffix.casefold() in SUPPORTED_IMAGE_EXTENSIONS
         ]

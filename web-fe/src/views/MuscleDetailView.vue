@@ -7,11 +7,11 @@ import { ApiError } from '@/api/client'
 import type { MuscleDetail, RelatedExercise } from '@/api/types'
 import AnatomyPanel from '@/components/anatomy/AnatomyPanel.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
-import MediaImage from '@/components/common/MediaImage.vue'
 import DataGroup from '@/components/detail/DataGroup.vue'
 import DetailHero from '@/components/detail/DetailHero.vue'
 import DetailLoading from '@/components/detail/DetailLoading.vue'
 import MarkdownArticle from '@/components/detail/MarkdownArticle.vue'
+import MuscleGallery from '@/components/detail/MuscleGallery.vue'
 import { domainLabel, formatNumber, percentage, prettyToken } from '@/utils/format'
 
 const props = defineProps<{ slug: string }>()
@@ -126,11 +126,6 @@ const groups = computed(() => muscle.value ? [
           <p v-else class="honest-empty">No measured or target-category exercise relationships are available.</p>
         </section>
 
-        <section v-if="muscle.gallery.length" class="media-section panel">
-          <header><h2>Gallery</h2><span class="mono">{{ muscle.gallery.length }} images</span></header>
-          <div class="gallery-grid"><MediaImage v-for="image in muscle.gallery" :key="image" :src="image" :alt="`${muscle.display_name} anatomy`" /></div>
-        </section>
-
         <div class="media-columns">
           <section class="media-section panel">
             <header><h2>Demonstration videos</h2></header>
@@ -147,6 +142,12 @@ const groups = computed(() => muscle.value ? [
             <p v-else class="honest-empty">No external references stored yet.</p>
           </section>
         </div>
+
+        <MuscleGallery
+          v-if="muscle.gallery.length"
+          :images="muscle.gallery"
+          :title="muscle.display_name"
+        />
 
         <section class="bible-panel panel">
           <header><div><span class="eyebrow">Muscle Bible</span><h2>{{ muscle.display_name }}</h2></div><span class="chip mono">database content</span></header>

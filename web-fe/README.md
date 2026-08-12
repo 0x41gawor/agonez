@@ -9,6 +9,10 @@ Exercise detail pages embed stored YouTube demonstrations through the privacy-en
 YouTube domain. The compact `Add video` action accepts a pasted YouTube URL, saves it
 through the Atlas API, and refreshes the section immediately.
 
+Muscle detail pages show up to four gallery previews above the Muscle Bible. A regular
+click opens the in-page lightbox with wraparound arrows, keyboard navigation, swipe,
+and a scrollable thumbnail rail; Ctrl/Cmd-click retains native new-tab image behavior.
+
 ## Architecture
 
 - Vue 3 + TypeScript + Vite

@@ -95,7 +95,7 @@ Put a reverse proxy in front of the `MAMMOONE` host port for TLS in production.
 
 - Exercise hero: `media/exercises/{slug}.{supported_extension}`
 - Muscle hero: `media/muscles/{slug}.{supported_extension}`
-- Muscle gallery: `media/muscles/{slug}/*.{supported_extension}`
+- Muscle gallery: `media/galleries/muscles/{slug}/*.{supported_extension}`
 - Anatomy asset: `media/anatomy.svg`, exposed as `/assets/anatomy.svg`
 
 Supported image extensions are AVIF, WebP, PNG, JPG, and JPEG. The API checks files

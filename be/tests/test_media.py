@@ -19,7 +19,8 @@ def test_media_resolver_returns_existing_slug_asset(tmp_path: Path) -> None:
 
 def test_media_resolver_prefers_modern_extensions_and_builds_gallery(tmp_path: Path) -> None:
     muscle_dir = tmp_path / "muscles"
-    gallery_dir = muscle_dir / "latissimus_dorsi"
+    gallery_dir = tmp_path / "galleries" / "muscles" / "latissimus_dorsi"
+    muscle_dir.mkdir()
     gallery_dir.mkdir(parents=True)
     (muscle_dir / "latissimus_dorsi.png").write_bytes(b"png")
     (muscle_dir / "latissimus_dorsi.webp").write_bytes(b"webp")
@@ -36,8 +37,8 @@ def test_media_resolver_prefers_modern_extensions_and_builds_gallery(tmp_path: P
         "https://cdn.example/agonez/muscles/latissimus_dorsi.webp"
     )
     assert resolver.gallery_urls("muscles", "latissimus_dorsi") == [
-        "https://cdn.example/agonez/muscles/latissimus_dorsi/01-origin.webp",
-        "https://cdn.example/agonez/muscles/latissimus_dorsi/02-insertion.jpg",
+        "https://cdn.example/agonez/galleries/muscles/latissimus_dorsi/01-origin.webp",
+        "https://cdn.example/agonez/galleries/muscles/latissimus_dorsi/02-insertion.jpg",
     ]
 
 
