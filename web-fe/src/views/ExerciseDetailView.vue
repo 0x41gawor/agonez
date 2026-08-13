@@ -11,6 +11,7 @@ import DataGroup from '@/components/detail/DataGroup.vue'
 import DetailHero from '@/components/detail/DetailHero.vue'
 import DetailLoading from '@/components/detail/DetailLoading.vue'
 import ObjectDataCard from '@/components/detail/ObjectDataCard.vue'
+import TechniqueGuide from '@/components/detail/TechniqueGuide.vue'
 import { useAtlasStore } from '@/stores/atlas'
 import { domainLabel, formatNumber, prettyToken } from '@/utils/format'
 import { exerciseVector, normalizeVector, type VisualizationMode } from '@/utils/vectors'
@@ -218,10 +219,6 @@ async function saveVideo(): Promise<void> {
           </section>
 
           <div class="data-groups exercise-groups"><DataGroup v-for="group in groups" :key="group.title" :title="group.title" :rows="group.rows" /></div>
-          <div class="object-columns">
-            <ObjectDataCard title="Technique" :data="exercise.technique" empty-message="Canonical execution instructions have not been authored for this exercise yet." />
-            <ObjectDataCard title="Comments" :data="exercise.comments" empty-message="No contextual comments or caveats are stored yet — kept separate from canonical technique." />
-          </div>
           <section class="media-section panel">
             <header>
               <h2>Demonstration videos</h2>
@@ -270,6 +267,13 @@ async function saveVideo(): Promise<void> {
             </div>
             <p v-else class="honest-empty">No video links stored for this exercise yet.</p>
           </section>
+          <TechniqueGuide :data="exercise.technique" />
+          <ObjectDataCard
+            class="exercise-comments"
+            title="Comments"
+            :data="exercise.comments"
+            empty-message="No contextual comments or caveats are stored yet — kept separate from canonical technique."
+          />
         </div>
       </div>
     </template>

@@ -112,7 +112,7 @@ the parent repository.
 ## Final verification record
 
 - `npm run lint`: passed with zero warnings.
-- `npm test`: 6 files / 19 tests passed.
+- `npm test`: 7 files / 21 tests passed.
 - `npm run build`: strict Vue TypeScript check and Vite production build passed.
 - `docker compose config -q`: passed using shell-provided `MERSAA` and `MAMMOONE`.
 - Production container: healthy at `http://127.0.0.1:${MERSAA}`.
@@ -128,3 +128,7 @@ the parent repository.
 - Muscle galleries: added a maximum-four responsive preview immediately above Muscle
   Bible, remaining-image count, accessible modal lightbox, wraparound arrow/keyboard
   navigation, touch swipe, scrollable thumbnails, and native modified-click behavior.
+- Exercise technique: moved demonstration videos before editorial content; replaced
+  the two-column raw-object view with full-width ordered technique and comments;
+  added nested structured values, canonical sequence groups, semantic heading cues,
+  list rendering, future-field fallback, and ordering/nesting tests.

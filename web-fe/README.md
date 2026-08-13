@@ -9,6 +9,11 @@ Exercise detail pages embed stored YouTube demonstrations through the privacy-en
 YouTube domain. The compact `Add video` action accepts a pasted YouTube URL, saves it
 through the Atlas API, and refreshes the section immediately.
 
+Exercise technique is rendered as a structured guide in a canonical frontend-owned
+sequence: nested TL;DR, movement overview, preparation, repetition, cues, effort and
+failure, then troubleshooting. Unknown future fields remain visible under Additional
+notes. Videos precede the full-width technique and comments sections.
+
 Muscle detail pages show up to four gallery previews above the Muscle Bible. A regular
 click opens the in-page lightbox with wraparound arrows, keyboard navigation, swipe,
 and a scrollable thumbnail rail; Ctrl/Cmd-click retains native new-tab image behavior.
