@@ -9,20 +9,19 @@ defineProps<{
   muscleItems: MuscleListItem[]
   hovered: string | null
 }>()
-const emit = defineEmits<{ hover: [slug: string | null]; select: [slug: string] }>()
+const emit = defineEmits<{ hover: [slug: string | null] }>()
 </script>
 
 <template>
   <div class="atlas-grid">
     <template v-if="kind === 'exercises'">
-      <article
+      <RouterLink
         v-for="item in exerciseItems"
         :key="item.slug"
         class="atlas-card panel"
         :class="{ hovered: hovered === item.slug }"
-        tabindex="0"
+        :to="{ name: 'exercise-detail', params: { slug: item.slug } }"
         @mouseenter="emit('hover', item.slug)" @mouseleave="emit('hover', null)" @focus="emit('hover', item.slug)" @blur="emit('hover', null)"
-        @click="emit('select', item.slug)" @keydown.enter="emit('select', item.slug)" @keydown.space.prevent="emit('select', item.slug)"
       >
         <MediaImage :src="item.image_url" :alt="item.name" label="exercise visual unavailable" />
         <div class="atlas-card-body">
@@ -31,17 +30,16 @@ const emit = defineEmits<{ hover: [slug: string | null]; select: [slug: string] 
           <div class="card-chips"><span class="chip">{{ prettyToken(item.target_category) }}</span><span class="chip">{{ prettyToken(item.mechanics_tier) }}</span></div>
           <footer class="mono"><span>{{ formatNumber(item.load_capacity, 0) }} kg</span><span>{{ formatNumber(item.systemic_propulsive_fcsa_demand) }} cm²</span></footer>
         </div>
-      </article>
+      </RouterLink>
     </template>
     <template v-else>
-      <article
+      <RouterLink
         v-for="item in muscleItems"
         :key="item.slug"
         class="atlas-card panel"
         :class="{ hovered: hovered === item.slug }"
-        tabindex="0"
+        :to="{ name: 'muscle-detail', params: { slug: item.slug } }"
         @mouseenter="emit('hover', item.slug)" @mouseleave="emit('hover', null)" @focus="emit('hover', item.slug)" @blur="emit('hover', null)"
-        @click="emit('select', item.slug)" @keydown.enter="emit('select', item.slug)" @keydown.space.prevent="emit('select', item.slug)"
       >
         <MediaImage :src="item.image_url" :alt="item.display_name" label="muscle visual unavailable" />
         <div class="atlas-card-body">
@@ -50,7 +48,7 @@ const emit = defineEmits<{ hover: [slug: string | null]; select: [slug: string] 
           <div class="card-chips"><span class="chip">{{ prettyToken(item.complex) }}</span><span class="chip">{{ item.body_part }}</span></div>
           <footer class="mono"><span>{{ formatNumber(item.mass_g, 0) }} g</span><span>{{ formatNumber(item.pcsa_projected_fcsa_cm2) }} cm²</span></footer>
         </div>
-      </article>
+      </RouterLink>
     </template>
   </div>
 </template>

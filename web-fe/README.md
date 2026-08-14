@@ -105,7 +105,9 @@ docker compose down
 
 Search, filters, sort, view, and pagination are represented in route query parameters.
 The exercise and muscle indexes retain separate in-memory browsing state when switching
-tabs.
+tabs. Table rows and grid cards expose native detail links, so Ctrl/Cmd-click,
+middle-click, and the browser context menu can open entries without disturbing the
+current filtered list or scroll position.
 
 ## Theme testing
 

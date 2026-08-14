@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 
 import { atlasApi } from '@/api/atlas'
 import { ApiError } from '@/api/client'
@@ -15,7 +14,6 @@ import MuscleGallery from '@/components/detail/MuscleGallery.vue'
 import { domainLabel, formatNumber, percentage, prettyToken } from '@/utils/format'
 
 const props = defineProps<{ slug: string }>()
-const router = useRouter()
 const muscle = ref<MuscleDetail | null>(null)
 const related = ref<RelatedExercise[]>([])
 const loading = ref(true)
@@ -116,12 +114,12 @@ const groups = computed(() => muscle.value ? [
         <section class="related-panel panel">
           <header><h2>Exercises targeting this muscle</h2><span class="mono">measured ETU · target fallback</span></header>
           <div v-if="related.length">
-            <button v-for="item in related" :key="item.slug" class="related-row" type="button" @click="router.push({ name: 'exercise-detail', params: { slug: item.slug } })">
+            <RouterLink v-for="item in related" :key="item.slug" class="related-row" :to="{ name: 'exercise-detail', params: { slug: item.slug } }">
               <span><strong>{{ item.name }}</strong><small>{{ prettyToken(item.mechanics_tier) }} · {{ item.name_full }}</small></span>
               <span class="chip">{{ prettyToken(item.target_category) }}</span>
               <span v-if="item.relation === 'measured' && item.etu_cm2 != null" class="related-value"><i><b :style="{ width: `${100 * item.etu_cm2 / maximumEtu}%` }" /></i><span class="mono">{{ formatNumber(item.etu_cm2) }} cm²</span></span>
               <small v-else class="relation-fallback mono">by target category</small>
-            </button>
+            </RouterLink>
           </div>
           <p v-else class="honest-empty">No measured or target-category exercise relationships are available.</p>
         </section>

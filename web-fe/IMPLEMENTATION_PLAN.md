@@ -112,7 +112,7 @@ the parent repository.
 ## Final verification record
 
 - `npm run lint`: passed with zero warnings.
-- `npm test`: 7 files / 21 tests passed.
+- `npm test`: 8 files / 24 tests passed.
 - `npm run build`: strict Vue TypeScript check and Vite production build passed.
 - `docker compose config -q`: passed using shell-provided `MERSAA` and `MAMMOONE`.
 - Production container: healthy at `http://127.0.0.1:${MERSAA}`.
@@ -132,3 +132,6 @@ the parent repository.
   the two-column raw-object view with full-width ordered technique and comments;
   added nested structured values, canonical sequence groups, semantic heading cues,
   list rendering, future-field fallback, and ordering/nesting tests.
+- Native Atlas navigation: converted table cells, grid cards, and related-exercise
+  rows to semantic RouterLink anchors, restoring Ctrl/Cmd-click, middle-click, context
+  menu, and standard keyboard navigation while retaining SPA routing on normal clicks.

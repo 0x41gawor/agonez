@@ -215,7 +215,6 @@ function updateView(value: 'list' | 'grid'): void {
   browse.value.view = value
   localStorage.setItem(props.kind === 'exercises' ? 'agonez-exercise-view' : 'agonez-muscle-view', value)
 }
-function select(slug: string): void { void router.push({ name: props.kind === 'exercises' ? 'exercise-detail' : 'muscle-detail', params: { slug } }) }
 </script>
 
 <template>
@@ -253,7 +252,6 @@ function select(slug: string): void { void router.push({ name: props.kind === 'e
             :maximum-demand="maximumDemand"
             :hovered="hoverExercise"
             @hover="hoverExercise = $event"
-            @select="select"
           />
           <MuscleTable
             v-else-if="kind === 'muscles' && browse.view === 'list'"
@@ -262,7 +260,6 @@ function select(slug: string): void { void router.push({ name: props.kind === 'e
             :maximum-capacity="maximumCapacity"
             :hovered="hoverMuscle"
             @hover="hoverMuscle = $event"
-            @select="select"
           />
           <AtlasCardGrid
             v-else
@@ -271,7 +268,6 @@ function select(slug: string): void { void router.push({ name: props.kind === 'e
             :muscle-items="muscleResponse?.items ?? []"
             :hovered="kind === 'exercises' ? hoverExercise : hoverMuscle"
             @hover="kind === 'exercises' ? hoverExercise = $event : hoverMuscle = $event"
-            @select="select"
           />
           <AtlasPagination :page="response.page" :per-page="response.per_page" :total="response.total" @change="browse.page = $event" />
         </template>

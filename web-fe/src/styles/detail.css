@@ -234,6 +234,8 @@
 .related-row:hover,
 .related-row:focus {
   background: var(--rowHover);
+  color: var(--text);
+  text-decoration: none;
 }
 
 .related-row > span:first-child {

@@ -3,7 +3,7 @@ import type { MuscleListItem } from '@/api/types'
 import { formatNumber, percentage, prettyToken } from '@/utils/format'
 
 defineProps<{ items: MuscleListItem[]; maximumMass: number; maximumCapacity: number; hovered: string | null }>()
-const emit = defineEmits<{ hover: [slug: string | null]; select: [slug: string] }>()
+const emit = defineEmits<{ hover: [slug: string | null] }>()
 </script>
 
 <template>
@@ -15,22 +15,18 @@ const emit = defineEmits<{ hover: [slug: string | null]; select: [slug: string] 
           v-for="item in items"
           :key="item.slug"
           :class="{ hovered: hovered === item.slug }"
-          tabindex="0"
           @mouseenter="emit('hover', item.slug)"
           @mouseleave="emit('hover', null)"
-          @focus="emit('hover', item.slug)"
-          @blur="emit('hover', null)"
-          @click="emit('select', item.slug)"
-          @keydown.enter="emit('select', item.slug)"
-          @keydown.space.prevent="emit('select', item.slug)"
+          @focusin="emit('hover', item.slug)"
+          @focusout="emit('hover', null)"
         >
-          <td><strong>{{ item.display_name }}</strong><small><i>{{ item.name }}</i></small></td>
-          <td>{{ item.body_part }}</td>
-          <td><span class="chip">{{ prettyToken(item.complex) }}</span></td>
-          <td><div class="metric-cell"><span class="metric-bar"><i :style="{ width: `${Math.max(3, 100 * item.mass_g / maximumMass)}%` }" /></span><span class="mono">{{ formatNumber(item.mass_g, 0) }}</span></div></td>
-          <td class="number mono">{{ formatNumber(item.mv_cm3, 0) }}</td>
-          <td><div class="fiber-cell" :title="`Type I ${percentage(item.fiber_bias_type_i)}, Type II ${percentage(item.fiber_bias_type_ii)}`"><span><i :style="{ width: percentage(item.fiber_bias_type_i) }" /><b :style="{ width: percentage(item.fiber_bias_type_ii) }" /></span><small class="mono">II {{ percentage(item.fiber_bias_type_ii) }}</small></div></td>
-          <td><div class="metric-cell green"><span class="metric-bar"><i :style="{ width: `${Math.max(3, 100 * (item.pcsa_projected_fcsa_cm2 ?? 0) / maximumCapacity)}%` }" /></span><span class="mono">{{ formatNumber(item.pcsa_projected_fcsa_cm2) }}</span></div></td>
+          <td><RouterLink class="atlas-cell-link atlas-cell-primary" :to="{ name: 'muscle-detail', params: { slug: item.slug } }"><span><strong>{{ item.display_name }}</strong><small><i>{{ item.name }}</i></small></span></RouterLink></td>
+          <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'muscle-detail', params: { slug: item.slug } }">{{ item.body_part }}</RouterLink></td>
+          <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'muscle-detail', params: { slug: item.slug } }"><span class="chip">{{ prettyToken(item.complex) }}</span></RouterLink></td>
+          <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'muscle-detail', params: { slug: item.slug } }"><span class="metric-cell"><span class="metric-bar"><i :style="{ width: `${Math.max(3, 100 * item.mass_g / maximumMass)}%` }" /></span><span class="mono">{{ formatNumber(item.mass_g, 0) }}</span></span></RouterLink></td>
+          <td class="number mono"><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'muscle-detail', params: { slug: item.slug } }">{{ formatNumber(item.mv_cm3, 0) }}</RouterLink></td>
+          <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'muscle-detail', params: { slug: item.slug } }"><span class="fiber-cell" :title="`Type I ${percentage(item.fiber_bias_type_i)}, Type II ${percentage(item.fiber_bias_type_ii)}`"><span><i :style="{ width: percentage(item.fiber_bias_type_i) }" /><b :style="{ width: percentage(item.fiber_bias_type_ii) }" /></span><small class="mono">II {{ percentage(item.fiber_bias_type_ii) }}</small></span></RouterLink></td>
+          <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'muscle-detail', params: { slug: item.slug } }"><span class="metric-cell green"><span class="metric-bar"><i :style="{ width: `${Math.max(3, 100 * (item.pcsa_projected_fcsa_cm2 ?? 0) / maximumCapacity)}%` }" /></span><span class="mono">{{ formatNumber(item.pcsa_projected_fcsa_cm2) }}</span></span></RouterLink></td>
         </tr>
       </tbody>
     </table>
