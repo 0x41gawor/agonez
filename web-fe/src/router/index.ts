@@ -28,6 +28,17 @@ const router = createRouter({
       component: () => import('@/views/MuscleDetailView.vue'),
       props: true,
     },
+    {
+      path: '/plans',
+      name: 'plans',
+      component: () => import('@/views/PlanListView.vue'),
+    },
+    {
+      path: '/plans/:planId(\\d+)',
+      name: 'plan-editor',
+      component: () => import('@/views/PlanCreatorView.vue'),
+      props: true,
+    },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
   ],
   scrollBehavior(to, from, savedPosition) {

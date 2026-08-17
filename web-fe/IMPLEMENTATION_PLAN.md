@@ -135,3 +135,30 @@ the parent repository.
 - Native Atlas navigation: converted table cells, grid cards, and related-exercise
   rows to semantic RouterLink anchors, restoring Ctrl/Cmd-click, middle-click, context
   menu, and standard keyboard navigation while retaining SPA routing on normal clicks.
+
+## PlanCreator PLAN tab (2026-08-17)
+
+- [x] Audit existing Vue, router, Pinia, API client, test, and Claude-derived style
+  conventions.
+- [x] Activate `My Plans` with `/plans` and `/plans/:planId` routes.
+- [x] Add typed create/list/load/save/delete integration for the live nested Plans API.
+- [x] Add a route-level draft orchestration composable with dirty, saving, saved,
+  failure, validation, and optimistic-lock conflict states.
+- [x] Preserve every server ID; use UI-only client keys for new rows and emit null IDs
+  only where the backend assigns identity.
+- [x] Implement ordered days, optional workout/rest state, text preparation notes,
+  purpose-first slots, roles, target muscle selection, DEFAULT/FALLBACK catalog
+  exercises, and compact set prescription editing.
+- [x] Add deterministic move controls, set duplication, progressive disclosure, and
+  responsive desktop/mobile styling using the existing theme tokens.
+- [x] Keep ANALYSIS and MODULATION visible but disabled and free of speculative logic.
+- [x] Pass strict TypeScript, ESLint, 34 Vitest tests, and the Vite production build.
+- [x] Rebuild and deploy `agonez-atlas-web:local`; verify the container is healthy and
+  complete a self-cleaning create/save/reload/delete round-trip through Nginx.
+
+PlanCreator architecture and continuation notes live in
+`docs/plancreator-implementation.md`.
+
+Final verification: 10 test files / 34 tests passed; TypeScript, ESLint, and production
+build passed; `/plans` direct refresh and every Plans API method used by the editor
+worked through the deployed same-origin proxy; the temporary smoke plan was removed.

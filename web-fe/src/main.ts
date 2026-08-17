@@ -9,5 +9,6 @@ import './styles/layout.css'
 import './styles/anatomy.css'
 import './styles/atlas.css'
 import './styles/detail.css'
+import './styles/plancreator.css'
 
 createApp(App).use(createPinia()).use(router).mount('#app')

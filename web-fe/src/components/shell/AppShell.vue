@@ -9,6 +9,7 @@ const route = useRoute()
 const atlas = useAtlasStore()
 const { theme, label, toggleTheme } = useTheme()
 const atlasActive = computed(() => route.path.startsWith('/atlas'))
+const plansActive = computed(() => route.path.startsWith('/plans'))
 </script>
 
 <template>
@@ -21,14 +22,17 @@ const atlasActive = computed(() => route.path.startsWith('/atlas'))
 
       <nav class="main-nav" aria-label="Primary navigation">
         <RouterLink :class="{ active: atlasActive }" to="/atlas/exercises">Atlas</RouterLink>
-        <span class="planned-nav" title="Planned module" aria-disabled="true">My Plans</span>
+        <RouterLink :class="{ active: plansActive }" to="/plans">My Plans</RouterLink>
         <span class="planned-nav" title="Planned module" aria-disabled="true">Dashboard</span>
       </nav>
 
       <div class="app-bar-spacer" />
       <span class="atlas-version">
-        ATLAS v0.1
-        <template v-if="atlas.meta">· {{ atlas.meta.counts.exercises }} exercises · {{ atlas.meta.counts.muscles }} muscles</template>
+        <template v-if="plansActive">PLAN CREATOR · DRAFT</template>
+        <template v-else>
+          ATLAS v0.1
+          <template v-if="atlas.meta">· {{ atlas.meta.counts.exercises }} exercises · {{ atlas.meta.counts.muscles }} muscles</template>
+        </template>
       </span>
       <button class="theme-toggle" type="button" :title="`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`" @click="toggleTheme">
         <span class="theme-dot" :class="theme" />

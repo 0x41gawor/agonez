@@ -1,9 +1,8 @@
-# Agonez Atlas Web Frontend
+# Agonez Web Frontend
 
-Responsive Vue 3 frontend for the public Agonez exercise and muscle Atlas. It consumes
-the FastAPI application in `/home/agonez/be`, renders API-provided media, and implements
-the Claude-designed anatomy, list/grid indexes, detail pages, heatmaps, and dark/light
-themes.
+Responsive Vue 3 frontend for the Agonez Atlas and PlanCreator. It consumes the FastAPI
+application in `/home/agonez/be`, renders API-provided media, implements the
+Claude-designed Atlas, and provides the first structural PLAN editor.
 
 Exercise detail pages embed stored YouTube demonstrations through the privacy-enhanced
 YouTube domain. The compact `Add video` action accepts a pasted YouTube URL, saves it
@@ -18,10 +17,17 @@ Muscle detail pages show up to four gallery previews above the Muscle Bible. A r
 click opens the in-page lightbox with wraparound arrows, keyboard navigation, swipe,
 and a scrollable thumbnail rail; Ctrl/Cmd-click retains native new-tab image behavior.
 
+PlanCreator treats the complete backend draft as one editable aggregate while keeping
+days, workout units, slots, variants, and sets relationally stable. `My Plans` creates
+and opens drafts. The PLAN tab edits ordered days, optional workouts, purpose-first
+exercise slots, DEFAULT/FALLBACK catalog exercises, target muscles, and set rep/RIR
+prescriptions. Save is explicit, tracks dirty/saving/saved states, and never overwrites
+a newer server revision after a `409 Conflict`.
+
 ## Architecture
 
 - Vue 3 + TypeScript + Vite
-- Vue Router for the four linkable Atlas routes
+- Vue Router for Atlas, My Plans, and PlanCreator routes
 - Pinia for Atlas metadata, per-index browse state, hover state, and muscle capacities
 - Focused API, anatomy, index, detail, and shell components
 - Nginx production image with SPA fallback and a same-origin reverse proxy
@@ -85,7 +91,8 @@ docker compose ps
 curl "http://127.0.0.1:${MERSAA}/"
 ```
 
-Open `http://127.0.0.1:${MERSAA}/atlas/exercises`. Nginx listens on port 8080 inside
+Open `http://127.0.0.1:${MERSAA}/plans` for PlanCreator or
+`http://127.0.0.1:${MERSAA}/atlas/exercises` for Atlas. Nginx listens on port 8080 inside
 the container and Compose publishes it on `MERSAA`. It proxies public backend paths to
 the host port in `MAMMOONE` through `host.docker.internal`.
 
@@ -102,6 +109,8 @@ docker compose down
 - `/atlas/exercises/:slug`
 - `/atlas/muscles`
 - `/atlas/muscles/:slug`
+- `/plans`
+- `/plans/:planId`
 
 Search, filters, sort, view, and pagination are represented in route query parameters.
 The exercise and muscle indexes retain separate in-memory browsing state when switching
@@ -134,9 +143,11 @@ npm run build
 
 ## Extension points
 
-Atlas remains public and has no authentication. `My Plans` and `Dashboard` in the shell
-are deliberately inert placeholders. Future modules can be added as route-level
-features with their own stores/API clients, or deployed separately behind the same
-reverse proxy, without changing Atlas internals.
+Atlas and this first PlanCreator iteration currently have no authentication or
+ownership. `Dashboard` remains an inert placeholder. PlanCreator uses a route-level
+composable rather than a new global store: the backend draft is converted into an
+editor model with UI-only client keys for unsaved rows, then stripped back to the exact
+API DTO on save. Future Analysis, Modulation, execution, and authenticated ownership
+can remain separate route/service boundaries.
 
 Implementation status and handoff notes are maintained in `IMPLEMENTATION_PLAN.md`.

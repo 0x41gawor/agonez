@@ -38,7 +38,7 @@ async function requestJson<T>(path: string, request: RequestInit): Promise<T> {
       // Keep a non-JSON proxy error as readable text.
     }
     const detail = typeof details === 'object' && details && 'detail' in details ? String(details.detail) : response.statusText
-    throw new ApiError(detail || 'The Atlas request failed.', response.status, details)
+    throw new ApiError(detail || 'The Agonez request failed.', response.status, details)
   }
   return response.json() as Promise<T>
 }
@@ -59,4 +59,31 @@ export async function postJson<T>(path: string, body: unknown, signal?: AbortSig
   }
   if (signal) request.signal = signal
   return requestJson<T>(path, request)
+}
+
+export async function putJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  const request: RequestInit = {
+    method: 'PUT',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }
+  if (signal) request.signal = signal
+  return requestJson<T>(path, request)
+}
+
+export async function deleteRequest(path: string, signal?: AbortSignal): Promise<void> {
+  const request: RequestInit = { method: 'DELETE', headers: { Accept: 'application/json' } }
+  if (signal) request.signal = signal
+  const response = await fetch(apiUrl(path), request)
+  if (response.ok) return
+
+  const raw = await response.text()
+  let details: unknown = raw
+  try {
+    details = JSON.parse(raw) as unknown
+  } catch {
+    // Keep a non-JSON proxy error as readable text.
+  }
+  const detail = typeof details === 'object' && details && 'detail' in details ? String(details.detail) : response.statusText
+  throw new ApiError(detail || 'The Agonez request failed.', response.status, details)
 }
