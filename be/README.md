@@ -1,9 +1,9 @@
-# Agonez Atlas API
+# Agonez API
 
-Public FastAPI service bridging the existing Agonez PostgreSQL database and the Vue 3
-Atlas frontend. Atlas intentionally has no authentication or per-user state. Its only
-mutation is the narrowly validated addition of YouTube demonstration links. The module
-boundary leaves room for future authenticated Plans and Dashboard services.
+FastAPI service bridging the existing Agonez PostgreSQL database and the Vue 3
+frontend. It currently contains the public Atlas and the first PlanCreator persistence
+boundary. Authentication and ownership are not present yet; add them before treating
+plans as private user data.
 
 The implementation and handoff record is in `IMPLEMENTATION_PLAN.md`. The supplied
 frontend materials are preserved in `docs/api-contract.md` and
@@ -18,6 +18,12 @@ frontend materials are preserved in `docs/api-contract.md` and
 - `GET /api/atlas/muscles/{slug}`
 - `GET /api/atlas/muscles/{slug}/exercises`
 - `GET /api/atlas/meta`
+- `POST /api/plans`
+- `GET /api/plans`
+- `GET /api/plans/{plan_id}`
+- `DELETE /api/plans/{plan_id}`
+- `GET /api/plans/{plan_id}/draft`
+- `PUT /api/plans/{plan_id}/draft`
 - `GET /assets/anatomy.svg`
 - `GET /health/live` and `GET /health/ready`
 - Interactive OpenAPI: `GET /docs`
@@ -40,7 +46,8 @@ accepted compatibility fallback for direct Python deployments. Compose does not 
 into the image or returned by health endpoints.
 The Atlas connection enforces a 10-second statement timeout. The configured database
 role needs `SELECT` access plus `UPDATE (video_links)` on `core.exercises` for the video
-link feature.
+link feature. PlanCreator startup migrations require schema/table creation rights for
+the initial deployment, and normal operation requires CRUD access to the `plans` schema.
 
 The `.bashrc` assignments must use `export`, then be loaded in the current shell:
 
@@ -70,6 +77,12 @@ Run checks:
 .venv/bin/pytest
 ```
 
+Apply packaged migrations when running outside Docker:
+
+```bash
+.venv/bin/python -m agonez_api.migrations
+```
+
 ## Docker deployment
 
 Keep PostgreSQL listening on the host port stored in `MINA`, ensure the exported
@@ -85,6 +98,9 @@ Compose maps `host.docker.internal` to the Linux host gateway and explicitly pas
 exported variables into the container. It mounts `${MEDIA_HOST_PATH:-../media}` read-only at
 `/app/media`; the current default therefore serves `/home/agonez/media/exercises`.
 Production runtime dependencies are pinned in `requirements.lock`.
+The container applies pending checksum-tracked migrations under a PostgreSQL advisory
+lock before starting Uvicorn. Repeated starts are safe; changing an already-applied SQL
+migration is rejected.
 
 For a remote database, set `DB_HOST` and `MINA` and remove the `DB_HOST` override from
 `compose.yml`, or deploy with equivalent orchestrator environment variables. The API
@@ -104,8 +120,19 @@ as `[]`. Set `PUBLIC_MEDIA_BASE_URL` to return CDN URLs without changing databas
 
 ## Architecture
 
-`agonez_api.app.create_app` wires infrastructure. `modules/atlas/router.py` owns HTTP
-concerns, `service.py` owns response shaping and related-exercise policy, and
-`repository.py` owns PostgreSQL SQL. `modules/plans/` is reserved only as a boundary;
-when plans become user-specific it can acquire authentication or move to a separate
-image without coupling that policy to Atlas.
+`agonez_api.app.create_app` wires infrastructure. Each module separates its FastAPI
+router, Pydantic schemas, service-level assembly, and Psycopg repository. Atlas owns
+catalog browsing. `modules/plans/` owns relational PlanCreator drafts and stable-ID
+reconciliation. It can acquire authentication or move to a separate image later
+without coupling user policy to Atlas.
+
+PlanCreator persists this identity chain in the PostgreSQL `plans` schema:
+
+```text
+Plan -> Revision -> Day -> WorkoutUnit -> ExerciseSlot -> ExerciseVariant -> Set
+```
+
+The complete draft is exposed as nested JSON, but remains relationally stored. A save
+updates submitted IDs in place, inserts children whose ID is null, deletes only omitted
+children, and increments `lock_version`. Stale saves receive `409 Conflict`. See
+`docs/plancreator-foundation.md` for the domain boundary and assumptions.

@@ -30,6 +30,9 @@ dev = [
 where = ["src"]
 include = ["agonez_api*"]
 
+[tool.setuptools.package-data]
+"agonez_api.migrations" = ["versions/*.sql"]
+
 [tool.pytest.ini_options]
 addopts = "-q"
 pythonpath = ["src"]

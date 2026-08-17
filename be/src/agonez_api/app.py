@@ -22,6 +22,15 @@ from agonez_api.modules.atlas.exceptions import AtlasEntityNotFoundError
 from agonez_api.modules.atlas.repository import AtlasRepository
 from agonez_api.modules.atlas.router import router as atlas_router
 from agonez_api.modules.atlas.service import AtlasService
+from agonez_api.modules.plans.exceptions import (
+    PlanConflictError,
+    PlanDomainValidationError,
+    PlanDraftNotFoundError,
+    PlanNotFoundError,
+)
+from agonez_api.modules.plans.repository import PlanRepository
+from agonez_api.modules.plans.router import router as plans_router
+from agonez_api.modules.plans.service import PlanService
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +46,14 @@ def create_app(
     owns_pool = pool is None
     database_pool = pool or create_database_pool(settings)
     repository = AtlasRepository(database_pool)
+    plan_repository = PlanRepository(database_pool)
     media = MediaResolver(
         root=settings.media_root,
         url_prefix=settings.media_url_prefix,
         public_base_url=settings.public_media_base_url,
     )
     service = AtlasService(repository, media)
+    plan_service = PlanService(plan_repository)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -60,8 +71,9 @@ def create_app(
         title=settings.app_name,
         version=settings.app_version,
         description=(
-            "REST API for the Agonez exercise and muscle Atlas. "
-            "This module is intentionally public and has no per-user state."
+            "REST API for the Agonez exercise and muscle Atlas and the relational "
+            "PlanCreator draft editor. Authentication and ownership are intentionally "
+            "deferred in this first PlanCreator iteration."
         ),
         lifespan=lifespan,
     )
@@ -69,12 +81,14 @@ def create_app(
     app.state.database_pool = database_pool
     app.state.atlas_repository = repository
     app.state.atlas_service = service
+    app.state.plan_repository = plan_repository
+    app.state.plan_service = plan_service
 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Accept", "Content-Type", "X-Request-ID"],
         expose_headers=["X-Request-ID"],
     )
@@ -112,6 +126,39 @@ def create_app(
             content={"detail": f"{exc.entity.capitalize()} '{exc.slug}' was not found"},
         )
 
+    async def handle_plan_not_found(
+        request: Request,
+        exc: Exception,
+    ) -> JSONResponse:
+        del request
+        return JSONResponse(status_code=404, content={"detail": str(exc)})
+
+    app.add_exception_handler(PlanNotFoundError, handle_plan_not_found)
+    app.add_exception_handler(PlanDraftNotFoundError, handle_plan_not_found)
+
+    @app.exception_handler(PlanConflictError)
+    async def handle_plan_conflict(
+        request: Request,
+        exc: PlanConflictError,
+    ) -> JSONResponse:
+        del request
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": str(exc),
+                "submitted_lock_version": exc.submitted_lock_version,
+                "current_lock_version": exc.current_lock_version,
+            },
+        )
+
+    @app.exception_handler(PlanDomainValidationError)
+    async def handle_plan_validation(
+        request: Request,
+        exc: PlanDomainValidationError,
+    ) -> JSONResponse:
+        del request
+        return JSONResponse(status_code=422, content={"detail": exc.detail})
+
     @app.get("/health/live", tags=["Health"], include_in_schema=False)
     async def liveness() -> dict[str, str]:
         return {"status": "ok"}
@@ -141,6 +188,7 @@ def create_app(
         return FileResponse(anatomy_path, media_type="image/svg+xml")
 
     app.include_router(atlas_router)
+    app.include_router(plans_router)
     app.mount(
         settings.media_url_prefix,
         StaticFiles(directory=settings.media_root, check_dir=False),

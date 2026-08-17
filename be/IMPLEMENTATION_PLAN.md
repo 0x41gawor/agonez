@@ -115,3 +115,24 @@ The Atlas HTTP layer depends on an Atlas service, which depends on an Atlas repo
   `media/galleries/muscles/{slug}/` on the muscle detail endpoint.
 - [x] Keep gallery enumeration detail-only so list browsing does not scan or transfer
   unused image collections.
+
+## PlanCreator foundation (2026-08-17)
+
+- [x] Audit the existing Psycopg/FastAPI architecture and live catalog key types.
+- [x] Document the PlanCreator domain boundary and the temporary public/no-owner model.
+- [x] Add checksum-tracked, transactional SQL migrations and the relational `plans`
+  schema.
+- [x] Add Plan, DRAFT revision, day, optional workout unit, stable slot, target muscle,
+  exercise variant, and set infra-prescription persistence.
+- [x] Add nested create/list/detail/delete/draft load/draft save endpoints.
+- [x] Reconcile children by stable ID inside one transaction and reject foreign IDs.
+- [x] Add optimistic concurrency with `lock_version` and HTTP 409 responses.
+- [x] Add Pydantic/domain constraints for ordinals, slugs, variants, rep ranges, and RIR.
+- [x] Run Ruff, strict mypy, and 26 unit/contract tests successfully.
+- [x] Run all 12 required live API/database scenarios successfully, including cascade
+  verification, against PostgreSQL 15 and remove the temporary plans.
+- [x] Rebuild and deploy `agonez-atlas-api:local`; startup applied
+  `0001_plancreator_foundation.sql` and the container reports healthy.
+
+Intentionally deferred: authentication/ownership, draft release, snapshots, resolver,
+analyzers, Analysis/Modulation tabs, macrocycles, PlanExecution, and progression.
