@@ -6,6 +6,7 @@ PostgreSQL service. Every created plan is removed in a finally block.
 
 import copy
 import json
+import os
 import urllib.error
 import urllib.request
 from typing import Any
@@ -14,7 +15,7 @@ import psycopg
 
 from agonez_api.core.config import Settings
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = os.getenv("PLAN_API_BASE_URL", "http://127.0.0.1:8000")
 
 
 def request(
@@ -295,6 +296,40 @@ def main() -> None:
         )
         with_fallback = expect("PUT", f"/api/plans/{plan_id}/draft", 200, with_fallback)
         assert with_fallback["lock_version"] == deleting["lock_version"] + 1
+        primary_slot = next(
+            slot
+            for slot in with_fallback["days"][0]["workout_unit"]["exercise_slots"]
+            if slot["name"] == "Primary chest press"
+        )
+        fallback_variant_id = next(
+            variant["id"]
+            for variant in primary_slot["variants"]
+            if variant["variant_type"] == "FALLBACK"
+        )
+        analysis = expect(
+            "POST",
+            f"/api/plans/{plan_id}/draft/analysis",
+            200,
+            {
+                "resolution_context": {
+                    "global_volume_level": 0,
+                    "focus_area": None,
+                    "axis_overrides": {},
+                }
+            },
+        )
+        assert analysis["model_version"] == "plan-analysis-v1"
+        assert analysis["plan_id"] == plan_id
+        assert analysis["revision_id"] == with_fallback["revision_id"]
+        assert analysis["lock_version"] == with_fallback["lock_version"]
+        assert analysis["plan_summary"]["total_etu_scalar"] > 0
+        assert all(
+            contribution["variant_id"] != fallback_variant_id
+            for contribution in analysis["contributions"]
+        )
+        assert expect("GET", f"/api/plans/{plan_id}/draft", 200)[
+            "lock_version"
+        ] == with_fallback["lock_version"]
 
         invalid_slug = copy.deepcopy(with_fallback)
         invalid_slug["days"][0]["workout_unit"]["exercise_slots"][0]["variants"][0][
@@ -345,7 +380,7 @@ def main() -> None:
         created_plan_ids.remove(plan_id)
         expect("GET", f"/api/plans/{plan_id}", 404)
         assert_rows_were_cascaded(persisted_ids)
-        print("PlanCreator live scenarios passed: 12/12")
+        print("PlanCreator live scenarios passed: 13/13")
     finally:
         for cleanup_id in created_plan_ids:
             request("DELETE", f"/api/plans/{cleanup_id}")

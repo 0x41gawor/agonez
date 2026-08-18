@@ -2,6 +2,11 @@ from typing import Annotated, cast
 
 from fastapi import APIRouter, Body, Depends, Path, Request, Response, status
 
+from agonez_api.modules.plans.analysis.schemas import (
+    PlanAnalysisRequest,
+    PlanAnalysisResult,
+)
+from agonez_api.modules.plans.analysis.service import PlanAnalysisService
 from agonez_api.modules.plans.schemas import (
     PlanCreate,
     PlanDetail,
@@ -17,6 +22,10 @@ PlanId = Annotated[int, Path(ge=1)]
 
 def get_plan_service(request: Request) -> PlanService:
     return cast(PlanService, request.app.state.plan_service)
+
+
+def get_plan_analysis_service(request: Request) -> PlanAnalysisService:
+    return cast(PlanAnalysisService, request.app.state.plan_analysis_service)
 
 
 @router.post("", response_model=PlanDraftArtifact, status_code=status.HTTP_201_CREATED)
@@ -66,3 +75,12 @@ async def save_draft(
     service: Annotated[PlanService, Depends(get_plan_service)],
 ) -> PlanDraftArtifact:
     return await service.save_draft(plan_id, payload)
+
+
+@router.post("/{plan_id}/draft/analysis", response_model=PlanAnalysisResult)
+async def analyze_draft(
+    plan_id: PlanId,
+    payload: Annotated[PlanAnalysisRequest, Body()],
+    service: Annotated[PlanAnalysisService, Depends(get_plan_analysis_service)],
+) -> PlanAnalysisResult:
+    return await service.analyze_draft(plan_id, payload)

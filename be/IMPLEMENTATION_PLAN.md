@@ -136,3 +136,75 @@ The Atlas HTTP layer depends on an Atlas service, which depends on an Atlas repo
 
 Intentionally deferred: authentication/ownership, draft release, snapshots, resolver,
 analyzers, Analysis/Modulation tabs, macrocycles, PlanExecution, and progression.
+
+## PlanCreator Analysis V1 (2026-08-18)
+
+Status: complete implementation and deployed handoff
+
+### Reconnaissance findings
+
+- Analysis remains request-time derived data. No migration or analysis persistence is
+  required.
+- The persisted source aggregate is the existing DRAFT revision and its ordered day,
+  optional workout-unit, stable slot, target-muscle, variant, and set rows.
+- All 49 current `engine.exercises` rows have non-null, non-empty JSON objects for ETU,
+  active tension, recovery modifiers, and joint load. Per exercise, the three muscle
+  vector key sets align exactly.
+- Muscle-vector keys are the 47 canonical `core.muscles.slug` values. Joint vectors use
+  11 observed canonical slugs; no separate joint catalog exists yet.
+- Observed value ranges are: ETU 0.48–179.19, active tension 0.60–155.82,
+  recovery modifier 0.95–1.15, and joint load 0.06–0.90.
+- All 47 muscles currently have positive authoritative projected FCSA values
+  (`pcsa_projected_fcsa_cm2`), ranging from 4.50 to 243.17 cm².
+- Production data is complete today, but the evaluator will still emit per-vector
+  diagnostics and partial results if future catalog rows are incomplete.
+
+### Planned architecture
+
+```text
+Persisted PlanDraft + engine/FCSA snapshot
+  -> PlanResolver (DEFAULT variant and active volume-level sets)
+  -> immutable ResolvedPlan
+  -> contribution evaluator (ETU, MRU, JRU with provenance)
+  -> 168-hour periodic recovery simulator
+  -> separate PlanAnalysisResult API response
+```
+
+- Add a read-only, consistent repository snapshot for draft plus relevant engine and
+  muscle rows.
+- Keep analysis DTOs, domain objects, calibration parameters, resolver, evaluator, and
+  service in a dedicated `plans.analysis` boundary.
+- Add `POST /api/plans/{plan_id}/draft/analysis`; it will not mutate the draft or its
+  lock version.
+- Include ordered rest days, explicit timing assumptions, model parameters, summaries,
+  per-day before/after recovery snapshots, contribution provenance, and diagnostics.
+- Calibrate the two global V1 velocities from real catalog exercises with a reproducible
+  read-only utility and preserve the raw anchor output in the handoff documentation.
+
+### Verification plan
+
+- Deterministic unit coverage for resolution, formulas, classification, cumulative
+  penalties, volume gating, provenance, linear decay, periodic convergence/divergence,
+  diagnostics, immutability, and model version.
+- Contract/OpenAPI and mocked endpoint coverage plus a live persisted-draft analysis.
+- Full pytest, Ruff, strict mypy, Docker rebuild, health check, and live endpoint smoke.
+
+Explicitly out of scope: Analysis frontend, modulation UI/policy, non-local fatigue
+models, execution data, progression, persisted/cached results, and automatic plan edits.
+
+### Implementation progress
+
+- [x] Add repeatable-read, read-only draft + engine/FCSA source snapshot.
+- [x] Add immutable DEFAULT-only resolver with volume gating and weekly timing.
+- [x] Add explainable ETU/MRU/JRU evaluator and contribution provenance.
+- [x] Add periodic 168-hour muscle/joint recovery simulation and divergence diagnostics.
+- [x] Add separate Analysis V1 request/response models and POST endpoint.
+- [x] Calibrate and freeze real-catalog V1 velocities with a reproducible utility.
+- [x] Add deterministic unit/contract coverage and full implementation handoff.
+- [x] Rebuild/deploy the backend and complete live HTTP verification.
+
+Final result: 34 tests, Ruff, strict mypy, calibration reproduction, and all 13 live
+PlanCreator scenarios passed. The rebuilt `be-atlas-api-1` container is healthy on host
+port 33287. Existing plan 6 returns a fully explainable result plus an explicit
+`RECOVERY_DIVERGENCE` diagnostic (20 muscles and 7 joints), which is preserved for manual
+calibration review rather than clamped.

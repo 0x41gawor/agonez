@@ -24,6 +24,13 @@ class DraftRows:
     sets: list[Row]
 
 
+@dataclass(frozen=True)
+class AnalysisSourceRows:
+    draft: DraftRows
+    exercises: list[Row]
+    muscles: list[Row]
+
+
 class PlanRepository:
     """Relational persistence and transactional reconciliation for plan drafts."""
 
@@ -130,6 +137,56 @@ class PlanRepository:
                 raise PlanNotFoundError(plan_id)
             return await self._load_draft_rows(connection, plan_id)
 
+    async def get_analysis_source(self, plan_id: int) -> AnalysisSourceRows:
+        """Load a consistent, read-only draft and catalog snapshot for analysis."""
+        async with self._pool.connection() as connection:
+            async with connection.transaction():
+                await self._execute(
+                    connection,
+                    "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY",
+                )
+                plan_exists = await self._fetch_optional(
+                    connection,
+                    "SELECT id FROM plans.workout_plans WHERE id = %s",
+                    (plan_id,),
+                )
+                if plan_exists is None:
+                    raise PlanNotFoundError(plan_id)
+                draft = await self._load_draft_rows(connection, plan_id)
+                exercise_slugs = sorted({cast(str, row["exercise_slug"]) for row in draft.variants})
+                exercises: list[Row] = []
+                if exercise_slugs:
+                    exercises = await self._fetch_all(
+                        connection,
+                        """
+                        SELECT
+                            exercise.id AS exercise_id,
+                            exercise.slug AS exercise_slug,
+                            engine.etu_vector,
+                            engine.active_tension_exposure_vector,
+                            engine.muscle_recovery_cost_modifier_vector,
+                            engine.joint_load_exposure_vector
+                        FROM core.exercises AS exercise
+                        LEFT JOIN engine.exercises AS engine ON engine.slug = exercise.slug
+                        WHERE exercise.slug = ANY(%s)
+                        ORDER BY exercise.slug
+                        """,
+                        (exercise_slugs,),
+                    )
+                muscles = await self._fetch_all(
+                    connection,
+                    """
+                    SELECT slug, pcsa_projected_fcsa_cm2
+                    FROM core.muscles
+                    ORDER BY slug
+                    """,
+                )
+                return AnalysisSourceRows(
+                    draft=draft,
+                    exercises=exercises,
+                    muscles=muscles,
+                )
+
     async def save_draft(self, plan_id: int, payload: PlanDraftUpdate) -> DraftRows:
         async with self._pool.connection() as connection:
             async with connection.transaction():
@@ -216,9 +273,7 @@ class PlanRepository:
                     day_id = await self._upsert_day(connection, revision_id, day)
                     if day.workout_unit is None:
                         continue
-                    unit_id = await self._upsert_workout_unit(
-                        connection, day_id, day.workout_unit
-                    )
+                    unit_id = await self._upsert_workout_unit(connection, day_id, day.workout_unit)
                     for slot in day.workout_unit.exercise_slots:
                         slot_id = await self._upsert_slot(connection, unit_id, slot)
                         await self._replace_target_muscles(

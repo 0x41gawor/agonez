@@ -22,7 +22,7 @@ class PlanService:
         self._repository = repository
 
     async def create_plan(self, payload: PlanCreate) -> PlanDraftArtifact:
-        return self._assemble_draft(await self._repository.create_plan(payload))
+        return self.assemble_draft(await self._repository.create_plan(payload))
 
     async def list_plans(self) -> PlanListResponse:
         rows = await self._repository.list_plans()
@@ -39,17 +39,17 @@ class PlanService:
         await self._repository.delete_plan(plan_id)
 
     async def get_draft(self, plan_id: int) -> PlanDraftArtifact:
-        return self._assemble_draft(await self._repository.get_draft(plan_id))
+        return self.assemble_draft(await self._repository.get_draft(plan_id))
 
     async def save_draft(
         self,
         plan_id: int,
         payload: PlanDraftUpdate,
     ) -> PlanDraftArtifact:
-        return self._assemble_draft(await self._repository.save_draft(plan_id, payload))
+        return self.assemble_draft(await self._repository.save_draft(plan_id, payload))
 
     @staticmethod
-    def _assemble_draft(rows: DraftRows) -> PlanDraftArtifact:
+    def assemble_draft(rows: DraftRows) -> PlanDraftArtifact:
         sets_by_variant: dict[int, list[SetInfraArtifact]] = {}
         for item in rows.sets:
             variant_id = cast(int, item["exercise_variant_id"])

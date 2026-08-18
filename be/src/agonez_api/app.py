@@ -22,6 +22,7 @@ from agonez_api.modules.atlas.exceptions import AtlasEntityNotFoundError
 from agonez_api.modules.atlas.repository import AtlasRepository
 from agonez_api.modules.atlas.router import router as atlas_router
 from agonez_api.modules.atlas.service import AtlasService
+from agonez_api.modules.plans.analysis.service import PlanAnalysisService
 from agonez_api.modules.plans.exceptions import (
     PlanConflictError,
     PlanDomainValidationError,
@@ -54,6 +55,7 @@ def create_app(
     )
     service = AtlasService(repository, media)
     plan_service = PlanService(plan_repository)
+    plan_analysis_service = PlanAnalysisService(plan_repository)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -83,6 +85,7 @@ def create_app(
     app.state.atlas_service = service
     app.state.plan_repository = plan_repository
     app.state.plan_service = plan_service
+    app.state.plan_analysis_service = plan_analysis_service
 
     app.add_middleware(
         CORSMiddleware,
