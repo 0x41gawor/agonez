@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue'
 
 import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import BodyViewer from '@/components/anatomy/BodyViewer.vue'
+import MediaImage from '@/components/common/MediaImage.vue'
 import ExerciseSelector from '@/components/plans/ExerciseSelector.vue'
 import ExerciseVariantEditor from '@/components/plans/ExerciseVariantEditor.vue'
 import MuscleTargetSelector from '@/components/plans/MuscleTargetSelector.vue'
@@ -43,6 +45,10 @@ const defaultExercise = computed(() => {
 const setCount = computed(() =>
   model.value.variants.reduce((total, variant) => total + variant.sets.length, 0),
 )
+const roleClass = computed(() => `role-${model.value.role.toLowerCase().replaceAll('_', '-')}`)
+const targetVector = computed<Record<string, number>>(() =>
+  Object.fromEntries(model.value.target_muscle_slugs.map((slug) => [slug, 1])),
+)
 
 function chooseInitialDefault(slug: string): void {
   if (!slug) return
@@ -80,13 +86,23 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
 </script>
 
 <template>
-  <article class="slot-editor panel">
+  <article class="slot-editor panel" :class="roleClass">
     <header class="slot-summary">
       <span class="slot-order mono">{{ index + 1 }}</span>
+      <div class="slot-exercise-thumb">
+        <MediaImage
+          :src="defaultExercise?.image_url"
+          :alt="defaultExercise ? `${defaultExercise.name_full || defaultExercise.name} exercise` : 'No default exercise selected'"
+          label="No image"
+        />
+      </div>
       <button class="slot-summary-main" type="button" :aria-expanded="expanded" @click="expanded = !expanded">
-        <span>
+        <span class="slot-title-copy">
+          <span class="slot-role-badge">
+            <i aria-hidden="true" />{{ roleLabel(model.role) }}
+          </span>
           <strong>{{ model.name?.trim() || 'Untitled exercise slot' }}</strong>
-          <small>{{ roleLabel(model.role) }} · {{ defaultExercise?.name_full || defaultExercise?.name || 'Choose default exercise' }}</small>
+          <small>{{ defaultExercise?.name_full || defaultExercise?.name || 'Choose default exercise' }}</small>
         </span>
         <span class="slot-set-count mono">{{ setCount }} {{ setCount === 1 ? 'set' : 'sets' }}</span>
       </button>
@@ -140,9 +156,19 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           <span class="field-label">Description</span>
           <textarea v-model="model.description" class="text-area" rows="2" placeholder="Optional execution or programming context" />
         </label>
-        <div class="field">
-          <span class="field-label">Intentional target muscles</span>
-          <MuscleTargetSelector v-model="model.target_muscle_slugs" :muscles="muscles" />
+        <div class="slot-intent-layout">
+          <div class="field">
+            <span class="field-label">Intentional target muscles</span>
+            <MuscleTargetSelector v-model="model.target_muscle_slugs" :muscles="muscles" />
+            <p class="intent-help">This is the purpose of the slot, not calculated recruitment.</p>
+          </div>
+          <aside v-if="model.target_muscle_slugs.length" class="slot-muscle-map" aria-label="Target muscle preview">
+            <header>
+              <span class="section-label">Intent map</span>
+              <span class="mono">{{ model.target_muscle_slugs.length }} targets</span>
+            </header>
+            <BodyViewer :vector="targetVector" mode="etu" :interactive="false" />
+          </aside>
         </div>
 
         <div class="fallback-heading">

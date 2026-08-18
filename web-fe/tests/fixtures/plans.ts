@@ -13,7 +13,7 @@ export const exercise: ExerciseListItem = {
   load_capacity: 72,
   systemic_propulsive_fcsa_demand: 175,
   has_engine_vectors: true,
-  image_url: null,
+  image_url: '/media/exercises/barbell_bench_press.png',
 }
 
 export const fallbackExercise: ExerciseListItem = {

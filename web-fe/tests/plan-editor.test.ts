@@ -16,7 +16,7 @@ import {
 import { exercise, fallbackExercise, muscle, planArtifact } from './fixtures/plans'
 
 describe('PlanEditor', () => {
-  it('renders a loaded plan and its slot-first visible hierarchy', () => {
+  it('starts with all loaded days collapsed, then renders the slot-first hierarchy', async () => {
     const editor = toPlanEditorState(planArtifact())
     const wrapper = mount(PlanEditor, {
       props: {
@@ -29,8 +29,16 @@ describe('PlanEditor', () => {
 
     expect(wrapper.get('.plan-name-input').element).toHaveProperty('value', 'PPLPP')
     expect(wrapper.text()).toContain('Push A')
+    expect(wrapper.find('.day-body').exists()).toBe(false)
+
+    await wrapper.get('.day-toggle').trigger('click')
     expect(wrapper.text()).toContain('Primary chest press')
     expect(wrapper.text()).toContain('Barbell Bench Press')
+    expect(wrapper.get('.slot-editor').classes()).toContain('role-primary-progressive')
+    expect(wrapper.get('.slot-role-badge').text()).toContain('Primary progressive')
+    expect(wrapper.get('.slot-exercise-thumb img').attributes('src')).toBe(
+      '/media/exercises/barbell_bench_press.png',
+    )
     expect(
       wrapper
         .findAll('.set-editor input')
@@ -52,6 +60,19 @@ describe('PlanEditor', () => {
     await wrapper.findAll('.day-header .danger-action')[0]?.trigger('click')
     expect(editor.days).toHaveLength(1)
     expect(editor.days[0]?.ordinal).toBe(0)
+  })
+
+  it('shows a compact anatomy intent map only when slot details with targets are open', async () => {
+    const editor = toPlanEditorState(planArtifact())
+    const wrapper = mount(PlanEditor, {
+      props: { modelValue: editor, exercises: [exercise], muscles: [muscle], issues: [] },
+    })
+
+    await wrapper.get('.day-toggle').trigger('click')
+    expect(wrapper.find('.slot-muscle-map').exists()).toBe(false)
+    await wrapper.get('.slot-disclosure').trigger('click')
+    expect(wrapper.find('.slot-muscle-map').exists()).toBe(true)
+    expect(wrapper.get('.slot-muscle-map').text()).toContain('1 targets')
   })
 
   it('adds, removes, and reorders slots without changing their stable IDs', () => {

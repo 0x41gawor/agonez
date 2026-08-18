@@ -613,18 +613,63 @@
 }
 
 .slot-editor {
+  --slot-role-color: var(--roleAccessory);
   overflow: clip;
+  border-color: color-mix(in srgb, var(--slot-role-color) 28%, var(--border));
   border-radius: 9px;
   background: var(--panel2);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--slot-role-color) 78%, transparent);
+}
+
+.slot-editor.role-primary-progressive {
+  --slot-role-color: var(--rolePrimary);
+}
+
+.slot-editor.role-secondary-progressive {
+  --slot-role-color: var(--roleSecondary);
+}
+
+.slot-editor.role-volume-accumulation {
+  --slot-role-color: var(--roleVolume);
+}
+
+.slot-editor.role-accessory {
+  --slot-role-color: var(--roleAccessory);
 }
 
 .slot-summary {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto 48px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--slot-role-color) 8%, transparent),
+    transparent 34%
+  );
+}
+
+.slot-exercise-thumb {
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--slot-role-color) 28%, var(--border));
+  border-radius: 8px;
+  background: var(--inputBg);
+}
+
+.slot-exercise-thumb img,
+.slot-exercise-thumb .placeholder-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slot-exercise-thumb .placeholder-media {
+  padding: 4px;
+  font-size: 7px;
 }
 
 .slot-summary-main {
@@ -643,6 +688,34 @@
 .slot-summary-main strong,
 .slot-summary-main small {
   display: block;
+}
+
+.slot-title-copy {
+  min-width: 0;
+}
+
+.slot-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--slot-role-color) 35%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--slot-role-color) 9%, transparent);
+  color: color-mix(in srgb, var(--slot-role-color) 76%, var(--text));
+  font-size: 8.5px;
+  font-weight: 650;
+  letter-spacing: 0.25px;
+  line-height: 1.4;
+}
+
+.slot-role-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--slot-role-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--slot-role-color) 14%, transparent);
 }
 
 .slot-summary-main strong {
@@ -677,6 +750,73 @@
   margin-top: 12px;
   padding-top: 14px;
   border-top: 1px solid var(--border);
+}
+
+.slot-intent-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  align-items: start;
+  gap: 12px;
+}
+
+.intent-help {
+  margin: 2px 0 0;
+  color: var(--text3);
+  font-size: 10px;
+}
+
+.slot-muscle-map {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--etu) 28%, var(--border));
+  border-radius: 8px;
+  background: var(--inputBg);
+}
+
+.slot-muscle-map > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border);
+}
+
+.slot-muscle-map > header .mono {
+  color: var(--text3);
+  font-size: 8px;
+}
+
+.slot-muscle-map .body-viewer {
+  min-height: 0;
+  height: 174px;
+  padding: 5px 3px 2px;
+}
+
+.slot-muscle-map .body-view {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.slot-muscle-map .body-view > div {
+  display: flex;
+  align-items: center;
+  height: 146px;
+}
+
+.slot-muscle-map .body-view svg.agz-body {
+  width: 100% !important;
+  height: 146px !important;
+}
+
+.slot-muscle-map .body-view > span {
+  padding: 2px 0;
+  font-size: 7px;
+  letter-spacing: 1px;
+}
+
+.slot-muscle-map .body-skeleton {
+  height: 144px;
+  margin: 2px 5px;
 }
 
 .slot-disclosure {
@@ -1123,6 +1263,15 @@
     height: 36px;
   }
 
+  .slot-summary {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+  }
+
+  .slot-exercise-thumb {
+    width: 42px;
+    height: 42px;
+  }
+
   .slot-summary-main {
     min-width: 0;
   }
@@ -1132,7 +1281,15 @@
   }
 
   .slot-summary > .ordered-actions {
-    grid-column: 2;
+    grid-column: 3;
+  }
+
+  .slot-intent-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .slot-muscle-map {
+    width: min(100%, 240px);
   }
 
   .set-editor {

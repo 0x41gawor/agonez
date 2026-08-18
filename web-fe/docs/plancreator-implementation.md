@@ -40,6 +40,18 @@ progression.
 - Conflict state never overwrites local edits. The user can explicitly reload the
   current server draft.
 
+## Visual identity refinement
+
+- Loaded days start collapsed so the complete microcycle remains visible as a compact
+  ordered overview; new or selected days can still be expanded independently.
+- Slot headers use the DEFAULT exercise's catalog `image_url` and a theme-aware role
+  accent. Primary progressive, secondary progressive, volume accumulation, and
+  accessory slots each have a distinct rail, frame tint, dot, and badge color.
+- Intentional target muscles can be previewed on the shared Atlas `anatomy.svg` renderer
+  inside expanded slot details. The map is not mounted for collapsed slots, avoiding a
+  large-plan rendering cost, and is explicitly labeled as slot intent rather than
+  calculated recruitment.
+
 ## Verification
 
 - Pure editor tests cover ordering, ID preservation, variants, sets, and validation.

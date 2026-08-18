@@ -23,7 +23,7 @@ defineEmits<{
   remove: []
 }>()
 
-const expanded = ref(true)
+const expanded = ref(false)
 const weekdayLabel = computed(() =>
   model.value.weekday == null
     ? 'Flexible day'

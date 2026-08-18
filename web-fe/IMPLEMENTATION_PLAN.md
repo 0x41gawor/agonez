@@ -162,3 +162,8 @@ PlanCreator architecture and continuation notes live in
 Final verification: 10 test files / 34 tests passed; TypeScript, ESLint, and production
 build passed; `/plans` direct refresh and every Plans API method used by the editor
 worked through the deployed same-origin proxy; the temporary smoke plan was removed.
+
+Post-delivery visual refinement: loaded days now start collapsed; DEFAULT exercise
+catalog images appear in slot summaries; slot roles use distinct dark/light semantic
+accents; expanded slots with target muscles reuse the Atlas front/rear anatomy renderer
+as a compact intent map. The updated suite passes 35 tests.
