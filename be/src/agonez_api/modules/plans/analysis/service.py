@@ -5,14 +5,21 @@ from agonez_api.modules.plans.analysis.domain import (
     AnalysisCatalog,
     ExerciseEngineData,
     MuscleCatalogData,
+    ResolvedPlan,
 )
 from agonez_api.modules.plans.analysis.evaluator import evaluate_plan
 from agonez_api.modules.plans.analysis.resolver import resolve_plan
 from agonez_api.modules.plans.analysis.schemas import (
+    PlanAIExportDay,
+    PlanAIExportExercise,
+    PlanAIExportResult,
+    PlanAIExportSet,
     PlanAnalysisRequest,
     PlanAnalysisResult,
+    PlanExportRequest,
 )
 from agonez_api.modules.plans.repository import AnalysisSourceRows, PlanRepository
+from agonez_api.modules.plans.schemas import PlanDraftArtifact
 from agonez_api.modules.plans.service import PlanService
 
 
@@ -37,6 +44,20 @@ class PlanAnalysisService:
             timing_assumptions=timing_assumptions,
             initial_diagnostics=diagnostics,
         )
+
+    async def export_draft(
+        self,
+        plan_id: int,
+        request: PlanExportRequest,
+    ) -> PlanAIExportResult:
+        source = await self._repository.get_analysis_source(plan_id)
+        draft = PlanService.assemble_draft(source.draft)
+        resolved, _, _ = resolve_plan(draft, request.resolution_context)
+        exercise_names = {
+            cast(str, row["exercise_slug"]): cast(str, row["exercise_name"])
+            for row in source.exercises
+        }
+        return build_plan_ai_export(draft, resolved, exercise_names)
 
     @staticmethod
     def _catalog(source: AnalysisSourceRows) -> AnalysisCatalog:
@@ -77,3 +98,64 @@ def _number_or_none(value: Any) -> float | None:
     if isinstance(value, (int, float, Decimal)) and not isinstance(value, bool):
         return float(value)
     return None
+
+
+WEEKDAY_NAMES = (
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+)
+
+
+def build_plan_ai_export(
+    draft: PlanDraftArtifact,
+    resolved: ResolvedPlan,
+    exercise_names: dict[str, str],
+) -> PlanAIExportResult:
+    days: list[PlanAIExportDay] = []
+    for day in resolved.days:
+        exercises: list[PlanAIExportExercise] = []
+        if day.workout is not None:
+            for slot in day.workout.slots:
+                selected = slot.selected_exercise
+                if selected is None or not selected.sets:
+                    continue
+                exercises.append(
+                    PlanAIExportExercise(
+                        name=exercise_names.get(
+                            selected.exercise_slug,
+                            selected.exercise_slug.replace("_", " ").title(),
+                        ),
+                        slug=selected.exercise_slug,
+                        sets=[
+                            PlanAIExportSet(
+                                reps={"min": item.rep_min, "max": item.rep_max},
+                                rir=item.rir,
+                            )
+                            for item in selected.sets
+                        ],
+                    )
+                )
+        weekday = WEEKDAY_NAMES[day.weekday - 1] if day.weekday is not None else None
+        days.append(
+            PlanAIExportDay(
+                day=day.ordinal + 1,
+                name=day.name,
+                weekday=weekday,
+                rest=day.workout is None,
+                exercises=exercises,
+            )
+        )
+    return PlanAIExportResult(
+        plan_name=draft.name,
+        resolution_context={
+            "global_volume_level": resolved.resolution_context.global_volume_level,
+            "focus_area": resolved.resolution_context.focus_area,
+            "axis_overrides": dict(resolved.resolution_context.axis_overrides),
+        },
+        days=days,
+    )

@@ -6,6 +6,8 @@ import type {
   PlanDraftUpdate,
   PlanListResponse,
 } from './plan-types'
+import type { PlanAnalysisRequest, PlanAnalysisResult } from './plan-analysis-types'
+import type { PlanAIExportResult, PlanExportRequest } from './plan-export-types'
 
 export const plansApi = {
   list: (signal?: AbortSignal) => getJson<PlanListResponse>('/api/plans', undefined, signal),
@@ -17,6 +19,10 @@ export const plansApi = {
     getJson<PlanDraftArtifact>(`/api/plans/${planId}/draft`, undefined, signal),
   saveDraft: (planId: number, payload: PlanDraftUpdate, signal?: AbortSignal) =>
     putJson<PlanDraftArtifact>(`/api/plans/${planId}/draft`, payload, signal),
+  analyzeDraft: (planId: number, payload: PlanAnalysisRequest, signal?: AbortSignal) =>
+    postJson<PlanAnalysisResult>(`/api/plans/${planId}/draft/analysis`, payload, signal),
+  exportDraft: (planId: number, payload: PlanExportRequest, signal?: AbortSignal) =>
+    postJson<PlanAIExportResult>(`/api/plans/${planId}/draft/export`, payload, signal),
   delete: (planId: number, signal?: AbortSignal) =>
     deleteRequest(`/api/plans/${planId}`, signal),
 }

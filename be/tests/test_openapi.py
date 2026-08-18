@@ -30,6 +30,7 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     assert "get" in paths["/api/plans/{plan_id}/draft"]
     assert "put" in paths["/api/plans/{plan_id}/draft"]
     assert "post" in paths["/api/plans/{plan_id}/draft/analysis"]
+    assert "post" in paths["/api/plans/{plan_id}/draft/export"]
 
     list_parameters = {
         parameter["name"] for parameter in paths["/api/atlas/exercises"]["get"]["parameters"]

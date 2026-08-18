@@ -10,5 +10,6 @@ import './styles/anatomy.css'
 import './styles/atlas.css'
 import './styles/detail.css'
 import './styles/plancreator.css'
+import './styles/analysis.css'
 
 createApp(App).use(createPinia()).use(router).mount('#app')

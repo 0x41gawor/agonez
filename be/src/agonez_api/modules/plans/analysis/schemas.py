@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
 
-from agonez_api.modules.plans.schemas import APIModel, ExerciseSlotRole
+from agonez_api.modules.plans.schemas import APIModel, ExerciseSlotRole, RepRange
 
 
 class PlanResolutionContext(APIModel):
@@ -23,6 +23,36 @@ class PlanResolutionContext(APIModel):
 
 class PlanAnalysisRequest(APIModel):
     resolution_context: PlanResolutionContext = Field(default_factory=PlanResolutionContext)
+
+
+class PlanExportRequest(APIModel):
+    resolution_context: PlanResolutionContext = Field(default_factory=PlanResolutionContext)
+
+
+class PlanAIExportSet(APIModel):
+    reps: RepRange
+    rir: int = Field(ge=0, le=4)
+
+
+class PlanAIExportExercise(APIModel):
+    name: str
+    slug: str
+    sets: list[PlanAIExportSet]
+
+
+class PlanAIExportDay(APIModel):
+    day: int = Field(ge=1)
+    name: str
+    weekday: str | None
+    rest: bool
+    exercises: list[PlanAIExportExercise]
+
+
+class PlanAIExportResult(APIModel):
+    format: Literal["agonez-plan-sanity-v1"] = "agonez-plan-sanity-v1"
+    plan_name: str
+    resolution_context: PlanResolutionContext
+    days: list[PlanAIExportDay]
 
 
 class DiagnosticSeverity(str, Enum):

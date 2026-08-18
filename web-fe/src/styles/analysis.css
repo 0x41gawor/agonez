@@ -1,0 +1,742 @@
+.analysis-page {
+  display: grid;
+  gap: 28px;
+  padding-bottom: 56px;
+}
+
+.analysis-page h2,
+.analysis-page h3,
+.analysis-page p {
+  margin-top: 0;
+}
+
+.analysis-page h2 {
+  margin-bottom: 4px;
+  color: var(--text);
+  font-size: 18px;
+  letter-spacing: -0.025em;
+}
+
+.analysis-page h3 {
+  color: var(--text2);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.analysis-section {
+  display: grid;
+  gap: 14px;
+}
+
+.analysis-section-heading,
+.analysis-snapshot > header,
+.analysis-data-card > header,
+.recovery-map > header,
+.recovery-inspector > header,
+.provenance-inspector > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.analysis-section-heading p,
+.provenance-inspector header p {
+  margin: 4px 0 0;
+  color: var(--text3);
+  font-size: 11px;
+}
+
+.analysis-count {
+  padding-top: 3px;
+  color: var(--text3);
+  font-size: 9.5px;
+}
+
+.analysis-snapshot {
+  display: grid;
+  gap: 15px;
+  padding: 18px;
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accentDim) 34%, var(--panel));
+}
+
+.snapshot-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.snapshot-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel2);
+}
+
+.snapshot-control > span,
+.snapshot-control > small {
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.snapshot-control > strong {
+  color: var(--text2);
+  font-size: 11px;
+}
+
+.analysis-stale,
+.analysis-inline-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--joint) 50%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--joint) 7%, var(--panel2));
+}
+
+.analysis-stale strong {
+  color: var(--text);
+  font-size: 11.5px;
+}
+
+.analysis-stale p {
+  margin: 3px 0 0;
+  color: var(--text3);
+  font-size: 10px;
+}
+
+.status-chip {
+  margin-right: 8px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--joint) 16%, transparent);
+  color: var(--joint);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.analysis-banner-actions,
+.summary-controls,
+.metric-switch,
+.phase-switch,
+.recovery-band-legend,
+.intent-legend,
+.effective-reps-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.analysis-model-state {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--etu) 38%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--etu) 5%, var(--panel2));
+}
+
+.analysis-model-state.divergent {
+  border-color: color-mix(in srgb, var(--rec) 45%, var(--border));
+  background: color-mix(in srgb, var(--rec) 5%, var(--panel2));
+}
+
+.analysis-model-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid color-mix(in srgb, var(--etu) 42%, var(--border));
+  border-radius: 50%;
+  color: var(--etu);
+}
+
+.divergent .analysis-model-mark {
+  border-color: color-mix(in srgb, var(--rec) 48%, var(--border));
+  color: var(--rec);
+}
+
+.analysis-model-state strong,
+.analysis-data-card header strong,
+.recovery-map header strong,
+.recovery-inspector header strong,
+.provenance-inspector header strong {
+  display: block;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.analysis-model-state p {
+  max-width: 760px;
+  margin: 3px 0 0;
+  color: var(--text3);
+  font-size: 10.5px;
+}
+
+.divergence-counts {
+  display: flex;
+  gap: 16px;
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.divergence-counts strong {
+  display: inline;
+  color: var(--rec);
+  font-size: 13px;
+}
+
+.analysis-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--border);
+}
+
+.analysis-overview-grid > div {
+  min-width: 0;
+  padding: 12px;
+  background: var(--panel2);
+}
+
+.analysis-overview-grid span,
+.analysis-overview-grid small {
+  display: block;
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.analysis-overview-grid strong {
+  display: block;
+  margin: 5px 0 2px;
+  color: var(--text);
+  font-family: 'Geist Mono', monospace;
+  font-size: 19px;
+}
+
+.microcycle-timeline {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(118px, 1fr));
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.timeline-day {
+  position: relative;
+  display: grid;
+  align-content: start;
+  min-height: 126px;
+  padding: 12px;
+  color: var(--text2);
+  text-align: left;
+  cursor: pointer;
+}
+
+.timeline-day:hover,
+.timeline-day.selected {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--border));
+}
+
+.timeline-day.selected {
+  box-shadow: inset 0 3px 0 var(--accent);
+  background: color-mix(in srgb, var(--accentDim) 42%, var(--panel));
+}
+
+.timeline-day.rest {
+  border-style: dashed;
+  opacity: 0.82;
+}
+
+.timeline-weekday {
+  color: var(--accent);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.timeline-day strong {
+  display: block;
+  overflow: hidden;
+  margin: 12px 0 4px;
+  color: var(--text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-day small {
+  color: var(--text3);
+  font-size: 9.5px;
+  line-height: 1.4;
+}
+
+.timeline-warning,
+.timeline-rest-label {
+  align-self: end;
+  width: max-content;
+  margin-top: 15px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rec) 10%, transparent);
+  color: var(--rec);
+  font-size: 8.5px;
+}
+
+.timeline-rest-label {
+  background: var(--chipBg);
+  color: var(--text3);
+}
+
+.selected-workout-heading {
+  align-items: end;
+}
+
+.phase-switch,
+.metric-switch {
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel2);
+}
+
+.phase-switch button,
+.metric-switch button {
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text3);
+  font-size: 9.5px;
+}
+
+.phase-switch button.active,
+.metric-switch button.active {
+  background: var(--accentDim);
+  color: var(--accent2);
+}
+
+.selected-workout-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(290px, 0.65fr);
+  gap: 10px;
+}
+
+.recovery-map,
+.recovery-inspector,
+.analysis-data-card,
+.provenance-inspector {
+  padding: 14px;
+}
+
+.recovery-map .body-viewer {
+  min-height: 350px;
+}
+
+.recovery-map .body-view > span {
+  display: none;
+}
+
+.recovery-map > header > .mono,
+.analysis-data-card > header > .mono {
+  color: var(--text3);
+  font-size: 8.5px;
+}
+
+.recovery-band-legend {
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.recovery-band-legend span,
+.intent-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text3);
+  font-size: 8.5px;
+}
+
+.recovery-band-legend i,
+.intent-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--anatMuscle);
+}
+
+.recovery-band-legend .low { background: color-mix(in srgb, var(--anatMuscle), var(--rec) 25%); }
+.recovery-band-legend .medium { background: color-mix(in srgb, var(--anatMuscle), var(--rec) 50%); }
+.recovery-band-legend .high { background: color-mix(in srgb, var(--anatMuscle), var(--rec) 75%); }
+.recovery-band-legend .max { background: var(--rec); }
+
+.recovery-map-note,
+.analysis-footnote {
+  margin: 8px 0 0;
+  color: var(--text3);
+  font-size: 9px;
+  text-align: center;
+}
+
+.recovery-ranking,
+.selected-muscle-facts,
+.compact-metric-list {
+  display: grid;
+  gap: 4px;
+  margin-top: 13px;
+}
+
+.recovery-ranking button,
+.selected-muscle-facts > div,
+.compact-metric-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+  padding: 7px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-size: 10.5px;
+  text-align: left;
+}
+
+.recovery-ranking button:hover {
+  background: var(--rowHover);
+  color: var(--text);
+}
+
+.recovery-ranking strong,
+.selected-muscle-facts strong,
+.compact-metric-list strong {
+  color: var(--text);
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+}
+
+.selected-muscle-facts p {
+  margin: 10px 0 0;
+  color: var(--text3);
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
+.workout-analysis-data {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+  gap: 10px;
+}
+
+.stimulus-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 14px;
+}
+
+.stimulus-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 31px;
+  padding: 5px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-size: 10px;
+  text-align: left;
+}
+
+button.stimulus-row:hover { background: var(--rowHover); }
+.stimulus-row strong { color: var(--text); font-family: 'Geist Mono', monospace; font-size: 9.5px; }
+.stimulus-row small { color: var(--text3); font-size: 8px; }
+.stimulus-row em { color: var(--text3); font-family: 'Geist Mono', monospace; font-size: 8.5px; font-style: normal; }
+
+.summary-heading {
+  align-items: end;
+}
+
+.compact-select {
+  min-height: 38px;
+  font-size: 10px;
+}
+
+.analysis-table-wrap {
+  overflow: hidden;
+}
+
+.analysis-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.analysis-table th,
+.analysis-table td {
+  padding: 9px 11px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.analysis-table th {
+  background: var(--panel2);
+  color: var(--text3);
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.analysis-table tbody tr:hover,
+.analysis-table tbody tr.selected {
+  background: var(--rowHover);
+}
+
+.analysis-table td > strong,
+.analysis-table td > small {
+  display: block;
+}
+
+.analysis-table td > strong { color: var(--text); font-size: 10.5px; }
+.analysis-table td > small { margin-top: 3px; color: var(--text3); font-size: 8.5px; }
+.primary-analysis-metric { color: var(--text) !important; font-size: 12px !important; }
+
+.intent-stack {
+  display: flex;
+  width: 100%;
+  min-width: 150px;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--panel2);
+}
+
+.intent-stack span { min-width: 0; }
+.intentional { background: var(--etu) !important; }
+.incidental { background: var(--accent) !important; }
+.unclassified { background: var(--text3) !important; }
+.intent-numbers { margin-top: 4px !important; white-space: nowrap; }
+
+.table-expander {
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  background: var(--panel2);
+  color: var(--accent2);
+  font-size: 9.5px;
+}
+
+.intent-legend {
+  flex-wrap: wrap;
+}
+
+.provenance-inspector {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.provenance-groups {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.provenance-groups details,
+.diagnostic-card {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel2);
+}
+
+.provenance-groups summary,
+.diagnostic-card summary,
+.analysis-model-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  color: var(--text2);
+  cursor: pointer;
+  list-style: none;
+}
+
+.provenance-groups summary::-webkit-details-marker,
+.diagnostic-card summary::-webkit-details-marker,
+.analysis-model-details summary::-webkit-details-marker { display: none; }
+
+.provenance-groups summary strong,
+.provenance-groups summary small { display: block; }
+.provenance-groups summary strong { color: var(--text); font-size: 10.5px; }
+.provenance-groups summary small { margin-top: 3px; font-size: 8px; }
+.intent-intentional { color: var(--etu); }
+.intent-incidental { color: var(--accent); }
+.intent-unclassified { color: var(--text3); }
+.provenance-totals { color: var(--text3); font-size: 9px; white-space: nowrap; }
+
+.provenance-set-list {
+  max-height: 320px;
+  overflow: auto;
+  padding: 3px 12px 10px;
+}
+
+.provenance-set-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 18px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.provenance-set-list strong,
+.provenance-set-list em { color: var(--text2); font-family: 'Geist Mono', monospace; font-size: 8.5px; font-style: normal; }
+
+.diagnostic-list { display: grid; gap: 7px; }
+.diagnostic-card { overflow: hidden; }
+.diagnostic-card.severity-warning { border-left: 3px solid var(--joint); }
+.diagnostic-card.severity-error { border-left: 3px solid var(--rec); }
+.diagnostic-card.severity-info { border-left: 3px solid var(--text3); }
+.diagnostic-card summary span small,
+.diagnostic-card summary span strong { display: block; }
+.diagnostic-card summary small { margin-bottom: 3px; color: var(--joint); font-size: 8px; }
+.diagnostic-card summary strong { color: var(--text); font-size: 11px; }
+.diagnostic-card summary code { color: var(--text3); font-size: 8.5px; }
+.diagnostic-card > div { padding: 0 12px 12px; color: var(--text2); font-size: 10.5px; line-height: 1.55; }
+.diagnostic-card > div p { margin: 6px 0; }
+
+.diagnostic-resources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.diagnostic-resources > strong { margin-right: 4px; color: var(--text); }
+.diagnostic-resources > span { padding: 3px 6px; border-radius: 999px; background: var(--chipBg); color: var(--text2); font-size: 8.5px; }
+
+.analysis-model-details {
+  overflow: hidden;
+}
+
+.analysis-model-details summary > span:first-child span,
+.analysis-model-details summary > span:first-child strong { display: block; }
+.analysis-model-details summary strong { color: var(--text); font-size: 11.5px; }
+.analysis-model-details summary > .mono { color: var(--text3); font-size: 9px; }
+
+.model-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  border-top: 1px solid var(--border);
+  background: var(--border);
+}
+
+.model-detail-grid > div { padding: 11px; background: var(--panel2); }
+.model-detail-grid span,
+.model-detail-grid strong { display: block; }
+.model-detail-grid span { margin-bottom: 5px; color: var(--text3); font-size: 8.5px; }
+.model-detail-grid strong { color: var(--text2); font-size: 10px; }
+.effective-reps-row,
+.timing-assumptions { flex-wrap: wrap; padding: 12px; border-top: 1px solid var(--border); color: var(--text3); font-size: 9px; }
+.effective-reps-row code { padding: 3px 6px; border-radius: 4px; background: var(--panel2); color: var(--text2); }
+.timing-assumptions strong { display: block; color: var(--text2); }
+.timing-assumptions p { margin: 5px 0 0; }
+
+.text-action {
+  padding: 3px 5px;
+  border: 0;
+  background: transparent;
+  color: var(--accent2);
+  font-size: 9.5px;
+}
+
+.text-action:hover { text-decoration: underline; }
+
+.analysis-loading,
+.analysis-empty {
+  padding: 28px;
+}
+
+.analysis-loading-copy p,
+.analysis-empty p { color: var(--text3); font-size: 11px; }
+.analysis-loading-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
+.analysis-loading-grid .skeleton { height: 130px; }
+.analysis-loading-grid .wide { grid-column: 1 / -1; height: 280px; }
+.analysis-empty { min-height: 260px; text-align: center; }
+.analysis-empty-mark { display: grid; place-items: center; width: 42px; height: 42px; margin: 30px auto 12px; border: 1px solid var(--border2); border-radius: 50%; color: var(--accent); }
+.analysis-refreshing { position: sticky; z-index: 25; top: 158px; width: max-content; margin: -16px auto -12px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel); box-shadow: var(--shadow); color: var(--text3); font-size: 9px; }
+.analysis-inline-error { border-color: color-mix(in srgb, var(--rec) 45%, var(--border)); background: color-mix(in srgb, var(--rec) 6%, var(--panel)); color: var(--text2); font-size: 10px; }
+
+@media (max-width: 1000px) {
+  .analysis-overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .selected-workout-layout,
+  .workout-analysis-data { grid-template-columns: 1fr; }
+  .model-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  .analysis-page { gap: 22px; }
+  .analysis-section-heading,
+  .analysis-snapshot > header,
+  .selected-workout-heading,
+  .summary-heading { align-items: stretch; flex-direction: column; }
+  .analysis-snapshot { padding: 13px; }
+  .snapshot-controls { grid-template-columns: 1fr; }
+  .snapshot-control { grid-template-columns: 74px minmax(0, 1fr); }
+  .snapshot-control small { display: none; }
+  .analysis-stale,
+  .analysis-inline-error { align-items: stretch; flex-direction: column; }
+  .analysis-banner-actions .button { flex: 1; }
+  .analysis-model-state { grid-template-columns: auto minmax(0, 1fr); }
+  .divergence-counts { grid-column: 1 / -1; padding-left: 47px; }
+  .analysis-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .microcycle-timeline { grid-template-columns: repeat(7, minmax(132px, 1fr)); margin-right: -20px; }
+  .phase-switch,
+  .metric-switch { align-self: flex-start; }
+  .recovery-map .body-viewer { min-height: 420px; }
+  .stimulus-columns { grid-template-columns: 1fr; }
+  .summary-controls { align-items: stretch; flex-direction: column; }
+  .analysis-table-wrap { overflow-x: auto; }
+  .analysis-table { min-width: 760px; }
+  .model-detail-grid { grid-template-columns: 1fr; }
+  .provenance-inspector > header { align-items: stretch; flex-direction: column; }
+  .provenance-totals { white-space: normal; }
+}
+
+@media (max-width: 430px) {
+  .analysis-overview-grid { grid-template-columns: 1fr 1fr; }
+  .analysis-overview-grid > div:last-child { grid-column: 1 / -1; }
+  .recovery-map,
+  .recovery-inspector,
+  .analysis-data-card,
+  .provenance-inspector { padding: 11px; }
+  .recovery-map .body-viewer { min-height: 350px; }
+}

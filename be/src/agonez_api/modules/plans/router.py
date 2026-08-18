@@ -3,8 +3,10 @@ from typing import Annotated, cast
 from fastapi import APIRouter, Body, Depends, Path, Request, Response, status
 
 from agonez_api.modules.plans.analysis.schemas import (
+    PlanAIExportResult,
     PlanAnalysisRequest,
     PlanAnalysisResult,
+    PlanExportRequest,
 )
 from agonez_api.modules.plans.analysis.service import PlanAnalysisService
 from agonez_api.modules.plans.schemas import (
@@ -84,3 +86,12 @@ async def analyze_draft(
     service: Annotated[PlanAnalysisService, Depends(get_plan_analysis_service)],
 ) -> PlanAnalysisResult:
     return await service.analyze_draft(plan_id, payload)
+
+
+@router.post("/{plan_id}/draft/export", response_model=PlanAIExportResult)
+async def export_draft(
+    plan_id: PlanId,
+    payload: Annotated[PlanExportRequest, Body()],
+    service: Annotated[PlanAnalysisService, Depends(get_plan_analysis_service)],
+) -> PlanAIExportResult:
+    return await service.export_draft(plan_id, payload)

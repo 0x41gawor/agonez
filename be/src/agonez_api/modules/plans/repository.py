@@ -162,6 +162,9 @@ class PlanRepository:
                         SELECT
                             exercise.id AS exercise_id,
                             exercise.slug AS exercise_slug,
+                            COALESCE(
+                                NULLIF(exercise.name_full, ''), exercise.name
+                            ) AS exercise_name,
                             engine.etu_vector,
                             engine.active_tension_exposure_vector,
                             engine.muscle_recovery_cost_modifier_vector,

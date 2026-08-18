@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 import { fetchAnatomySource } from '@/api/anatomy'
 import { SVG_TO_DB, heatmapMix, jointStyle, type VisualizationMode } from '@/utils/vectors'
-import { prettyToken } from '@/utils/format'
+import { formatNumber, prettyToken } from '@/utils/format'
 
 const props = withDefaults(
   defineProps<{
@@ -11,10 +11,21 @@ const props = withDefaults(
     vector?: Record<string, number> | null
     mode?: VisualizationMode
     joints?: Record<string, number> | null
+    tooltipValues?: Record<string, number> | null
+    tooltipValueLabel?: string
     showJoints?: boolean
     interactive?: boolean
   }>(),
-  { selectedSlug: null, vector: null, mode: 'etu', joints: null, showJoints: false, interactive: true },
+  {
+    selectedSlug: null,
+    vector: null,
+    mode: 'etu',
+    joints: null,
+    tooltipValues: null,
+    tooltipValueLabel: 'Relative intensity',
+    showJoints: false,
+    interactive: true,
+  },
 )
 
 const emit = defineEmits<{
@@ -167,12 +178,20 @@ function showTooltip(group: SVGGElement, event?: MouseEvent): void {
   const type = group.dataset.type
   const slug = SVG_TO_DB[group.id] ?? group.id
   const value = type === 'joint' ? props.joints?.[slug] : props.vector?.[slug]
+  const tooltipValue = props.tooltipValues?.[slug]
+  let detail = value == null ? prettyToken(type) : `${prettyToken(type)} · ${(value * 100).toFixed(1)}% relative intensity`
+  if (tooltipValue != null) {
+    detail =
+      props.mode === 'recovery' && tooltipValue <= 0.005
+        ? `${props.tooltipValueLabel} · fresh (0 h)`
+        : `${props.tooltipValueLabel} · ${formatNumber(tooltipValue, tooltipValue < 10 ? 1 : 0)} h to fresh`
+  }
   tip.value = {
     visible: true,
     x: event ? Math.min(event.clientX + 14, window.innerWidth - 248) : 24,
     y: event ? Math.min(event.clientY + 14, window.innerHeight - 84) : 70,
     title: prettyToken(slug),
-    detail: value == null ? prettyToken(type) : `${prettyToken(type)} · ${(value * 100).toFixed(1)}% relative intensity`,
+    detail,
   }
   if (type === 'muscle') emit('hover', slug)
 }
