@@ -94,15 +94,15 @@ This conversion is only an intermediate approximation. External exercise resista
 
 ---
 
-## Systemic FCSA Demand
+## Systemic Propulsive FCSA Demand
 
-**Systemic FCSA Demand** is the total effective muscle force-generating capacity concurrently required to overcome or control the external mechanical demand of one repetition of an exercise, performed with a specified load, range of motion, and technique.
+**Systemic Propulsive FCSA Demand** is the total effective muscle force-generating capacity concurrently required to overcome or control the external mechanical demand of one repetition of an exercise, performed with a specified load, range of motion, and technique.
 
 The value is expressed in square centimetres of FCSA and is estimated at the mechanically limiting phase of the repetition: the phase in which the movement requires the greatest plausible concurrent active muscle-force capacity.
 
 Unless the exercise is explicitly eccentric or isometric, evaluate the limiting phase of the concentric portion of the repetition.
 
-Systemic FCSA Demand must be estimated from the exercise side first:
+Systemic Propulsive FCSA Demand must be estimated from the exercise side first:
 
 1. Determine the effective external force.
 2. Determine the external joint moments that must be overcome or controlled.
@@ -112,7 +112,7 @@ Systemic FCSA Demand must be estimated from the exercise side first:
 
 Exercises involving a larger effective external resistance, less favorable external leverage, larger required joint moments, or substantial movement of body mass should generally produce a higher Systemic FCSA Demand.
 
-Systemic FCSA Demand is calculated as:
+Systemic Propulsive FCSA Demand is calculated as:
 
 \[
 D_{FCSA}
@@ -132,9 +132,9 @@ This is a measure of mechanical force production only. It does not represent hyp
 
 ---
 
-## Systemic FCSA Contribution Vector
+## Propulsive FCSA Contribution Vector
 
-The **Systemic FCSA Contribution Vector** is a JSON object that describes how the total Systemic FCSA Demand is distributed among the contributing muscles.
+The **Propulsive FCSA Contribution Vector** is a JSON object that describes how the total Systemic FCSA Demand is distributed among the contributing muscles.
 
 For each included muscle:
 
@@ -142,10 +142,10 @@ For each included muscle:
 Contribution_m = FCSA_m \cdot E_{mech,m}
 \]
 
-The sum of all values in the vector must equal `systemic_fcsa_demand` within a rounding tolerance of 0.01:
+The sum of all values in the vector must equal `systemic_propulsive_fcsa_demand` within a rounding tolerance of 0.01:
 
 \[
-systemic\_fcsa\_demand
+systemic\_propulsive\_fcsa\_demand
 =
 \sum_m Contribution_m
 \]
@@ -191,8 +191,8 @@ Because different muscles operate at different joints and have different interna
 
 For the exercise provided in the input, estimate:
 
-- `systemic_fcsa_demand`
-- `systemic_fcsa_contribution_vector`
+- `systemic_propulsive_fcsa_demand`
+- `propulsive_fcsa_contribution_vector`
 
 Perform the estimation using the following three-stage procedure.
 
@@ -569,7 +569,7 @@ Return exactly one section: an executable PostgreSQL statement.
 
 Do not return a separate prose evaluation section, and do not restate,
 summarise, or comment on the result before or after the SQL statement.
-The complete evaluation is carried inside the `systemic_fcsa_eval` column.
+The complete evaluation is carried inside the `systemic_propulsive_fcsa_eval_note` column.
 
 ## Evaluation object
 
@@ -607,7 +607,7 @@ embedded in the SQL statement below.
       "rationale": "brief biomechanical justification"
     }
   ],
-  "systemic_fcsa_demand_cm2": 0.00,
+  "systemic_propulsive_fcsa_demand_cm2": 0.00,
   "vector_sum_cm2": 0.00,
   "reconciliation": "PASS",
   "notes": [
@@ -621,7 +621,7 @@ Requirements:
 - Round dimensional engagement factors to four decimal places.
 - Round FCSA values to two decimal places.
 - Order muscles by descending FCSA contribution.
-- `systemic_fcsa_demand_cm2` must equal `vector_sum_cm2`.
+- `systemic_propulsive_fcsa_demand_cm2` must equal `vector_sum_cm2`.
 - The final difference must not exceed 0.01.
 - Use `PASS` only when the top-down and bottom-up estimates have been
   reconciled.
@@ -645,3 +645,22 @@ Record a note when any of the following occurs:
 - the supplied `load_capacity_kg` appears **inconsistent** with the 8–12
   repetition RIR 1–2 band for the reference athlete;
 - a muscle that would commonly be expected in this exercise was
+
+## SQL statement template
+
+Return the result using exactly this PostgreSQL statement structure:
+
+```sql
+UPDATE core.exercises
+SET
+    systemic_propulsive_fcsa_demand = <systemic_propulsive_fcsa_demand>,
+    propulsive_fcsa_contribution_vector = '<propulsive_fcsa_contribution_vector_json>'::jsonb,
+    systemic_propulsive_fcsa_eval_note = '<evaluation_object_json>'::jsonb
+WHERE slug = '<exercise_slug>';
+```
+
+Requirements:
+- systemic_propulsive_fcsa_demand is the final systemic_propulsive_fcsa_demand_cm2 value.
+- propulsive_fcsa_contribution_vector is a JSON object mapping muscle slugs to their FCSA contributions in cm².
+- systemic_propulsive_fcsa_eval_note contains the complete Evaluation object defined above.
+- Return only the executable SQL statement.
