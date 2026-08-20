@@ -119,7 +119,7 @@ class AtlasService:
             mechanics_tier=row["mechanics_tier"],
             resistance_source=row["resistance_source"],
             execution_pattern=row["execution_pattern"],
-            load_capacity=row["load_capacity_kg"],
+            load_capacity=row["load_capacity"],
             systemic_propulsive_fcsa_demand=row["systemic_propulsive_fcsa_demand"],
             propulsive_fcsa_contribution_vector=row["propulsive_fcsa_contribution_vector"],
             technique=row["technique"] or {},

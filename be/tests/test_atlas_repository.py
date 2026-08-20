@@ -45,9 +45,13 @@ async def test_exercise_list_metrics_and_sorting_are_sourced_from_engine() -> No
     )
 
     list_query = queries[0]
-    assert "eng.load_capacity" in list_query
+    assert (
+        "eng.load_capacity_kg AS load_capacity,\n"
+        "                eng.systemic_propulsive_fcsa_demand"
+    ) in list_query
     assert "eng.systemic_propulsive_fcsa_demand" in list_query
-    assert "ORDER BY eng.load_capacity DESC" in list_query
+    assert "ORDER BY eng.load_capacity_kg DESC" in list_query
+    assert EXERCISE_SORTS["load_capacity"] == "eng.load_capacity_kg"
     assert EXERCISE_SORTS["systemic_propulsive_fcsa_demand"] == (
         "eng.systemic_propulsive_fcsa_demand"
     )
@@ -69,9 +73,12 @@ async def test_exercise_detail_propulsive_fields_are_sourced_from_engine() -> No
     repository._fetch_optional = fetch_optional  # type: ignore[method-assign]
     await repository.get_exercise("barbell_bench_press")
 
-    assert "eng.load_capacity" in captured_query
+    assert (
+        "eng.load_capacity_kg AS load_capacity,\n"
+        "                eng.systemic_propulsive_fcsa_demand"
+    ) in captured_query
     assert "eng.systemic_propulsive_fcsa_demand" in captured_query
     assert "eng.propulsive_fcsa_contribution_vector" in captured_query
-    assert "e.load_capacity" not in captured_query
+    assert "e.load_capacity," not in captured_query
     assert "e.systemic_propulsive_fcsa_demand" not in captured_query
     assert "e.propulsive_fcsa_contribution_vector" not in captured_query

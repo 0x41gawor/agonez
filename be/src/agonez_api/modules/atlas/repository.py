@@ -61,7 +61,7 @@ class AtlasRepository:
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
                 e.execution_pattern::text AS execution_pattern,
-                eng.load_capacity_kg,
+                eng.load_capacity_kg AS load_capacity,
                 eng.systemic_propulsive_fcsa_demand,
                 (
                     eng.slug IS NOT NULL
@@ -136,7 +136,7 @@ class AtlasRepository:
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
                 e.execution_pattern::text AS execution_pattern,
-                eng.load_capacity_kg,
+                eng.load_capacity_kg AS load_capacity,
                 eng.systemic_propulsive_fcsa_demand,
                 eng.propulsive_fcsa_contribution_vector,
                 e.technique,
