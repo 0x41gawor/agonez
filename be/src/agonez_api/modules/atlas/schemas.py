@@ -21,8 +21,8 @@ class ExerciseListItem(APIModel):
     mechanics_tier: str
     resistance_source: str
     execution_pattern: str
-    load_capacity: float
-    systemic_propulsive_fcsa_demand: float
+    load_capacity: float | None
+    systemic_propulsive_fcsa_demand: float | None
     has_engine_vectors: bool
     image_url: str | None
 
@@ -59,9 +59,9 @@ class ExerciseDetail(APIModel):
     mechanics_tier: str
     resistance_source: str
     execution_pattern: str
-    load_capacity: float
-    systemic_propulsive_fcsa_demand: float
-    propulsive_fcsa_contribution_vector: Vector
+    load_capacity: float | None
+    systemic_propulsive_fcsa_demand: float | None
+    propulsive_fcsa_contribution_vector: Vector | None
     technique: JsonObject
     comments: JsonObject
     video_links: list[str]

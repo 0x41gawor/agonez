@@ -28,7 +28,7 @@ const emit = defineEmits<{ hover: [slug: string | null] }>()
           <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'exercise-detail', params: { slug: item.slug } }">{{ prettyToken(item.mechanics_tier) }}</RouterLink></td>
           <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'exercise-detail', params: { slug: item.slug } }">{{ prettyToken(item.resistance_source) }}</RouterLink></td>
           <td class="number mono"><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'exercise-detail', params: { slug: item.slug } }">{{ formatNumber(item.load_capacity, 0) }}</RouterLink></td>
-          <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'exercise-detail', params: { slug: item.slug } }"><span class="metric-cell"><span class="metric-bar"><i :style="{ width: `${Math.max(3, 100 * item.systemic_propulsive_fcsa_demand / maximumDemand)}%` }" /></span><span class="mono">{{ formatNumber(item.systemic_propulsive_fcsa_demand) }}</span></span></RouterLink></td>
+          <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'exercise-detail', params: { slug: item.slug } }"><span class="metric-cell"><span class="metric-bar"><i :style="{ width: `${Math.max(3, 100 * (item.systemic_propulsive_fcsa_demand ?? 0) / maximumDemand)}%` }" /></span><span class="mono">{{ formatNumber(item.systemic_propulsive_fcsa_demand) }}</span></span></RouterLink></td>
         </tr>
       </tbody>
     </table>

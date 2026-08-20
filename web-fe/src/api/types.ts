@@ -10,8 +10,8 @@ export interface ExerciseListItem {
   mechanics_tier: string
   resistance_source: string
   execution_pattern: string
-  load_capacity: number
-  systemic_propulsive_fcsa_demand: number
+  load_capacity: number | null
+  systemic_propulsive_fcsa_demand: number | null
   has_engine_vectors: boolean
   image_url: string | null
 }
@@ -40,7 +40,7 @@ export interface ExerciseEngine {
 }
 
 export interface ExerciseDetail extends Omit<ExerciseListItem, 'has_engine_vectors'> {
-  propulsive_fcsa_contribution_vector: Vector
+  propulsive_fcsa_contribution_vector: Vector | null
   technique: Record<string, unknown>
   comments: Record<string, unknown>
   video_links: string[]

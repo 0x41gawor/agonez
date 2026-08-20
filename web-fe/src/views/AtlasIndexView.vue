@@ -164,7 +164,7 @@ const muscleResponse = computed(() => props.kind === 'muscles' ? response.value 
 const total = computed(() => response.value?.total ?? 0)
 const exerciseCount = computed(() => atlas.meta?.counts.exercises ?? (props.kind === 'exercises' ? total.value : 0))
 const muscleCount = computed(() => atlas.meta?.counts.muscles ?? (props.kind === 'muscles' ? total.value : 0))
-const maximumDemand = computed(() => Math.max(1, ...(exerciseResponse.value?.items.map((item) => item.systemic_propulsive_fcsa_demand) ?? [])))
+const maximumDemand = computed(() => Math.max(1, ...(exerciseResponse.value?.items.map((item) => item.systemic_propulsive_fcsa_demand ?? 0) ?? [])))
 const maximumMass = computed(() => Math.max(1, ...(muscleResponse.value?.items.map((item) => item.mass_g) ?? [])))
 const maximumCapacity = computed(() => Math.max(1, ...(muscleResponse.value?.items.map((item) => item.pcsa_projected_fcsa_cm2 ?? 0) ?? [])))
 

@@ -90,7 +90,7 @@ const groups = computed(() => exercise.value ? [
     { label: 'Load capacity', value: formatNumber(exercise.value.load_capacity, 0), unit: 'kg' },
     { label: 'Systemic FCSA demand', value: formatNumber(exercise.value.systemic_propulsive_fcsa_demand), unit: 'cm²' },
     { label: 'Total ETU', value: hasEtu.value ? formatNumber(totalEtu.value) : 'pending', unit: hasEtu.value ? 'cm²' : '' },
-    { label: 'Muscles exposed', value: String(Object.keys(exercise.value.engine?.active_tension_exposure_vector ?? exercise.value.propulsive_fcsa_contribution_vector).length) },
+    { label: 'Muscles exposed', value: String(Object.keys(exercise.value.engine?.active_tension_exposure_vector ?? exercise.value.propulsive_fcsa_contribution_vector ?? {}).length) },
   ] },
 ] : [])
 
