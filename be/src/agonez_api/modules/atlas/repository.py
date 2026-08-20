@@ -8,7 +8,7 @@ Row = dict[str, Any]
 EXERCISE_SORTS = {
     "name": "LOWER(e.name)",
     "name_full": "LOWER(e.name_full)",
-    "load_capacity": "eng.load_capacity",
+    "load_capacity": "eng.load_capacity_kg",
     "systemic_propulsive_fcsa_demand": "eng.systemic_propulsive_fcsa_demand",
 }
 
@@ -61,7 +61,7 @@ class AtlasRepository:
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
                 e.execution_pattern::text AS execution_pattern,
-                eng.load_capacity,
+                eng.load_capacity_kg,
                 eng.systemic_propulsive_fcsa_demand,
                 (
                     eng.slug IS NOT NULL
@@ -136,7 +136,7 @@ class AtlasRepository:
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
                 e.execution_pattern::text AS execution_pattern,
-                eng.load_capacity,
+                eng.load_capacity_kg,
                 eng.systemic_propulsive_fcsa_demand,
                 eng.propulsive_fcsa_contribution_vector,
                 e.technique,

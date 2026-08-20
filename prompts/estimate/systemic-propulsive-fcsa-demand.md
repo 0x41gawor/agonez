@@ -651,7 +651,7 @@ Record a note when any of the following occurs:
 Return the result using exactly this PostgreSQL statement structure:
 
 ```sql
-UPDATE core.exercises
+UPDATE engine.exercises
 SET
     systemic_propulsive_fcsa_demand = <systemic_propulsive_fcsa_demand>,
     propulsive_fcsa_contribution_vector = '<propulsive_fcsa_contribution_vector_json>'::jsonb,
