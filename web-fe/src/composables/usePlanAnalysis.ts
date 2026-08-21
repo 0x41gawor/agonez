@@ -7,7 +7,11 @@ import type {
   PlanAnalysisResult,
 } from '@/api/plan-analysis-types'
 import { plansApi } from '@/api/plans'
-import type { AnalysisPhase, EtuDisplayMode } from '@/features/plans/analysis'
+import type {
+  AnalysisPhase,
+  EtuDisplayMode,
+  EtuTimeBasis,
+} from '@/features/plans/analysis'
 
 export const DEFAULT_ANALYSIS_REQUEST: Readonly<PlanAnalysisRequest> = {
   resolution_context: {
@@ -29,6 +33,7 @@ export function usePlanAnalysis(
   const selectedDayId = ref<number | null>(null)
   const selectedPhase = ref<AnalysisPhase>('BEFORE')
   const etuMode = ref<EtuDisplayMode>('ABSOLUTE')
+  const etuTimeBasis = ref<EtuTimeBasis>('MICROCYCLE')
   let requestSequence = 0
 
   const lockVersionMismatch = computed(
@@ -138,6 +143,7 @@ export function usePlanAnalysis(
     selectedDay,
     selectedPhase,
     etuMode,
+    etuTimeBasis,
     stale,
     lockVersionMismatch,
     muscleContributionsBySlug,

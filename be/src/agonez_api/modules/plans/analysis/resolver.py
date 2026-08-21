@@ -7,6 +7,7 @@ from agonez_api.modules.plans.analysis.domain import (
     ResolvedSlot,
     ResolvedWorkout,
 )
+from agonez_api.modules.plans.analysis.parameters import HOURS_PER_DAY
 from agonez_api.modules.plans.analysis.schemas import (
     AnalysisDiagnostic,
     DiagnosticSeverity,
@@ -32,34 +33,34 @@ def resolve_plan(
     diagnostics: list[AnalysisDiagnostic] = []
     resolved_days: list[ResolvedDay] = []
 
-    for day in draft.days:
-        if day.weekday is not None:
-            hour_offset = float((day.weekday - 1) * 24)
-            timing_source = "WEEKDAY"
-            detail = f"ISO weekday {day.weekday} fixes the day at hour {hour_offset:g}."
-        else:
-            raw_offset = float(day.ordinal * 24)
-            hour_offset = raw_offset % 168.0
-            timing_source = "ORDINAL_ASSUMPTION"
-            detail = "Weekday is absent; deterministic 24-hour ordinal spacing was used."
-            diagnostics.append(
-                AnalysisDiagnostic(
-                    code="ORDINAL_TIMING_ASSUMPTION",
-                    severity=DiagnosticSeverity.INFO,
-                    message=f"Day {day.id} has no weekday; ordinal timing was used.",
-                )
-            )
-            if raw_offset >= 168.0:
-                diagnostics.append(
-                    AnalysisDiagnostic(
-                        code="ORDINAL_TIMING_WRAPPED",
-                        severity=DiagnosticSeverity.WARNING,
-                        message=(
-                            f"Day {day.id} ordinal offset {raw_offset:g}h exceeds the "
-                            "168-hour microcycle and was wrapped modulo 168 hours."
-                        ),
+    for index, day in enumerate(draft.days):
+        hour_offset = float(day.ordinal) * HOURS_PER_DAY
+        timing_source = "MICROCYCLE_ORDINAL"
+        weekday_detail = (
+            f" Saved weekday {day.weekday} is display metadata only."
+            if day.weekday is not None
+            else " No weekday metadata is stored."
+        )
+        detail = (
+            f"Microcycle day {day.ordinal + 1} fixes this boundary at "
+            f"hour {hour_offset:g}.{weekday_detail}"
+        )
+        if index > 0:
+            previous = draft.days[index - 1]
+            if previous.weekday is not None and day.weekday is not None:
+                expected_weekday = previous.weekday % 7 + 1
+                if day.weekday != expected_weekday:
+                    diagnostics.append(
+                        AnalysisDiagnostic(
+                            code="WEEKDAY_SEQUENCE_MISMATCH",
+                            severity=DiagnosticSeverity.INFO,
+                            message=(
+                                f"Day {day.id} stores ISO weekday {day.weekday} after day "
+                                f"{previous.id} weekday {previous.weekday}; ordered microcycle "
+                                "timing remains authoritative."
+                            ),
+                        )
                     )
-                )
         assumptions.append(
             TimingAssumption(
                 day_id=day.id,

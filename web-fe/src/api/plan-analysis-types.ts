@@ -25,13 +25,16 @@ export interface AnalysisDiagnostic {
 export interface TimingAssumption {
   day_id: number
   day_ordinal: number
-  timing_source: 'WEEKDAY' | 'ORDINAL_ASSUMPTION'
+  timing_source: 'MICROCYCLE_ORDINAL' | 'WEEKDAY' | 'ORDINAL_ASSUMPTION'
   hour_offset: number
   detail: string
 }
 
 export interface AnalysisModelParameters {
+  microcycle_days: number
   microcycle_hours: number
+  microcycle_weeks: number
+  weekly_normalization_factor: number
   effective_reps_by_rir: Record<string, number>
   rir_recovery_multiplier: Record<string, number>
   cumulative_set_penalty_step: number
@@ -47,10 +50,15 @@ export interface MuscleAnalysisSummary {
   slug: string
   fcsa_cm2: number | null
   total_etu: number
+  weekly_etu: number
   etu_per_fcsa_cm2: number | null
+  weekly_etu_per_fcsa_cm2: number | null
   intentional_etu: number
+  weekly_intentional_etu: number
   incidental_etu: number
+  weekly_incidental_etu: number
   unclassified_etu: number
+  weekly_unclassified_etu: number
   total_mru: number
   maximum_post_workout_hours_to_fresh: number
   worst_pre_workout_hours_to_fresh: number
@@ -68,6 +76,7 @@ export interface JointAnalysisSummary {
 
 export interface PlanAnalysisSummary {
   total_etu_scalar: number
+  weekly_etu_scalar: number
   muscles: MuscleAnalysisSummary[]
   joints: JointAnalysisSummary[]
 }

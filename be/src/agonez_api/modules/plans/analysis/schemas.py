@@ -73,13 +73,16 @@ class AnalysisDiagnostic(APIModel):
 class TimingAssumption(APIModel):
     day_id: int
     day_ordinal: int
-    timing_source: Literal["WEEKDAY", "ORDINAL_ASSUMPTION"]
+    timing_source: Literal["MICROCYCLE_ORDINAL", "WEEKDAY", "ORDINAL_ASSUMPTION"]
     hour_offset: float
     detail: str
 
 
 class AnalysisModelParameters(APIModel):
-    microcycle_hours: float
+    microcycle_days: int = Field(ge=0)
+    microcycle_hours: float = Field(ge=0)
+    microcycle_weeks: float = Field(ge=0)
+    weekly_normalization_factor: float = Field(ge=0)
     effective_reps_by_rir: dict[int, float]
     rir_recovery_multiplier: dict[int, float]
     cumulative_set_penalty_step: float
@@ -95,10 +98,15 @@ class MuscleAnalysisSummary(APIModel):
     slug: str
     fcsa_cm2: float | None
     total_etu: float
+    weekly_etu: float
     etu_per_fcsa_cm2: float | None
+    weekly_etu_per_fcsa_cm2: float | None
     intentional_etu: float
+    weekly_intentional_etu: float
     incidental_etu: float
+    weekly_incidental_etu: float
     unclassified_etu: float
+    weekly_unclassified_etu: float
     total_mru: float
     maximum_post_workout_hours_to_fresh: float
     worst_pre_workout_hours_to_fresh: float
@@ -116,6 +124,7 @@ class JointAnalysisSummary(APIModel):
 
 class PlanAnalysisSummary(APIModel):
     total_etu_scalar: float
+    weekly_etu_scalar: float
     muscles: list[MuscleAnalysisSummary]
     joints: list[JointAnalysisSummary]
 

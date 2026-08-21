@@ -1,7 +1,8 @@
 from typing import Final
 
-MODEL_VERSION: Final = "plan-analysis-v1"
-MICROCYCLE_HOURS: Final = 168.0
+MODEL_VERSION: Final = "plan-analysis-v2"
+HOURS_PER_DAY: Final = 24.0
+DAYS_PER_WEEK: Final = 7.0
 
 EFFECTIVE_REPS_BY_RIR: Final[dict[int, float]] = {
     0: 5.0,

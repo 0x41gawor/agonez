@@ -45,6 +45,18 @@ async def list_plans(
     return await service.list_plans()
 
 
+@router.post(
+    "/{plan_id}/duplicate",
+    response_model=PlanDraftArtifact,
+    status_code=status.HTTP_201_CREATED,
+)
+async def duplicate_plan(
+    plan_id: PlanId,
+    service: Annotated[PlanService, Depends(get_plan_service)],
+) -> PlanDraftArtifact:
+    return await service.duplicate_plan(plan_id)
+
+
 @router.get("/{plan_id}", response_model=PlanDetail)
 async def get_plan(
     plan_id: PlanId,

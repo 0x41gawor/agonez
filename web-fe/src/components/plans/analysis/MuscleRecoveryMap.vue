@@ -89,7 +89,8 @@ const selectedStimulus = computed(() =>
     <div v-if="selectedSlug && selectedState" class="selected-muscle-facts">
       <div><span>Current state</span><strong>{{ formatHours(selectedState.hours_to_fresh) }}</strong></div>
       <div><span>Workout ETU</span><strong>{{ formatNumber(selectedStimulus?.etu_absolute, 2) }}</strong></div>
-      <div><span>Weekly ETU</span><strong>{{ formatNumber(selectedSummary?.total_etu, 2) }}</strong></div>
+      <div><span>Microcycle ETU</span><strong>{{ formatNumber(selectedSummary?.total_etu, 2) }}</strong></div>
+      <div><span>ETU / 7 days</span><strong>{{ formatNumber(selectedSummary?.weekly_etu, 2) }}</strong></div>
       <div><span>ETU / FCSA</span><strong>{{ formatNumber(selectedSummary?.etu_per_fcsa_cm2, 2) }}</strong></div>
       <div><span>Workout MRU</span><strong>{{ formatNumber(selectedStimulus?.mru, 2) }}</strong></div>
       <p>Modeled local performance/recovery debt—not soreness, protein synthesis, injury, or literal healing.</p>

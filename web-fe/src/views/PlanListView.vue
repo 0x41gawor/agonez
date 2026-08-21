@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { plansApi } from '@/api/plans'
-import type { PlanSummary } from '@/api/plan-types'
+import type { PlanDraftArtifact, PlanSummary } from '@/api/plan-types'
 import ErrorState from '@/components/common/ErrorState.vue'
 
 const router = useRouter()
@@ -14,6 +14,8 @@ const creating = ref(false)
 const createOpen = ref(false)
 const name = ref('')
 const description = ref('')
+const duplicatingPlanId = ref<number | null>(null)
+const duplicatedPlan = ref<Pick<PlanDraftArtifact, 'id' | 'name'> | null>(null)
 
 async function loadPlans(): Promise<void> {
   loading.value = true
@@ -51,6 +53,22 @@ async function deletePlan(plan: PlanSummary): Promise<void> {
     plans.value = plans.value.filter((item) => item.id !== plan.id)
   } catch (caught) {
     error.value = caught instanceof Error ? caught.message : 'The plan could not be deleted.'
+  }
+}
+
+async function duplicatePlan(plan: PlanSummary): Promise<void> {
+  if (duplicatingPlanId.value !== null) return
+  duplicatingPlanId.value = plan.id
+  duplicatedPlan.value = null
+  error.value = null
+  try {
+    const duplicate = await plansApi.duplicate(plan.id)
+    plans.value = (await plansApi.list()).items
+    duplicatedPlan.value = { id: duplicate.id, name: duplicate.name }
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : 'The plan could not be duplicated.'
+  } finally {
+    duplicatingPlanId.value = null
   }
 }
 
@@ -98,6 +116,12 @@ onMounted(() => void loadPlans())
       <span>{{ error }}</span>
       <button type="button" @click="error = null">Dismiss</button>
     </div>
+    <div v-if="duplicatedPlan" class="plan-inline-success" role="status">
+      <span>Created “{{ duplicatedPlan.name }}” as an independent deep copy.</span>
+      <RouterLink :to="{ name: 'plan-editor', params: { planId: duplicatedPlan.id } }">
+        Open copy →
+      </RouterLink>
+    </div>
 
     <div v-if="loading" class="plans-loading panel" aria-label="Loading plans">
       <div v-for="index in 3" :key="index" class="skeleton" />
@@ -120,7 +144,26 @@ onMounted(() => void loadPlans())
             Draft v{{ plan.draft_lock_version ?? '—' }}<br />{{ updatedLabel(plan.updated_at) }}
           </span>
         </RouterLink>
-        <button class="plan-delete" type="button" :aria-label="`Delete ${plan.name}`" @click="deletePlan(plan)">×</button>
+        <div class="plan-card-actions">
+          <button
+            class="plan-card-action plan-duplicate"
+            type="button"
+            :disabled="duplicatingPlanId !== null"
+            :aria-label="`Duplicate ${plan.name}`"
+            :title="`Duplicate ${plan.name}`"
+            @click="duplicatePlan(plan)"
+          >
+            {{ duplicatingPlanId === plan.id ? '…' : '⧉' }}
+          </button>
+          <button
+            class="plan-card-action plan-delete"
+            type="button"
+            :disabled="duplicatingPlanId !== null"
+            :aria-label="`Delete ${plan.name}`"
+            :title="`Delete ${plan.name}`"
+            @click="deletePlan(plan)"
+          >×</button>
+        </div>
       </article>
     </div>
     <div v-else class="new-plan-empty panel">

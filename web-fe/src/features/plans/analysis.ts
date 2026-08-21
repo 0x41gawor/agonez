@@ -8,6 +8,7 @@ import { formatNumber, prettyToken } from '@/utils/format'
 
 export type AnalysisPhase = 'BEFORE' | 'AFTER'
 export type EtuDisplayMode = 'ABSOLUTE' | 'NORMALIZED'
+export type EtuTimeBasis = 'MICROCYCLE' | 'WEEKLY'
 export type MuscleSort = 'ETU' | 'NORMALIZED' | 'RECOVERY'
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const
@@ -30,6 +31,7 @@ const DIAGNOSTIC_TITLES: Record<string, string> = {
   RECOVERY_DIVERGENCE: 'Recovery model did not reach steady state',
   ORDINAL_TIMING_ASSUMPTION: 'Timing assumption',
   ORDINAL_TIMING_WRAPPED: 'Weekly timing wrapped',
+  WEEKDAY_SEQUENCE_MISMATCH: 'Weekday metadata differs from plan order',
   MISSING_ETU_VECTOR: 'ETU data unavailable',
   MISSING_ACTIVE_TENSION_VECTOR: 'Active-tension data unavailable',
   MISSING_RECOVERY_MODIFIER_VECTOR: 'Recovery-modifier data unavailable',

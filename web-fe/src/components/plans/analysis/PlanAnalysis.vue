@@ -9,7 +9,11 @@ import type {
 } from '@/api/plan-analysis-types'
 import type { ExerciseListItem, MuscleListItem } from '@/api/types'
 import ErrorState from '@/components/common/ErrorState.vue'
-import type { AnalysisPhase, EtuDisplayMode } from '@/features/plans/analysis'
+import type {
+  AnalysisPhase,
+  EtuDisplayMode,
+  EtuTimeBasis,
+} from '@/features/plans/analysis'
 import AnalysisDiagnostics from './AnalysisDiagnostics.vue'
 import AnalysisModelDetails from './AnalysisModelDetails.vue'
 import AnalysisSnapshot from './AnalysisSnapshot.vue'
@@ -20,6 +24,7 @@ import WorkoutAnalysis from './WorkoutAnalysis.vue'
 
 const phase = defineModel<AnalysisPhase>('phase', { required: true })
 const etuMode = defineModel<EtuDisplayMode>('etuMode', { required: true })
+const etuTimeBasis = defineModel<EtuTimeBasis>('etuTimeBasis', { required: true })
 const props = defineProps<{
   result: PlanAnalysisResult | null
   loading: boolean
@@ -87,6 +92,7 @@ const hasTrainingSessions = computed(
       </div>
 
       <AnalysisSnapshot
+        v-model:etu-basis="etuTimeBasis"
         :result="result"
         :stale="stale"
         :dirty="dirty"
@@ -121,6 +127,7 @@ const hasTrainingSessions = computed(
         v-if="hasTrainingSessions && result.plan_summary.muscles.length"
         v-model:mode="etuMode"
         v-model:selected-slug="selectedMuscleSlug"
+        :etu-basis="etuTimeBasis"
         :summaries="result.plan_summary.muscles"
         :contributions-by-slug="muscleContributionsBySlug"
         :muscles="muscles"

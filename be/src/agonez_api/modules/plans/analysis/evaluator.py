@@ -12,10 +12,11 @@ from agonez_api.modules.plans.analysis.domain import (
 from agonez_api.modules.plans.analysis.parameters import (
     CUMULATIVE_SET_PENALTY_CAP,
     CUMULATIVE_SET_PENALTY_STEP,
+    DAYS_PER_WEEK,
     EFFECTIVE_REPS_BY_RIR,
+    HOURS_PER_DAY,
     JOINT_RECOVERY_VELOCITY_V1,
     MEANINGFUL_CONTRIBUTION_EPSILON,
-    MICROCYCLE_HOURS,
     MODEL_VERSION,
     MUSCLE_RECOVERY_VELOCITY_V1,
     RECOVERY_CONVERGENCE_EPSILON_HOURS,
@@ -89,6 +90,12 @@ def evaluate_plan(
     timing_assumptions: list[TimingAssumption] | None = None,
     initial_diagnostics: list[AnalysisDiagnostic] | None = None,
 ) -> PlanAnalysisResult:
+    microcycle_days = len(plan.days)
+    microcycle_hours = float(microcycle_days) * HOURS_PER_DAY
+    microcycle_weeks = float(microcycle_days) / DAYS_PER_WEEK
+    weekly_normalization_factor = (
+        DAYS_PER_WEEK / float(microcycle_days) if microcycle_days else 0.0
+    )
     diagnostics = list(initial_diagnostics or [])
     diagnostic_keys = {
         (
@@ -295,7 +302,7 @@ def evaluate_plan(
         for joint_slug, jru in aggregate.joint_jru.items():
             aggregate.joint_recovery_hours[joint_slug] = jru / JOINT_RECOVERY_VELOCITY_V1
 
-    simulation = _simulate_recovery(plan.days, workouts)
+    simulation = _simulate_recovery(plan.days, workouts, microcycle_hours)
     if not simulation.converged:
         _add_diagnostic(
             diagnostics,
@@ -304,7 +311,8 @@ def evaluate_plan(
                 code="RECOVERY_DIVERGENCE",
                 severity=DiagnosticSeverity.ERROR,
                 message=(
-                    "The repeating 168-hour microcycle did not reach a periodic recovery "
+                    f"The repeating {microcycle_hours:g}-hour microcycle did not reach a "
+                    "periodic recovery "
                     f"state within {RECOVERY_MAX_CYCLES} cycles."
                 ),
                 affected_muscle_slugs=sorted(simulation.divergent_muscles),
@@ -317,8 +325,9 @@ def evaluate_plan(
         catalog,
         plan.days,
         simulation,
+        weekly_normalization_factor,
     )
-    timeline = _build_timeline(plan.days, workouts, simulation)
+    timeline = _build_timeline(plan.days, workouts, simulation, microcycle_hours)
     context = plan.resolution_context
     return PlanAnalysisResult(
         model_version=MODEL_VERSION,
@@ -333,7 +342,10 @@ def evaluate_plan(
         ),
         timing_assumptions=list(timing_assumptions or []),
         model_parameters=AnalysisModelParameters(
-            microcycle_hours=MICROCYCLE_HOURS,
+            microcycle_days=microcycle_days,
+            microcycle_hours=microcycle_hours,
+            microcycle_weeks=microcycle_weeks,
+            weekly_normalization_factor=weekly_normalization_factor,
             effective_reps_by_rir=dict(EFFECTIVE_REPS_BY_RIR),
             rir_recovery_multiplier=dict(RIR_RECOVERY_MULTIPLIER),
             cumulative_set_penalty_step=CUMULATIVE_SET_PENALTY_STEP,
@@ -458,6 +470,7 @@ def _classify_intent(
 def _simulate_recovery(
     days: tuple[ResolvedDay, ...],
     workouts: Mapping[int, _WorkoutAggregate],
+    microcycle_hours: float,
 ) -> _SimulationResult:
     muscle_keys = sorted(
         {
@@ -489,6 +502,7 @@ def _simulate_recovery(
             workouts,
             start_muscle,
             start_joint,
+            microcycle_hours,
         )
         last_muscle_delta = {
             slug: abs(muscle_state[slug] - start_muscle[slug]) for slug in muscle_keys
@@ -501,6 +515,7 @@ def _simulate_recovery(
                 workouts,
                 muscle_state,
                 joint_state,
+                microcycle_hours,
             )
             return _SimulationResult(
                 converged=True,
@@ -515,6 +530,7 @@ def _simulate_recovery(
         workouts,
         muscle_state,
         joint_state,
+        microcycle_hours,
     )
     return _SimulationResult(
         converged=False,
@@ -538,6 +554,7 @@ def _run_cycle(
     workouts: Mapping[int, _WorkoutAggregate],
     start_muscle: Mapping[str, float],
     start_joint: Mapping[str, float],
+    microcycle_hours: float,
 ) -> tuple[dict[str, float], dict[str, float], dict[int, _DayRecoverySnapshot]]:
     muscle_state = dict(start_muscle)
     joint_state = dict(start_joint)
@@ -562,8 +579,8 @@ def _run_cycle(
             joint_after=dict(joint_state),
         )
         previous_offset = day.hour_offset
-    _decay(muscle_state, MICROCYCLE_HOURS - previous_offset)
-    _decay(joint_state, MICROCYCLE_HOURS - previous_offset)
+    _decay(muscle_state, microcycle_hours - previous_offset)
+    _decay(joint_state, microcycle_hours - previous_offset)
     return muscle_state, joint_state, snapshots
 
 
@@ -572,6 +589,7 @@ def _build_summary(
     catalog: AnalysisCatalog,
     days: tuple[ResolvedDay, ...],
     simulation: _SimulationResult,
+    weekly_normalization_factor: float,
 ) -> PlanAnalysisSummary:
     muscle_values: dict[str, dict[str, float]] = {}
     joint_values: dict[str, dict[str, float]] = {}
@@ -621,14 +639,29 @@ def _build_summary(
                 slug=slug,
                 fcsa_cm2=fcsa,
                 total_etu=values["etu"],
+                weekly_etu=values["etu"] * weekly_normalization_factor,
                 etu_per_fcsa_cm2=(
                     values["etu"] / fcsa
                     if fcsa is not None and fcsa > MEANINGFUL_CONTRIBUTION_EPSILON
                     else None
                 ),
+                weekly_etu_per_fcsa_cm2=(
+                    values["etu"] * weekly_normalization_factor / fcsa
+                    if fcsa is not None and fcsa > MEANINGFUL_CONTRIBUTION_EPSILON
+                    else None
+                ),
                 intentional_etu=values["intentional"],
+                weekly_intentional_etu=(
+                    values["intentional"] * weekly_normalization_factor
+                ),
                 incidental_etu=values["incidental"],
+                weekly_incidental_etu=(
+                    values["incidental"] * weekly_normalization_factor
+                ),
                 unclassified_etu=values["unclassified"],
+                weekly_unclassified_etu=(
+                    values["unclassified"] * weekly_normalization_factor
+                ),
                 total_mru=values["mru"],
                 maximum_post_workout_hours_to_fresh=max(post_values, default=0.0),
                 worst_pre_workout_hours_to_fresh=max(pre_values, default=0.0),
@@ -653,8 +686,10 @@ def _build_summary(
                 recovery_converged=slug not in simulation.divergent_joints,
             )
         )
+    total_etu_scalar = sum(values["etu"] for values in muscle_values.values())
     return PlanAnalysisSummary(
-        total_etu_scalar=sum(values["etu"] for values in muscle_values.values()),
+        total_etu_scalar=total_etu_scalar,
+        weekly_etu_scalar=total_etu_scalar * weekly_normalization_factor,
         muscles=muscles,
         joints=joints,
     )
@@ -664,11 +699,12 @@ def _build_timeline(
     days: tuple[ResolvedDay, ...],
     workouts: Mapping[int, _WorkoutAggregate],
     simulation: _SimulationResult,
+    microcycle_hours: float,
 ) -> list[AnalysisTimelineDay]:
     ordered_days = sorted(days, key=lambda day: (day.hour_offset, day.ordinal, day.id))
     if not ordered_days:
         return []
-    previous_offset = ordered_days[-1].hour_offset - MICROCYCLE_HOURS
+    previous_offset = ordered_days[-1].hour_offset - microcycle_hours
     timeline: list[AnalysisTimelineDay] = []
     for day in ordered_days:
         snapshot = simulation.snapshots[day.id]

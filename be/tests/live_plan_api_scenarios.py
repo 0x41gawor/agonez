@@ -318,7 +318,7 @@ def main() -> None:
                 }
             },
         )
-        assert analysis["model_version"] == "plan-analysis-v1"
+        assert analysis["model_version"] == "plan-analysis-v2"
         assert analysis["plan_id"] == plan_id
         assert analysis["revision_id"] == with_fallback["revision_id"]
         assert analysis["lock_version"] == with_fallback["lock_version"]

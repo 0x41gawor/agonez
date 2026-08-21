@@ -20,7 +20,7 @@ describe('usePlanAnalysis', () => {
     vi.mocked(plansApi.analyzeDraft).mockResolvedValue(analysisResult())
   })
 
-  it('loads persisted Analysis once on first activation with the frozen V1 context', async () => {
+  it('loads persisted Analysis once on first activation with the frozen context', async () => {
     const state = usePlanAnalysis(ref(11), ref(4), ref(false))
 
     await state.activate()
@@ -28,8 +28,9 @@ describe('usePlanAnalysis', () => {
 
     expect(plansApi.analyzeDraft).toHaveBeenCalledTimes(1)
     expect(plansApi.analyzeDraft).toHaveBeenCalledWith(11, DEFAULT_ANALYSIS_REQUEST)
-    expect(state.result.value?.model_version).toBe('plan-analysis-v1')
+    expect(state.result.value?.model_version).toBe('plan-analysis-v2')
     expect(state.selectedDay.value?.day_id).toBe(31)
+    expect(state.etuTimeBasis.value).toBe('MICROCYCLE')
   })
 
   it('keeps BEFORE/AFTER and day selection local without another request', async () => {

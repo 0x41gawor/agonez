@@ -202,7 +202,10 @@ def test_resolver_uses_default_variant_volume_gate_and_preserves_rest_days() -> 
     assert resolved.days[1].workout is None
     assert result.timeline[1].workout is None
     assert "fallback_press" not in {item.exercise_slug for item in result.contributions}
-    assert any(item.code == "ORDINAL_TIMING_ASSUMPTION" for item in result.diagnostics)
+    assert [day.hour_offset for day in resolved.days] == [0.0, 24.0]
+    assert {item.timing_source for item in result.timing_assumptions} == {
+        "MICROCYCLE_ORDINAL"
+    }
     assert draft.model_dump() == original
 
     resolved_override, _ = _analyze(
@@ -315,8 +318,16 @@ def test_recovery_conversion_linear_decay_rest_and_before_after_snapshots() -> N
 def test_periodic_simulation_carries_sunday_debt_into_monday() -> None:
     high_active_catalog = _catalog(active={"chest": 30.0})
     draft = _draft(
-        [[_slot(1, [_set(1, 0, 2)])], [_slot(2, [_set(2, 0, 2)])]],
-        weekdays=[1, 7],
+        [
+            [_slot(1, [_set(1, 0, 2)])],
+            None,
+            None,
+            None,
+            None,
+            None,
+            [_slot(2, [_set(2, 0, 2)])],
+        ],
+        weekdays=[1, 2, 3, 4, 5, 6, 7],
     )
     _, result = _analyze(draft, high_active_catalog)
 
@@ -324,6 +335,41 @@ def test_periodic_simulation_carries_sunday_debt_into_monday() -> None:
     assert result.simulation_cycles > 1
     assert monday.muscle_recovery_before[0].hours_to_fresh > 0
     assert result.recovery_converged is True
+    assert result.model_parameters.microcycle_days == 7
+    assert result.model_parameters.microcycle_hours == 168
+    assert result.model_parameters.weekly_normalization_factor == 1
+
+
+def test_fourteen_day_microcycle_uses_full_chronology_and_weekly_etu_normalization() -> None:
+    days: list[list[dict[str, Any]] | None] = [None] * 14
+    days[0] = [_slot(1, [_set(1, 0, 2)], targets=["chest"])]
+    days[7] = [_slot(2, [_set(2, 0, 2)], targets=["chest"])]
+    weekdays = [1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7]
+
+    resolved, result = _analyze(_draft(days, weekdays=weekdays), _catalog())
+    muscle = result.plan_summary.muscles[0]
+
+    assert [day.hour_offset for day in resolved.days] == [index * 24 for index in range(14)]
+    assert [day.elapsed_hours_since_previous_entry for day in result.timeline] == [24] * 14
+    assert result.model_parameters.microcycle_days == 14
+    assert result.model_parameters.microcycle_hours == 336
+    assert result.model_parameters.microcycle_weeks == 2
+    assert result.model_parameters.weekly_normalization_factor == pytest.approx(0.5)
+    assert result.plan_summary.total_etu_scalar == pytest.approx(12.0)
+    assert result.plan_summary.weekly_etu_scalar == pytest.approx(6.0)
+    assert muscle.total_etu == pytest.approx(12.0)
+    assert muscle.weekly_etu == pytest.approx(6.0)
+    assert muscle.etu_per_fcsa_cm2 == pytest.approx(1.2)
+    assert muscle.weekly_etu_per_fcsa_cm2 == pytest.approx(0.6)
+    assert muscle.weekly_intentional_etu == pytest.approx(6.0)
+
+
+def test_repeated_weekday_metadata_does_not_collapse_day_boundaries() -> None:
+    draft = _draft([None, None], weekdays=[1, 1])
+    resolved, result = _analyze(draft, _catalog())
+
+    assert [day.hour_offset for day in resolved.days] == [0.0, 24.0]
+    assert any(item.code == "WEEKDAY_SEQUENCE_MISMATCH" for item in result.diagnostics)
 
 
 def test_overloaded_periodic_recovery_returns_divergence_diagnostic() -> None:
@@ -370,7 +416,7 @@ def test_missing_and_malformed_vectors_are_partial_and_explicit() -> None:
         "MISSING_JOINT_LOAD_VECTOR",
         "MALFORMED_RECOVERY_VECTOR_KEYS",
     } <= codes
-    assert result.model_version == "plan-analysis-v1"
+    assert result.model_version == "plan-analysis-v2"
     assert result.plan_id == 6
     assert result.revision_id == 9
     assert result.lock_version == 55

@@ -13,6 +13,8 @@ export const plansApi = {
   list: (signal?: AbortSignal) => getJson<PlanListResponse>('/api/plans', undefined, signal),
   create: (payload: PlanCreate, signal?: AbortSignal) =>
     postJson<PlanDraftArtifact>('/api/plans', payload, signal),
+  duplicate: (planId: number, signal?: AbortSignal) =>
+    postJson<PlanDraftArtifact>(`/api/plans/${planId}/duplicate`, {}, signal),
   detail: (planId: number, signal?: AbortSignal) =>
     getJson<PlanDetail>(`/api/plans/${planId}`, undefined, signal),
   draft: (planId: number, signal?: AbortSignal) =>

@@ -10,7 +10,9 @@ defineProps<{ result: PlanAnalysisResult }>()
     <summary><span><span class="section-label">Analysis model</span><strong>Parameters and inspectability</strong></span><span class="mono">{{ result.model_version }}</span></summary>
     <div class="model-detail-grid">
       <div><span>Model</span><strong>{{ result.model_version }}</strong></div>
-      <div><span>Microcycle</span><strong>{{ formatNumber(result.model_parameters.microcycle_hours, 0) }} h repeating</strong></div>
+      <div><span>Microcycle</span><strong>{{ result.model_parameters.microcycle_days }} days · {{ formatNumber(result.model_parameters.microcycle_hours, 0) }} h</strong></div>
+      <div><span>Cycle length</span><strong>{{ formatNumber(result.model_parameters.microcycle_weeks, 2) }} weeks</strong></div>
+      <div><span>Seven-day ETU factor</span><strong>×{{ formatNumber(result.model_parameters.weekly_normalization_factor, 3) }}</strong></div>
       <div><span>Cycles simulated</span><strong>{{ result.simulation_cycles }}</strong></div>
       <div><span>Recovery model</span><strong>Linear hours-to-fresh debt</strong></div>
       <div><span>Muscle recovery velocity</span><strong>{{ formatNumber(result.model_parameters.muscle_recovery_velocity_v1, 9) }} MRU/cm²/h</strong></div>

@@ -2,8 +2,10 @@
 import { computed } from 'vue'
 
 import type { PlanAnalysisResult } from '@/api/plan-analysis-types'
+import type { EtuTimeBasis } from '@/features/plans/analysis'
 import { formatNumber } from '@/utils/format'
 
+const etuBasis = defineModel<EtuTimeBasis>('etuBasis', { required: true })
 const props = defineProps<{
   result: PlanAnalysisResult
   stale: boolean
@@ -35,6 +37,11 @@ const jointsNotFresh = computed(
       (item) => item.worst_pre_workout_hours_to_fresh > 0.005,
     ).length,
 )
+const displayedTotalEtu = computed(() =>
+  etuBasis.value === 'WEEKLY'
+    ? props.result.plan_summary.weekly_etu_scalar
+    : props.result.plan_summary.total_etu_scalar,
+)
 </script>
 
 <template>
@@ -53,6 +60,20 @@ const jointsNotFresh = computed(
         <span>Volume</span>
         <strong>Default · Level {{ result.resolution_context.global_volume_level }}</strong>
         <small class="mono">Modulation later</small>
+      </div>
+      <div class="snapshot-control snapshot-control-basis">
+        <span>ETU basis</span>
+        <div class="metric-switch" aria-label="ETU time basis">
+          <button type="button" :class="{ active: etuBasis === 'MICROCYCLE' }" @click="etuBasis = 'MICROCYCLE'">
+            Full cycle
+          </button>
+          <button type="button" :class="{ active: etuBasis === 'WEEKLY' }" @click="etuBasis = 'WEEKLY'">
+            Per 7 days
+          </button>
+        </div>
+        <small class="mono">
+          {{ result.model_parameters.microcycle_days }}d · {{ formatNumber(result.model_parameters.microcycle_weeks, 2) }}w
+        </small>
       </div>
       <div class="snapshot-control" aria-disabled="true">
         <span>Focus</span>
@@ -97,7 +118,11 @@ const jointsNotFresh = computed(
     </div>
 
     <div class="analysis-overview-grid" aria-label="Plan Analysis overview">
-      <div><span>Total ETU</span><strong>{{ formatNumber(result.plan_summary.total_etu_scalar, 1) }}</strong><small>descriptive aggregate</small></div>
+      <div>
+        <span>{{ etuBasis === 'WEEKLY' ? 'ETU / 7 days' : 'Microcycle ETU' }}</span>
+        <strong>{{ formatNumber(displayedTotalEtu, 1) }}</strong>
+        <small>{{ etuBasis === 'WEEKLY' ? `normalized from ${result.model_parameters.microcycle_days} days` : `${result.model_parameters.microcycle_days}-day aggregate` }}</small>
+      </div>
       <div><span>Stimulated muscles</span><strong>{{ stimulatedMuscles }}</strong><small>non-zero ETU</small></div>
       <div><span>Muscles not fresh</span><strong>{{ musclesNotFresh }}</strong><small>before ≥1 workout</small></div>
       <div><span>Joints not fresh</span><strong>{{ jointsNotFresh }}</strong><small>before ≥1 workout</small></div>

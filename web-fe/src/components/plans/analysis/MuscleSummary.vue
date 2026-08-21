@@ -10,6 +10,7 @@ import {
   formatHours,
   muscleLabel,
   type EtuDisplayMode,
+  type EtuTimeBasis,
   type MuscleSort,
 } from '@/features/plans/analysis'
 import { formatNumber } from '@/utils/format'
@@ -19,6 +20,7 @@ const mode = defineModel<EtuDisplayMode>('mode', { required: true })
 const selectedSlug = defineModel<string | null>('selectedSlug', { default: null })
 const props = defineProps<{
   summaries: MuscleAnalysisSummary[]
+  etuBasis: EtuTimeBasis
   contributionsBySlug: Map<string, MuscleContribution[]>
   muscles: MuscleListItem[]
   exercises: ExerciseListItem[]
@@ -30,10 +32,10 @@ const sorted = computed(() => {
   const items = [...props.summaries]
   items.sort((a, b) => {
     if (sort.value === 'NORMALIZED')
-      return (b.etu_per_fcsa_cm2 ?? -1) - (a.etu_per_fcsa_cm2 ?? -1)
+      return (etuPerFcsa(b) ?? -1) - (etuPerFcsa(a) ?? -1)
     if (sort.value === 'RECOVERY')
       return b.worst_pre_workout_hours_to_fresh - a.worst_pre_workout_hours_to_fresh
-    return b.total_etu - a.total_etu
+    return totalEtu(b) - totalEtu(a)
   })
   return items
 })
@@ -43,11 +45,40 @@ const selectedContributions = computed(() =>
 )
 
 function primaryValue(item: MuscleAnalysisSummary): number | null {
-  return mode.value === 'ABSOLUTE' ? item.total_etu : item.etu_per_fcsa_cm2
+  return mode.value === 'ABSOLUTE' ? totalEtu(item) : etuPerFcsa(item)
+}
+
+function totalEtu(item: MuscleAnalysisSummary): number {
+  return props.etuBasis === 'WEEKLY' ? item.weekly_etu : item.total_etu
+}
+
+function etuPerFcsa(item: MuscleAnalysisSummary): number | null {
+  return props.etuBasis === 'WEEKLY'
+    ? item.weekly_etu_per_fcsa_cm2
+    : item.etu_per_fcsa_cm2
+}
+
+function intentionalEtu(item: MuscleAnalysisSummary): number {
+  return props.etuBasis === 'WEEKLY'
+    ? item.weekly_intentional_etu
+    : item.intentional_etu
+}
+
+function incidentalEtu(item: MuscleAnalysisSummary): number {
+  return props.etuBasis === 'WEEKLY'
+    ? item.weekly_incidental_etu
+    : item.incidental_etu
+}
+
+function unclassifiedEtu(item: MuscleAnalysisSummary): number {
+  return props.etuBasis === 'WEEKLY'
+    ? item.weekly_unclassified_etu
+    : item.unclassified_etu
 }
 
 function intentWidth(item: MuscleAnalysisSummary, value: number): string {
-  return `${item.total_etu > 0 ? Math.max(0, (value / item.total_etu) * 100) : 0}%`
+  const total = totalEtu(item)
+  return `${total > 0 ? Math.max(0, (value / total) * 100) : 0}%`
 }
 </script>
 
@@ -56,8 +87,10 @@ function intentWidth(item: MuscleAnalysisSummary, value: number): string {
     <header class="analysis-section-heading summary-heading">
       <div>
         <span class="section-label">Muscle summary</span>
-        <h2>Complete microcycle stimulus</h2>
-        <p>ETU is modeled hypertrophic stimulus; recovery debt is shown separately.</p>
+        <h2>{{ etuBasis === 'WEEKLY' ? 'Seven-day-normalized stimulus' : 'Complete microcycle stimulus' }}</h2>
+        <p>
+          {{ etuBasis === 'WEEKLY' ? 'ETU is normalized to seven days for comparison; recovery still uses the complete cycle.' : 'ETU is modeled hypertrophic stimulus across the complete cycle; recovery debt is shown separately.' }}
+        </p>
       </div>
       <div class="summary-controls">
         <div class="metric-switch" aria-label="ETU normalization">
@@ -80,7 +113,7 @@ function intentWidth(item: MuscleAnalysisSummary, value: number): string {
         <thead>
           <tr>
             <th>Muscle</th>
-            <th>{{ mode === 'ABSOLUTE' ? 'ETU' : 'ETU / FCSA' }}</th>
+            <th>{{ mode === 'ABSOLUTE' ? (etuBasis === 'WEEKLY' ? 'ETU / 7d' : 'ETU') : (etuBasis === 'WEEKLY' ? 'ETU / FCSA / 7d' : 'ETU / FCSA') }}</th>
             <th>Intent composition</th>
             <th>Worst before</th>
             <th>Max after</th>
@@ -91,20 +124,20 @@ function intentWidth(item: MuscleAnalysisSummary, value: number): string {
           <tr v-for="item in visible" :key="item.slug" :class="{ selected: selectedSlug === item.slug }">
             <td>
               <strong>{{ muscleLabel(item.slug, muscles) }}</strong>
-              <small>{{ formatNumber(item.total_mru, 1) }} MRU · {{ item.recovery_converged ? 'converged' : 'divergent' }}</small>
+              <small>{{ formatNumber(item.total_mru, 1) }} MRU / cycle · {{ item.recovery_converged ? 'converged' : 'divergent' }}</small>
             </td>
             <td class="primary-analysis-metric mono">
               {{ formatNumber(primaryValue(item), 2) }}
-              <small>{{ mode === 'ABSOLUTE' ? 'ETU' : 'ETU/cm²' }}</small>
+              <small>{{ mode === 'ABSOLUTE' ? (etuBasis === 'WEEKLY' ? 'ETU/7d' : 'ETU') : (etuBasis === 'WEEKLY' ? 'ETU/cm²/7d' : 'ETU/cm²') }}</small>
             </td>
             <td>
-              <div class="intent-stack" :aria-label="`${formatNumber(item.intentional_etu, 2)} intentional, ${formatNumber(item.incidental_etu, 2)} incidental, ${formatNumber(item.unclassified_etu, 2)} unclassified ETU`">
-                <span class="intentional" :style="{ width: intentWidth(item, item.intentional_etu) }" />
-                <span class="incidental" :style="{ width: intentWidth(item, item.incidental_etu) }" />
-                <span class="unclassified" :style="{ width: intentWidth(item, item.unclassified_etu) }" />
+              <div class="intent-stack" :aria-label="`${formatNumber(intentionalEtu(item), 2)} intentional, ${formatNumber(incidentalEtu(item), 2)} incidental, ${formatNumber(unclassifiedEtu(item), 2)} unclassified ETU`">
+                <span class="intentional" :style="{ width: intentWidth(item, intentionalEtu(item)) }" />
+                <span class="incidental" :style="{ width: intentWidth(item, incidentalEtu(item)) }" />
+                <span class="unclassified" :style="{ width: intentWidth(item, unclassifiedEtu(item)) }" />
               </div>
               <small class="intent-numbers mono">
-                I {{ formatNumber(item.intentional_etu, 1) }} · Inc {{ formatNumber(item.incidental_etu, 1) }} · U {{ formatNumber(item.unclassified_etu, 1) }}
+                I {{ formatNumber(intentionalEtu(item), 1) }} · Inc {{ formatNumber(incidentalEtu(item), 1) }} · U {{ formatNumber(unclassifiedEtu(item), 1) }}
               </small>
             </td>
             <td>{{ formatHours(item.worst_pre_workout_hours_to_fresh) }}</td>

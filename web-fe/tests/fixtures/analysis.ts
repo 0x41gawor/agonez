@@ -33,7 +33,7 @@ export function analysisResult(
   overrides: Partial<PlanAnalysisResult> = {},
 ): PlanAnalysisResult {
   return {
-    model_version: 'plan-analysis-v1',
+    model_version: 'plan-analysis-v2',
     plan_id: 11,
     revision_id: 21,
     revision_no: 1,
@@ -47,13 +47,16 @@ export function analysisResult(
       {
         day_id: 32,
         day_ordinal: 1,
-        timing_source: 'ORDINAL_ASSUMPTION',
+        timing_source: 'MICROCYCLE_ORDINAL',
         hour_offset: 24,
         detail: 'No weekday; used plan ordinal.',
       },
     ],
     model_parameters: {
+      microcycle_days: 7,
       microcycle_hours: 168,
+      microcycle_weeks: 1,
+      weekly_normalization_factor: 1,
       effective_reps_by_rir: { '0': 5, '1': 4, '2': 3, '3': 2, '4': 1 },
       rir_recovery_multiplier: { '0': 1.2, '1': 1.1, '2': 1, '3': 0.9, '4': 0.8 },
       cumulative_set_penalty_step: 0.05,
@@ -68,15 +71,21 @@ export function analysisResult(
     simulation_cycles: 100,
     plan_summary: {
       total_etu_scalar: 31.5,
+      weekly_etu_scalar: 31.5,
       muscles: [
         {
           slug: 'pectoralis_major_sternal',
           fcsa_cm2: 53,
           total_etu: 24.5,
+          weekly_etu: 24.5,
           etu_per_fcsa_cm2: 0.462,
+          weekly_etu_per_fcsa_cm2: 0.462,
           intentional_etu: 12,
+          weekly_intentional_etu: 12,
           incidental_etu: 8,
+          weekly_incidental_etu: 8,
           unclassified_etu: 4.5,
+          weekly_unclassified_etu: 4.5,
           total_mru: 14,
           maximum_post_workout_hours_to_fresh: 80,
           worst_pre_workout_hours_to_fresh: 18,

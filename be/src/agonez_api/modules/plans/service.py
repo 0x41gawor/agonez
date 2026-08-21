@@ -24,6 +24,9 @@ class PlanService:
     async def create_plan(self, payload: PlanCreate) -> PlanDraftArtifact:
         return self.assemble_draft(await self._repository.create_plan(payload))
 
+    async def duplicate_plan(self, plan_id: int) -> PlanDraftArtifact:
+        return self.assemble_draft(await self._repository.duplicate_plan(plan_id))
+
     async def list_plans(self) -> PlanListResponse:
         rows = await self._repository.list_plans()
         return PlanListResponse(items=[PlanSummary.model_validate(row) for row in rows])

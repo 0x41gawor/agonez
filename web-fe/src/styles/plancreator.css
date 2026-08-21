@@ -88,7 +88,7 @@
   align-items: center;
   gap: 14px;
   min-height: 92px;
-  padding: 16px 52px 16px 16px;
+  padding: 16px 88px 16px 16px;
   color: var(--text);
 }
 
@@ -134,20 +134,36 @@
   text-align: right;
 }
 
-.plan-delete {
+.plan-card-actions {
   position: absolute;
   top: 50%;
   right: 14px;
+  display: flex;
+  gap: 4px;
+  transform: translateY(-50%);
+}
+
+.plan-card-action {
   width: 30px;
   height: 30px;
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
   color: var(--text3);
-  transform: translateY(-50%);
 }
 
-.plan-delete:hover,
+.plan-card-action:disabled {
+  cursor: wait;
+  opacity: 0.48;
+}
+
+.plan-duplicate:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--border));
+  background: var(--accentDim);
+  color: var(--accent2);
+}
+
+.plan-delete:hover:not(:disabled),
 .danger-action:hover,
 .danger-text:hover {
   border-color: color-mix(in srgb, var(--rec) 40%, var(--border));
@@ -325,7 +341,8 @@
 }
 
 .conflict-banner,
-.plan-inline-error {
+.plan-inline-error,
+.plan-inline-success {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -336,6 +353,17 @@
   border-radius: 9px;
   background: color-mix(in srgb, var(--rec) 8%, var(--panel));
   color: var(--text2);
+}
+
+.plan-inline-success {
+  border-color: color-mix(in srgb, var(--etu) 38%, var(--border));
+  background: color-mix(in srgb, var(--etu) 7%, var(--panel));
+}
+
+.plan-inline-success a {
+  flex: none;
+  color: color-mix(in srgb, var(--etu) 72%, var(--text));
+  font-weight: 650;
 }
 
 .conflict-banner strong {
@@ -1364,7 +1392,8 @@
   }
 
   .conflict-banner,
-  .plan-inline-error {
+  .plan-inline-error,
+  .plan-inline-success {
     align-items: stretch;
     flex-direction: column;
   }

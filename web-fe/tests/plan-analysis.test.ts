@@ -27,6 +27,7 @@ function mountAnalysis(result = analysisResult()) {
     props: {
       phase: 'BEFORE',
       etuMode: 'ABSOLUTE',
+      etuTimeBasis: 'MICROCYCLE',
       result,
       loading: false,
       error: null,
@@ -62,6 +63,64 @@ describe('Plan Analysis presentation', () => {
       expect.stringContaining('Rest'),
     ])
     expect(wrapper.findAll('.timeline-day')[1]?.classes()).toContain('rest')
+  })
+
+  it('groups a multi-week cycle and can normalize ETU to seven days', async () => {
+    const base = analysisResult()
+    const timeline = Array.from({ length: 14 }, (_, index) => {
+      const source = base.timeline[index % base.timeline.length]!
+      return {
+        ...source,
+        day_id: 100 + index,
+        day_ordinal: index,
+        weekday: (index % 7) + 1,
+        hour_offset: index * 24,
+        elapsed_hours_since_previous_entry: 24,
+      }
+    })
+    const result = analysisResult({
+      model_parameters: {
+        ...base.model_parameters,
+        microcycle_days: 14,
+        microcycle_hours: 336,
+        microcycle_weeks: 2,
+        weekly_normalization_factor: 0.5,
+      },
+      plan_summary: {
+        ...base.plan_summary,
+        total_etu_scalar: 63,
+        weekly_etu_scalar: 31.5,
+        muscles: base.plan_summary.muscles.map((item) => ({
+          ...item,
+          total_etu: 49,
+          weekly_etu: 24.5,
+          etu_per_fcsa_cm2: 0.924,
+          weekly_etu_per_fcsa_cm2: 0.462,
+          intentional_etu: 24,
+          weekly_intentional_etu: 12,
+          incidental_etu: 16,
+          weekly_incidental_etu: 8,
+          unclassified_etu: 9,
+          weekly_unclassified_etu: 4.5,
+        })),
+      },
+      timeline,
+    })
+    const wrapper = mountAnalysis(result)
+
+    expect(wrapper.findAll('.timeline-week-group')).toHaveLength(2)
+    expect(wrapper.text()).toContain('14 days · 2 weeks')
+    expect(wrapper.text()).toContain('Week 1')
+    expect(wrapper.text()).toContain('Week 2')
+    expect(wrapper.get('.analysis-overview-grid > div').text()).toContain('63')
+
+    await wrapper.findAll('.snapshot-control-basis button')[1]!.trigger('click')
+    expect(wrapper.emitted('update:etuTimeBasis')).toEqual([['WEEKLY']])
+    await wrapper.setProps({ etuTimeBasis: 'WEEKLY' })
+
+    expect(wrapper.get('.analysis-overview-grid > div').text()).toContain('31.5')
+    expect(wrapper.text()).toContain('Seven-day-normalized stimulus')
+    expect(wrapper.get('.primary-analysis-metric').text()).toContain('24.5')
   })
 
   it('emits timeline selection and keeps the returned Analysis inspectable under divergence', async () => {
@@ -115,6 +174,7 @@ describe('Plan Analysis presentation', () => {
       props: {
         mode: 'ABSOLUTE',
         selectedSlug: null,
+        etuBasis: 'MICROCYCLE',
         summaries: result.plan_summary.muscles,
         contributionsBySlug: new Map([[muscle.slug, contributions]]),
         muscles: [muscle],
@@ -152,6 +212,7 @@ describe('Plan Analysis presentation', () => {
       props: {
         mode: 'ABSOLUTE',
         selectedSlug: muscle.slug,
+        etuBasis: 'MICROCYCLE',
         summaries: result.plan_summary.muscles,
         contributionsBySlug: new Map([[muscle.slug, contributions]]),
         muscles: [muscle],

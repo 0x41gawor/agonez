@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from typing import Any, cast
 
@@ -58,6 +59,188 @@ class PlanRepository:
                     (plan["id"],),
                 )
                 return await self._load_draft_rows(connection, cast(int, plan["id"]))
+
+    async def duplicate_plan(self, plan_id: int) -> DraftRows:
+        async with self._pool.connection() as connection:
+            async with connection.transaction():
+                source_plan = await self._fetch_optional(
+                    connection,
+                    """
+                    SELECT id, name, description
+                    FROM plans.workout_plans
+                    WHERE id = %s
+                    FOR SHARE
+                    """,
+                    (plan_id,),
+                )
+                if source_plan is None:
+                    raise PlanNotFoundError(plan_id)
+
+                source = await self._load_draft_rows(connection, plan_id)
+                existing_names = await self._fetch_all(
+                    connection,
+                    "SELECT name FROM plans.workout_plans",
+                )
+                duplicate_name = self._duplicate_plan_name(
+                    cast(str, source_plan["name"]),
+                    [cast(str, row["name"]) for row in existing_names],
+                )
+                plan = await self._fetch_one(
+                    connection,
+                    """
+                    INSERT INTO plans.workout_plans (name, description)
+                    VALUES (%s, %s)
+                    RETURNING id
+                    """,
+                    (duplicate_name, source_plan["description"]),
+                )
+                revision = await self._fetch_one(
+                    connection,
+                    """
+                    INSERT INTO plans.plan_revisions
+                        (plan_id, revision_no, status, based_on_revision_id)
+                    VALUES (%s, 1, 'DRAFT', %s)
+                    RETURNING id
+                    """,
+                    (plan["id"], source.header["revision_id"]),
+                )
+                await self._copy_draft_tree(
+                    connection,
+                    source,
+                    cast(int, revision["id"]),
+                )
+                return await self._load_draft_rows(connection, cast(int, plan["id"]))
+
+    @staticmethod
+    def _duplicate_plan_name(source_name: str, existing_names: list[str]) -> str:
+        root = re.sub(r" copy(?: \d+)?$", "", source_name.strip(), flags=re.IGNORECASE)
+        normalized_names = {name.strip().casefold() for name in existing_names}
+        copy_number = 1
+        while True:
+            suffix = " copy" if copy_number == 1 else f" copy {copy_number}"
+            candidate = f"{root[: 200 - len(suffix)].rstrip()}{suffix}"
+            if candidate.casefold() not in normalized_names:
+                return candidate
+            copy_number += 1
+
+    async def _copy_draft_tree(
+        self,
+        connection: Any,
+        source: DraftRows,
+        new_revision_id: int,
+    ) -> None:
+        day_ids: dict[int, int] = {}
+        for day in source.days:
+            copied = await self._fetch_one(
+                connection,
+                """
+                INSERT INTO plans.day_prescriptions
+                    (revision_id, ordinal, weekday, name, description)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    new_revision_id,
+                    day["ordinal"],
+                    day["weekday"],
+                    day["name"],
+                    day["description"],
+                ),
+            )
+            day_ids[cast(int, day["id"])] = cast(int, copied["id"])
+
+        unit_ids: dict[int, int] = {}
+        for unit in source.workout_units:
+            copied = await self._fetch_one(
+                connection,
+                """
+                INSERT INTO plans.workout_unit_prescriptions
+                    (day_id, name, description, warmup_notes, stretch_notes)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    day_ids[cast(int, unit["day_id"])],
+                    unit["name"],
+                    unit["description"],
+                    unit["warmup_notes"],
+                    unit["stretch_notes"],
+                ),
+            )
+            unit_ids[cast(int, unit["id"])] = cast(int, copied["id"])
+
+        slot_ids: dict[int, int] = {}
+        for slot in source.slots:
+            copied = await self._fetch_one(
+                connection,
+                """
+                INSERT INTO plans.exercise_slots
+                    (workout_unit_id, ordinal, name, description, goal, role, volume_axis)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    unit_ids[cast(int, slot["workout_unit_id"])],
+                    slot["ordinal"],
+                    slot["name"],
+                    slot["description"],
+                    slot["goal"],
+                    slot["role"],
+                    slot["volume_axis"],
+                ),
+            )
+            slot_ids[cast(int, slot["id"])] = cast(int, copied["id"])
+
+        for target in source.target_muscles:
+            await self._execute(
+                connection,
+                """
+                INSERT INTO plans.exercise_slot_target_muscles (slot_id, muscle_id)
+                VALUES (%s, %s)
+                """,
+                (
+                    slot_ids[cast(int, target["slot_id"])],
+                    target["muscle_id"],
+                ),
+            )
+
+        variant_ids: dict[int, int] = {}
+        for variant in source.variants:
+            copied = await self._fetch_one(
+                connection,
+                """
+                INSERT INTO plans.exercise_variants
+                    (slot_id, ordinal, variant_type, exercise_id)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    slot_ids[cast(int, variant["slot_id"])],
+                    variant["ordinal"],
+                    variant["variant_type"],
+                    variant["exercise_id"],
+                ),
+            )
+            variant_ids[cast(int, variant["id"])] = cast(int, copied["id"])
+
+        for item in source.sets:
+            await self._fetch_one(
+                connection,
+                """
+                INSERT INTO plans.set_infra_prescriptions
+                    (exercise_variant_id, ordinal, rep_min, rep_max, rir, min_volume_level)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    variant_ids[cast(int, item["exercise_variant_id"])],
+                    item["ordinal"],
+                    item["rep_min"],
+                    item["rep_max"],
+                    item["rir"],
+                    item["min_volume_level"],
+                ),
+            )
 
     async def list_plans(self) -> list[Row]:
         async with self._pool.connection() as connection:
@@ -664,7 +847,7 @@ class PlanRepository:
         target_muscles = await self._fetch_all(
             connection,
             """
-            SELECT target.slot_id, muscle.slug
+            SELECT target.slot_id, target.muscle_id, muscle.slug
             FROM plans.exercise_slot_target_muscles AS target
             JOIN core.muscles AS muscle ON muscle.id = target.muscle_id
             JOIN plans.exercise_slots AS slot ON slot.id = target.slot_id
@@ -679,7 +862,8 @@ class PlanRepository:
             connection,
             """
             SELECT variant.id, variant.slot_id, variant.ordinal,
-                   variant.variant_type::text AS variant_type, exercise.slug AS exercise_slug
+                   variant.variant_type::text AS variant_type,
+                   variant.exercise_id, exercise.slug AS exercise_slug
             FROM plans.exercise_variants AS variant
             JOIN core.exercises AS exercise ON exercise.id = variant.exercise_id
             JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id

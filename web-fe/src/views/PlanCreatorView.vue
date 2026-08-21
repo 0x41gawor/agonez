@@ -193,6 +193,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
           v-show="activeTab === 'ANALYSIS'"
           v-model:phase="analysis.selectedPhase.value"
           v-model:etu-mode="analysis.etuMode.value"
+          v-model:etu-time-basis="analysis.etuTimeBasis.value"
           :result="analysis.result.value"
           :loading="analysis.loading.value"
           :error="analysis.error.value"
