@@ -18,6 +18,8 @@ const exercise: ExerciseListItem = {
   execution_pattern: 'Bilateral',
   load_capacity: 72,
   systemic_propulsive_fcsa_demand: 175.61,
+  created_at: '2026-08-20T10:00:00Z',
+  updated_at: '2026-08-21T10:00:00Z',
   has_engine_vectors: true,
   image_url: null,
 }

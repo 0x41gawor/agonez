@@ -1,5 +1,12 @@
 export type Vector = Record<string, number>
 export type SortOrder = 'asc' | 'desc'
+export type ExerciseSort =
+  | 'name'
+  | 'name_full'
+  | 'load_capacity'
+  | 'systemic_propulsive_fcsa_demand'
+  | 'created_at'
+  | 'updated_at'
 
 export interface ExerciseListItem {
   slug: string
@@ -12,6 +19,8 @@ export interface ExerciseListItem {
   execution_pattern: string
   load_capacity: number | null
   systemic_propulsive_fcsa_demand: number | null
+  created_at: string
+  updated_at: string
   has_engine_vectors: boolean
   image_url: string | null
 }
@@ -125,7 +134,7 @@ export interface ExerciseListQuery {
   target_category?: string[]
   mechanics_tier?: string[]
   resistance_source?: string[]
-  sort?: 'name' | 'name_full' | 'load_capacity' | 'systemic_propulsive_fcsa_demand'
+  sort?: ExerciseSort
   order?: SortOrder
   page?: number
   per_page?: number

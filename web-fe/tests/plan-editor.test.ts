@@ -62,6 +62,26 @@ describe('PlanEditor', () => {
     expect(editor.days[0]?.ordinal).toBe(0)
   })
 
+  it('adds exercise slots from the bottom control and the focused-day shortcut', async () => {
+    const editor = toPlanEditorState(planArtifact())
+    const wrapper = mount(PlanEditor, {
+      props: { modelValue: editor, exercises: [exercise], muscles: [muscle], issues: [] },
+    })
+
+    await wrapper.get('.day-toggle').trigger('click')
+    expect(wrapper.findAll('.add-slot-bottom')).toHaveLength(1)
+
+    await wrapper.get('.add-slot-bottom').trigger('click')
+    expect(editor.days[0]?.workout_unit?.exercise_slots).toHaveLength(2)
+
+    await wrapper.get('.day-editor').trigger('keydown', {
+      key: 'e',
+      ctrlKey: true,
+      shiftKey: true,
+    })
+    expect(editor.days[0]?.workout_unit?.exercise_slots).toHaveLength(3)
+  })
+
   it('shows a compact anatomy intent map only when slot details with targets are open', async () => {
     const editor = toPlanEditorState(planArtifact())
     const wrapper = mount(PlanEditor, {

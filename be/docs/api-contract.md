@@ -11,7 +11,7 @@ Index list. Server-side filtering/sorting once the library grows; UI currently d
 Query params:
 - `q` — free-text over name / name_full / slug
 - `body_part`, `target_category`, `mechanics_tier`, `resistance_source` — repeatable
-- `sort` — one of `name | name_full | load_capacity | systemic_propulsive_fcsa_demand`
+- `sort` — one of `name | name_full | load_capacity | systemic_propulsive_fcsa_demand | created_at | updated_at`
 - `order` — `asc | desc`; `page`, `per_page`
 
 ```json
@@ -28,6 +28,8 @@ Query params:
       "execution_pattern": "Bilateral",
       "load_capacity": 55.0,
       "systemic_propulsive_fcsa_demand": 115.0,
+      "created_at": "2026-08-20T10:00:00Z",
+      "updated_at": "2026-08-21T10:00:00Z",
       "has_engine_vectors": true,
       "image_url": null
     }
@@ -63,6 +65,8 @@ Detail page. One call returns core row + engine vectors.
   "execution_pattern": "Bilateral",
   "load_capacity": 55.0,
   "systemic_propulsive_fcsa_demand": 115.0,
+  "created_at": "2026-08-20T10:00:00Z",
+  "updated_at": "2026-08-21T10:00:00Z",
   "technique": {},
   "comments": {},
   "video_links": [],
@@ -88,6 +92,9 @@ Notes:
 Adds a demonstration video. The API accepts YouTube watch, short, Shorts, Live, and
 embed URLs, stores a canonical watch URL, and deduplicates equivalent URL forms by
 video ID.
+
+Appending a new link updates the exercise's `updated_at`; submitting an already stored
+video leaves the timestamp unchanged.
 
 ```json
 {

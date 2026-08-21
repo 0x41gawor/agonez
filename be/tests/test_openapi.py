@@ -46,3 +46,10 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
         "page",
         "per_page",
     } <= list_parameters
+
+    sort_parameter = next(
+        parameter
+        for parameter in paths["/api/atlas/exercises"]["get"]["parameters"]
+        if parameter["name"] == "sort"
+    )
+    assert {"created_at", "updated_at"} <= set(sort_parameter["schema"]["enum"])

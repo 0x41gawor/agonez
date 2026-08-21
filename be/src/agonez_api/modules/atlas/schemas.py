@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -23,6 +24,8 @@ class ExerciseListItem(APIModel):
     execution_pattern: str
     load_capacity: float | None
     systemic_propulsive_fcsa_demand: float | None
+    created_at: datetime
+    updated_at: datetime
     has_engine_vectors: bool
     image_url: str | None
 
@@ -62,6 +65,8 @@ class ExerciseDetail(APIModel):
     load_capacity: float | None
     systemic_propulsive_fcsa_demand: float | None
     propulsive_fcsa_contribution_vector: Vector | None
+    created_at: datetime
+    updated_at: datetime
     technique: JsonObject
     comments: JsonObject
     video_links: list[str]

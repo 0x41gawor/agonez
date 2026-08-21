@@ -188,6 +188,7 @@ const filterGroups = computed<FilterGroup[]>(() => {
 const sortOptions = computed(() => props.kind === 'exercises' ? [
   { value: 'name', label: 'Name' }, { value: 'name_full', label: 'Full name' },
   { value: 'load_capacity', label: 'Load capacity' }, { value: 'systemic_propulsive_fcsa_demand', label: 'FCSA demand' },
+  { value: 'created_at', label: 'Date added' }, { value: 'updated_at', label: 'Date modified' },
 ] : [
   { value: 'name', label: 'Name' }, { value: 'mass_g', label: 'Mass' }, { value: 'mv_cm3', label: 'Volume' },
   { value: 'fiber_bias_type_ii', label: 'Type II bias' }, { value: 'pcsa_fiber_cm2', label: 'PCSA (fiber)' },

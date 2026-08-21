@@ -865,7 +865,6 @@ overhead_rope_triceps_extension
 | Cable
 | 60.00
 | {"triceps_long_head":41.00,"triceps_lateral_head":28.00,"triceps_medial_head":12.00,"rotator_cuffs":7.00}
-| {...}
 ```
 
 

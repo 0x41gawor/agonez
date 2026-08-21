@@ -122,6 +122,8 @@ class AtlasService:
             load_capacity=row["load_capacity"],
             systemic_propulsive_fcsa_demand=row["systemic_propulsive_fcsa_demand"],
             propulsive_fcsa_contribution_vector=row["propulsive_fcsa_contribution_vector"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
             technique=row["technique"] or {},
             comments=row["comments"] or {},
             video_links=list(row["video_links"] or []),

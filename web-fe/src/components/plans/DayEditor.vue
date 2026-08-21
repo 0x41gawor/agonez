@@ -24,6 +24,7 @@ defineEmits<{
 }>()
 
 const expanded = ref(false)
+const workoutEditor = ref<{ addSlot: () => void } | null>(null)
 const weekdayLabel = computed(() =>
   model.value.weekday == null
     ? 'Flexible day'
@@ -35,10 +36,24 @@ const weekdayLabel = computed(() =>
 function addWorkout(): void {
   model.value.workout_unit = createWorkout(model.value.name)
 }
+
+function handleShortcut(event: KeyboardEvent): void {
+  if (
+    !expanded.value
+    || !model.value.workout_unit
+    || !(event.ctrlKey || event.metaKey)
+    || !event.shiftKey
+    || event.altKey
+    || event.key.toLowerCase() !== 'e'
+  ) return
+
+  event.preventDefault()
+  workoutEditor.value?.addSlot()
+}
 </script>
 
 <template>
-  <article class="day-editor panel">
+  <article class="day-editor panel" @keydown="handleShortcut">
     <header class="day-header">
       <button class="day-toggle" type="button" :aria-expanded="expanded" @click="expanded = !expanded">
         <span class="day-number mono">D{{ String(index + 1).padStart(2, '0') }}</span>
@@ -81,6 +96,7 @@ function addWorkout(): void {
 
       <WorkoutUnitEditor
         v-if="model.workout_unit"
+        ref="workoutEditor"
         v-model="model.workout_unit"
         :exercises="exercises"
         :muscles="muscles"

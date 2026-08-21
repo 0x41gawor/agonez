@@ -10,6 +10,8 @@ EXERCISE_SORTS = {
     "name_full": "LOWER(e.name_full)",
     "load_capacity": "eng.load_capacity_kg",
     "systemic_propulsive_fcsa_demand": "eng.systemic_propulsive_fcsa_demand",
+    "created_at": "e.created_at",
+    "updated_at": "e.updated_at",
 }
 
 MUSCLE_SORTS = {
@@ -61,6 +63,8 @@ class AtlasRepository:
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
                 e.execution_pattern::text AS execution_pattern,
+                e.created_at,
+                e.updated_at,
                 eng.load_capacity_kg AS load_capacity,
                 eng.systemic_propulsive_fcsa_demand,
                 (
@@ -136,6 +140,8 @@ class AtlasRepository:
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
                 e.execution_pattern::text AS execution_pattern,
+                e.created_at,
+                e.updated_at,
                 eng.load_capacity_kg AS load_capacity,
                 eng.systemic_propulsive_fcsa_demand,
                 eng.propulsive_fcsa_contribution_vector,
@@ -162,11 +168,15 @@ class AtlasRepository:
             SET video_links = CASE
                 WHEN %s = ANY(video_links) THEN video_links
                 ELSE array_append(video_links, %s)
+            END,
+            updated_at = CASE
+                WHEN %s = ANY(video_links) THEN updated_at
+                ELSE now()
             END
             WHERE slug = %s
-            RETURNING video_links
+            RETURNING video_links, updated_at
             """,
-            (url, url, slug),
+            (url, url, url, slug),
         )
 
     async def list_muscles(

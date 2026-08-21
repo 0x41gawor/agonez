@@ -13,6 +13,8 @@ def exercise_fields() -> dict[str, object]:
         "execution_pattern": "Bilateral",
         "load_capacity": None,
         "systemic_propulsive_fcsa_demand": None,
+        "created_at": "2026-08-20T10:00:00Z",
+        "updated_at": "2026-08-21T10:00:00Z",
         "image_url": None,
     }
 

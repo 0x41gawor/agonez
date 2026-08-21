@@ -41,6 +41,8 @@ async def list_exercises(
         "name_full",
         "load_capacity",
         "systemic_propulsive_fcsa_demand",
+        "created_at",
+        "updated_at",
     ] = "name",
     order: Literal["asc", "desc"] = "asc",
     page: Annotated[int, Query(ge=1)] = 1,

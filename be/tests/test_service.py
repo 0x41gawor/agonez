@@ -26,6 +26,8 @@ class FakeRepository:
                     "execution_pattern": "Bilateral",
                     "load_capacity": 55,
                     "systemic_propulsive_fcsa_demand": 115,
+                    "created_at": "2026-08-20T10:00:00Z",
+                    "updated_at": "2026-08-21T10:00:00Z",
                     "has_engine_vectors": True,
                 }
             ],
@@ -118,6 +120,8 @@ async def test_exercise_list_is_shaped_for_the_contract(service: AtlasService) -
     assert response.facets.body_part == {"Core": 1}
     assert response.items[0].image_url == "/media/exercises/dragon_flag.png"
     assert response.items[0].has_engine_vectors is True
+    assert response.items[0].created_at.isoformat() == "2026-08-20T10:00:00+00:00"
+    assert response.items[0].updated_at.isoformat() == "2026-08-21T10:00:00+00:00"
 
 
 async def test_related_exercises_put_measured_values_first(service: AtlasService) -> None:

@@ -474,6 +474,28 @@
   gap: 12px;
 }
 
+.slot-list-footer {
+  display: flex;
+  justify-content: center;
+  padding: 2px 0 0;
+}
+
+.add-slot-bottom {
+  justify-content: center;
+  min-width: 230px;
+  border-style: dashed;
+  color: var(--accent2);
+}
+
+.slot-shortcut {
+  margin-left: 8px;
+  padding-left: 9px;
+  border-left: 1px solid var(--border2);
+  color: var(--text3);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
 .day-editor {
   overflow: clip;
 }
@@ -1172,6 +1194,10 @@
   .days-heading .button,
   .rest-day-state .button,
   .slot-list-heading .button {
+    width: 100%;
+  }
+
+  .slot-list-footer .button {
     width: 100%;
   }
 

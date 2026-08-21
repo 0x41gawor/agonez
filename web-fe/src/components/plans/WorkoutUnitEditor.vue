@@ -25,6 +25,8 @@ const notesOpen = ref(false)
 function addSlot(): void {
   model.value.exercise_slots.push(createSlot(model.value.exercise_slots.length))
 }
+
+defineExpose({ addSlot })
 </script>
 
 <template>
@@ -73,7 +75,7 @@ function addSlot(): void {
         <span class="eyebrow">Exercise slots</span>
         <h3>{{ model.exercise_slots.length ? `${model.exercise_slots.length} planned roles` : 'Build this workout' }}</h3>
       </div>
-      <button class="button primary" type="button" @click="addSlot">+ Add exercise slot</button>
+      <button class="button primary" type="button" title="Add exercise slot (Ctrl/⌘ + Shift + E)" aria-keyshortcuts="Control+Shift+E Meta+Shift+E" @click="addSlot">+ Add exercise slot</button>
     </div>
 
     <div v-if="model.exercise_slots.length" class="slot-list">
@@ -90,6 +92,12 @@ function addSlot(): void {
         @move="moveOrdered(model.exercise_slots, index, $event)"
         @remove="removeOrdered(model.exercise_slots, index)"
       />
+      <div class="slot-list-footer">
+        <button class="button add-slot-bottom" type="button" title="Add exercise slot (Ctrl/⌘ + Shift + E)" aria-keyshortcuts="Control+Shift+E Meta+Shift+E" @click="addSlot">
+          <span>+ Add exercise slot</span>
+          <span class="slot-shortcut mono" aria-hidden="true">Ctrl ⇧ E</span>
+        </button>
+      </div>
     </div>
     <div v-else class="workout-empty">
       <p>No exercise slots yet. Add a slot for each stable role in this workout.</p>

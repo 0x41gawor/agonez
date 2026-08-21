@@ -55,6 +55,10 @@ async def test_exercise_list_metrics_and_sorting_are_sourced_from_engine() -> No
     assert EXERCISE_SORTS["systemic_propulsive_fcsa_demand"] == (
         "eng.systemic_propulsive_fcsa_demand"
     )
+    assert EXERCISE_SORTS["created_at"] == "e.created_at"
+    assert EXERCISE_SORTS["updated_at"] == "e.updated_at"
+    assert "e.created_at" in list_query
+    assert "e.updated_at" in list_query
 
 
 async def test_exercise_detail_propulsive_fields_are_sourced_from_engine() -> None:
@@ -79,6 +83,32 @@ async def test_exercise_detail_propulsive_fields_are_sourced_from_engine() -> No
     ) in captured_query
     assert "eng.systemic_propulsive_fcsa_demand" in captured_query
     assert "eng.propulsive_fcsa_contribution_vector" in captured_query
+    assert "e.created_at" in captured_query
+    assert "e.updated_at" in captured_query
     assert "e.load_capacity," not in captured_query
     assert "e.systemic_propulsive_fcsa_demand" not in captured_query
     assert "e.propulsive_fcsa_contribution_vector" not in captured_query
+
+
+async def test_adding_a_video_updates_timestamp_only_for_a_new_link() -> None:
+    repository = AtlasRepository(None)  # type: ignore[arg-type]
+    captured_query = ""
+    captured_params: tuple[Any, ...] | None = None
+
+    async def fetch_optional(
+        query: str,
+        params: tuple[Any, ...] | None = None,
+    ) -> dict[str, Any]:
+        nonlocal captured_query, captured_params
+        captured_query = query
+        captured_params = params
+        return {"video_links": ["https://youtu.be/YE7VzlLtp-4"]}
+
+    repository._fetch_optional = fetch_optional  # type: ignore[method-assign]
+    url = "https://youtu.be/YE7VzlLtp-4"
+    await repository.add_exercise_video(slug="barbell_bench_press", url=url)
+
+    assert "WHEN %s = ANY(video_links) THEN updated_at" in captured_query
+    assert "ELSE now()" in captured_query
+    assert "RETURNING video_links, updated_at" in captured_query
+    assert captured_params == (url, url, url, "barbell_bench_press")

@@ -2,7 +2,7 @@ import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { atlasApi } from '@/api/atlas'
-import type { AtlasMeta, MuscleListItem } from '@/api/types'
+import type { AtlasMeta, ExerciseSort, MuscleListItem } from '@/api/types'
 
 let metaRequest: Promise<AtlasMeta> | null = null
 let capacityRequest: Promise<MuscleListItem[]> | null = null
@@ -16,7 +16,7 @@ export const useAtlasStore = defineStore('atlas', () => {
   const exerciseBrowse = reactive({
     search: '',
     filters: { body_part: [] as string[], target_category: [] as string[], mechanics_tier: [] as string[], resistance_source: [] as string[] },
-    sort: 'name' as const as 'name' | 'name_full' | 'load_capacity' | 'systemic_propulsive_fcsa_demand',
+    sort: 'name' as ExerciseSort,
     order: 'asc' as 'asc' | 'desc',
     view: (localStorage.getItem('agonez-exercise-view') === 'grid' ? 'grid' : 'list') as 'list' | 'grid',
     page: 1,
