@@ -13,6 +13,8 @@ const props = withDefaults(
     joints?: Record<string, number> | null
     tooltipValues?: Record<string, number> | null
     tooltipValueLabel?: string
+    tooltipValueUnit?: string
+    tooltipValueDigits?: number
     showJoints?: boolean
     interactive?: boolean
   }>(),
@@ -23,6 +25,8 @@ const props = withDefaults(
     joints: null,
     tooltipValues: null,
     tooltipValueLabel: 'Relative intensity',
+    tooltipValueUnit: '',
+    tooltipValueDigits: 2,
     showJoints: false,
     interactive: true,
   },
@@ -184,7 +188,9 @@ function showTooltip(group: SVGGElement, event?: MouseEvent): void {
     detail =
       props.mode === 'recovery' && tooltipValue <= 0.005
         ? `${props.tooltipValueLabel} · fresh (0 h)`
-        : `${props.tooltipValueLabel} · ${formatNumber(tooltipValue, tooltipValue < 10 ? 1 : 0)} h to fresh`
+        : props.mode === 'recovery'
+          ? `${props.tooltipValueLabel} · ${formatNumber(tooltipValue, tooltipValue < 10 ? 1 : 0)} h to fresh`
+          : `${props.tooltipValueLabel} · ${formatNumber(tooltipValue, props.tooltipValueDigits)}${props.tooltipValueUnit ? ` ${props.tooltipValueUnit}` : ''}`
   }
   tip.value = {
     visible: true,

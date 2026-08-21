@@ -32,8 +32,8 @@ export function usePlanAnalysis(
   const explicitlyStale = ref(false)
   const selectedDayId = ref<number | null>(null)
   const selectedPhase = ref<AnalysisPhase>('BEFORE')
-  const etuMode = ref<EtuDisplayMode>('ABSOLUTE')
-  const etuTimeBasis = ref<EtuTimeBasis>('MICROCYCLE')
+  const etuMode = ref<EtuDisplayMode>('NORMALIZED')
+  const etuTimeBasis = ref<EtuTimeBasis>('WEEKLY')
   let requestSequence = 0
 
   const lockVersionMismatch = computed(

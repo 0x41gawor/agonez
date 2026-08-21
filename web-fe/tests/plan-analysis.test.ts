@@ -16,6 +16,8 @@ const BodyViewerStub = defineComponent({
     selectedSlug: { type: String, default: null },
     vector: { type: Object, default: null },
     tooltipValues: { type: Object, default: null },
+    tooltipValueLabel: { type: String, default: '' },
+    tooltipValueUnit: { type: String, default: '' },
     mode: { type: String, default: '' },
   },
   emits: ['select'],
@@ -119,7 +121,7 @@ describe('Plan Analysis presentation', () => {
     await wrapper.setProps({ etuTimeBasis: 'WEEKLY' })
 
     expect(wrapper.get('.analysis-overview-grid > div').text()).toContain('31.5')
-    expect(wrapper.text()).toContain('Seven-day-normalized stimulus')
+    expect(wrapper.text()).toContain('Weekly stimulus distribution')
     expect(wrapper.get('.primary-analysis-metric').text()).toContain('24.5')
   })
 
@@ -175,17 +177,24 @@ describe('Plan Analysis presentation', () => {
         mode: 'ABSOLUTE',
         selectedSlug: null,
         etuBasis: 'MICROCYCLE',
+        weeklyNormalizationFactor: result.model_parameters.weekly_normalization_factor,
+        timeline: result.timeline,
         summaries: result.plan_summary.muscles,
         contributionsBySlug: new Map([[muscle.slug, contributions]]),
         muscles: [muscle],
         exercises: [exercise],
       },
+      global: { stubs: { BodyViewer: BodyViewerStub } },
     })
 
     expect(wrapper.get('.primary-analysis-metric').text()).toContain('24.5')
-    expect(wrapper.text()).toContain('I 12')
-    expect(wrapper.text()).toContain('Inc 8')
-    expect(wrapper.text()).toContain('U 4.5')
+    expect(wrapper.get('.intent-stack').attributes('aria-label')).toContain('12 intentional')
+    expect(wrapper.get('.intent-stack').attributes('aria-label')).toContain('8 incidental')
+    expect(wrapper.get('.intent-stack').attributes('aria-label')).toContain('4.5 unclassified')
+
+    const viewer = wrapper.findComponent(BodyViewerStub)
+    expect(viewer.props('tooltipValues')).toEqual({ [muscle.slug]: 24.5 })
+    expect(viewer.props('tooltipValueUnit')).toBe('ETU/cycle')
 
     await wrapper.findAll('.metric-switch button')[1]!.trigger('click')
     expect(wrapper.emitted('update:mode')).toEqual([['NORMALIZED']])
@@ -199,8 +208,12 @@ describe('Plan Analysis presentation', () => {
     expect(wrapper.text()).toContain('9.25')
     expect(wrapper.text()).toContain('4.2')
 
-    await wrapper.find('.muscle-summary-section .text-action').trigger('click')
+    await wrapper.find('.stimulus-ranking-row').trigger('click')
     expect(wrapper.text()).toContain('Contribution provenance')
+    expect(wrapper.text()).toContain('D01')
+    expect(wrapper.text()).toContain('MON')
+    expect(wrapper.text()).toContain('Push A workout')
+    expect(wrapper.text()).toContain('Primary progressive')
     expect(wrapper.text()).toContain('Barbell Bench Press')
     expect(wrapper.text()).toContain('set records')
   })
@@ -213,11 +226,14 @@ describe('Plan Analysis presentation', () => {
         mode: 'ABSOLUTE',
         selectedSlug: muscle.slug,
         etuBasis: 'MICROCYCLE',
+        weeklyNormalizationFactor: result.model_parameters.weekly_normalization_factor,
+        timeline: result.timeline,
         summaries: result.plan_summary.muscles,
         contributionsBySlug: new Map([[muscle.slug, contributions]]),
         muscles: [muscle],
         exercises: [exercise],
       },
+      global: { stubs: { BodyViewer: BodyViewerStub } },
     })
 
     expect(wrapper.findAll('.provenance-set-list > div').length).toBeLessThanOrEqual(288)

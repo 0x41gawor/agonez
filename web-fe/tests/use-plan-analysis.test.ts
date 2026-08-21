@@ -30,7 +30,8 @@ describe('usePlanAnalysis', () => {
     expect(plansApi.analyzeDraft).toHaveBeenCalledWith(11, DEFAULT_ANALYSIS_REQUEST)
     expect(state.result.value?.model_version).toBe('plan-analysis-v2')
     expect(state.selectedDay.value?.day_id).toBe(31)
-    expect(state.etuTimeBasis.value).toBe('MICROCYCLE')
+    expect(state.etuTimeBasis.value).toBe('WEEKLY')
+    expect(state.etuMode.value).toBe('NORMALIZED')
   })
 
   it('keeps BEFORE/AFTER and day selection local without another request', async () => {

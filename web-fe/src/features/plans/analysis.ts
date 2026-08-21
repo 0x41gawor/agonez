@@ -81,6 +81,7 @@ export function recoveryBandIntensity(hoursToFresh: number): number {
 export interface MuscleSourceGroup {
   key: string
   exercise_slug: string
+  slot_role: MuscleContribution['slot_role']
   intent_classification: MuscleContribution['intent_classification']
   etu: number
   mru: number
@@ -92,10 +93,11 @@ export function groupMuscleSources(
 ): MuscleSourceGroup[] {
   const groups = new Map<string, MuscleSourceGroup>()
   for (const item of contributions) {
-    const key = `${item.exercise_slug}:${item.intent_classification}`
+    const key = `${item.day_id}:${item.exercise_slug}:${item.slot_role}:${item.intent_classification}`
     const group = groups.get(key) ?? {
       key,
       exercise_slug: item.exercise_slug,
+      slot_role: item.slot_role,
       intent_classification: item.intent_classification,
       etu: 0,
       mru: 0,
