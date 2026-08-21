@@ -654,19 +654,32 @@
 
 .slot-editor {
   --slot-role-color: var(--roleAccessory);
+  --slot-role-border-strength: 28%;
+  --slot-role-rail-strength: 78%;
+  --slot-role-rail-width: 3px;
   overflow: clip;
-  border-color: color-mix(in srgb, var(--slot-role-color) 28%, var(--border));
+  border-color: color-mix(
+    in srgb,
+    var(--slot-role-color) var(--slot-role-border-strength),
+    var(--border)
+  );
   border-radius: 9px;
   background: var(--panel2);
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--slot-role-color) 78%, transparent);
+  box-shadow: inset var(--slot-role-rail-width) 0 0
+    color-mix(in srgb, var(--slot-role-color) var(--slot-role-rail-strength), transparent);
 }
 
 .slot-editor.role-primary-progressive {
   --slot-role-color: var(--rolePrimary);
+  --slot-role-border-strength: 40%;
+  --slot-role-rail-strength: 92%;
+  --slot-role-rail-width: 4px;
 }
 
 .slot-editor.role-secondary-progressive {
   --slot-role-color: var(--roleSecondary);
+  --slot-role-border-strength: 34%;
+  --slot-role-rail-strength: 84%;
 }
 
 .slot-editor.role-volume-accumulation {
