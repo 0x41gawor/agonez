@@ -215,6 +215,69 @@ export function createSet(ordinal: number, source?: EditorSet): EditorSet {
   }
 }
 
+function duplicatedDayName(name: string, days: EditorDay[]): string {
+  const trimmed = name.trim() || 'Day'
+  const root = trimmed.replace(/ copy(?: \d+)?$/i, '')
+  const existing = new Set(days.map((day) => day.name.trim().toLocaleLowerCase()))
+  let candidate = `${root} copy`
+  let suffix = 2
+  while (existing.has(candidate.toLocaleLowerCase())) {
+    candidate = `${root} copy ${suffix}`
+    suffix += 1
+  }
+  return candidate
+}
+
+function duplicateWorkout(source: EditorWorkoutUnit, dayName: string, copyName: string): EditorWorkoutUnit {
+  return {
+    ...source,
+    id: null,
+    clientKey: clientKey('workout', null),
+    name: source.name.trim() === dayName.trim() ? copyName : source.name,
+    exercise_slots: source.exercise_slots.map((slot, slotIndex) => ({
+      ...slot,
+      id: null,
+      clientKey: clientKey('slot', null),
+      ordinal: slotIndex,
+      target_muscle_slugs: [...slot.target_muscle_slugs],
+      variants: slot.variants.map((variant, variantIndex) => ({
+        ...variant,
+        id: null,
+        clientKey: clientKey('variant', null),
+        ordinal: variantIndex,
+        sets: variant.sets.map((item, setIndex) => ({
+          ...item,
+          id: null,
+          clientKey: clientKey('set', null),
+          ordinal: setIndex,
+          reps: { ...item.reps },
+        })),
+      })),
+    })),
+  }
+}
+
+export function duplicateDay(days: EditorDay[], index: number): EditorDay | null {
+  const source = days[index]
+  if (!source) return null
+  const name = duplicatedDayName(source.name, days)
+  const duplicate: EditorDay = {
+    ...source,
+    id: null,
+    clientKey: clientKey('day', null),
+    ordinal: index + 1,
+    name,
+    workout_unit: source.workout_unit
+      ? duplicateWorkout(source.workout_unit, source.name, name)
+      : null,
+  }
+  days.splice(index + 1, 0, duplicate)
+  days.forEach((day, ordinal) => {
+    day.ordinal = ordinal
+  })
+  return duplicate
+}
+
 export function moveOrdered<T extends { ordinal: number }>(
   items: T[],
   index: number,

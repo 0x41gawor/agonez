@@ -3,6 +3,7 @@ import type { ExerciseListItem, MuscleListItem } from '@/api/types'
 import DayEditor from '@/components/plans/DayEditor.vue'
 import {
   createDay,
+  duplicateDay,
   moveOrdered,
   removeOrdered,
   type PlanEditorState,
@@ -67,6 +68,7 @@ function addDay(): void {
           :muscles="muscles"
           :path="`days.${day.clientKey}`"
           :issues="issues"
+          @duplicate="duplicateDay(model.days, index)"
           @move="moveOrdered(model.days, index, $event)"
           @remove="removeOrdered(model.days, index)"
         />

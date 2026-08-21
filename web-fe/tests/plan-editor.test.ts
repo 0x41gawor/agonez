@@ -7,6 +7,7 @@ import PlanEditor from '@/components/plans/PlanEditor.vue'
 import {
   createSlot,
   createVariant,
+  duplicateDay,
   moveOrdered,
   removeOrdered,
   toPlanDraftUpdate,
@@ -60,6 +61,44 @@ describe('PlanEditor', () => {
     await wrapper.findAll('.day-header .danger-action')[0]?.trigger('click')
     expect(editor.days).toHaveLength(1)
     expect(editor.days[0]?.ordinal).toBe(0)
+  })
+
+  it('deep-copies a day with fresh nested identities and an independent name', async () => {
+    const editor = toPlanEditorState(planArtifact())
+    const source = editor.days[0]!
+    const wrapper = mount(PlanEditor, {
+      props: { modelValue: editor, exercises: [exercise], muscles: [muscle], issues: [] },
+    })
+
+    await wrapper.get('button[title="Duplicate day"]').trigger('click')
+    expect(editor.days).toHaveLength(2)
+    const duplicate = editor.days[1]!
+    expect(duplicate.name).toBe('Push A copy')
+    expect(duplicate.ordinal).toBe(1)
+    expect(duplicate.id).toBeNull()
+    expect(duplicate.clientKey).not.toBe(source.clientKey)
+    expect(duplicate.workout_unit?.id).toBeNull()
+    expect(duplicate.workout_unit?.name).toBe('Push A workout')
+    expect(duplicate.workout_unit?.exercise_slots[0]?.id).toBeNull()
+    expect(duplicate.workout_unit?.exercise_slots[0]?.variants[0]?.id).toBeNull()
+    expect(duplicate.workout_unit?.exercise_slots[0]?.variants[0]?.sets[0]?.id).toBeNull()
+
+    duplicate.workout_unit!.exercise_slots[0]!.target_muscle_slugs.push('another_muscle')
+    duplicate.workout_unit!.exercise_slots[0]!.variants[0]!.sets[0]!.reps.min = 99
+    expect(source.workout_unit?.exercise_slots[0]?.target_muscle_slugs).toEqual([muscle.slug])
+    expect(source.workout_unit?.exercise_slots[0]?.variants[0]?.sets[0]?.reps.min).toBe(5)
+
+    const payload = toPlanDraftUpdate(editor)
+    expect(payload.days[1]?.workout_unit?.exercise_slots[0]?.variants[0]?.sets[0]?.id).toBeNull()
+  })
+
+  it('gives repeated copies deterministic unique names', () => {
+    const editor = toPlanEditorState(planArtifact())
+    duplicateDay(editor.days, 0)
+    duplicateDay(editor.days, 0)
+
+    expect(editor.days.map((day) => day.name)).toEqual(['Push A', 'Push A copy 2', 'Push A copy'])
+    expect(editor.days.map((day) => day.ordinal)).toEqual([0, 1, 2])
   })
 
   it('adds exercise slots from the bottom control and the focused-day shortcut', async () => {

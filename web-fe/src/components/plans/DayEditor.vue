@@ -20,6 +20,7 @@ defineProps<{
 }>()
 defineEmits<{
   move: [direction: -1 | 1]
+  duplicate: []
   remove: []
 }>()
 
@@ -64,6 +65,7 @@ function handleShortcut(event: KeyboardEvent): void {
         <span aria-hidden="true">{{ expanded ? '−' : '+' }}</span>
       </button>
       <div class="ordered-actions">
+        <button type="button" title="Duplicate day" aria-label="Duplicate day" @click="$emit('duplicate')">⧉</button>
         <button type="button" :disabled="index === 0" title="Move day up" @click="$emit('move', -1)">↑</button>
         <button type="button" :disabled="index === count - 1" title="Move day down" @click="$emit('move', 1)">↓</button>
         <button class="danger-action" type="button" title="Remove day" @click="$emit('remove')">×</button>
