@@ -20,7 +20,7 @@ const BodyViewerStub = defineComponent({
     tooltipValueUnit: { type: String, default: '' },
     mode: { type: String, default: '' },
   },
-  emits: ['select'],
+  emits: ['hover', 'select'],
   template: '<div class="body-viewer-stub" />',
 })
 
@@ -141,9 +141,20 @@ describe('Plan Analysis presentation', () => {
     const wrapper = mount(WorkoutAnalysis, {
       props: {
         phase: 'BEFORE',
+        etuMode: 'ABSOLUTE',
         selectedMuscleSlug: null,
         day: result.timeline[0]!,
+        timeline: result.timeline,
+        contributionsBySlug: new Map([
+          [
+            muscle.slug,
+            result.contributions.filter(
+              (item): item is MuscleContribution => item.type === 'MUSCLE',
+            ),
+          ],
+        ]),
         muscles: [muscle],
+        exercises: [exercise],
         summaries: result.plan_summary.muscles,
       },
       global: { stubs: { BodyViewer: BodyViewerStub } },
@@ -165,6 +176,75 @@ describe('Plan Analysis presentation', () => {
     expect(wrapper.findComponent(BodyViewerStub).props('vector')).toEqual({
       [muscle.slug]: 1,
     })
+  })
+
+  it('switches selected-day analysis to a workout-scoped stimulus explorer', async () => {
+    const result = analysisResult()
+    const contributions = result.contributions.filter(
+      (item): item is MuscleContribution => item.type === 'MUSCLE',
+    )
+    const wrapper = mount(WorkoutAnalysis, {
+      props: {
+        phase: 'BEFORE',
+        etuMode: 'ABSOLUTE',
+        selectedMuscleSlug: null,
+        day: result.timeline[0]!,
+        timeline: result.timeline,
+        contributionsBySlug: new Map([[muscle.slug, contributions]]),
+        muscles: [muscle],
+        exercises: [exercise],
+        summaries: result.plan_summary.muscles,
+      },
+      global: { stubs: { BodyViewer: BodyViewerStub } },
+    })
+
+    await wrapper.findAll('.selected-day-tabs button')[1]!.trigger('click')
+
+    expect(wrapper.find('.phase-switch').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Workout target bias')
+    expect(wrapper.text()).toContain('31.5 total ETU')
+    expect(wrapper.find('.workout-analysis-data').exists()).toBe(false)
+    expect(wrapper.findComponent(BodyViewerStub).props('tooltipValues')).toEqual({
+      [muscle.slug]: 24.5,
+    })
+    expect(wrapper.findComponent(BodyViewerStub).props('tooltipValueUnit')).toBe(
+      'ETU/workout',
+    )
+
+    await wrapper.find('.stimulus-ranking-row').trigger('click')
+    expect(wrapper.text()).toContain('D01')
+    expect(wrapper.text()).toContain('Barbell Bench Press')
+    expect(wrapper.text()).toContain('Primary progressive')
+
+    await wrapper.findAll('.selected-day-toolbar .metric-switch button')[1]!.trigger('click')
+    expect(wrapper.emitted('update:etuMode')).toEqual([['NORMALIZED']])
+  })
+
+  it('keeps workout stimulus unavailable on rest days and returns to recovery', async () => {
+    const result = analysisResult()
+    const wrapper = mount(WorkoutAnalysis, {
+      props: {
+        phase: 'BEFORE',
+        etuMode: 'NORMALIZED',
+        selectedMuscleSlug: null,
+        day: result.timeline[0]!,
+        timeline: result.timeline,
+        contributionsBySlug: new Map(),
+        muscles: [muscle],
+        exercises: [exercise],
+        summaries: result.plan_summary.muscles,
+      },
+      global: { stubs: { BodyViewer: BodyViewerStub } },
+    })
+
+    await wrapper.findAll('.selected-day-tabs button')[1]!.trigger('click')
+    expect(wrapper.text()).toContain('Workout target bias')
+
+    await wrapper.setProps({ day: result.timeline[1]! })
+
+    expect(wrapper.findAll('.selected-day-tabs button')[1]!.attributes('disabled')).toBeDefined()
+    expect(wrapper.find('.phase-switch').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Workout target bias')
   })
 
   it('renders backend muscle values and keeps all intent classes distinct', async () => {

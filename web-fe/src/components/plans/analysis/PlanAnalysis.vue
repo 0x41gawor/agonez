@@ -111,9 +111,13 @@ const hasTrainingSessions = computed(
       <WorkoutAnalysis
         v-if="selectedDay && hasTrainingSessions"
         v-model:phase="phase"
+        v-model:etu-mode="etuMode"
         v-model:selected-muscle-slug="selectedMuscleSlug"
         :day="selectedDay"
+        :timeline="result.timeline"
+        :contributions-by-slug="muscleContributionsBySlug"
         :muscles="muscles"
+        :exercises="exercises"
         :summaries="result.plan_summary.muscles"
       />
       <section v-else class="analysis-empty panel">

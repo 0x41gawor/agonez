@@ -1,33 +1,41 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import type {
   AnalysisTimelineDay,
   MuscleAnalysisSummary,
+  MuscleContribution,
   RecoveryState,
 } from '@/api/plan-analysis-types'
-import type { MuscleListItem } from '@/api/types'
+import type { ExerciseListItem, MuscleListItem } from '@/api/types'
 import {
   formatHours,
   jointLabel,
-  muscleLabel,
   type AnalysisPhase,
+  type EtuDisplayMode,
+  type MuscleStimulusPresentation,
 } from '@/features/plans/analysis'
 import { formatNumber } from '@/utils/format'
 import MuscleRecoveryMap from './MuscleRecoveryMap.vue'
+import MuscleStimulusExplorer from './MuscleStimulusExplorer.vue'
+
+type SelectedDayView = 'RECOVERY' | 'STIMULUS'
 
 const phase = defineModel<AnalysisPhase>('phase', { required: true })
+const etuMode = defineModel<EtuDisplayMode>('etuMode', { required: true })
 const selectedMuscleSlug = defineModel<string | null>('selectedMuscleSlug', {
   default: null,
 })
 const props = defineProps<{
   day: AnalysisTimelineDay
+  timeline: AnalysisTimelineDay[]
+  contributionsBySlug: Map<string, MuscleContribution[]>
   muscles: MuscleListItem[]
+  exercises: ExerciseListItem[]
   summaries: MuscleAnalysisSummary[]
 }>()
 
-const showAllMuscles = ref(false)
-const showAllJoints = ref(false)
+const activeView = ref<SelectedDayView>('RECOVERY')
 const jointStates = computed<RecoveryState[]>(() =>
   phase.value === 'BEFORE'
     ? props.day.joint_recovery_before
@@ -36,18 +44,49 @@ const jointStates = computed<RecoveryState[]>(() =>
 const rankedJointStates = computed(() =>
   [...jointStates.value].sort((a, b) => b.hours_to_fresh - a.hours_to_fresh),
 )
-const muscleStimulus = computed(() => {
-  const items = [...(props.day.workout?.stimulus.muscles ?? [])].sort(
-    (a, b) => b.etu_absolute - a.etu_absolute,
-  )
-  return showAllMuscles.value ? items : items.slice(0, 8)
+const dayContributionsBySlug = computed(() => {
+  const result = new Map<string, MuscleContribution[]>()
+  for (const [slug, contributions] of props.contributionsBySlug) {
+    const matching = contributions.filter((item) => item.day_id === props.day.day_id)
+    if (matching.length) result.set(slug, matching)
+  }
+  return result
 })
-const jointStimulus = computed(() => {
-  const items = [...(props.day.workout?.stimulus.joints ?? [])].sort(
-    (a, b) => b.jru - a.jru,
-  )
-  return showAllJoints.value ? items : items.slice(0, 6)
-})
+const workoutItems = computed<MuscleStimulusPresentation[]>(() =>
+  (props.day.workout?.stimulus.muscles ?? []).map((stimulus) => {
+    const summary = props.summaries.find((item) => item.slug === stimulus.slug)
+    const contributions = dayContributionsBySlug.value.get(stimulus.slug) ?? []
+    const intentEtu = (intent: MuscleContribution['intent_classification']) =>
+      contributions
+        .filter((item) => item.intent_classification === intent)
+        .reduce((total, item) => total + (item.etu_contribution ?? 0), 0)
+    const fcsa = summary?.fcsa_cm2 ?? null
+    return {
+      slug: stimulus.slug,
+      absoluteEtu: stimulus.etu_absolute,
+      normalizedEtu: fcsa != null && fcsa > 0 ? stimulus.etu_absolute / fcsa : null,
+      fcsaCm2: fcsa,
+      intentionalEtu: intentEtu('INTENTIONAL'),
+      incidentalEtu: intentEtu('INCIDENTAL'),
+      unclassifiedEtu: intentEtu('UNCLASSIFIED'),
+      recoveryConverged: summary?.recovery_converged ?? true,
+    }
+  }),
+)
+
+watch(
+  () => [props.day.day_id, activeView.value] as const,
+  () => {
+    if (!props.day.workout) activeView.value = 'RECOVERY'
+    if (
+      activeView.value === 'STIMULUS' &&
+      selectedMuscleSlug.value &&
+      !workoutItems.value.some((item) => item.slug === selectedMuscleSlug.value)
+    ) {
+      selectedMuscleSlug.value = null
+    }
+  },
+)
 </script>
 
 <template>
@@ -57,10 +96,34 @@ const jointStimulus = computed(() => {
         <span class="section-label">Selected day analysis</span>
         <h2>{{ day.workout?.name || day.day_name }}</h2>
         <p>
-          {{ day.workout ? 'Inspect entry state and the workload applied at this boundary.' : 'Rest boundary · no workout stimulus is added.' }}
+          {{ day.workout ? 'Inspect recovery state or the stimulus applied at this boundary.' : 'Rest boundary · no workout stimulus is added.' }}
         </p>
       </div>
-      <div class="phase-switch" aria-label="Recovery snapshot state">
+    </header>
+
+    <div class="selected-day-toolbar">
+      <div class="selected-day-tabs" role="tablist" aria-label="Selected day analysis mode">
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="activeView === 'RECOVERY'"
+          :class="{ active: activeView === 'RECOVERY' }"
+          @click="activeView = 'RECOVERY'"
+        >
+          Local recovery
+        </button>
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="activeView === 'STIMULUS'"
+          :class="{ active: activeView === 'STIMULUS' }"
+          :disabled="!day.workout"
+          @click="activeView = 'STIMULUS'"
+        >
+          Workout stimulus
+        </button>
+      </div>
+      <div v-if="activeView === 'RECOVERY'" class="phase-switch" aria-label="Recovery snapshot state">
         <button type="button" :class="{ active: phase === 'BEFORE' }" @click="phase = 'BEFORE'">
           Right before
         </button>
@@ -68,79 +131,61 @@ const jointStimulus = computed(() => {
           Right after
         </button>
       </div>
-    </header>
-
-    <div class="selected-workout-layout">
-      <MuscleRecoveryMap
-        v-model:selected-slug="selectedMuscleSlug"
-        :day="day"
-        :phase="phase"
-        :muscles="muscles"
-        :summaries="summaries"
-      />
+      <div v-else class="metric-switch" aria-label="Workout stimulus metric">
+        <button type="button" :class="{ active: etuMode === 'ABSOLUTE' }" @click="etuMode = 'ABSOLUTE'">
+          Absolute ETU
+        </button>
+        <button type="button" :class="{ active: etuMode === 'NORMALIZED' }" @click="etuMode = 'NORMALIZED'">
+          ETU / FCSA
+        </button>
+      </div>
     </div>
 
-    <div class="workout-analysis-data">
-      <section class="analysis-data-card panel">
-        <header>
-          <div><span class="section-label">Joint-load recovery</span><strong>{{ phase === 'BEFORE' ? 'Entry readiness' : 'Post-workout state' }}</strong></div>
-          <span class="mono">JRU → hours_to_fresh</span>
-        </header>
-        <div class="compact-metric-list">
-          <div v-for="item in rankedJointStates" :key="item.slug">
-            <span>{{ jointLabel(item.slug) }}</span>
-            <strong>{{ formatHours(item.hours_to_fresh) }}</strong>
-          </div>
-        </div>
-        <p class="analysis-footnote">Modeled joint-load readiness cost—not literal biological healing.</p>
-      </section>
+    <template v-if="activeView === 'RECOVERY'">
+      <div class="selected-workout-layout">
+        <MuscleRecoveryMap
+          v-model:selected-slug="selectedMuscleSlug"
+          :day="day"
+          :phase="phase"
+          :muscles="muscles"
+          :summaries="summaries"
+        />
+      </div>
 
-      <section v-if="day.workout" class="analysis-data-card panel">
-        <header>
-          <div><span class="section-label">Workout stimulus</span><strong>{{ formatNumber(day.workout.stimulus.total_etu_scalar, 1) }} total ETU</strong></div>
-          <span class="mono">returned workload</span>
-        </header>
-        <div class="stimulus-columns">
-          <div>
-            <h3>Muscles</h3>
-            <button
-              v-for="item in muscleStimulus"
-              :key="item.slug"
-              class="stimulus-row"
-              type="button"
-              @click="selectedMuscleSlug = item.slug"
-            >
-              <span>{{ muscleLabel(item.slug, muscles) }}</span>
-              <strong>{{ formatNumber(item.etu_absolute, 1) }} <small>ETU</small></strong>
-              <em>{{ formatNumber(item.mru, 1) }} MRU</em>
-            </button>
-            <button
-              v-if="day.workout.stimulus.muscles.length > 8"
-              class="text-action"
-              type="button"
-              @click="showAllMuscles = !showAllMuscles"
-            >
-              {{ showAllMuscles ? 'Show strongest only' : `View all ${day.workout.stimulus.muscles.length}` }}
-            </button>
-          </div>
-          <div>
-            <h3>Joints</h3>
-            <div v-for="item in jointStimulus" :key="item.slug" class="stimulus-row static">
+      <div class="workout-analysis-data single-card">
+        <section class="analysis-data-card panel">
+          <header>
+            <div><span class="section-label">Joint-load recovery</span><strong>{{ phase === 'BEFORE' ? 'Entry readiness' : 'Post-workout state' }}</strong></div>
+            <span class="mono">JRU → hours_to_fresh</span>
+          </header>
+          <div class="compact-metric-list">
+            <div v-for="item in rankedJointStates" :key="item.slug">
               <span>{{ jointLabel(item.slug) }}</span>
-              <strong>{{ formatNumber(item.joint_load_exposure, 2) }} <small>load</small></strong>
-              <em>{{ formatNumber(item.jru, 2) }} JRU</em>
+              <strong>{{ formatHours(item.hours_to_fresh) }}</strong>
             </div>
-            <button
-              v-if="day.workout.stimulus.joints.length > 6"
-              class="text-action"
-              type="button"
-              @click="showAllJoints = !showAllJoints"
-            >
-              {{ showAllJoints ? 'Show strongest only' : `View all ${day.workout.stimulus.joints.length}` }}
-            </button>
           </div>
-        </div>
-      </section>
-    </div>
+          <p class="analysis-footnote">Modeled joint-load readiness cost—not literal biological healing.</p>
+        </section>
+      </div>
+    </template>
+
+    <MuscleStimulusExplorer
+      v-else-if="day.workout"
+      v-model:mode="etuMode"
+      v-model:selected-slug="selectedMuscleSlug"
+      layout="anatomy-wide"
+      :items="workoutItems"
+      etu-basis="MICROCYCLE"
+      :source-etu-factor="1"
+      metric-unit-suffix="/workout"
+      scope-label="selected workout"
+      anatomy-title="Workout target bias"
+      :anatomy-meta="`${formatNumber(day.workout.stimulus.total_etu_scalar, 1)} total ETU`"
+      ranking-title="Strongest workout biases"
+      :timeline="timeline"
+      :contributions-by-slug="dayContributionsBySlug"
+      :muscles="muscles"
+      :exercises="exercises"
+    />
   </section>
 </template>

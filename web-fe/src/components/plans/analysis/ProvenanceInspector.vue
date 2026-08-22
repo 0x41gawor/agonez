@@ -4,7 +4,6 @@ import { computed } from 'vue'
 import type {
   AnalysisTimelineDay,
   JointContribution,
-  MuscleAnalysisSummary,
   MuscleContribution,
 } from '@/api/plan-analysis-types'
 import type { ExerciseListItem, MuscleListItem } from '@/api/types'
@@ -18,6 +17,7 @@ import {
   type EtuDisplayMode,
   type EtuTimeBasis,
   type MuscleSourceGroup,
+  type MuscleStimulusPresentation,
 } from '@/features/plans/analysis'
 import { formatNumber } from '@/utils/format'
 
@@ -27,11 +27,12 @@ const props = withDefaults(
     jointSlug?: string | null
     muscleContributions?: MuscleContribution[]
     jointContributions?: JointContribution[]
-    muscleSummary?: MuscleAnalysisSummary | null
+    musclePresentation?: MuscleStimulusPresentation | null
     timeline?: AnalysisTimelineDay[]
     mode?: EtuDisplayMode
     etuBasis?: EtuTimeBasis
-    weeklyNormalizationFactor?: number
+    sourceEtuFactor?: number
+    metricUnitSuffix?: string
     auxiliary?: boolean
     muscles: MuscleListItem[]
     exercises: ExerciseListItem[]
@@ -41,11 +42,12 @@ const props = withDefaults(
     jointSlug: null,
     muscleContributions: () => [],
     jointContributions: () => [],
-    muscleSummary: null,
+    musclePresentation: null,
     timeline: () => [],
     mode: 'ABSOLUTE',
     etuBasis: 'MICROCYCLE',
-    weeklyNormalizationFactor: 1,
+    sourceEtuFactor: 1,
+    metricUnitSuffix: '',
     auxiliary: false,
   },
 )
@@ -93,29 +95,24 @@ const rawTotal = computed(() =>
 )
 const metricUnit = computed(() => {
   const base = props.mode === 'NORMALIZED' ? 'ETU/cm²' : 'ETU'
+  if (props.metricUnitSuffix) return `${base}${props.metricUnitSuffix}`
   return props.etuBasis === 'WEEKLY' ? `${base}/7d` : `${base}/cycle`
 })
 const selectedMetricValue = computed(() => {
-  const item = props.muscleSummary
+  const item = props.musclePresentation
   if (!item) return null
-  if (props.mode === 'NORMALIZED') {
-    return props.etuBasis === 'WEEKLY'
-      ? item.weekly_etu_per_fcsa_cm2
-      : item.etu_per_fcsa_cm2
-  }
-  return props.etuBasis === 'WEEKLY' ? item.weekly_etu : item.total_etu
+  return props.mode === 'NORMALIZED' ? item.normalizedEtu : item.absoluteEtu
 })
 const intentionalShare = computed(() => {
-  const summary = props.muscleSummary
-  if (!summary || summary.total_etu <= 0) return 0
-  return (summary.intentional_etu / summary.total_etu) * 100
+  const item = props.musclePresentation
+  if (!item || item.absoluteEtu <= 0) return 0
+  return (item.intentionalEtu / item.absoluteEtu) * 100
 })
 
 function scaledEtu(rawEtu: number): number | null {
-  const timeAdjusted =
-    rawEtu * (props.etuBasis === 'WEEKLY' ? props.weeklyNormalizationFactor : 1)
+  const timeAdjusted = rawEtu * props.sourceEtuFactor
   if (props.mode === 'ABSOLUTE') return timeAdjusted
-  const fcsa = props.muscleSummary?.fcsa_cm2
+  const fcsa = props.musclePresentation?.fcsaCm2
   return fcsa != null && fcsa > 0 ? timeAdjusted / fcsa : null
 }
 
@@ -155,7 +152,7 @@ function tokenLabel(value: string): string {
       </div>
       <span v-else class="mono">{{ muscleContributions.length }} set records</span>
     </header>
-    <div v-if="muscleSummary" class="stimulus-selected-facts">
+    <div v-if="musclePresentation" class="stimulus-selected-facts">
       <div>
         <span>Displayed stimulus</span>
         <strong>{{ formatNumber(selectedMetricValue, 2) }}</strong>
@@ -163,7 +160,7 @@ function tokenLabel(value: string): string {
       </div>
       <div>
         <span>Projected FCSA</span>
-        <strong>{{ formatNumber(muscleSummary.fcsa_cm2, 1) }}</strong>
+        <strong>{{ formatNumber(musclePresentation.fcsaCm2, 1) }}</strong>
         <small class="mono">cm²</small>
       </div>
       <div>

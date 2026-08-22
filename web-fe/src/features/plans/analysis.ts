@@ -11,6 +11,17 @@ export type EtuDisplayMode = 'ABSOLUTE' | 'NORMALIZED'
 export type EtuTimeBasis = 'MICROCYCLE' | 'WEEKLY'
 export type MuscleSort = 'ETU' | 'NORMALIZED' | 'RECOVERY'
 
+export interface MuscleStimulusPresentation {
+  slug: string
+  absoluteEtu: number
+  normalizedEtu: number | null
+  fcsaCm2: number | null
+  intentionalEtu: number
+  incidentalEtu: number
+  unclassifiedEtu: number
+  recoveryConverged: boolean
+}
+
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const
 
 export const JOINT_LABELS: Record<string, string> = {
