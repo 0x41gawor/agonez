@@ -914,6 +914,17 @@
 .provenance-groups summary small { display: block; }
 .provenance-groups summary strong { color: var(--text); font-size: 10.5px; }
 .provenance-groups summary small { margin-top: 3px; font-size: 8px; }
+
+.analysis-exercise-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.analysis-exercise-link:hover {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .intent-intentional { color: var(--etu); }
 .intent-incidental { color: var(--accent); }
 .intent-unclassified { color: var(--text3); }

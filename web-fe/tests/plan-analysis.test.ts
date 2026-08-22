@@ -216,6 +216,19 @@ describe('Plan Analysis presentation', () => {
     expect(wrapper.text()).toContain('Barbell Bench Press')
     expect(wrapper.text()).toContain('Primary progressive')
 
+    const exerciseLink = wrapper.get('.analysis-exercise-link')
+    expect(exerciseLink.attributes('href')).toBe('/atlas/exercises/barbell_bench_press')
+    const details = exerciseLink.element.closest('details')!
+    const openBeforeModifiedClick = details.open
+    const modifiedClick = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+    })
+    modifiedClick.preventDefault()
+    exerciseLink.element.dispatchEvent(modifiedClick)
+    expect(details.open).toBe(openBeforeModifiedClick)
+
     await wrapper.findAll('.selected-day-toolbar .metric-switch button')[1]!.trigger('click')
     expect(wrapper.emitted('update:etuMode')).toEqual([['NORMALIZED']])
   })

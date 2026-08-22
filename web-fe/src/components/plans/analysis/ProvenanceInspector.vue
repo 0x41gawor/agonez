@@ -132,6 +132,24 @@ function tokenLabel(value: string): string {
   const label = value.toLowerCase().replaceAll('_', ' ')
   return label.charAt(0).toUpperCase() + label.slice(1)
 }
+
+function exerciseHref(slug: string): string {
+  return `/atlas/exercises/${encodeURIComponent(slug)}`
+}
+
+function handleExerciseLinkClick(event: MouseEvent): void {
+  const modifiedClick =
+    event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0
+  if (modifiedClick) {
+    event.stopPropagation()
+    return
+  }
+
+  event.preventDefault()
+  event.stopPropagation()
+  const details = (event.currentTarget as HTMLElement).closest('details')
+  if (details) details.open = !details.open
+}
 </script>
 
 <template>
@@ -192,7 +210,14 @@ function tokenLabel(value: string): string {
           >
             <summary>
               <span>
-                <strong>{{ exerciseLabel(group.exercise_slug, exercises) }}</strong>
+                <a
+                  class="analysis-exercise-link"
+                  :href="exerciseHref(group.exercise_slug)"
+                  title="Click to inspect sets · Ctrl/Cmd+click to open in Atlas"
+                  @click="handleExerciseLinkClick"
+                >
+                  <strong>{{ exerciseLabel(group.exercise_slug, exercises) }}</strong>
+                </a>
                 <small>
                   <i class="source-role-dot" :class="roleClass(group.slot_role)" />
                   {{ tokenLabel(group.slot_role) }} ·
@@ -231,7 +256,14 @@ function tokenLabel(value: string): string {
     <div class="provenance-groups">
       <details v-for="group in jointGroups" :key="group.exercise_slug">
         <summary>
-          <strong>{{ exerciseLabel(group.exercise_slug, exercises) }}</strong>
+          <a
+            class="analysis-exercise-link"
+            :href="exerciseHref(group.exercise_slug)"
+            title="Click to inspect sets · Ctrl/Cmd+click to open in Atlas"
+            @click="handleExerciseLinkClick"
+          >
+            <strong>{{ exerciseLabel(group.exercise_slug, exercises) }}</strong>
+          </a>
           <span class="provenance-totals mono">
             {{ formatNumber(group.joint_load, 3) }} load · {{ formatNumber(group.jru, 3) }} JRU
           </span>

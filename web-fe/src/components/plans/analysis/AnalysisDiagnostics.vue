@@ -7,6 +7,10 @@ defineProps<{
   diagnostics: AnalysisDiagnostic[]
   muscles: MuscleListItem[]
 }>()
+
+function exerciseHref(slug: string): string {
+  return `/atlas/exercises/${encodeURIComponent(slug)}`
+}
 </script>
 
 <template>
@@ -29,7 +33,12 @@ defineProps<{
         </summary>
         <div>
           <p>{{ diagnostic.message }}</p>
-          <p v-if="diagnostic.exercise_slug"><strong>Exercise:</strong> {{ diagnostic.exercise_slug }}</p>
+          <p v-if="diagnostic.exercise_slug">
+            <strong>Exercise:</strong>
+            <a class="analysis-exercise-link" :href="exerciseHref(diagnostic.exercise_slug)">
+              {{ diagnostic.exercise_slug }}
+            </a>
+          </p>
           <div v-if="diagnostic.affected_muscle_slugs.length" class="diagnostic-resources">
             <strong>Affected muscles</strong>
             <span v-for="slug in diagnostic.affected_muscle_slugs" :key="slug">{{ muscleLabel(slug, muscles) }}</span>

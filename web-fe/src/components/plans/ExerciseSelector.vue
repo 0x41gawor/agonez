@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 
 import type { ExerciseListItem } from '@/api/types'
+import { formatNumber, prettyToken } from '@/utils/format'
 
 const props = defineProps<{
   modelValue: string
@@ -14,12 +15,13 @@ const open = ref(false)
 const query = ref('')
 const current = computed(() => props.exercises.find((item) => item.slug === props.modelValue))
 const filtered = computed(() => {
-  const needle = query.value.trim().toLowerCase()
+  const needle = query.value.trim().toLowerCase().replaceAll('_', ' ')
   if (!needle) return props.exercises.slice(0, 24)
   return props.exercises
     .filter((item) =>
-      `${item.name} ${item.name_full} ${item.slug} ${item.resistance_source}`
+      `${item.name} ${item.name_full} ${item.slug} ${item.resistance_source} ${item.mechanics_tier} ${item.target_category}`
         .toLowerCase()
+        .replaceAll('_', ' ')
         .includes(needle),
     )
     .slice(0, 24)
@@ -59,7 +61,15 @@ function select(slug: string): void {
         <strong>{{ current?.name_full || current?.name || (modelValue ? modelValue.replaceAll('_', ' ') : 'Choose exercise') }}</strong>
         <small v-if="current">{{ current.resistance_source }} · {{ current.slug }}</small>
       </span>
-      <span aria-hidden="true">{{ open ? '−' : '⌄' }}</span>
+      <span class="exercise-selector-side">
+        <span v-if="current" class="exercise-selector-facts">
+          <span class="exercise-mechanics-tag">{{ prettyToken(current.mechanics_tier) }}</span>
+          <span class="exercise-demand-tag mono">
+            {{ formatNumber(current.systemic_propulsive_fcsa_demand, 0) }} cm² systemic FCSA
+          </span>
+        </span>
+        <span class="exercise-selector-chevron" aria-hidden="true">{{ open ? '−' : '⌄' }}</span>
+      </span>
     </a>
 
     <div v-if="open" class="catalog-selector-panel">
@@ -69,7 +79,7 @@ function select(slug: string): void {
         v-model="query"
         class="text-input"
         type="search"
-        placeholder="Name, slug, or resistance…"
+        placeholder="Name, target, slug, or resistance…"
         autocomplete="off"
       />
       <div class="catalog-options" role="listbox" :aria-label="label ?? 'Exercise options'">
@@ -83,11 +93,16 @@ function select(slug: string): void {
           :aria-selected="exercise.slug === modelValue"
           @click="select(exercise.slug)"
         >
-          <span>
+          <span class="exercise-option-copy">
             <strong>{{ exercise.name_full || exercise.name }}</strong>
-            <small>{{ exercise.slug }}</small>
+            <small>{{ exercise.resistance_source }} · {{ exercise.slug }}</small>
           </span>
-          <span class="chip">{{ exercise.resistance_source }}</span>
+          <span class="exercise-option-facts">
+            <span class="exercise-mechanics-tag">{{ prettyToken(exercise.mechanics_tier) }}</span>
+            <span class="exercise-option-demand mono">
+              {{ formatNumber(exercise.systemic_propulsive_fcsa_demand, 0) }} cm² FCSA
+            </span>
+          </span>
         </button>
         <p v-if="!filtered.length" class="selector-empty">No catalog exercises match this search.</p>
       </div>

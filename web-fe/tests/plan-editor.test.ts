@@ -205,6 +205,32 @@ describe('PlanEditor', () => {
     expect(wrapper.find('.catalog-selector-panel').exists()).toBe(true)
   })
 
+  it('shows mechanics class and systemic FCSA demand in the selected exercise and picker', async () => {
+    const slot = createSlot(0)
+    slot.variants.push(createVariant('DEFAULT', 0, exercise.slug))
+    const wrapper = mount(ExerciseSlotEditor, {
+      props: {
+        modelValue: slot,
+        index: 0,
+        count: 1,
+        exercises: [exercise],
+        muscles: [muscle],
+        path: `days/day-new.slots.${slot.clientKey}`,
+        issues: [],
+      },
+    })
+
+    expect(wrapper.get('.exercise-selector-facts').text()).toContain('Heavy Compound')
+    expect(wrapper.get('.exercise-demand-tag').text()).toContain('175 cm² systemic FCSA')
+    await wrapper.get('.catalog-selector-trigger').trigger('click')
+    expect(wrapper.get('.exercise-option-facts').text()).toContain('Heavy Compound')
+    expect(wrapper.get('.exercise-option-demand').text()).toContain('175 cm² FCSA')
+    await wrapper.get('input[type="search"]').setValue('chest sternal')
+    expect(wrapper.find('.catalog-option').exists()).toBe(true)
+    await wrapper.get('input[type="search"]').setValue('hamstrings')
+    expect(wrapper.find('.catalog-option').exists()).toBe(false)
+  })
+
   it('adds and removes a FALLBACK inside the slot details', async () => {
     const slot = createSlot(0)
     slot.variants.push(createVariant('DEFAULT', 0, exercise.slug))
