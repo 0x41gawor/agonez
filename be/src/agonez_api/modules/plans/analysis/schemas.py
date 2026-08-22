@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Annotated, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from agonez_api.modules.plans.schemas import APIModel, ExerciseSlotRole, RepRange
 
@@ -53,6 +53,90 @@ class PlanAIExportResult(APIModel):
     plan_name: str
     resolution_context: PlanResolutionContext
     days: list[PlanAIExportDay]
+
+
+WeekdayName = Literal[
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+]
+
+
+class PlanAIImportSet(APIModel):
+    reps: RepRange
+    rir: int = Field(ge=0, le=4)
+
+
+class PlanAIImportExercise(APIModel):
+    name: str = Field(min_length=1, max_length=200)
+    slug: str = Field(min_length=1, max_length=200, pattern=r"^[a-z0-9_]+$")
+    sets: list[PlanAIImportSet] = Field(max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Exercise name must not be blank")
+        return value.strip()
+
+
+class PlanAIImportDay(APIModel):
+    day: int = Field(ge=1, le=365)
+    name: str = Field(min_length=1, max_length=200)
+    weekday: WeekdayName | None
+    rest: bool
+    exercises: list[PlanAIImportExercise] = Field(max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Day name must not be blank")
+        return value.strip()
+
+    @model_validator(mode="after")
+    def validate_rest_day(self) -> "PlanAIImportDay":
+        if self.rest and self.exercises:
+            raise ValueError("A rest day must have an empty exercises array")
+        return self
+
+
+class PlanAIImportDocument(APIModel):
+    format: Literal["agonez-plan-sanity-v1"]
+    plan_name: str = Field(min_length=1, max_length=200)
+    resolution_context: PlanResolutionContext
+    days: list[PlanAIImportDay] = Field(max_length=365)
+
+    @field_validator("plan_name")
+    @classmethod
+    def validate_plan_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Plan name must not be blank")
+        return value.strip()
+
+    @field_validator("resolution_context")
+    @classmethod
+    def validate_resolution_context_fields(
+        cls,
+        value: PlanResolutionContext,
+    ) -> PlanResolutionContext:
+        required = {"global_volume_level", "focus_area", "axis_overrides"}
+        missing = sorted(required - value.model_fields_set)
+        if missing:
+            raise ValueError("Missing resolution-context fields: " + ", ".join(missing))
+        return value
+
+    @model_validator(mode="after")
+    def validate_day_numbers(self) -> "PlanAIImportDocument":
+        expected = list(range(1, len(self.days) + 1))
+        actual = [day.day for day in self.days]
+        if actual != expected:
+            raise ValueError("Day numbers must be consecutive, ordered, and start at 1")
+        return self
 
 
 class DiagnosticSeverity(str, Enum):

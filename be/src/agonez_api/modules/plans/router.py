@@ -4,6 +4,7 @@ from fastapi import APIRouter, Body, Depends, Path, Request, Response, status
 
 from agonez_api.modules.plans.analysis.schemas import (
     PlanAIExportResult,
+    PlanAIImportDocument,
     PlanAnalysisRequest,
     PlanAnalysisResult,
     PlanExportRequest,
@@ -36,6 +37,14 @@ async def create_plan(
     service: Annotated[PlanService, Depends(get_plan_service)],
 ) -> PlanDraftArtifact:
     return await service.create_plan(payload)
+
+
+@router.post("/import", response_model=PlanDraftArtifact, status_code=status.HTTP_201_CREATED)
+async def import_plan(
+    payload: Annotated[PlanAIImportDocument, Body()],
+    service: Annotated[PlanService, Depends(get_plan_service)],
+) -> PlanDraftArtifact:
+    return await service.import_plan(payload)
 
 
 @router.get("", response_model=PlanListResponse)

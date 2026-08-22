@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 from agonez_api.core.database import DatabasePool
+from agonez_api.modules.plans.analysis.schemas import PlanAIImportDocument
 from agonez_api.modules.plans.exceptions import (
     PlanConflictError,
     PlanDomainValidationError,
@@ -58,6 +59,133 @@ class PlanRepository:
                     """,
                     (plan["id"],),
                 )
+                return await self._load_draft_rows(connection, cast(int, plan["id"]))
+
+    async def import_plan(self, payload: PlanAIImportDocument) -> DraftRows:
+        """Create a complete draft from the public AI interchange format atomically."""
+        async with self._pool.connection() as connection:
+            async with connection.transaction():
+                exercise_ids = await self._resolve_catalog_slugs(
+                    connection,
+                    table="core.exercises",
+                    slugs={
+                        exercise.slug
+                        for day in payload.days
+                        for exercise in day.exercises
+                    },
+                    entity_label="exercise",
+                )
+                plan = await self._fetch_one(
+                    connection,
+                    """
+                    INSERT INTO plans.workout_plans (name, description)
+                    VALUES (%s, NULL)
+                    RETURNING id
+                    """,
+                    (payload.plan_name,),
+                )
+                revision = await self._fetch_one(
+                    connection,
+                    """
+                    INSERT INTO plans.plan_revisions (plan_id, revision_no, status)
+                    VALUES (%s, 1, 'DRAFT')
+                    RETURNING id
+                    """,
+                    (plan["id"],),
+                )
+
+                weekday_numbers = {
+                    "Monday": 1,
+                    "Tuesday": 2,
+                    "Wednesday": 3,
+                    "Thursday": 4,
+                    "Friday": 5,
+                    "Saturday": 6,
+                    "Sunday": 7,
+                }
+                inferred_roles = (
+                    "PRIMARY_PROGRESSIVE",
+                    "SECONDARY_PROGRESSIVE",
+                )
+                for day_index, day in enumerate(payload.days):
+                    inserted_day = await self._fetch_one(
+                        connection,
+                        """
+                        INSERT INTO plans.day_prescriptions
+                            (revision_id, ordinal, weekday, name, description)
+                        VALUES (%s, %s, %s, %s, NULL)
+                        RETURNING id
+                        """,
+                        (
+                            revision["id"],
+                            day_index,
+                            weekday_numbers.get(day.weekday) if day.weekday else None,
+                            day.name,
+                        ),
+                    )
+                    if day.rest:
+                        continue
+
+                    unit = await self._fetch_one(
+                        connection,
+                        """
+                        INSERT INTO plans.workout_unit_prescriptions
+                            (day_id, name, description, warmup_notes, stretch_notes)
+                        VALUES (%s, %s, NULL, NULL, NULL)
+                        RETURNING id
+                        """,
+                        (inserted_day["id"], day.name),
+                    )
+                    for exercise_index, exercise in enumerate(day.exercises):
+                        role = (
+                            inferred_roles[exercise_index]
+                            if exercise_index < len(inferred_roles)
+                            else "ACCESSORY"
+                        )
+                        slot = await self._fetch_one(
+                            connection,
+                            """
+                            INSERT INTO plans.exercise_slots
+                            (
+                                workout_unit_id, ordinal, name, description,
+                                goal, role, volume_axis
+                            )
+                            VALUES (%s, %s, %s, NULL, NULL, %s, NULL)
+                            RETURNING id
+                            """,
+                            (unit["id"], exercise_index, exercise.name, role),
+                        )
+                        variant = await self._fetch_one(
+                            connection,
+                            """
+                            INSERT INTO plans.exercise_variants
+                                (slot_id, ordinal, variant_type, exercise_id)
+                            VALUES (%s, 0, 'DEFAULT', %s)
+                            RETURNING id
+                            """,
+                            (slot["id"], exercise_ids[exercise.slug]),
+                        )
+                        for set_index, set_prescription in enumerate(exercise.sets):
+                            await self._fetch_one(
+                                connection,
+                                """
+                                INSERT INTO plans.set_infra_prescriptions
+                                    (
+                                        exercise_variant_id, ordinal, rep_min,
+                                        rep_max, rir, min_volume_level
+                                    )
+                                VALUES (%s, %s, %s, %s, %s, 0)
+                                RETURNING id
+                                """,
+                                (
+                                    variant["id"],
+                                    set_index,
+                                    set_prescription.reps.min,
+                                    set_prescription.reps.max,
+                                    set_prescription.rir,
+                                ),
+                            )
+
                 return await self._load_draft_rows(connection, cast(int, plan["id"]))
 
     async def duplicate_plan(self, plan_id: int) -> DraftRows:

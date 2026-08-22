@@ -42,7 +42,9 @@ slot, and another permits only one DRAFT revision per plan.
 ## API
 
 - `POST /api/plans`
+- `POST /api/plans/import`
 - `GET /api/plans`
+- `POST /api/plans/{plan_id}/duplicate`
 - `GET /api/plans/{plan_id}`
 - `DELETE /api/plans/{plan_id}`
 - `GET /api/plans/{plan_id}/draft`

@@ -26,6 +26,13 @@
   padding: 20px 0 24px;
 }
 
+.plans-index-actions,
+.new-plan-empty-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .plans-index-header h1,
 .plan-creator-toolbar h1,
 .plan-overview h2,
@@ -374,6 +381,46 @@
   border: 0;
   background: transparent;
   color: var(--rec);
+}
+
+.plan-import-errors {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border-color: color-mix(in srgb, var(--rec) 45%, var(--border));
+  background: color-mix(in srgb, var(--rec) 6%, var(--panel));
+  color: var(--text2);
+}
+
+.plan-import-errors strong {
+  color: var(--rec);
+}
+
+.plan-import-errors ul {
+  margin: 7px 0 0;
+  padding-left: 18px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px;
+}
+
+.plan-import-errors li + li {
+  margin-top: 4px;
+}
+
+.plan-import-errors small {
+  display: block;
+  margin-top: 7px;
+  color: var(--text3);
+}
+
+.plan-import-errors > button {
+  border: 0;
+  background: transparent;
+  color: var(--rec);
+  font-size: 18px;
 }
 
 .plan-editor-loading {
@@ -969,10 +1016,13 @@
   background: var(--inputBg);
   color: var(--text);
   text-align: left;
+  text-decoration: none;
 }
 
 .catalog-selector-trigger:hover {
   border-color: var(--border2);
+  color: var(--text);
+  text-decoration: none;
 }
 
 .exercise-selector-copy,
@@ -1236,6 +1286,17 @@
   .rest-day-state .button,
   .slot-list-heading .button {
     width: 100%;
+  }
+
+  .plans-index-actions,
+  .new-plan-empty-actions {
+    width: 100%;
+  }
+
+  .plans-index-actions .button,
+  .new-plan-empty-actions .button {
+    flex: 1;
+    width: auto;
   }
 
   .slot-list-footer .button {
@@ -1542,6 +1603,81 @@
   background: var(--panel);
 }
 
+.plan-import-dialog {
+  grid-template-rows: auto auto auto minmax(180px, 1fr) auto;
+  width: min(760px, 100%);
+}
+
+.plan-import-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--panel2);
+}
+
+.plan-import-summary > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px 16px;
+  border-right: 1px solid var(--border);
+}
+
+.plan-import-summary > div:last-child {
+  border-right: 0;
+}
+
+.plan-import-summary span {
+  color: var(--text3);
+  font-size: 8.5px;
+  text-transform: uppercase;
+}
+
+.plan-import-summary strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.plan-import-days {
+  min-height: 0;
+  padding: 8px 16px;
+  overflow: auto;
+  background: var(--inputBg);
+}
+
+.plan-import-days article {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-import-days article > .mono {
+  color: var(--accent2);
+  font-size: 9px;
+}
+
+.plan-import-days article > .mono:last-child {
+  color: var(--text3);
+}
+
+.plan-import-days strong,
+.plan-import-days small {
+  display: block;
+}
+
+.plan-import-days strong {
+  color: var(--text);
+}
+
+.plan-import-days small {
+  margin-top: 2px;
+  color: var(--text3);
+  font-size: 9px;
+}
+
 .plan-export-dialog footer p {
   margin: 0;
   color: var(--rec);
@@ -1567,6 +1703,18 @@
   .plan-export-dialog > footer {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .plan-import-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-import-summary > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .plan-import-summary > div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border);
   }
 
   .plan-export-dialog footer > div .button {

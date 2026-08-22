@@ -3,8 +3,15 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { plansApi } from '@/api/plans'
+import type { PlanAIImportDocument } from '@/api/plan-export-types'
 import type { PlanDraftArtifact, PlanSummary } from '@/api/plan-types'
 import ErrorState from '@/components/common/ErrorState.vue'
+import PlanImportDialog from '@/components/plans/PlanImportDialog.vue'
+import {
+  PLAN_IMPORT_MAX_BYTES,
+  PlanImportValidationError,
+  parsePlanImportJson,
+} from '@/features/plans/import'
 
 const router = useRouter()
 const plans = ref<PlanSummary[]>([])
@@ -16,6 +23,12 @@ const name = ref('')
 const description = ref('')
 const duplicatingPlanId = ref<number | null>(null)
 const duplicatedPlan = ref<Pick<PlanDraftArtifact, 'id' | 'name'> | null>(null)
+const importInput = ref<HTMLInputElement | null>(null)
+const importDocument = ref<PlanAIImportDocument | null>(null)
+const importFilename = ref('')
+const importing = ref(false)
+const importError = ref<string | null>(null)
+const importValidationIssues = ref<string[]>([])
 
 async function loadPlans(): Promise<void> {
   loading.value = true
@@ -72,6 +85,56 @@ async function duplicatePlan(plan: PlanSummary): Promise<void> {
   }
 }
 
+function chooseImportFile(): void {
+  createOpen.value = false
+  importValidationIssues.value = []
+  importInput.value?.click()
+}
+
+async function readImportFile(event: Event): Promise<void> {
+  const input = event.currentTarget as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  importError.value = null
+  importValidationIssues.value = []
+  if (file.size > PLAN_IMPORT_MAX_BYTES) {
+    importValidationIssues.value = ['The JSON file must be 1 MiB or smaller.']
+    return
+  }
+  try {
+    importDocument.value = parsePlanImportJson(await file.text())
+    importFilename.value = file.name
+  } catch (caught) {
+    importDocument.value = null
+    importValidationIssues.value =
+      caught instanceof PlanImportValidationError
+        ? caught.issues
+        : ['The selected JSON file could not be read.']
+  }
+}
+
+function closeImport(): void {
+  if (importing.value) return
+  importDocument.value = null
+  importFilename.value = ''
+  importError.value = null
+}
+
+async function importPlan(): Promise<void> {
+  if (!importDocument.value || importing.value) return
+  importing.value = true
+  importError.value = null
+  try {
+    const plan = await plansApi.importPlan(importDocument.value)
+    await router.push({ name: 'plan-editor', params: { planId: plan.id } })
+  } catch (caught) {
+    importError.value = caught instanceof Error ? caught.message : 'The plan could not be imported.'
+  } finally {
+    importing.value = false
+  }
+}
+
 function updatedLabel(value: string): string {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(
     new Date(value),
@@ -89,9 +152,19 @@ onMounted(() => void loadPlans())
         <h1>My Plans</h1>
         <p>Build the stable structure of each training microcycle.</p>
       </div>
-      <button class="button primary" type="button" @click="createOpen = !createOpen">
-        {{ createOpen ? 'Close' : '+ New plan' }}
-      </button>
+      <div class="plans-index-actions">
+        <button class="button" type="button" @click="chooseImportFile">Import JSON</button>
+        <button class="button primary" type="button" @click="createOpen = !createOpen">
+          {{ createOpen ? 'Close' : '+ New plan' }}
+        </button>
+        <input
+          ref="importInput"
+          type="file"
+          accept="application/json,.json"
+          hidden
+          @change="readImportFile"
+        />
+      </div>
     </header>
 
     <form v-if="createOpen" class="create-plan-panel panel" @submit.prevent="createPlan">
@@ -115,6 +188,18 @@ onMounted(() => void loadPlans())
     <div v-if="error && !loading" class="plan-inline-error" role="alert">
       <span>{{ error }}</span>
       <button type="button" @click="error = null">Dismiss</button>
+    </div>
+    <div v-if="importValidationIssues.length" class="plan-import-errors panel" role="alert">
+      <div>
+        <strong>The JSON file is not importable.</strong>
+        <ul>
+          <li v-for="issue in importValidationIssues.slice(0, 8)" :key="issue">{{ issue }}</li>
+        </ul>
+        <small v-if="importValidationIssues.length > 8">
+          And {{ importValidationIssues.length - 8 }} more issues.
+        </small>
+      </div>
+      <button type="button" aria-label="Dismiss import errors" @click="importValidationIssues = []">×</button>
     </div>
     <div v-if="duplicatedPlan" class="plan-inline-success" role="status">
       <span>Created “{{ duplicatedPlan.name }}” as an independent deep copy.</span>
@@ -170,7 +255,19 @@ onMounted(() => void loadPlans())
       <span class="empty-plan-mark mono">PLAN</span>
       <h2>No workout plans yet</h2>
       <p>Create the source artifact that Analysis and Modulation will eventually consume.</p>
-      <button class="button primary" type="button" @click="createOpen = true">Create first plan</button>
+      <div class="new-plan-empty-actions">
+        <button class="button" type="button" @click="chooseImportFile">Import JSON</button>
+        <button class="button primary" type="button" @click="createOpen = true">Create first plan</button>
+      </div>
     </div>
+    <PlanImportDialog
+      v-if="importDocument"
+      :document="importDocument"
+      :filename="importFilename"
+      :importing="importing"
+      :error="importError"
+      @close="closeImport"
+      @confirm="importPlan"
+    />
   </div>
 </template>

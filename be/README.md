@@ -19,11 +19,15 @@ frontend materials are preserved in `docs/api-contract.md` and
 - `GET /api/atlas/muscles/{slug}/exercises`
 - `GET /api/atlas/meta`
 - `POST /api/plans`
+- `POST /api/plans/import`
 - `GET /api/plans`
+- `POST /api/plans/{plan_id}/duplicate`
 - `GET /api/plans/{plan_id}`
 - `DELETE /api/plans/{plan_id}`
 - `GET /api/plans/{plan_id}/draft`
 - `PUT /api/plans/{plan_id}/draft`
+- `POST /api/plans/{plan_id}/draft/analysis`
+- `POST /api/plans/{plan_id}/draft/export`
 - `GET /assets/anatomy.svg`
 - `GET /health/live` and `GET /health/ready`
 - Interactive OpenAPI: `GET /docs`

@@ -29,3 +29,5 @@ export interface PlanAIExportResult {
   resolution_context: PlanResolutionContext
   days: PlanAIExportDay[]
 }
+
+export type PlanAIImportDocument = PlanAIExportResult

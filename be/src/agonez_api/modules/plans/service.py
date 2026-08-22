@@ -1,5 +1,6 @@
 from typing import Any, cast
 
+from agonez_api.modules.plans.analysis.schemas import PlanAIImportDocument
 from agonez_api.modules.plans.repository import DraftRows, PlanRepository
 from agonez_api.modules.plans.schemas import (
     DayArtifact,
@@ -23,6 +24,9 @@ class PlanService:
 
     async def create_plan(self, payload: PlanCreate) -> PlanDraftArtifact:
         return self.assemble_draft(await self._repository.create_plan(payload))
+
+    async def import_plan(self, payload: PlanAIImportDocument) -> PlanDraftArtifact:
+        return self.assemble_draft(await self._repository.import_plan(payload))
 
     async def duplicate_plan(self, plan_id: int) -> PlanDraftArtifact:
         return self.assemble_draft(await self._repository.duplicate_plan(plan_id))

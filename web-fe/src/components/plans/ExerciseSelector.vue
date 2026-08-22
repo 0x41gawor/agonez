@@ -24,6 +24,18 @@ const filtered = computed(() => {
     )
     .slice(0, 24)
 })
+const currentExerciseHref = computed(() =>
+  current.value ? `/atlas/exercises/${encodeURIComponent(current.value.slug)}` : undefined,
+)
+
+function handleTriggerClick(event: MouseEvent): void {
+  const modifiedClick =
+    event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0
+  if (currentExerciseHref.value && modifiedClick) return
+
+  event.preventDefault()
+  open.value = !open.value
+}
 
 function select(slug: string): void {
   emit('update:modelValue', slug)
@@ -34,11 +46,13 @@ function select(slug: string): void {
 
 <template>
   <div class="catalog-selector exercise-selector">
-    <button
+    <a
       class="catalog-selector-trigger"
-      type="button"
+      :href="currentExerciseHref"
+      role="button"
       :aria-expanded="open"
-      @click="open = !open"
+      :title="currentExerciseHref ? 'Click to choose an exercise · Ctrl/Cmd+click to open in Atlas' : 'Click to choose an exercise'"
+      @click="handleTriggerClick"
     >
       <span class="exercise-selector-copy">
         <span class="exercise-selector-label">{{ label ?? 'Exercise' }}</span>
@@ -46,7 +60,7 @@ function select(slug: string): void {
         <small v-if="current">{{ current.resistance_source }} · {{ current.slug }}</small>
       </span>
       <span aria-hidden="true">{{ open ? '−' : '⌄' }}</span>
-    </button>
+    </a>
 
     <div v-if="open" class="catalog-selector-panel">
       <label class="field-label" :for="`exercise-search-${label ?? 'exercise'}`">Find exercise</label>

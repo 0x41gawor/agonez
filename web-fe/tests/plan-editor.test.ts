@@ -173,6 +173,38 @@ describe('PlanEditor', () => {
     expect(slot.variants[0]?.exercise_slug).toBe(exercise.slug)
   })
 
+  it('keeps a plain selector click in the editor and exposes native modified-click navigation', async () => {
+    const slot = createSlot(0)
+    slot.variants.push(createVariant('DEFAULT', 0, exercise.slug))
+    const wrapper = mount(ExerciseSlotEditor, {
+      props: {
+        modelValue: slot,
+        index: 0,
+        count: 1,
+        exercises: [exercise],
+        muscles: [muscle],
+        path: `days/day-new.slots.${slot.clientKey}`,
+        issues: [],
+      },
+    })
+
+    const trigger = wrapper.get('.catalog-selector-trigger')
+    expect(trigger.element.tagName).toBe('A')
+    expect(trigger.attributes('href')).toBe('/atlas/exercises/barbell_bench_press')
+
+    const modifiedClick = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+    })
+    modifiedClick.preventDefault()
+    trigger.element.dispatchEvent(modifiedClick)
+    expect(wrapper.find('.catalog-selector-panel').exists()).toBe(false)
+
+    await trigger.trigger('click')
+    expect(wrapper.find('.catalog-selector-panel').exists()).toBe(true)
+  })
+
   it('adds and removes a FALLBACK inside the slot details', async () => {
     const slot = createSlot(0)
     slot.variants.push(createVariant('DEFAULT', 0, exercise.slug))

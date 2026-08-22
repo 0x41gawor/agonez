@@ -7,12 +7,18 @@ import type {
   PlanListResponse,
 } from './plan-types'
 import type { PlanAnalysisRequest, PlanAnalysisResult } from './plan-analysis-types'
-import type { PlanAIExportResult, PlanExportRequest } from './plan-export-types'
+import type {
+  PlanAIExportResult,
+  PlanAIImportDocument,
+  PlanExportRequest,
+} from './plan-export-types'
 
 export const plansApi = {
   list: (signal?: AbortSignal) => getJson<PlanListResponse>('/api/plans', undefined, signal),
   create: (payload: PlanCreate, signal?: AbortSignal) =>
     postJson<PlanDraftArtifact>('/api/plans', payload, signal),
+  importPlan: (payload: PlanAIImportDocument, signal?: AbortSignal) =>
+    postJson<PlanDraftArtifact>('/api/plans/import', payload, signal),
   duplicate: (planId: number, signal?: AbortSignal) =>
     postJson<PlanDraftArtifact>(`/api/plans/${planId}/duplicate`, {}, signal),
   detail: (planId: number, signal?: AbortSignal) =>
