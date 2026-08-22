@@ -228,32 +228,60 @@ function duplicatedDayName(name: string, days: EditorDay[]): string {
   return candidate
 }
 
+function duplicatedSlotName(name: string | null, slots: EditorSlot[]): string {
+  const trimmed = name?.trim() || 'Untitled exercise slot'
+  const root = trimmed.replace(/ copy(?: \d+)?$/i, '')
+  const existing = new Set(
+    slots.map((slot) => (slot.name?.trim() || 'Untitled exercise slot').toLocaleLowerCase()),
+  )
+  let suffix = ' copy'
+  let candidate = `${root.slice(0, 200 - suffix.length)}${suffix}`
+  let copyNumber = 2
+  while (existing.has(candidate.toLocaleLowerCase())) {
+    suffix = ` copy ${copyNumber}`
+    candidate = `${root.slice(0, 200 - suffix.length)}${suffix}`
+    copyNumber += 1
+  }
+  return candidate
+}
+
+function duplicateSlotTree(
+  source: EditorSlot,
+  ordinal: number,
+  name: string | null = source.name,
+): EditorSlot {
+  return {
+    ...source,
+    id: null,
+    clientKey: clientKey('slot', null),
+    ordinal,
+    name,
+    target_muscle_slugs: [...source.target_muscle_slugs],
+    variants: source.variants.map((variant, variantIndex) => ({
+      ...variant,
+      id: null,
+      clientKey: clientKey('variant', null),
+      ordinal: variantIndex,
+      sets: variant.sets.map((item, setIndex) => ({
+        ...item,
+        id: null,
+        clientKey: clientKey('set', null),
+        ordinal: setIndex,
+        reps: { ...item.reps },
+      })),
+    })),
+  }
+}
+
 function duplicateWorkout(source: EditorWorkoutUnit, dayName: string, copyName: string): EditorWorkoutUnit {
   return {
     ...source,
     id: null,
     clientKey: clientKey('workout', null),
     name: source.name.trim() === dayName.trim() ? copyName : source.name,
-    exercise_slots: source.exercise_slots.map((slot, slotIndex) => ({
-      ...slot,
-      id: null,
-      clientKey: clientKey('slot', null),
-      ordinal: slotIndex,
-      target_muscle_slugs: [...slot.target_muscle_slugs],
-      variants: slot.variants.map((variant, variantIndex) => ({
-        ...variant,
-        id: null,
-        clientKey: clientKey('variant', null),
-        ordinal: variantIndex,
-        sets: variant.sets.map((item, setIndex) => ({
-          ...item,
-          id: null,
-          clientKey: clientKey('set', null),
-          ordinal: setIndex,
-          reps: { ...item.reps },
-        })),
-      })),
-    })),
+    exercise_slots: source.exercise_slots.map((slot, slotIndex) =>
+      duplicateSlotTree(slot, slotIndex),
+    ),
   }
 }
 
@@ -274,6 +302,17 @@ export function duplicateDay(days: EditorDay[], index: number): EditorDay | null
   days.splice(index + 1, 0, duplicate)
   days.forEach((day, ordinal) => {
     day.ordinal = ordinal
+  })
+  return duplicate
+}
+
+export function duplicateSlot(slots: EditorSlot[], index: number): EditorSlot | null {
+  const source = slots[index]
+  if (!source) return null
+  const duplicate = duplicateSlotTree(source, index + 1, duplicatedSlotName(source.name, slots))
+  slots.splice(index + 1, 0, duplicate)
+  slots.forEach((slot, ordinal) => {
+    slot.ordinal = ordinal
   })
   return duplicate
 }

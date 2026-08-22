@@ -5,6 +5,7 @@ import type { ExerciseListItem, MuscleListItem } from '@/api/types'
 import ExerciseSlotEditor from '@/components/plans/ExerciseSlotEditor.vue'
 import {
   createSlot,
+  duplicateSlot,
   moveOrdered,
   removeOrdered,
   type EditorWorkoutUnit,
@@ -90,6 +91,7 @@ defineExpose({ addSlot })
         :path="`${path.replace('.workout', '')}.slots.${slot.clientKey}`"
         :issues="issues"
         @move="moveOrdered(model.exercise_slots, index, $event)"
+        @duplicate="duplicateSlot(model.exercise_slots, index)"
         @remove="removeOrdered(model.exercise_slots, index)"
       />
       <div class="slot-list-footer">

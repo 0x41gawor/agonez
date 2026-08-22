@@ -8,6 +8,7 @@ import {
   createSlot,
   createVariant,
   duplicateDay,
+  duplicateSlot,
   moveOrdered,
   removeOrdered,
   toPlanDraftUpdate,
@@ -150,6 +151,75 @@ describe('PlanEditor', () => {
     removeOrdered(slots, 1)
     expect(slots.map((slot) => slot.id)).toEqual([52])
     expect(ids).toEqual([51, 52])
+  })
+
+  it('deep-copies an exercise slot with fresh nested identities and independent values', async () => {
+    const editor = toPlanEditorState(planArtifact())
+    const slots = editor.days[0]!.workout_unit!.exercise_slots
+    const source = slots[0]!
+    source.variants.push(createVariant('FALLBACK', 1, fallbackExercise.slug))
+    source.variants[1]!.sets.push({
+      id: 72,
+      clientKey: 'set-72',
+      ordinal: 0,
+      reps: { min: 8, max: 10 },
+      rir: 2,
+      min_volume_level: 0,
+    })
+
+    const wrapper = mount(PlanEditor, {
+      props: {
+        modelValue: editor,
+        exercises: [exercise, fallbackExercise],
+        muscles: [muscle],
+        issues: [],
+      },
+    })
+    await wrapper.get('.day-toggle').trigger('click')
+    await wrapper.get('button[title="Duplicate exercise slot"]').trigger('click')
+
+    expect(slots).toHaveLength(2)
+    const duplicate = slots[1]!
+    expect(duplicate.name).toBe('Primary chest press copy')
+    expect(duplicate.ordinal).toBe(1)
+    expect(duplicate.id).toBeNull()
+    expect(duplicate.clientKey).not.toBe(source.clientKey)
+    expect(duplicate.target_muscle_slugs).toEqual(source.target_muscle_slugs)
+    expect(duplicate.target_muscle_slugs).not.toBe(source.target_muscle_slugs)
+    expect(duplicate.variants).toHaveLength(2)
+    duplicate.variants.forEach((variant, index) => {
+      expect(variant.id).toBeNull()
+      expect(variant.clientKey).not.toBe(source.variants[index]!.clientKey)
+      variant.sets.forEach((set, setIndex) => {
+        expect(set.id).toBeNull()
+        expect(set.clientKey).not.toBe(source.variants[index]!.sets[setIndex]!.clientKey)
+        expect(set.reps).not.toBe(source.variants[index]!.sets[setIndex]!.reps)
+      })
+    })
+
+    duplicate.target_muscle_slugs.push('another_muscle')
+    duplicate.variants[0]!.sets[0]!.reps.min = 99
+    expect(source.target_muscle_slugs).toEqual([muscle.slug])
+    expect(source.variants[0]!.sets[0]!.reps.min).toBe(5)
+
+    const payload = toPlanDraftUpdate(editor)
+    expect(payload.days[0]?.workout_unit?.exercise_slots[1]?.id).toBeNull()
+    expect(payload.days[0]?.workout_unit?.exercise_slots[1]?.variants[0]?.id).toBeNull()
+    expect(payload.days[0]?.workout_unit?.exercise_slots[1]?.variants[0]?.sets[0]?.id).toBeNull()
+  })
+
+  it('gives repeated slot copies deterministic unique names', () => {
+    const editor = toPlanEditorState(planArtifact())
+    const slots = editor.days[0]!.workout_unit!.exercise_slots
+    duplicateSlot(slots, 0)
+    duplicateSlot(slots, 0)
+
+    expect(slots.map((slot) => slot.name)).toEqual([
+      'Primary chest press',
+      'Primary chest press copy 2',
+      'Primary chest press copy',
+    ])
+    expect(slots.map((slot) => slot.ordinal)).toEqual([0, 1, 2])
   })
 
   it('selects a live-catalog exercise as the DEFAULT variant', async () => {

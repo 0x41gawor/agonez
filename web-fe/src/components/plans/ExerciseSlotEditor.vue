@@ -25,6 +25,7 @@ const props = defineProps<{
 }>()
 defineEmits<{
   move: [direction: -1 | 1]
+  duplicate: []
   remove: []
 }>()
 
@@ -109,6 +110,7 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
       <div class="ordered-actions">
         <button type="button" :disabled="index === 0" title="Move slot up" @click="$emit('move', -1)">↑</button>
         <button type="button" :disabled="index === count - 1" title="Move slot down" @click="$emit('move', 1)">↓</button>
+        <button type="button" title="Duplicate exercise slot" aria-label="Duplicate exercise slot" @click="$emit('duplicate')">⧉</button>
         <button class="danger-action" type="button" title="Remove slot" @click="$emit('remove')">×</button>
       </div>
     </header>
