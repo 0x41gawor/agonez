@@ -12,6 +12,11 @@ export const exercise: ExerciseListItem = {
   execution_pattern: 'Bilateral',
   load_capacity: 72,
   systemic_propulsive_fcsa_demand: 175,
+  recommended_rep_profile: {
+    high_load: { min: 4, max: 6 },
+    moderate_load: { min: 7, max: 11 },
+    low_load: { min: 12, max: 18 },
+  },
   created_at: '2026-08-20T10:00:00Z',
   updated_at: '2026-08-21T10:00:00Z',
   has_engine_vectors: true,
@@ -69,6 +74,8 @@ export function planArtifact(lockVersion = 4): PlanDraftArtifact {
               goal: 'Main progressive chest stimulus',
               role: 'PRIMARY_PROGRESSIVE',
               volume_axis: null,
+              loading_mode: 'moderate_load',
+              loading_cycle: null,
               target_muscle_slugs: [muscle.slug],
               variants: [
                 {
@@ -83,6 +90,8 @@ export function planArtifact(lockVersion = 4): PlanDraftArtifact {
                       reps: { min: 5, max: 7 },
                       rir: 2,
                       min_volume_level: 0,
+                      loading_mode: null,
+                      loading_cycle: null,
                     },
                   ],
                 },

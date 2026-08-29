@@ -46,6 +46,9 @@
   --roleSecondary: #64a0e8;
   --roleVolume: #2bc28a;
   --roleAccessory: #9a84c8;
+  --loadHigh: #f07855;
+  --loadModerate: #5a9fe8;
+  --loadLow: #a77ce8;
 }
 
 :root[data-theme='light'] {
@@ -79,4 +82,7 @@
   --roleSecondary: #2f6fa8;
   --roleVolume: #147a59;
   --roleAccessory: #6f5aa0;
+  --loadHigh: #c54d30;
+  --loadModerate: #2f72b7;
+  --loadLow: #7447b5;
 }

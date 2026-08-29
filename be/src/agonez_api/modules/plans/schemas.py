@@ -27,6 +27,12 @@ class ExerciseVariantType(str, Enum):
     FALLBACK = "FALLBACK"
 
 
+class LoadingMode(str, Enum):
+    HIGH_LOAD = "high_load"
+    MODERATE_LOAD = "moderate_load"
+    LOW_LOAD = "low_load"
+
+
 def _require_deterministic_ordinals(items: list[Any], label: str) -> None:
     ordinals = [item.ordinal for item in items]
     if ordinals != list(range(len(items))):
@@ -56,6 +62,8 @@ class SetInfraDraft(APIModel):
     reps: RepRange
     rir: int = Field(ge=0, le=4)
     min_volume_level: int = Field(default=0, ge=0, le=32767)
+    loading_mode: LoadingMode | None = None
+    loading_cycle: list[LoadingMode] | None = Field(default=None, min_length=2, max_length=52)
 
 
 class ExerciseVariantDraft(APIModel):
@@ -79,6 +87,8 @@ class ExerciseSlotDraft(APIModel):
     goal: str | None = None
     role: ExerciseSlotRole
     volume_axis: str | None = Field(default=None, max_length=100)
+    loading_mode: LoadingMode = LoadingMode.MODERATE_LOAD
+    loading_cycle: list[LoadingMode] | None = Field(default=None, min_length=2, max_length=52)
     target_muscle_slugs: list[str] = Field(default_factory=list)
     variants: list[ExerciseVariantDraft] = Field(default_factory=list)
 
@@ -161,6 +171,8 @@ class SetInfraArtifact(APIModel):
     reps: RepRange
     rir: int
     min_volume_level: int
+    loading_mode: LoadingMode | None = None
+    loading_cycle: list[LoadingMode] | None = Field(default=None, min_length=2, max_length=52)
 
 
 class ExerciseVariantArtifact(APIModel):
@@ -179,6 +191,8 @@ class ExerciseSlotArtifact(APIModel):
     goal: str | None
     role: ExerciseSlotRole
     volume_axis: str | None
+    loading_mode: LoadingMode = LoadingMode.MODERATE_LOAD
+    loading_cycle: list[LoadingMode] | None = Field(default=None, min_length=2, max_length=52)
     target_muscle_slugs: list[str]
     variants: list[ExerciseVariantArtifact]
 

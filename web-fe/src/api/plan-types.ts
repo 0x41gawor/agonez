@@ -5,6 +5,7 @@ export type ExerciseSlotRole =
   | 'VOLUME_ACCUMULATION'
   | 'ACCESSORY'
 export type ExerciseVariantType = 'DEFAULT' | 'FALLBACK'
+export type LoadingMode = 'high_load' | 'moderate_load' | 'low_load'
 
 export interface RepRange {
   min: number
@@ -17,6 +18,8 @@ export interface SetInfraDraft {
   reps: RepRange
   rir: number
   min_volume_level: number
+  loading_mode: LoadingMode | null
+  loading_cycle: LoadingMode[] | null
 }
 
 export interface ExerciseVariantDraft {
@@ -35,6 +38,8 @@ export interface ExerciseSlotDraft {
   goal: string | null
   role: ExerciseSlotRole
   volume_axis: string | null
+  loading_mode: LoadingMode
+  loading_cycle: LoadingMode[] | null
   target_muscle_slugs: string[]
   variants: ExerciseVariantDraft[]
 }

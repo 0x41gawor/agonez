@@ -51,6 +51,10 @@ progression.
   inside expanded slot details. The map is not mounted for collapsed slots, avoiding a
   large-plan rendering cost, and is explicitly labeled as slot intent rather than
   calculated recruitment.
+- Slot summaries expose a restrained loading badge. Expanded slots define a static
+  loading mode or repeating microcycle pattern; sets inherit that prescription or
+  override it independently. New sets initialize reps from the selected Atlas
+  exercise's `recommended_rep_profile`, without overwriting later manual edits.
 
 ## Verification
 

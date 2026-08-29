@@ -59,6 +59,7 @@ async def test_exercise_list_metrics_and_sorting_are_sourced_from_engine() -> No
     assert EXERCISE_SORTS["updated_at"] == "e.updated_at"
     assert "e.created_at" in list_query
     assert "e.updated_at" in list_query
+    assert "e.recommended_rep_profile" in list_query
 
 
 async def test_exercise_detail_propulsive_fields_are_sourced_from_engine() -> None:
@@ -85,6 +86,7 @@ async def test_exercise_detail_propulsive_fields_are_sourced_from_engine() -> No
     assert "eng.propulsive_fcsa_contribution_vector" in captured_query
     assert "e.created_at" in captured_query
     assert "e.updated_at" in captured_query
+    assert "e.recommended_rep_profile" in captured_query
     assert "e.load_capacity," not in captured_query
     assert "e.systemic_propulsive_fcsa_demand" not in captured_query
     assert "e.propulsive_fcsa_contribution_vector" not in captured_query

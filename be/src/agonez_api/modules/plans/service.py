@@ -67,6 +67,8 @@ class PlanService:
                     reps={"min": item["rep_min"], "max": item["rep_max"]},
                     rir=item["rir"],
                     min_volume_level=item["min_volume_level"],
+                    loading_mode=item.get("loading_mode"),
+                    loading_cycle=item.get("loading_cycle"),
                 )
             )
 
@@ -103,6 +105,8 @@ class PlanService:
                     goal=slot["goal"],
                     role=slot["role"],
                     volume_axis=slot["volume_axis"],
+                    loading_mode=slot.get("loading_mode", "moderate_load"),
+                    loading_cycle=slot.get("loading_cycle"),
                     target_muscle_slugs=targets_by_slot.get(slot_id, []),
                     variants=variants_by_slot.get(slot_id, []),
                 )

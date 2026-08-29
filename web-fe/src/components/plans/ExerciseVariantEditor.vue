@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
+import type { LoadingMode } from '@/api/plan-types'
 import type { ExerciseListItem } from '@/api/types'
 import ExerciseSelector from '@/components/plans/ExerciseSelector.vue'
 import SetPrescriptionEditor from '@/components/plans/SetPrescriptionEditor.vue'
 import {
   createSet,
+  effectiveLoadingPattern,
   moveOrdered,
   removeOrdered,
   type EditorVariant,
@@ -11,21 +15,35 @@ import {
 } from '@/features/plans/editor'
 
 const model = defineModel<EditorVariant>({ required: true })
-defineProps<{
+const props = withDefaults(defineProps<{
   exercises: ExerciseListItem[]
   path: string
   issues: PlanValidationIssue[]
   fallbackIndex?: number
   fallbackCount?: number
-}>()
+  slotLoadingMode?: LoadingMode
+  slotLoadingCycle?: LoadingMode[] | null
+}>(), {
+  slotLoadingMode: 'moderate_load',
+  slotLoadingCycle: null,
+})
 defineEmits<{
   remove: []
   move: [direction: -1 | 1]
 }>()
 
 function addSet(): void {
-  model.value.sets.push(createSet(model.value.sets.length))
+  model.value.sets.push(createSet(
+    model.value.sets.length,
+    undefined,
+    effectiveLoadingPattern(props.slotLoadingMode, props.slotLoadingCycle)[0]!,
+    selectedExercise.value?.recommended_rep_profile,
+  ))
 }
+
+const selectedExercise = computed(() =>
+  props.exercises.find((exercise) => exercise.slug === model.value.exercise_slug),
+)
 
 function duplicateSet(index: number): void {
   const source = model.value.sets[index]
@@ -74,6 +92,8 @@ function duplicateSet(index: number): void {
         :count="model.sets.length"
         :path="`${path}.sets.${item.clientKey}`"
         :issues="issues"
+        :slot-loading-mode="slotLoadingMode"
+        :slot-loading-cycle="slotLoadingCycle"
         @move="moveOrdered(model.sets, index, $event)"
         @remove="removeOrdered(model.sets, index)"
         @duplicate="duplicateSet(index)"

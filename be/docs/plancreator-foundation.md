@@ -10,8 +10,10 @@ tab. It stops at `PlanDraft` persistence:
 Exercise slots are stable plan roles, not aliases for catalog exercises. Their IDs—and
 the IDs of all other editable children—survive reorder and ordinary edits.
 
-Analysis, modulation, release workflow, macrocycles, execution, load tracking,
-progression, ETU, recovery, and joint-load evaluation are deliberately deferred.
+Loading intent and repeating loading patterns are persisted, while applying those
+patterns across future microcycles remains part of the deferred Modulation resolver.
+Release workflow, macrocycles, execution, load tracking, and progression remain
+deferred. See `loading-prescriptions.md` for inheritance semantics.
 
 ## Existing-system decisions
 
@@ -51,3 +53,6 @@ slot, and another permits only one DRAFT revision per plan.
 - `PUT /api/plans/{plan_id}/draft`
 
 External payloads use exercise and muscle slugs. Relational rows reference catalog IDs.
+
+Exercise slots own a default `loading_mode` and optional `loading_cycle`; individual
+sets may inherit or override either. Concrete rep ranges remain independently editable.

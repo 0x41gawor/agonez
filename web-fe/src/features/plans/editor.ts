@@ -4,11 +4,13 @@ import type {
   ExerciseSlotRole,
   ExerciseVariantDraft,
   ExerciseVariantType,
+  LoadingMode,
   PlanDraftArtifact,
   PlanDraftUpdate,
   SetInfraDraft,
   WorkoutUnitDraft,
 } from '@/api/plan-types'
+import type { RecommendedRepProfile } from '@/api/types'
 
 interface EditorIdentity {
   clientKey: string
@@ -52,7 +54,12 @@ function clientKey(kind: string, id: number | null): string {
 }
 
 function editorSet(item: SetInfraDraft): EditorSet {
-  return { ...item, reps: { ...item.reps }, clientKey: clientKey('set', item.id) }
+  return {
+    ...item,
+    reps: { ...item.reps },
+    loading_cycle: item.loading_cycle ? [...item.loading_cycle] : null,
+    clientKey: clientKey('set', item.id),
+  }
 }
 
 function editorVariant(item: ExerciseVariantDraft): EditorVariant {
@@ -67,6 +74,7 @@ function editorSlot(item: ExerciseSlotDraft): EditorSlot {
   return {
     ...item,
     clientKey: clientKey('slot', item.id),
+    loading_cycle: item.loading_cycle ? [...item.loading_cycle] : null,
     target_muscle_slugs: [...item.target_muscle_slugs],
     variants: item.variants.map(editorVariant),
   }
@@ -129,6 +137,8 @@ export function toPlanDraftUpdate(editor: PlanEditorState): PlanDraftUpdate {
               goal: slot.goal,
               role: slot.role,
               volume_axis: slot.volume_axis,
+              loading_mode: slot.loading_mode,
+              loading_cycle: slot.loading_cycle ? [...slot.loading_cycle] : null,
               target_muscle_slugs: [...slot.target_muscle_slugs],
               variants: slot.variants.map((variant, variantIndex) => ({
                 id: variant.id,
@@ -141,6 +151,8 @@ export function toPlanDraftUpdate(editor: PlanEditorState): PlanDraftUpdate {
                   reps: { ...item.reps },
                   rir: item.rir,
                   min_volume_level: item.min_volume_level,
+                  loading_mode: item.loading_mode,
+                  loading_cycle: item.loading_cycle ? [...item.loading_cycle] : null,
                 })),
               })),
             })),
@@ -184,6 +196,8 @@ export function createSlot(ordinal: number): EditorSlot {
     goal: null,
     role: 'ACCESSORY',
     volume_axis: null,
+    loading_mode: 'moderate_load',
+    loading_cycle: null,
     target_muscle_slugs: [],
     variants: [],
   }
@@ -204,14 +218,73 @@ export function createVariant(
   }
 }
 
-export function createSet(ordinal: number, source?: EditorSet): EditorSet {
+export const LOADING_MODES: readonly LoadingMode[] = [
+  'high_load',
+  'moderate_load',
+  'low_load',
+]
+
+export function loadingModeLabel(mode: LoadingMode): string {
+  return {
+    high_load: 'High load',
+    moderate_load: 'Moderate load',
+    low_load: 'Low load',
+  }[mode]
+}
+
+export function loadingModeShortLabel(mode: LoadingMode): string {
+  return {
+    high_load: 'H',
+    moderate_load: 'M',
+    low_load: 'L',
+  }[mode]
+}
+
+export function effectiveLoadingPattern(
+  slotMode: LoadingMode,
+  slotCycle: LoadingMode[] | null,
+  setMode: LoadingMode | null = null,
+  setCycle: LoadingMode[] | null = null,
+): LoadingMode[] {
+  if (setCycle?.length) return setCycle
+  if (setMode) return [setMode]
+  if (slotCycle?.length) return slotCycle
+  return [slotMode]
+}
+
+export function recommendedRepRange(
+  profile: RecommendedRepProfile | null | undefined,
+  mode: LoadingMode,
+): { min: number; max: number } | null {
+  const recommendation = profile?.[mode]
+  return recommendation ? { ...recommendation } : null
+}
+
+function fallbackRepRange(mode: LoadingMode): { min: number; max: number } {
+  return {
+    high_load: { min: 5, max: 8 },
+    moderate_load: { min: 8, max: 12 },
+    low_load: { min: 12, max: 20 },
+  }[mode]
+}
+
+export function createSet(
+  ordinal: number,
+  source?: EditorSet,
+  loadingMode: LoadingMode = 'moderate_load',
+  recommendedProfile?: RecommendedRepProfile | null,
+): EditorSet {
   return {
     id: null,
     clientKey: clientKey('set', null),
     ordinal,
-    reps: source ? { ...source.reps } : { min: 8, max: 12 },
+    reps: source
+      ? { ...source.reps }
+      : recommendedRepRange(recommendedProfile, loadingMode) ?? fallbackRepRange(loadingMode),
     rir: source?.rir ?? 2,
     min_volume_level: source?.min_volume_level ?? 0,
+    loading_mode: source ? source.loading_mode : loadingMode,
+    loading_cycle: source?.loading_cycle ? [...source.loading_cycle] : null,
   }
 }
 
@@ -256,6 +329,7 @@ function duplicateSlotTree(
     clientKey: clientKey('slot', null),
     ordinal,
     name,
+    loading_cycle: source.loading_cycle ? [...source.loading_cycle] : null,
     target_muscle_slugs: [...source.target_muscle_slugs],
     variants: source.variants.map((variant, variantIndex) => ({
       ...variant,
@@ -268,6 +342,7 @@ function duplicateSlotTree(
         clientKey: clientKey('set', null),
         ordinal: setIndex,
         reps: { ...item.reps },
+        loading_cycle: item.loading_cycle ? [...item.loading_cycle] : null,
       })),
     })),
   }

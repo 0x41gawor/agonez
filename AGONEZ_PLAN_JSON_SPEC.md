@@ -9,6 +9,10 @@ This is an interchange format, not a database backup. It deliberately describes 
 exercises, and concrete set prescriptions without exposing PlanCreator IDs, revisions,
 exercise-slot IDs, fallbacks, or other persistence details.
 
+Loading modes and loading cycles are intentionally not part of V1. Exported repetition
+ranges are already concrete. Import creates `moderate_load` slots and leaves each set in
+inherit mode; richer unresolved loading patterns require a future interchange version.
+
 The same format is produced by PlanCreator's **Export JSON** action and accepted by the
 **Import JSON** action on the **My Plans** page.
 

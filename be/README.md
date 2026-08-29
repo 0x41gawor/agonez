@@ -140,3 +140,7 @@ The complete draft is exposed as nested JSON, but remains relationally stored. A
 updates submitted IDs in place, inserts children whose ID is null, deletes only omitted
 children, and increments `lock_version`. Stale saves receive `409 Conflict`. See
 `docs/plancreator-foundation.md` for the domain boundary and assumptions.
+
+Atlas exercise payloads include `recommended_rep_profile`. PlanCreator slots and sets
+persist inheritable static loading modes and repeating microcycle loading patterns; see
+`docs/loading-prescriptions.md` for precedence and rep-initialization behavior.

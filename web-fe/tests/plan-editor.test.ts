@@ -5,11 +5,13 @@ import ExerciseSlotEditor from '@/components/plans/ExerciseSlotEditor.vue'
 import ExerciseVariantEditor from '@/components/plans/ExerciseVariantEditor.vue'
 import PlanEditor from '@/components/plans/PlanEditor.vue'
 import {
+  createSet,
   createSlot,
   createVariant,
   duplicateDay,
   duplicateSlot,
   moveOrdered,
+  recommendedRepRange,
   removeOrdered,
   toPlanDraftUpdate,
   toPlanEditorState,
@@ -18,6 +20,18 @@ import {
 import { exercise, fallbackExercise, muscle, planArtifact } from './fixtures/plans'
 
 describe('PlanEditor', () => {
+  it('treats null profile ranges as unsupported and safely seeds an editable set', () => {
+    const profile = {
+      high_load: null,
+      moderate_load: { min: 8, max: 12 },
+      low_load: null,
+    }
+
+    expect(recommendedRepRange(profile, 'high_load')).toBeNull()
+    expect(recommendedRepRange(profile, 'moderate_load')).toEqual({ min: 8, max: 12 })
+    expect(createSet(0, undefined, 'high_load', profile).reps).toEqual({ min: 5, max: 8 })
+  })
+
   it('starts with all loaded days collapsed, then renders the slot-first hierarchy', async () => {
     const editor = toPlanEditorState(planArtifact())
     const wrapper = mount(PlanEditor, {
@@ -157,6 +171,8 @@ describe('PlanEditor', () => {
     const editor = toPlanEditorState(planArtifact())
     const slots = editor.days[0]!.workout_unit!.exercise_slots
     const source = slots[0]!
+    source.loading_cycle = ['high_load', 'low_load']
+    source.variants[0]!.sets[0]!.loading_cycle = ['moderate_load', 'low_load']
     source.variants.push(createVariant('FALLBACK', 1, fallbackExercise.slug))
     source.variants[1]!.sets.push({
       id: 72,
@@ -165,6 +181,8 @@ describe('PlanEditor', () => {
       reps: { min: 8, max: 10 },
       rir: 2,
       min_volume_level: 0,
+      loading_mode: null,
+      loading_cycle: null,
     })
 
     const wrapper = mount(PlanEditor, {
@@ -186,6 +204,8 @@ describe('PlanEditor', () => {
     expect(duplicate.clientKey).not.toBe(source.clientKey)
     expect(duplicate.target_muscle_slugs).toEqual(source.target_muscle_slugs)
     expect(duplicate.target_muscle_slugs).not.toBe(source.target_muscle_slugs)
+    expect(duplicate.loading_cycle).toEqual(source.loading_cycle)
+    expect(duplicate.loading_cycle).not.toBe(source.loading_cycle)
     expect(duplicate.variants).toHaveLength(2)
     duplicate.variants.forEach((variant, index) => {
       expect(variant.id).toBeNull()
@@ -194,6 +214,9 @@ describe('PlanEditor', () => {
         expect(set.id).toBeNull()
         expect(set.clientKey).not.toBe(source.variants[index]!.sets[setIndex]!.clientKey)
         expect(set.reps).not.toBe(source.variants[index]!.sets[setIndex]!.reps)
+        if (set.loading_cycle) {
+          expect(set.loading_cycle).not.toBe(source.variants[index]!.sets[setIndex]!.loading_cycle)
+        }
       })
     })
 
@@ -336,6 +359,8 @@ describe('PlanEditor', () => {
 
     await wrapper.get('.add-set').trigger('click')
     expect(variant.sets).toHaveLength(1)
+    expect(variant.sets[0]?.reps).toEqual({ min: 7, max: 11 })
+    expect(variant.sets[0]?.loading_mode).toBe('moderate_load')
     await wrapper.get('input[type="number"]').setValue('6')
     expect(variant.sets[0]?.reps.min).toBe(6)
     await wrapper.get('button[title="Duplicate set"]').trigger('click')
@@ -345,6 +370,90 @@ describe('PlanEditor', () => {
     expect(variant.sets.map((item) => item.ordinal)).toEqual([0, 1])
     await wrapper.findAll('button[title="Remove set"]')[0]?.trigger('click')
     expect(variant.sets).toHaveLength(1)
+  })
+
+  it('starts from slot loading, supports compact set overrides and repeating patterns', async () => {
+    const slot = createSlot(0)
+    slot.loading_mode = 'high_load'
+    slot.variants.push(createVariant('DEFAULT', 0, exercise.slug))
+    const wrapper = mount(ExerciseSlotEditor, {
+      props: {
+        modelValue: slot,
+        index: 0,
+        count: 1,
+        exercises: [exercise],
+        muscles: [muscle],
+        path: `days/day-new.slots.${slot.clientKey}`,
+        issues: [],
+      },
+    })
+
+    expect(wrapper.get('.slot-loading-badge').text()).toContain('High load')
+    await wrapper.get('.add-set').trigger('click')
+    expect(slot.variants[0]?.sets[0]?.reps).toEqual({ min: 4, max: 6 })
+
+    await wrapper.get('.set-loading-control button[aria-label="Low load"]').trigger('click')
+    expect(slot.variants[0]?.sets[0]?.loading_mode).toBe('low_load')
+    expect(wrapper.find('.set-rep-recommendation').exists()).toBe(false)
+
+    await wrapper.get('.set-loading-control .loading-cycle-toggle').trigger('click')
+    expect(slot.variants[0]?.sets[0]?.loading_cycle).toEqual(['low_load', 'low_load'])
+    const cycleSteps = wrapper.findAll('.set-loading-control .loading-cycle-steps select')
+    await cycleSteps[1]!.setValue('high_load')
+    expect(slot.variants[0]?.sets[0]?.loading_cycle).toEqual(['low_load', 'high_load'])
+    expect(wrapper.get('.set-loading-control .loading-cycle-heading').text()).toContain('L·H')
+  })
+
+  it('uses the slot loading control as a bulk replacement for every set', async () => {
+    const slot = createSlot(0)
+    const variant = createVariant('DEFAULT', 0, exercise.slug)
+    variant.sets.push(
+      createSet(0, undefined, 'high_load', exercise.recommended_rep_profile),
+      createSet(1, undefined, 'low_load', exercise.recommended_rep_profile),
+    )
+    slot.variants.push(variant)
+    const wrapper = mount(ExerciseSlotEditor, {
+      props: {
+        modelValue: slot,
+        index: 0,
+        count: 1,
+        exercises: [exercise],
+        muscles: [muscle],
+        path: `days/day-new.slots.${slot.clientKey}`,
+        issues: [],
+      },
+    })
+
+    await wrapper.get('.slot-disclosure').trigger('click')
+    await wrapper.get('.slot-loading-prescription button[aria-label="Moderate load"]').trigger('click')
+
+    expect(slot.loading_mode).toBe('moderate_load')
+    expect(slot.loading_cycle).toBeNull()
+    expect(slot.variants[0]?.sets.map((set) => set.loading_mode)).toEqual([
+      'moderate_load',
+      'moderate_load',
+    ])
+    expect(slot.variants[0]?.sets.every((set) => set.loading_cycle === null)).toBe(true)
+  })
+
+  it('defines a slot loading cycle while preserving manually edited rep ranges', async () => {
+    const editor = toPlanEditorState(planArtifact())
+    const slot = editor.days[0]!.workout_unit!.exercise_slots[0]!
+    const originalReps = { ...slot.variants[0]!.sets[0]!.reps }
+    const wrapper = mount(PlanEditor, {
+      props: { modelValue: editor, exercises: [exercise], muscles: [muscle], issues: [] },
+    })
+
+    await wrapper.get('.day-toggle').trigger('click')
+    await wrapper.get('.slot-disclosure').trigger('click')
+    await wrapper.get('.slot-loading-prescription .loading-cycle-toggle').trigger('click')
+    expect(slot.loading_cycle).toEqual(['moderate_load', 'moderate_load'])
+    const steps = wrapper.findAll('.slot-loading-prescription .loading-cycle-steps select')
+    await steps[1]!.setValue('low_load')
+    expect(slot.loading_cycle).toEqual(['moderate_load', 'low_load'])
+    expect(slot.variants[0]!.sets[0]!.loading_cycle).toEqual(['moderate_load', 'low_load'])
+    expect(slot.variants[0]!.sets[0]!.reps).toEqual(originalReps)
+    expect(wrapper.get('.slot-loading-badge').text()).toContain('M·L')
   })
 
   it('preserves server IDs through edits and round-trip conversion', () => {

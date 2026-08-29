@@ -1,5 +1,13 @@
 export type Vector = Record<string, number>
 export type SortOrder = 'asc' | 'desc'
+export type LoadingMode = 'high_load' | 'moderate_load' | 'low_load'
+
+export interface RepRange {
+  min: number
+  max: number
+}
+
+export type RecommendedRepProfile = Record<LoadingMode, RepRange | null>
 export type ExerciseSort =
   | 'name'
   | 'name_full'
@@ -19,6 +27,7 @@ export interface ExerciseListItem {
   execution_pattern: string
   load_capacity: number | null
   systemic_propulsive_fcsa_demand: number | null
+  recommended_rep_profile: RecommendedRepProfile
   created_at: string
   updated_at: string
   has_engine_vectors: boolean

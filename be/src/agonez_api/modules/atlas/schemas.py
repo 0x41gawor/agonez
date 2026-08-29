@@ -13,6 +13,25 @@ class APIModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class RecommendedRepRange(APIModel):
+    min: int = Field(ge=1, le=32767)
+    max: int = Field(ge=1, le=32767)
+
+    @field_validator("max")
+    @classmethod
+    def validate_max(cls, value: int, info: Any) -> int:
+        minimum = info.data.get("min")
+        if isinstance(minimum, int) and value < minimum:
+            raise ValueError("max must be greater than or equal to min")
+        return value
+
+
+class RecommendedRepProfile(APIModel):
+    high_load: RecommendedRepRange | None
+    moderate_load: RecommendedRepRange | None
+    low_load: RecommendedRepRange | None
+
+
 class ExerciseListItem(APIModel):
     slug: str
     name: str
@@ -24,6 +43,7 @@ class ExerciseListItem(APIModel):
     execution_pattern: str
     load_capacity: float | None
     systemic_propulsive_fcsa_demand: float | None
+    recommended_rep_profile: RecommendedRepProfile
     created_at: datetime
     updated_at: datetime
     has_engine_vectors: bool
@@ -64,6 +84,7 @@ class ExerciseDetail(APIModel):
     execution_pattern: str
     load_capacity: float | None
     systemic_propulsive_fcsa_demand: float | None
+    recommended_rep_profile: RecommendedRepProfile
     propulsive_fcsa_contribution_vector: Vector | None
     created_at: datetime
     updated_at: datetime

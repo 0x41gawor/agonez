@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
+import type { LoadingMode } from '@/api/plan-types'
 import type { ExerciseListItem, MuscleListItem } from '@/api/types'
 import BodyViewer from '@/components/anatomy/BodyViewer.vue'
 import MediaImage from '@/components/common/MediaImage.vue'
 import ExerciseSelector from '@/components/plans/ExerciseSelector.vue'
 import ExerciseVariantEditor from '@/components/plans/ExerciseVariantEditor.vue'
+import LoadingCycleEditor from '@/components/plans/LoadingCycleEditor.vue'
+import LoadingModePicker from '@/components/plans/LoadingModePicker.vue'
 import MuscleTargetSelector from '@/components/plans/MuscleTargetSelector.vue'
 import {
   createVariant,
+  effectiveLoadingPattern,
+  loadingModeLabel,
+  loadingModeShortLabel,
   roleLabel,
   type EditorSlot,
   type PlanValidationIssue,
@@ -50,6 +56,33 @@ const roleClass = computed(() => `role-${model.value.role.toLowerCase().replaceA
 const targetVector = computed<Record<string, number>>(() =>
   Object.fromEntries(model.value.target_muscle_slugs.map((slug) => [slug, 1])),
 )
+const slotLoadingPattern = computed(() => effectiveLoadingPattern(
+  model.value.loading_mode,
+  model.value.loading_cycle,
+))
+const slotCycleModel = computed<LoadingMode[] | null>({
+  get: () => model.value.loading_cycle,
+  set: (cycle) => {
+    model.value.loading_cycle = cycle ? [...cycle] : null
+    for (const variant of model.value.variants) {
+      for (const set of variant.sets) {
+        set.loading_mode = model.value.loading_mode
+        set.loading_cycle = cycle ? [...cycle] : null
+      }
+    }
+  },
+})
+
+function applySlotLoadingMode(mode: LoadingMode): void {
+  model.value.loading_mode = mode
+  model.value.loading_cycle = null
+  for (const variant of model.value.variants) {
+    for (const set of variant.sets) {
+      set.loading_mode = mode
+      set.loading_cycle = null
+    }
+  }
+}
 
 function chooseInitialDefault(slug: string): void {
   if (!slug) return
@@ -102,6 +135,10 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           <span class="slot-role-badge">
             <i aria-hidden="true" />{{ roleLabel(model.role) }}
           </span>
+          <span class="slot-loading-badge" :class="`loading-${slotLoadingPattern[0]}`">
+            <i v-for="(mode, patternIndex) in slotLoadingPattern" :key="patternIndex" :class="`loading-${mode}`" aria-hidden="true" />
+            {{ slotLoadingPattern.length === 1 ? loadingModeLabel(slotLoadingPattern[0]!) : slotLoadingPattern.map(loadingModeShortLabel).join('·') }}
+          </span>
           <strong>{{ model.name?.trim() || 'Untitled exercise slot' }}</strong>
           <small>{{ defaultExercise?.name_full || defaultExercise?.name || 'Choose default exercise' }}</small>
         </span>
@@ -122,6 +159,8 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           :exercises="exercises"
           :path="`${path}.variants.${model.variants[defaultIndex]!.clientKey}`"
           :issues="issues"
+          :slot-loading-mode="model.loading_mode"
+          :slot-loading-cycle="model.loading_cycle"
         />
       </template>
       <div v-else class="empty-default">
@@ -150,6 +189,17 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
             </select>
           </label>
         </div>
+        <section class="slot-loading-prescription">
+          <div class="slot-loading-heading">
+            <span class="field-label">Loading</span>
+            <p>Apply one mode or cycle to every set.</p>
+          </div>
+          <LoadingModePicker
+            :model-value="model.loading_mode"
+            @select="applySlotLoadingMode"
+          />
+          <LoadingCycleEditor v-model="slotCycleModel" :fallback-mode="model.loading_mode" />
+        </section>
         <label class="field">
           <span class="field-label">Goal</span>
           <input v-model="model.goal" class="text-input" placeholder="Why this slot exists in the plan" />
@@ -189,6 +239,8 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           :issues="issues"
           :fallback-index="fallbackIndex"
           :fallback-count="fallbackIndices.length"
+          :slot-loading-mode="model.loading_mode"
+          :slot-loading-cycle="model.loading_cycle"
           @remove="removeVariant(arrayIndex)"
           @move="moveFallback(fallbackIndex, $event)"
         />

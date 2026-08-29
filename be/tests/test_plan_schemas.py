@@ -64,6 +64,41 @@ def test_nested_draft_schema_accepts_the_plan_artifact() -> None:
 
     assert draft.days[0].workout_unit is not None
     assert draft.days[0].workout_unit.exercise_slots[0].variants[0].sets[0].reps.max == 7
+    slot = draft.days[0].workout_unit.exercise_slots[0]
+    assert slot.loading_mode.value == "moderate_load"
+    assert slot.variants[0].sets[0].loading_mode is None
+
+
+def test_loading_mode_inheritance_and_cycles_are_accepted() -> None:
+    payload = draft_payload()
+    slot = payload["days"][0]["workout_unit"]["exercise_slots"][0]  # type: ignore[index]
+    slot["loading_mode"] = "high_load"
+    slot["loading_cycle"] = ["high_load", "high_load", "low_load"]
+    item = slot["variants"][0]["sets"][0]
+    item["loading_mode"] = "low_load"
+    item["loading_cycle"] = ["low_load", "high_load"]
+
+    draft = PlanDraftUpdate.model_validate(payload)
+    parsed_slot = draft.days[0].workout_unit.exercise_slots[0]  # type: ignore[union-attr]
+    assert [mode.value for mode in parsed_slot.loading_cycle or []] == [
+        "high_load",
+        "high_load",
+        "low_load",
+    ]
+    assert [mode.value for mode in parsed_slot.variants[0].sets[0].loading_cycle or []] == [
+        "low_load",
+        "high_load",
+    ]
+
+
+@pytest.mark.parametrize("cycle", [[], ["high_load"], ["unknown", "low_load"]])
+def test_invalid_loading_cycles_are_rejected(cycle: list[str]) -> None:
+    payload = draft_payload()
+    slot = payload["days"][0]["workout_unit"]["exercise_slots"][0]  # type: ignore[index]
+    slot["loading_cycle"] = cycle
+
+    with pytest.raises(ValidationError):
+        PlanDraftUpdate.model_validate(payload)
 
 
 @pytest.mark.parametrize(

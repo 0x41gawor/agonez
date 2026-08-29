@@ -200,9 +200,19 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
     assert [params for _, params in inserts] == [
         (99, 0, 1, "Push A", "Primary session"),
         (101, "Push A", None, "Warm up", None),
-        (102, 0, "Primary press", None, "Progress", "PRIMARY_PROGRESSIVE", None),
+        (
+            102,
+            0,
+            "Primary press",
+            None,
+            "Progress",
+            "PRIMARY_PROGRESSIVE",
+            None,
+            "moderate_load",
+            None,
+        ),
         (103, 0, "DEFAULT", 60),
-        (104, 0, 5, 7, 2, 0),
+        (104, 0, 5, 7, 2, 0, None, None),
     ]
     assert len(statements) == 1
     assert "INSERT INTO plans.exercise_slot_target_muscles" in statements[0][0]

@@ -121,6 +121,7 @@ class AtlasService:
             execution_pattern=row["execution_pattern"],
             load_capacity=row["load_capacity"],
             systemic_propulsive_fcsa_demand=row["systemic_propulsive_fcsa_demand"],
+            recommended_rep_profile=row["recommended_rep_profile"],
             propulsive_fcsa_contribution_vector=row["propulsive_fcsa_contribution_vector"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],

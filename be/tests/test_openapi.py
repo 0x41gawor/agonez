@@ -55,3 +55,8 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
         if parameter["name"] == "sort"
     )
     assert {"created_at", "updated_at"} <= set(sort_parameter["schema"]["enum"])
+
+    schemas = app.openapi()["components"]["schemas"]
+    assert "recommended_rep_profile" in schemas["ExerciseListItem"]["properties"]
+    assert "loading_mode" in schemas["ExerciseSlotDraft"]["properties"]
+    assert "loading_cycle" in schemas["SetInfraDraft"]["properties"]

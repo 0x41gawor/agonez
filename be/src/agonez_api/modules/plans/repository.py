@@ -303,8 +303,11 @@ class PlanRepository:
                 connection,
                 """
                 INSERT INTO plans.exercise_slots
-                    (workout_unit_id, ordinal, name, description, goal, role, volume_axis)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    (
+                        workout_unit_id, ordinal, name, description, goal, role, volume_axis,
+                        loading_mode, loading_cycle
+                    )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
                 RETURNING id
                 """,
                 (
@@ -315,6 +318,8 @@ class PlanRepository:
                     slot["goal"],
                     slot["role"],
                     slot["volume_axis"],
+                    slot.get("loading_mode", "moderate_load"),
+                    slot.get("loading_cycle"),
                 ),
             )
             slot_ids[cast(int, slot["id"])] = cast(int, copied["id"])
@@ -356,8 +361,11 @@ class PlanRepository:
                 connection,
                 """
                 INSERT INTO plans.set_infra_prescriptions
-                    (exercise_variant_id, ordinal, rep_min, rep_max, rir, min_volume_level)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                    (
+                        exercise_variant_id, ordinal, rep_min, rep_max, rir, min_volume_level,
+                        loading_mode, loading_cycle
+                    )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
                 RETURNING id
                 """,
                 (
@@ -367,6 +375,8 @@ class PlanRepository:
                     item["rep_max"],
                     item["rir"],
                     item["min_volume_level"],
+                    item.get("loading_mode"),
+                    item.get("loading_cycle"),
                 ),
             )
 
@@ -795,14 +805,19 @@ class PlanRepository:
             slot.goal,
             slot.role.value,
             slot.volume_axis,
+            slot.loading_mode.value,
+            [mode.value for mode in slot.loading_cycle] if slot.loading_cycle else None,
         )
         if slot.id is None:
             row = await self._fetch_one(
                 connection,
                 """
                 INSERT INTO plans.exercise_slots
-                    (workout_unit_id, ordinal, name, description, goal, role, volume_axis)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    (
+                        workout_unit_id, ordinal, name, description, goal, role, volume_axis,
+                        loading_mode, loading_cycle
+                    )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
                 RETURNING id
                 """,
                 values,
@@ -813,7 +828,8 @@ class PlanRepository:
             """
             UPDATE plans.exercise_slots
             SET workout_unit_id = %s, ordinal = %s, name = %s, description = %s,
-                goal = %s, role = %s, volume_axis = %s
+                goal = %s, role = %s, volume_axis = %s, loading_mode = %s,
+                loading_cycle = %s::plans.loading_mode[]
             WHERE id = %s
             """,
             (*values, slot.id),
@@ -891,14 +907,19 @@ class PlanRepository:
             item.reps.max,
             item.rir,
             item.min_volume_level,
+            item.loading_mode.value if item.loading_mode else None,
+            [mode.value for mode in item.loading_cycle] if item.loading_cycle else None,
         )
         if item.id is None:
             row = await self._fetch_one(
                 connection,
                 """
                 INSERT INTO plans.set_infra_prescriptions
-                    (exercise_variant_id, ordinal, rep_min, rep_max, rir, min_volume_level)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                    (
+                        exercise_variant_id, ordinal, rep_min, rep_max, rir, min_volume_level,
+                        loading_mode, loading_cycle
+                    )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
                 RETURNING id
                 """,
                 values,
@@ -909,7 +930,8 @@ class PlanRepository:
             """
             UPDATE plans.set_infra_prescriptions
             SET exercise_variant_id = %s, ordinal = %s, rep_min = %s, rep_max = %s,
-                rir = %s, min_volume_level = %s
+                rir = %s, min_volume_level = %s, loading_mode = %s,
+                loading_cycle = %s::plans.loading_mode[]
             WHERE id = %s
             """,
             (*values, item.id),
@@ -963,7 +985,11 @@ class PlanRepository:
             connection,
             """
             SELECT slot.id, slot.workout_unit_id, slot.ordinal, slot.name,
-                   slot.description, slot.goal, slot.role::text AS role, slot.volume_axis
+                   slot.description, slot.goal, slot.role::text AS role, slot.volume_axis,
+                   slot.loading_mode::text AS loading_mode,
+                   CASE WHEN slot.loading_cycle IS NULL THEN NULL ELSE ARRAY(
+                       SELECT mode::text FROM unnest(slot.loading_cycle) AS mode
+                   ) END AS loading_cycle
             FROM plans.exercise_slots AS slot
             JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
             JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
@@ -1006,7 +1032,11 @@ class PlanRepository:
             connection,
             """
             SELECT item.id, item.exercise_variant_id, item.ordinal,
-                   item.rep_min, item.rep_max, item.rir, item.min_volume_level
+                   item.rep_min, item.rep_max, item.rir, item.min_volume_level,
+                   item.loading_mode::text AS loading_mode,
+                   CASE WHEN item.loading_cycle IS NULL THEN NULL ELSE ARRAY(
+                       SELECT mode::text FROM unnest(item.loading_cycle) AS mode
+                   ) END AS loading_cycle
             FROM plans.set_infra_prescriptions AS item
             JOIN plans.exercise_variants AS variant ON variant.id = item.exercise_variant_id
             JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id

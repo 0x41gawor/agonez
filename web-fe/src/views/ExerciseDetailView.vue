@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 
 import { atlasApi } from '@/api/atlas'
 import { ApiError } from '@/api/client'
-import type { ExerciseDetail, Vector } from '@/api/types'
+import type { ExerciseDetail, RepRange, Vector } from '@/api/types'
 import BodyViewer from '@/components/anatomy/BodyViewer.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 import DataGroup from '@/components/detail/DataGroup.vue'
@@ -78,6 +78,9 @@ const peakJoint = computed(() => jointRows.value[0]?.[0] ?? '—')
 const vectorTitle = computed(() => mode.value === 'recovery' ? 'Muscle recovery exposure' : mode.value === 'propulsive' ? 'Propulsive FCSA contribution' : 'Muscle ETU exposure')
 const vectorSubtitle = computed(() => mode.value === 'recovery' ? 'active tension × recovery cost modifier' : mode.value === 'propulsive' ? 'from core schema · engine vectors pending' : 'effective training units per muscle')
 const vectorColor = computed(() => mode.value === 'recovery' ? 'var(--rec)' : mode.value === 'propulsive' ? 'var(--accent)' : 'var(--etu)')
+function formatRecommendedRange(range: RepRange | null): string {
+  return range ? `${range.min}–${range.max} reps` : 'Not recommended'
+}
 const groups = computed(() => exercise.value ? [
   { title: 'Classification', rows: [
     { label: 'Body part', value: exercise.value.body_part },
@@ -85,6 +88,11 @@ const groups = computed(() => exercise.value ? [
     { label: 'Mechanics tier', value: prettyToken(exercise.value.mechanics_tier) },
     { label: 'Resistance source', value: prettyToken(exercise.value.resistance_source) },
     { label: 'Execution pattern', value: prettyToken(exercise.value.execution_pattern) },
+  ] },
+  { title: 'Recommended rep ranges', rows: [
+    { label: 'High load', value: formatRecommendedRange(exercise.value.recommended_rep_profile.high_load) },
+    { label: 'Moderate load', value: formatRecommendedRange(exercise.value.recommended_rep_profile.moderate_load) },
+    { label: 'Low load', value: formatRecommendedRange(exercise.value.recommended_rep_profile.low_load) },
   ] },
   { title: 'Quantitative', rows: [
     { label: 'Load capacity', value: formatNumber(exercise.value.load_capacity, 0), unit: 'kg' },

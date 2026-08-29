@@ -18,6 +18,11 @@ const exercise: ExerciseListItem = {
   execution_pattern: 'Bilateral',
   load_capacity: 72,
   systemic_propulsive_fcsa_demand: 175.61,
+  recommended_rep_profile: {
+    high_load: { min: 5, max: 8 },
+    moderate_load: { min: 8, max: 12 },
+    low_load: { min: 12, max: 20 },
+  },
   created_at: '2026-08-20T10:00:00Z',
   updated_at: '2026-08-21T10:00:00Z',
   has_engine_vectors: true,

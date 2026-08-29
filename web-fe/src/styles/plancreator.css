@@ -846,6 +846,35 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--slot-role-color) 14%, transparent);
 }
 
+.slot-loading-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0 0 4px 4px;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--loading-color) 34%, var(--border));
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--loading-color) 74%, var(--text));
+  font-size: 8.5px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.slot-loading-badge i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--loading-color);
+}
+
+.loading-high_load { --loading-color: var(--loadHigh); }
+.loading-moderate_load { --loading-color: var(--loadModerate); }
+.loading-low_load { --loading-color: var(--loadLow); }
+
+.slot-loading-badge i.loading-high_load { background: var(--loadHigh); }
+.slot-loading-badge i.loading-moderate_load { background: var(--loadModerate); }
+.slot-loading-badge i.loading-low_load { background: var(--loadLow); }
+
 .slot-summary-main strong {
   overflow: hidden;
   font-size: 13px;
@@ -878,6 +907,161 @@
   margin-top: 12px;
   padding-top: 14px;
   border-top: 1px solid var(--border);
+}
+
+.slot-loading-prescription {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel2) 72%, transparent);
+}
+
+.slot-loading-heading {
+  min-width: 170px;
+  margin-right: auto;
+}
+
+.slot-loading-heading p {
+  margin: 2px 0 0;
+  color: var(--text3);
+  font-size: 9.5px;
+}
+
+.loading-mode-picker {
+  display: inline-flex;
+  overflow: hidden;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--inputBg);
+}
+
+.loading-mode-picker button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 4px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text3);
+  font-size: 9px;
+  font-weight: 600;
+  transition: background 100ms ease, color 100ms ease, box-shadow 100ms ease;
+}
+
+.loading-mode-picker button:hover {
+  color: var(--text);
+}
+
+.loading-mode-picker button.active {
+  background: color-mix(in srgb, var(--loading-color) 11%, var(--panel));
+  color: color-mix(in srgb, var(--loading-color) 78%, var(--text));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--loading-color) 35%, var(--border));
+}
+
+.loading-mode-picker i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--loading-color);
+  opacity: 0.7;
+}
+
+.loading-mode-picker.compact {
+  flex: none;
+}
+
+.loading-mode-picker.compact button {
+  width: 27px;
+  min-height: 27px;
+  padding: 3px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px;
+}
+
+.loading-mode-picker.compact i {
+  display: none;
+}
+
+.loading-cycle-editor {
+  display: grid;
+  gap: 5px;
+}
+
+.loading-cycle-toggle,
+.loading-cycle-heading button,
+.loading-cycle-add,
+.loading-cycle-steps label > button {
+  min-height: 27px;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text2);
+  font-size: 9px;
+}
+
+.loading-cycle-toggle {
+  justify-self: start;
+  border-style: dashed;
+}
+
+.loading-cycle-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text2);
+  font-size: 9px;
+}
+
+.loading-cycle-heading b {
+  margin-left: 4px;
+  color: var(--text);
+}
+
+.loading-cycle-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.loading-cycle-steps label {
+  display: grid;
+  grid-template-columns: auto minmax(90px, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--inputBg);
+}
+
+.loading-cycle-steps label > span {
+  padding-left: 3px;
+  color: var(--text3);
+  font-size: 8px;
+}
+
+.loading-cycle-steps select {
+  min-height: 27px;
+  padding: 3px 5px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 9px;
+}
+
+.loading-cycle-editor > small {
+  color: var(--text3);
+  font-size: 8px;
 }
 
 .slot-intent-layout {
@@ -1247,14 +1431,27 @@
 }
 
 .set-editor {
+  position: relative;
   display: grid;
-  grid-template-columns: 28px minmax(72px, 100px) 10px minmax(72px, 100px) minmax(64px, 80px) minmax(128px, 1fr);
+  grid-template-columns: 28px minmax(72px, 100px) 10px minmax(72px, 100px) minmax(64px, 80px) minmax(175px, 1fr) auto;
   align-items: end;
   gap: 6px;
   padding: 7px;
   border: 1px solid transparent;
   border-radius: 7px;
   background: var(--panel2);
+}
+
+.set-editor::before {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--loading-color);
+  content: '';
+  opacity: 0.72;
 }
 
 .set-editor.invalid {
@@ -1294,6 +1491,37 @@
   justify-self: end;
 }
 
+.set-loading-control {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  max-width: 230px;
+}
+
+.set-loading-label {
+  align-self: center;
+  color: var(--text3);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.set-loading-control .loading-cycle-toggle {
+  min-height: 33px;
+  white-space: nowrap;
+}
+
+.set-loading-control .loading-cycle-editor {
+  min-width: 0;
+}
+
+.set-loading-control .loading-cycle-heading {
+  min-height: 27px;
+}
+
+.set-loading-control .loading-cycle-steps label {
+  grid-template-columns: auto 34px auto;
+}
+
 .set-editor > .field-error {
   grid-column: 2 / -1;
 }
@@ -1323,6 +1551,11 @@
 
   .set-editor {
     grid-template-columns: 28px minmax(72px, 1fr) 10px minmax(72px, 1fr) 70px;
+  }
+
+  .set-loading-control {
+    grid-column: 2 / -1;
+    max-width: none;
   }
 
   .set-editor .ordered-actions {
@@ -1392,6 +1625,13 @@
   .target-options {
     grid-template-columns: 1fr;
   }
+
+  .slot-loading-prescription {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .slot-loading-heading { margin-right: 0; }
 
   .create-plan-panel .button {
     width: 100%;

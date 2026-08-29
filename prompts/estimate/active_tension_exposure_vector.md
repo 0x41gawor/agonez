@@ -946,7 +946,7 @@ SET
                 "muscle": "muscle_slug",
                 "maximum_fcsa_cm2": 0.00,
                 "propulsive_fcsa_cm2": 0.00,
-                "input_contribution_classification": "primarily_propulsive|mixed_propulsive_and_stabilizing|primarily_stabilizing_or_load_transmitting"
+                "input_contribution_classification": "primarily_propulsive|mixed_propulsive_and_stabilizing|primarily_stabilizing_or_load_transmitting",
                 "active_tension_exposure_cm2": 0.00,
                 "tension_fraction": 0.0000,
                 "mechanical_roles": [
