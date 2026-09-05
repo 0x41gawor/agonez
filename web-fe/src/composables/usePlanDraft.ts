@@ -3,7 +3,7 @@ import { computed, ref, type Ref } from 'vue'
 import { ApiError } from '@/api/client'
 import { atlasApi } from '@/api/atlas'
 import { plansApi } from '@/api/plans'
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import {
   toPlanDraftUpdate,
   toPlanEditorState,
@@ -14,7 +14,7 @@ import {
 
 export function usePlanDraft(planId: Ref<number>) {
   const draft = ref<PlanEditorState | null>(null)
-  const exercises = ref<ExerciseListItem[]>([])
+  const exercises = ref<ExerciseCatalogItem[]>([])
   const muscles = ref<MuscleListItem[]>([])
   const baseline = ref('')
   const loading = ref(true)
@@ -44,7 +44,7 @@ export function usePlanDraft(planId: Ref<number>) {
     try {
       const [artifact, exerciseResult, muscleResult] = await Promise.all([
         plansApi.draft(planId.value),
-        atlasApi.exercises({ page: 1, per_page: 100, sort: 'name_full', order: 'asc' }),
+        atlasApi.exerciseCatalog(),
         atlasApi.muscles({ page: 1, per_page: 100, sort: 'name', order: 'asc' }),
       ])
       exercises.value = exerciseResult.items

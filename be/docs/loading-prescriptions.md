@@ -6,7 +6,8 @@ future modulation.
 
 ## Catalog recommendation
 
-`core.exercises.recommended_rep_profile` is exposed by both Atlas exercise endpoints as:
+`core.exercises.recommended_rep_profile` is exposed by the Atlas exercise list, detail,
+and lightweight PlanCreator catalog endpoints as:
 
 ```json
 {

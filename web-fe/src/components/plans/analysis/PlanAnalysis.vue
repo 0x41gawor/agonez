@@ -7,7 +7,7 @@ import type {
   MuscleContribution,
   PlanAnalysisResult,
 } from '@/api/plan-analysis-types'
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import ErrorState from '@/components/common/ErrorState.vue'
 import type {
   AnalysisPhase,
@@ -37,7 +37,7 @@ const props = defineProps<{
   muscleContributionsBySlug: Map<string, MuscleContribution[]>
   jointContributionsBySlug: Map<string, JointContribution[]>
   muscles: MuscleListItem[]
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
 }>()
 
 defineEmits<{

@@ -34,6 +34,24 @@ export interface ExerciseListItem {
   image_url: string | null
 }
 
+export type ExerciseCatalogItem = Pick<
+  ExerciseListItem,
+  | 'slug'
+  | 'name'
+  | 'name_full'
+  | 'target_category'
+  | 'mechanics_tier'
+  | 'resistance_source'
+  | 'systemic_propulsive_fcsa_demand'
+  | 'recommended_rep_profile'
+  | 'image_url'
+>
+
+export interface ExerciseCatalogResponse {
+  items: ExerciseCatalogItem[]
+  total: number
+}
+
 export interface ExerciseFacets {
   body_part: Record<string, number>
   target_category: Record<string, number>

@@ -65,6 +65,23 @@ class ExerciseListResponse(APIModel):
     facets: ExerciseFacets
 
 
+class ExerciseCatalogItem(APIModel):
+    slug: str
+    name: str
+    name_full: str
+    target_category: str
+    mechanics_tier: str
+    resistance_source: str
+    systemic_propulsive_fcsa_demand: float | None
+    recommended_rep_profile: RecommendedRepProfile
+    image_url: str | None
+
+
+class ExerciseCatalogResponse(APIModel):
+    items: list[ExerciseCatalogItem]
+    total: int
+
+
 class ExerciseEngine(APIModel):
     propulsive_fcsa_contribution_vector: Vector | None
     active_tension_exposure_vector: Vector | None

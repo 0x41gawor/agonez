@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import ExerciseSlotEditor from '@/components/plans/ExerciseSlotEditor.vue'
 import {
   createSlot,
@@ -14,7 +14,7 @@ import {
 
 const model = defineModel<EditorWorkoutUnit>({ required: true })
 defineProps<{
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
   path: string
   issues: PlanValidationIssue[]

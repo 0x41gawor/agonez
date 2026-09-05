@@ -3,7 +3,7 @@ import type {
   JointContribution,
   MuscleContribution,
 } from '@/api/plan-analysis-types'
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import { formatNumber, prettyToken } from '@/utils/format'
 
 export type AnalysisPhase = 'BEFORE' | 'AFTER'
@@ -64,7 +64,7 @@ export function muscleLabel(slug: string, muscles: MuscleListItem[]): string {
   return muscle?.display_name || muscle?.name || prettyToken(slug)
 }
 
-export function exerciseLabel(slug: string, exercises: ExerciseListItem[]): string {
+export function exerciseLabel(slug: string, exercises: ExerciseCatalogItem[]): string {
   const exercise = exercises.find((item) => item.slug === slug)
   return exercise?.name_full || exercise?.name || prettyToken(slug)
 }

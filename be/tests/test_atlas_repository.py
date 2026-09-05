@@ -92,6 +92,33 @@ async def test_exercise_detail_propulsive_fields_are_sourced_from_engine() -> No
     assert "e.propulsive_fcsa_contribution_vector" not in captured_query
 
 
+async def test_exercise_catalog_is_complete_lightweight_and_sorted() -> None:
+    repository = AtlasRepository(None)  # type: ignore[arg-type]
+    captured_query = ""
+
+    async def fetch_all(
+        query: str,
+        params: tuple[Any, ...] | None = None,
+    ) -> list[dict[str, Any]]:
+        nonlocal captured_query
+        assert params is None
+        captured_query = query
+        return []
+
+    repository._fetch_all = fetch_all  # type: ignore[method-assign]
+    await repository.list_exercise_catalog()
+
+    assert "e.target_category::text AS target_category" in captured_query
+    assert "e.mechanics_tier::text AS mechanics_tier" in captured_query
+    assert "eng.systemic_propulsive_fcsa_demand" in captured_query
+    assert "e.recommended_rep_profile" in captured_query
+    assert "LEFT JOIN engine.exercises AS eng" in captured_query
+    assert "ORDER BY LOWER(e.name_full) ASC, e.slug ASC" in captured_query
+    assert "LIMIT" not in captured_query
+    assert "OFFSET" not in captured_query
+    assert "created_at" not in captured_query
+
+
 async def test_adding_a_video_updates_timestamp_only_for_a_new_link() -> None:
     repository = AtlasRepository(None)  # type: ignore[arg-type]
     captured_query = ""

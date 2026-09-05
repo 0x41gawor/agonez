@@ -163,6 +163,24 @@ class AtlasRepository:
             (slug,),
         )
 
+    async def list_exercise_catalog(self) -> list[Row]:
+        return await self._fetch_all(
+            """
+            SELECT
+                e.slug,
+                e.name,
+                e.name_full,
+                e.target_category::text AS target_category,
+                e.mechanics_tier::text AS mechanics_tier,
+                e.resistance_source::text AS resistance_source,
+                eng.systemic_propulsive_fcsa_demand,
+                e.recommended_rep_profile
+            FROM core.exercises AS e
+            LEFT JOIN engine.exercises AS eng ON eng.slug = e.slug
+            ORDER BY LOWER(e.name_full) ASC, e.slug ASC
+            """
+        )
+
     async def add_exercise_video(self, *, slug: str, url: str) -> Row | None:
         return await self._fetch_optional(
             """

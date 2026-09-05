@@ -15,6 +15,7 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     paths = app.openapi()["paths"]
 
     assert "/api/atlas/exercises" in paths
+    assert "/api/atlas/exercises/catalog" in paths
     assert "/api/atlas/exercises/{slug}" in paths
     assert "/api/atlas/exercises/{slug}/videos" in paths
     assert "post" in paths["/api/atlas/exercises/{slug}/videos"]
@@ -57,6 +58,9 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     assert {"created_at", "updated_at"} <= set(sort_parameter["schema"]["enum"])
 
     schemas = app.openapi()["components"]["schemas"]
+    catalog_schema = schemas["ExerciseCatalogItem"]
+    assert "created_at" not in catalog_schema["properties"]
+    assert "recommended_rep_profile" in catalog_schema["properties"]
     assert "recommended_rep_profile" in schemas["ExerciseListItem"]["properties"]
     assert "loading_mode" in schemas["ExerciseSlotDraft"]["properties"]
     assert "loading_cycle" in schemas["SetInfraDraft"]["properties"]

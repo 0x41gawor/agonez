@@ -54,6 +54,24 @@ class FakeRepository:
             "pcsa_projected_fcsa_cm2": 40.0,
         }
 
+    async def list_exercise_catalog(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "slug": "dragon_flag",
+                "name": "Dragon Flag",
+                "name_full": "Flat Bench Dragon Flag",
+                "target_category": "Core",
+                "mechanics_tier": "Secondary_Compound",
+                "resistance_source": "Bodyweight",
+                "systemic_propulsive_fcsa_demand": 115,
+                "recommended_rep_profile": {
+                    "high_load": None,
+                    "moderate_load": {"min": 8, "max": 12},
+                    "low_load": None,
+                },
+            }
+        ]
+
     async def get_exercise(self, slug: str) -> dict[str, Any] | None:
         if slug == "missing":
             return None
@@ -130,6 +148,19 @@ async def test_exercise_list_is_shaped_for_the_contract(service: AtlasService) -
     assert response.items[0].recommended_rep_profile.high_load is None
     assert response.items[0].recommended_rep_profile.moderate_load is not None
     assert response.items[0].recommended_rep_profile.moderate_load.max == 12
+
+
+async def test_exercise_catalog_returns_all_editor_fields_without_pagination(
+    service: AtlasService,
+) -> None:
+    response = await service.list_exercise_catalog()
+
+    assert response.total == 1
+    assert response.items[0].slug == "dragon_flag"
+    assert response.items[0].mechanics_tier == "Secondary_Compound"
+    assert response.items[0].systemic_propulsive_fcsa_demand == 115
+    assert response.items[0].recommended_rep_profile.high_load is None
+    assert response.items[0].image_url == "/media/exercises/dragon_flag.png"
 
 
 async def test_related_exercises_put_measured_values_first(service: AtlasService) -> None:

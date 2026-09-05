@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 
 import type { AnalysisTimelineDay, MuscleContribution } from '@/api/plan-analysis-types'
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import BodyViewer from '@/components/anatomy/BodyViewer.vue'
 import {
   muscleLabel,
@@ -29,7 +29,7 @@ const props = withDefaults(
     timeline: AnalysisTimelineDay[]
     contributionsBySlug: Map<string, MuscleContribution[]>
     muscles: MuscleListItem[]
-    exercises: ExerciseListItem[]
+    exercises: ExerciseCatalogItem[]
   }>(),
   {
     anatomyMeta: null,

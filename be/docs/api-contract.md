@@ -49,6 +49,34 @@ Notes:
 - `facets` optional but lets filter checkboxes show counts.
 - `image_url: null` is the contract for the placeholder state — never omit the key.
 
+### GET /api/atlas/exercises/catalog
+
+Complete, unpaginated selector catalog for PlanCreator. It is ordered by full exercise
+name and intentionally omits Atlas-only fields, facets, timestamps, and vectors.
+
+```json
+{
+  "items": [
+    {
+      "slug": "dragon_flag",
+      "name": "Dragon Flag",
+      "name_full": "Flat Bench Dragon Flag",
+      "target_category": "Core",
+      "mechanics_tier": "Secondary_Compound",
+      "resistance_source": "Bodyweight",
+      "systemic_propulsive_fcsa_demand": 115.0,
+      "recommended_rep_profile": {
+        "high_load": null,
+        "moderate_load": {"min": 8, "max": 12},
+        "low_load": null
+      },
+      "image_url": "/media/exercises/dragon_flag.png"
+    }
+  ],
+  "total": 1
+}
+```
+
 ## 2. GET /api/atlas/exercises/:slug
 
 Detail page. One call returns core row + engine vectors.

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import type { LoadingMode } from '@/api/plan-types'
-import type { ExerciseListItem } from '@/api/types'
+import type { ExerciseCatalogItem } from '@/api/types'
 import ExerciseSelector from '@/components/plans/ExerciseSelector.vue'
 import SetPrescriptionEditor from '@/components/plans/SetPrescriptionEditor.vue'
 import {
@@ -16,7 +16,7 @@ import {
 
 const model = defineModel<EditorVariant>({ required: true })
 const props = withDefaults(defineProps<{
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
   path: string
   issues: PlanValidationIssue[]
   fallbackIndex?: number

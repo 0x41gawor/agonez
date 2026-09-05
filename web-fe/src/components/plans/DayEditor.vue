@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import WorkoutUnitEditor from '@/components/plans/WorkoutUnitEditor.vue'
 import {
   createWorkout,
@@ -13,7 +13,7 @@ const model = defineModel<EditorDay>({ required: true })
 defineProps<{
   index: number
   count: number
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
   path: string
   issues: PlanValidationIssue[]

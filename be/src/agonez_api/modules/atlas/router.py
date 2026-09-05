@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request, status
 
 from agonez_api.modules.atlas.schemas import (
     AtlasMeta,
+    ExerciseCatalogResponse,
     ExerciseDetail,
     ExerciseListResponse,
     ExerciseVideoCreate,
@@ -59,6 +60,13 @@ async def list_exercises(
         page=page,
         per_page=per_page,
     )
+
+
+@router.get("/exercises/catalog", response_model=ExerciseCatalogResponse)
+async def list_exercise_catalog(
+    service: AtlasServiceDependency,
+) -> ExerciseCatalogResponse:
+    return await service.list_exercise_catalog()
 
 
 @router.get("/exercises/{slug}", response_model=ExerciseDetail)

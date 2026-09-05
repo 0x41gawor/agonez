@@ -16,7 +16,7 @@ vi.mock('@/api/plans', () => ({
 
 vi.mock('@/api/atlas', () => ({
   atlasApi: {
-    exercises: vi.fn(),
+    exerciseCatalog: vi.fn(),
     muscles: vi.fn(),
   },
 }))
@@ -25,13 +25,10 @@ describe('usePlanDraft save orchestration', () => {
   beforeEach(() => {
     vi.mocked(plansApi.draft).mockReset()
     vi.mocked(plansApi.saveDraft).mockReset()
-    vi.mocked(atlasApi.exercises).mockReset()
+    vi.mocked(atlasApi.exerciseCatalog).mockReset()
     vi.mocked(atlasApi.muscles).mockReset()
     vi.mocked(plansApi.draft).mockResolvedValue(planArtifact())
-    vi.mocked(atlasApi.exercises).mockResolvedValue({
-      items: [exercise], total: 1, page: 1, per_page: 100,
-      facets: { body_part: {}, target_category: {}, mechanics_tier: {}, resistance_source: {} },
-    })
+    vi.mocked(atlasApi.exerciseCatalog).mockResolvedValue({ items: [exercise], total: 1 })
     vi.mocked(atlasApi.muscles).mockResolvedValue({
       items: [muscle], total: 1, page: 1, per_page: 100,
       facets: { body_part: {}, complex: {} },
@@ -52,6 +49,7 @@ describe('usePlanDraft save orchestration', () => {
     expect(state.draft.value?.lock_version).toBe(5)
     expect(state.draft.value?.name).toBe('Edited plan')
     expect(state.dirty.value).toBe(false)
+    expect(atlasApi.exerciseCatalog).toHaveBeenCalledOnce()
   })
 
   it('keeps local edits and exposes a conflict instead of silently overwriting', async () => {

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import type { ExerciseListItem } from '@/api/types'
+import type { ExerciseCatalogItem } from '@/api/types'
 import { formatNumber, prettyToken } from '@/utils/format'
 
 const props = defineProps<{
   modelValue: string
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
   label?: string
 }>()
 const emit = defineEmits<{ 'update:modelValue': [slug: string] }>()

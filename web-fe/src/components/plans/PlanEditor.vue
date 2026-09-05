@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import DayEditor from '@/components/plans/DayEditor.vue'
 import {
   createDay,
@@ -12,7 +12,7 @@ import {
 
 const model = defineModel<PlanEditorState>({ required: true })
 defineProps<{
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
   issues: PlanValidationIssue[]
 }>()

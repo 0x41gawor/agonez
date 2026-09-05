@@ -35,6 +35,10 @@ progression.
 - Slot summaries emphasize their stable purpose/role, then nest DEFAULT and FALLBACK
   exercises inside. Optional description, goal, target muscles, and notes use
   progressive disclosure.
+- PlanCreator loads its complete exercise selector data from
+  `GET /api/atlas/exercises/catalog`. This lightweight contract is unpaginated and
+  separate from the paginated Atlas browsing endpoint, so catalog growth cannot hide
+  valid exercises from the editor.
 - All move controls are deterministic and work with keyboard/touch; no drag library is
   introduced.
 - Conflict state never overwrites local edits. The user can explicitly reload the

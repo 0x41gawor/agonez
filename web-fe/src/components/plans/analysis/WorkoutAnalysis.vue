@@ -7,7 +7,7 @@ import type {
   MuscleContribution,
   RecoveryState,
 } from '@/api/plan-analysis-types'
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import {
   formatHours,
   jointLabel,
@@ -31,7 +31,7 @@ const props = defineProps<{
   timeline: AnalysisTimelineDay[]
   contributionsBySlug: Map<string, MuscleContribution[]>
   muscles: MuscleListItem[]
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
   summaries: MuscleAnalysisSummary[]
 }>()
 

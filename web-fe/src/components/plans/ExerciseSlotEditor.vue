@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 
 import type { LoadingMode } from '@/api/plan-types'
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import BodyViewer from '@/components/anatomy/BodyViewer.vue'
 import MediaImage from '@/components/common/MediaImage.vue'
 import ExerciseSelector from '@/components/plans/ExerciseSelector.vue'
@@ -24,7 +24,7 @@ const model = defineModel<EditorSlot>({ required: true })
 const props = defineProps<{
   index: number
   count: number
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
   path: string
   issues: PlanValidationIssue[]

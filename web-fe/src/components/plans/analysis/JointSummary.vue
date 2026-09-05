@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 
 import type { JointAnalysisSummary, JointContribution } from '@/api/plan-analysis-types'
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import { formatHours, jointLabel } from '@/features/plans/analysis'
 import { formatNumber } from '@/utils/format'
 import ProvenanceInspector from './ProvenanceInspector.vue'
@@ -10,7 +10,7 @@ import ProvenanceInspector from './ProvenanceInspector.vue'
 const props = defineProps<{
   summaries: JointAnalysisSummary[]
   contributionsBySlug: Map<string, JointContribution[]>
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
 }>()
 

@@ -12,6 +12,7 @@ frontend materials are preserved in `docs/api-contract.md` and
 ## Endpoints
 
 - `GET /api/atlas/exercises`
+- `GET /api/atlas/exercises/catalog` — complete lightweight PlanCreator selector catalog
 - `GET /api/atlas/exercises/{slug}`
 - `POST /api/atlas/exercises/{slug}/videos`
 - `GET /api/atlas/muscles`

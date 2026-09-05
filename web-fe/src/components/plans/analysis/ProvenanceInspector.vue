@@ -6,7 +6,7 @@ import type {
   JointContribution,
   MuscleContribution,
 } from '@/api/plan-analysis-types'
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import {
   exerciseLabel,
   groupJointSources,
@@ -35,7 +35,7 @@ const props = withDefaults(
     metricUnitSuffix?: string
     auxiliary?: boolean
     muscles: MuscleListItem[]
-    exercises: ExerciseListItem[]
+    exercises: ExerciseCatalogItem[]
   }>(),
   {
     muscleSlug: null,

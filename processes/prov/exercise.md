@@ -54,3 +54,19 @@ e.g.
 ```
 single_arm_dumbbell_preacher_curl | Single-Arm Dumbbell Preacher Curl | Dumbbell | 28.00
 ```
+
+# active-tension-exposure-vector and etu-vector
+
+```sql
+SELECT 
+    c.slug,
+    c.name_full,
+    c.resistance_source,
+    e.load_capacity_kg,
+    e.systemic_propulsive_fcsa_demand,
+    e.propulsive_fcsa_contribution_vector
+FROM core.exercises c
+INNER JOIN engine.exercises e 
+    ON c.slug = e.slug
+WHERE e.active_tension_exposure_vector IS NULL;
+```

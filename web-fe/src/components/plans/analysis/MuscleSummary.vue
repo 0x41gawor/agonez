@@ -6,7 +6,7 @@ import type {
   MuscleAnalysisSummary,
   MuscleContribution,
 } from '@/api/plan-analysis-types'
-import type { ExerciseListItem, MuscleListItem } from '@/api/types'
+import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import type {
   EtuDisplayMode,
   EtuTimeBasis,
@@ -23,7 +23,7 @@ const props = defineProps<{
   timeline: AnalysisTimelineDay[]
   contributionsBySlug: Map<string, MuscleContribution[]>
   muscles: MuscleListItem[]
-  exercises: ExerciseListItem[]
+  exercises: ExerciseCatalogItem[]
 }>()
 
 const items = computed<MuscleStimulusPresentation[]>(() =>

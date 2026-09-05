@@ -7,6 +7,8 @@ from agonez_api.modules.atlas.repository import AtlasRepository, Row
 from agonez_api.modules.atlas.schemas import (
     AtlasCounts,
     AtlasMeta,
+    ExerciseCatalogItem,
+    ExerciseCatalogResponse,
     ExerciseDetail,
     ExerciseEngine,
     ExerciseFacets,
@@ -131,6 +133,17 @@ class AtlasService:
             image_url=self._media.image_url("exercises", row["slug"]),
             engine=engine,
         )
+
+    async def list_exercise_catalog(self) -> ExerciseCatalogResponse:
+        rows = await self._repository.list_exercise_catalog()
+        items = [
+            ExerciseCatalogItem(
+                **row,
+                image_url=self._media.image_url("exercises", row["slug"]),
+            )
+            for row in rows
+        ]
+        return ExerciseCatalogResponse(items=items, total=len(items))
 
     async def add_exercise_video(self, *, slug: str, url: str) -> ExerciseVideoLinks:
         exercise = await self._repository.get_exercise(slug)

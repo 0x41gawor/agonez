@@ -1,6 +1,7 @@
 import { getJson, postJson } from './client'
 import type {
   AtlasMeta,
+  ExerciseCatalogResponse,
   ExerciseDetail,
   ExerciseListQuery,
   ExerciseListResponse,
@@ -16,6 +17,8 @@ export const atlasApi = {
   meta: (signal?: AbortSignal) => getJson<AtlasMeta>('/api/atlas/meta', undefined, signal),
   exercises: (query: ExerciseListQuery, signal?: AbortSignal) =>
     getJson<ExerciseListResponse>('/api/atlas/exercises', query as QueryRecord, signal),
+  exerciseCatalog: (signal?: AbortSignal) =>
+    getJson<ExerciseCatalogResponse>('/api/atlas/exercises/catalog', undefined, signal),
   exercise: (slug: string, signal?: AbortSignal) =>
     getJson<ExerciseDetail>(`/api/atlas/exercises/${encodeURIComponent(slug)}`, undefined, signal),
   addExerciseVideo: (slug: string, url: string, signal?: AbortSignal) =>

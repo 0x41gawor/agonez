@@ -24,7 +24,7 @@ vi.mock('@/api/plans', () => ({
 
 vi.mock('@/api/atlas', () => ({
   atlasApi: {
-    exercises: vi.fn(),
+    exerciseCatalog: vi.fn(),
     muscles: vi.fn(),
   },
 }))
@@ -53,25 +53,14 @@ describe('PlanCreator Analysis tab integration', () => {
     vi.mocked(plansApi.saveDraft).mockReset()
     vi.mocked(plansApi.analyzeDraft).mockReset()
     vi.mocked(plansApi.exportDraft).mockReset()
-    vi.mocked(atlasApi.exercises).mockReset()
+    vi.mocked(atlasApi.exerciseCatalog).mockReset()
     vi.mocked(atlasApi.muscles).mockReset()
 
     vi.mocked(plansApi.draft).mockResolvedValue(planArtifact())
     vi.mocked(plansApi.saveDraft).mockResolvedValue(planArtifact(5))
     vi.mocked(plansApi.analyzeDraft).mockResolvedValue(analysisResult())
     vi.mocked(plansApi.exportDraft).mockResolvedValue(planExportResult())
-    vi.mocked(atlasApi.exercises).mockResolvedValue({
-      items: [exercise],
-      total: 1,
-      page: 1,
-      per_page: 100,
-      facets: {
-        body_part: {},
-        target_category: {},
-        mechanics_tier: {},
-        resistance_source: {},
-      },
-    })
+    vi.mocked(atlasApi.exerciseCatalog).mockResolvedValue({ items: [exercise], total: 1 })
     vi.mocked(atlasApi.muscles).mockResolvedValue({
       items: [muscle],
       total: 1,
