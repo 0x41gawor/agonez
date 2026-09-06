@@ -28,8 +28,8 @@ RECOVERY_MAX_CYCLES: Final = 256
 
 # Calibrated from the real engine catalog by scripts/calibrate_plan_analysis.py.
 # These are inspectable Agonez V1 engineering parameters, not physiological constants.
-MUSCLE_RECOVERY_VELOCITY_V1: Final = 0.289425511
-JOINT_RECOVERY_VELOCITY_V1: Final = 0.312
+MUSCLE_RECOVERY_VELOCITY_V1: Final = 0.70 # 0.289425511
+JOINT_RECOVERY_VELOCITY_V1: Final = 1.05
 
 
 def cumulative_set_multiplier(prior_contributing_set_count: int) -> float:
