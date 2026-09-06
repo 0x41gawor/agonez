@@ -70,3 +70,20 @@ INNER JOIN engine.exercises e
     ON c.slug = e.slug
 WHERE e.active_tension_exposure_vector IS NULL;
 ```
+
+# 4 joint recovery exposure vector
+
+```sql
+SELECT
+    c.slug,
+    c.name_full,
+    e.load_capacity_kg 
+FROM core.exercises AS c 
+LEFT JOIN engine.exercises AS e ON c.slug = e.slug
+WHERE e.joint_load_exposure_vector  IS NULL 
+   OR e.joint_load_exposure_vector  = '{}'::jsonb;
+```
+
+# 5 muscle recovery exposure vector
+
+```sql
