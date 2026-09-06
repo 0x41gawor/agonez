@@ -1,0 +1,6 @@
+- Smith Machine Overhead Press
+- Incline Bench Lying Triceps Cable Extension
+- Majka Curl, an isolation exercise for the biceps performed on a lat pulldown machine equipped with knee-stabilizing pads. In this variation, the athlete sits or kneels facing away from or toward the machine, using the adjustable knee stabilizer cushions to lock the elbows firmly in place.
+- Supine Straight Leg Raise
+- bent_knee_dragon_flag
+- straight_leg_dragon_flag
