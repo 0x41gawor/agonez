@@ -4,3 +4,4 @@
 - Supine Straight Leg Raise
 - bent_knee_dragon_flag
 - straight_leg_dragon_flag
+- Seated Dumbbell Rear Delt Raise
