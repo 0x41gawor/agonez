@@ -268,6 +268,13 @@ function fallbackRepRange(mode: LoadingMode): { min: number; max: number } {
   }[mode]
 }
 
+export function initialRepRange(
+  profile: RecommendedRepProfile | null | undefined,
+  mode: LoadingMode,
+): { min: number; max: number } {
+  return recommendedRepRange(profile, mode) ?? fallbackRepRange(mode)
+}
+
 export function createSet(
   ordinal: number,
   source?: EditorSet,
@@ -280,7 +287,7 @@ export function createSet(
     ordinal,
     reps: source
       ? { ...source.reps }
-      : recommendedRepRange(recommendedProfile, loadingMode) ?? fallbackRepRange(loadingMode),
+      : initialRepRange(recommendedProfile, loadingMode),
     rir: source?.rir ?? 2,
     min_volume_level: source?.min_volume_level ?? 0,
     loading_mode: source ? source.loading_mode : loadingMode,

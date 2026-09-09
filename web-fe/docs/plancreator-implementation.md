@@ -35,10 +35,18 @@ progression.
 - Slot summaries emphasize their stable purpose/role, then nest DEFAULT and FALLBACK
   exercises inside. Optional description, goal, target muscles, and notes use
   progressive disclosure.
+- Empty slots use a two-step setup: choose the default exercise, then choose its loading
+  mode. The load choices expose the exercise-specific rep profile and create three
+  editable sets immediately; missing profile ranges are clearly marked as generic
+  initialization fallbacks.
 - PlanCreator loads its complete exercise selector data from
   `GET /api/atlas/exercises/catalog`. This lightweight contract is unpaginated and
   separate from the paginated Atlas browsing endpoint, so catalog growth cannot hide
   valid exercises from the editor.
+- Exercise selectors search that catalog locally across full and short names, slugs,
+  target categories, resistance sources, and mechanics tiers. Exact, prefix, and
+  substring matches stay ahead of a restrained weighted fuzzy fallback, so common
+  misspellings are tolerated without making unrelated results dominate.
 - All move controls are deterministic and work with keyboard/touch; no drag library is
   introduced.
 - Conflict state never overwrites local edits. The user can explicitly reload the

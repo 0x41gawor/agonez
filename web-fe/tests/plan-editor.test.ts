@@ -245,7 +245,7 @@ describe('PlanEditor', () => {
     expect(slots.map((slot) => slot.ordinal)).toEqual([0, 1, 2])
   })
 
-  it('selects a live-catalog exercise as the DEFAULT variant', async () => {
+  it('creates three preferred-range sets after choosing an exercise and load', async () => {
     const slot = createSlot(0)
     const wrapper = mount(ExerciseSlotEditor, {
       props: {
@@ -261,9 +261,28 @@ describe('PlanEditor', () => {
 
     await wrapper.get('.catalog-selector-trigger').trigger('click')
     await wrapper.get('.catalog-option').trigger('click')
+    expect(slot.variants).toHaveLength(0)
+    expect(wrapper.get('.initial-load-options').text()).toContain('4–6 reps')
+    expect(wrapper.get('.slot-exercise-thumb img').attributes('src')).toBe(
+      '/media/exercises/barbell_bench_press.png',
+    )
+
+    await wrapper.get('.initial-load-options button[aria-label*="High load"]').trigger('click')
     expect(slot.variants).toHaveLength(1)
     expect(slot.variants[0]?.variant_type).toBe('DEFAULT')
     expect(slot.variants[0]?.exercise_slug).toBe(exercise.slug)
+    expect(slot.loading_mode).toBe('high_load')
+    expect(slot.variants[0]?.sets).toHaveLength(3)
+    expect(slot.variants[0]?.sets.map((set) => set.reps)).toEqual([
+      { min: 4, max: 6 },
+      { min: 4, max: 6 },
+      { min: 4, max: 6 },
+    ])
+    expect(slot.variants[0]?.sets.map((set) => set.loading_mode)).toEqual([
+      'high_load',
+      'high_load',
+      'high_load',
+    ])
   })
 
   it('keeps a plain selector click in the editor and exposes native modified-click navigation', async () => {

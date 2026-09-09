@@ -11,10 +11,13 @@ import LoadingCycleEditor from '@/components/plans/LoadingCycleEditor.vue'
 import LoadingModePicker from '@/components/plans/LoadingModePicker.vue'
 import MuscleTargetSelector from '@/components/plans/MuscleTargetSelector.vue'
 import {
+  createSet,
   createVariant,
   effectiveLoadingPattern,
+  initialRepRange,
   loadingModeLabel,
   loadingModeShortLabel,
+  LOADING_MODES,
   roleLabel,
   type EditorSlot,
   type PlanValidationIssue,
@@ -36,6 +39,7 @@ defineEmits<{
 }>()
 
 const expanded = ref(false)
+const pendingExerciseSlug = ref('')
 const defaultIndex = computed(() =>
   model.value.variants.findIndex((variant) => variant.variant_type === 'DEFAULT'),
 )
@@ -49,6 +53,10 @@ const defaultExercise = computed(() => {
   const variant = model.value.variants[defaultIndex.value]
   return props.exercises.find((exercise) => exercise.slug === variant?.exercise_slug)
 })
+const pendingExercise = computed(() =>
+  props.exercises.find((exercise) => exercise.slug === pendingExerciseSlug.value),
+)
+const displayedExercise = computed(() => defaultExercise.value ?? pendingExercise.value)
 const setCount = computed(() =>
   model.value.variants.reduce((total, variant) => total + variant.sets.length, 0),
 )
@@ -84,12 +92,29 @@ function applySlotLoadingMode(mode: LoadingMode): void {
   }
 }
 
-function chooseInitialDefault(slug: string): void {
+function chooseInitialExercise(slug: string): void {
   if (!slug) return
-  model.value.variants.unshift(createVariant('DEFAULT', 0, slug))
+  pendingExerciseSlug.value = slug
+}
+
+function initialRange(mode: LoadingMode): { min: number; max: number } {
+  return initialRepRange(pendingExercise.value?.recommended_rep_profile, mode)
+}
+
+function completeInitialSetup(mode: LoadingMode): void {
+  const exercise = pendingExercise.value
+  if (!exercise) return
+
+  applySlotLoadingMode(mode)
+  const variant = createVariant('DEFAULT', 0, exercise.slug)
+  variant.sets = Array.from({ length: 3 }, (_, ordinal) =>
+    createSet(ordinal, undefined, mode, exercise.recommended_rep_profile),
+  )
+  model.value.variants.unshift(variant)
   model.value.variants.forEach((variant, ordinal) => {
     variant.ordinal = ordinal
   })
+  pendingExerciseSlug.value = ''
 }
 
 function addFallback(): void {
@@ -125,8 +150,8 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
       <span class="slot-order mono">{{ index + 1 }}</span>
       <div class="slot-exercise-thumb">
         <MediaImage
-          :src="defaultExercise?.image_url"
-          :alt="defaultExercise ? `${defaultExercise.name_full || defaultExercise.name} exercise` : 'No default exercise selected'"
+          :src="displayedExercise?.image_url"
+          :alt="displayedExercise ? `${displayedExercise.name_full || displayedExercise.name} exercise` : 'No default exercise selected'"
           label="No image"
         />
       </div>
@@ -135,12 +160,12 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           <span class="slot-role-badge">
             <i aria-hidden="true" />{{ roleLabel(model.role) }}
           </span>
-          <span class="slot-loading-badge" :class="`loading-${slotLoadingPattern[0]}`">
+          <span v-if="defaultIndex >= 0" class="slot-loading-badge" :class="`loading-${slotLoadingPattern[0]}`">
             <i v-for="(mode, patternIndex) in slotLoadingPattern" :key="patternIndex" :class="`loading-${mode}`" aria-hidden="true" />
             {{ slotLoadingPattern.length === 1 ? loadingModeLabel(slotLoadingPattern[0]!) : slotLoadingPattern.map(loadingModeShortLabel).join('·') }}
           </span>
           <strong>{{ model.name?.trim() || 'Untitled exercise slot' }}</strong>
-          <small>{{ defaultExercise?.name_full || defaultExercise?.name || 'Choose default exercise' }}</small>
+          <small>{{ displayedExercise?.name_full || displayedExercise?.name || 'Choose default exercise' }}</small>
         </span>
         <span class="slot-set-count mono">{{ setCount }} {{ setCount === 1 ? 'set' : 'sets' }}</span>
       </button>
@@ -163,14 +188,53 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           :slot-loading-cycle="model.loading_cycle"
         />
       </template>
-      <div v-else class="empty-default">
-        <span class="section-label">Default exercise required for a populated slot</span>
-        <ExerciseSelector
-          model-value=""
-          :exercises="exercises"
-          label="Choose default exercise"
-          @update:model-value="chooseInitialDefault"
-        />
+      <div v-else class="empty-default initial-slot-setup">
+        <span class="section-label">Set up default exercise</span>
+        <section class="initial-setup-step">
+          <span class="initial-step-number mono">1</span>
+          <div class="initial-step-content">
+            <div class="initial-step-heading">
+              <strong>Choose exercise</strong>
+              <small>Find the movement this slot should perform.</small>
+            </div>
+            <ExerciseSelector
+              :model-value="pendingExerciseSlug"
+              :exercises="exercises"
+              label="Exercise"
+              @update:model-value="chooseInitialExercise"
+            />
+          </div>
+        </section>
+        <section class="initial-setup-step" :class="{ unavailable: !pendingExercise }">
+          <span class="initial-step-number mono">2</span>
+          <div class="initial-step-content">
+            <div class="initial-step-heading">
+              <strong>Choose load</strong>
+              <small v-if="pendingExercise">This creates three editable sets.</small>
+              <small v-else>Select an exercise first.</small>
+            </div>
+            <div v-if="pendingExercise" class="initial-load-options">
+              <button
+                v-for="mode in LOADING_MODES"
+                :key="mode"
+                type="button"
+                :class="[`loading-${mode}`, { unprofiled: !pendingExercise.recommended_rep_profile[mode] }]"
+                :aria-label="`Choose ${loadingModeLabel(mode)} and create three sets`"
+                @click="completeInitialSetup(mode)"
+              >
+                <i aria-hidden="true" />
+                <span>{{ loadingModeLabel(mode) }}</span>
+                <small class="mono">
+                  {{ initialRange(mode).min }}–{{ initialRange(mode).max }} reps
+                  <template v-if="!pendingExercise.recommended_rep_profile[mode]"> · generic</template>
+                </small>
+              </button>
+            </div>
+            <div v-else class="initial-load-placeholder" aria-hidden="true">
+              <span v-for="mode in LOADING_MODES" :key="mode" />
+            </div>
+          </div>
+        </section>
       </div>
 
       <div v-if="expanded" class="slot-details">

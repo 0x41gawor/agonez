@@ -1145,6 +1145,132 @@
   background: var(--accentDim);
 }
 
+.initial-slot-setup {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border2));
+  background: color-mix(in srgb, var(--accentDim) 45%, var(--panel));
+}
+
+.initial-slot-setup > .section-label {
+  padding: 10px 12px 8px;
+}
+
+.initial-setup-step {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  padding: 11px 12px;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 16%, var(--border));
+}
+
+.initial-setup-step.unavailable {
+  opacity: 0.58;
+}
+
+.initial-step-number {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  width: 24px;
+  height: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--accent2);
+  font-size: 8px;
+}
+
+.initial-step-content {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.initial-step-heading strong,
+.initial-step-heading small {
+  display: block;
+}
+
+.initial-step-heading strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.initial-step-heading small {
+  margin-top: 2px;
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.initial-load-options,
+.initial-load-placeholder {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(110px, 1fr));
+  gap: 7px;
+}
+
+.initial-load-options button {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 7px;
+  min-height: 48px;
+  padding: 7px 9px;
+  border: 1px solid color-mix(in srgb, var(--loading-color) 30%, var(--border));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--loading-color) 5%, var(--inputBg));
+  color: var(--text2);
+  text-align: left;
+  transition: border-color 100ms ease, background 100ms ease, transform 100ms ease;
+}
+
+.initial-load-options button:hover {
+  border-color: color-mix(in srgb, var(--loading-color) 62%, var(--border2));
+  background: color-mix(in srgb, var(--loading-color) 10%, var(--panel));
+  transform: translateY(-1px);
+}
+
+.initial-load-options button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--loading-color) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.initial-load-options button > i {
+  grid-row: 1 / 3;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--loading-color);
+}
+
+.initial-load-options button > span {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.initial-load-options button > small {
+  color: var(--text3);
+  font-size: 8px;
+}
+
+.initial-load-options button.unprofiled {
+  border-style: dashed;
+}
+
+.initial-load-placeholder span {
+  height: 48px;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--panel2) 55%, transparent);
+}
+
 .variant-editor {
   padding: 12px;
   border: 1px solid var(--border);
@@ -1607,6 +1733,11 @@
   .catalog-option {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .initial-load-options,
+  .initial-load-placeholder {
+    grid-template-columns: 1fr;
   }
 
   .exercise-option-facts {

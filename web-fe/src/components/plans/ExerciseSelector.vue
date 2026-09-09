@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 
 import type { ExerciseCatalogItem } from '@/api/types'
+import { ExerciseSearch } from '@/features/plans/exercise-search'
 import { formatNumber, prettyToken } from '@/utils/format'
 
 const props = defineProps<{
@@ -14,18 +15,8 @@ const emit = defineEmits<{ 'update:modelValue': [slug: string] }>()
 const open = ref(false)
 const query = ref('')
 const current = computed(() => props.exercises.find((item) => item.slug === props.modelValue))
-const filtered = computed(() => {
-  const needle = query.value.trim().toLowerCase().replaceAll('_', ' ')
-  if (!needle) return props.exercises.slice(0, 24)
-  return props.exercises
-    .filter((item) =>
-      `${item.name} ${item.name_full} ${item.slug} ${item.resistance_source} ${item.mechanics_tier} ${item.target_category}`
-        .toLowerCase()
-        .replaceAll('_', ' ')
-        .includes(needle),
-    )
-    .slice(0, 24)
-})
+const search = computed(() => new ExerciseSearch(props.exercises))
+const filtered = computed(() => search.value.search(query.value))
 const currentExerciseHref = computed(() =>
   current.value ? `/atlas/exercises/${encodeURIComponent(current.value.slug)}` : undefined,
 )
@@ -79,7 +70,7 @@ function select(slug: string): void {
         v-model="query"
         class="text-input"
         type="search"
-        placeholder="Name, target, slug, or resistance…"
+        placeholder="Name, target, slug, resistance, or mechanics…"
         autocomplete="off"
       />
       <div class="catalog-options" role="listbox" :aria-label="label ?? 'Exercise options'">
