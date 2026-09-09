@@ -47,6 +47,10 @@ progression.
   target categories, resistance sources, and mechanics tiers. Exact, prefix, and
   substring matches stay ahead of a restrained weighted fuzzy fallback, so common
   misspellings are tolerated without making unrelated results dominate.
+- A contextual `Plan check` coach evaluates the live draft without blocking save or
+  changing data. Its first rule opens a restrained floating suggestion when a non-empty
+  microcycle has no explicit rest day, explains the Analysis consequence, and disappears
+  as soon as a rest day exists.
 - All move controls are deterministic and work with keyboard/touch; no drag library is
   introduced.
 - Conflict state never overwrites local edits. The user can explicitly reload the

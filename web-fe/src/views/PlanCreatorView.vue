@@ -7,10 +7,12 @@ import { plansApi } from '@/api/plans'
 import ErrorState from '@/components/common/ErrorState.vue'
 import PlanExportDialog from '@/components/plans/PlanExportDialog.vue'
 import PlanEditor from '@/components/plans/PlanEditor.vue'
+import PlanGuidanceCoach from '@/components/plans/PlanGuidanceCoach.vue'
 import PlanAnalysis from '@/components/plans/analysis/PlanAnalysis.vue'
 import { usePlanAnalysis } from '@/composables/usePlanAnalysis'
 import { usePlanDraft } from '@/composables/usePlanDraft'
 import { DEFAULT_PLAN_EXPORT_REQUEST } from '@/features/plans/export'
+import { evaluatePlanGuidance, type PlanGuidanceTarget } from '@/features/plans/guidance'
 
 const props = defineProps<{ planId: string }>()
 const numericPlanId = computed(() => Number(props.planId))
@@ -23,6 +25,9 @@ const exporting = ref(false)
 const exportError = ref<string | null>(null)
 const exportDocument = ref<PlanAIExportResult | null>(null)
 const exportOpen = ref(false)
+const guidanceItems = computed(() =>
+  editor.draft.value ? evaluatePlanGuidance(editor.draft.value) : [],
+)
 
 const saveStatus = computed(() => {
   if (editor.saving.value) return 'Saving…'
@@ -80,6 +85,17 @@ function showAnalysis(): void {
 function reloadAfterConflict(): void {
   if (!window.confirm('Reload the latest server draft and discard your unsaved local changes?')) return
   void editor.reloadLatest()
+}
+
+function reviewGuidance(target: PlanGuidanceTarget): void {
+  showPlan()
+  requestAnimationFrame(() => {
+    const element = document.getElementById(`plan-${target}`)
+    if (!element) return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    element.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+    element.focus({ preventScroll: true })
+  })
 }
 
 onBeforeRouteLeave(() => {
@@ -218,6 +234,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
       :document="exportDocument"
       :editor-dirty="editor.dirty.value"
       @close="exportOpen = false"
+    />
+    <PlanGuidanceCoach
+      :active="activeTab === 'PLAN'"
+      :items="guidanceItems"
+      @review="reviewGuidance"
     />
   </div>
 </template>

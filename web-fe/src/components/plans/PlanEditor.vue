@@ -47,7 +47,7 @@ function addDay(): void {
       </div>
     </section>
 
-    <section class="days-section">
+    <section id="plan-days" class="days-section" tabindex="-1">
       <header class="days-heading">
         <div>
           <span class="eyebrow">Ordered microcycle</span>

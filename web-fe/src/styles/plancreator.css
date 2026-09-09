@@ -436,6 +436,207 @@
   height: 420px;
 }
 
+.plan-guidance {
+  position: fixed;
+  z-index: 100;
+  right: max(18px, calc((100vw - 1320px) / 2 + 20px));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  width: min(360px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.plan-guidance-panel,
+.plan-guidance-trigger {
+  pointer-events: auto;
+  border: 1px solid color-mix(in srgb, var(--joint) 34%, var(--border));
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.plan-guidance-panel {
+  overflow: hidden;
+  border-radius: 11px;
+  background:
+    linear-gradient(125deg, color-mix(in srgb, var(--joint) 7%, transparent), transparent 48%),
+    var(--panel);
+}
+
+.plan-guidance-panel > header {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel2) 72%, transparent);
+}
+
+.plan-guidance-panel > header strong,
+.plan-guidance-panel > header .eyebrow {
+  display: block;
+}
+
+.plan-guidance-panel > header strong {
+  margin-top: 1px;
+  color: var(--text2);
+  font-size: 10.5px;
+  font-weight: 550;
+}
+
+.plan-guidance-panel > header button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text3);
+  font-size: 17px;
+}
+
+.plan-guidance-panel > header button:hover {
+  border-color: var(--border2);
+  background: var(--panel2);
+  color: var(--text);
+}
+
+.plan-guidance-signal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--joint) 46%, var(--border));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--joint) 8%, var(--panel2));
+}
+
+.plan-guidance-signal::before,
+.plan-guidance-signal::after,
+.plan-guidance-signal i {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--joint);
+  content: '';
+}
+
+.plan-guidance-signal::before {
+  transform: translate(-5px, 3px);
+  opacity: 0.55;
+}
+
+.plan-guidance-signal::after {
+  transform: translate(5px, -3px);
+  opacity: 0.78;
+}
+
+.plan-guidance-panel > article {
+  padding: 15px;
+}
+
+.plan-guidance-panel > article + article {
+  border-top: 1px solid var(--border);
+}
+
+.plan-guidance-label {
+  color: var(--joint);
+  font-size: 8.5px;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.plan-guidance-panel h2 {
+  margin: 5px 0 6px;
+  color: var(--text);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.plan-guidance-panel p {
+  margin: 0;
+  color: var(--text2);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.plan-guidance-panel .plan-guidance-rationale {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 5px;
+  margin-top: 9px;
+  color: var(--text3);
+  font-size: 9.5px;
+}
+
+.plan-guidance-rationale > span {
+  color: var(--joint);
+}
+
+.plan-guidance-panel article > .button {
+  margin-top: 13px;
+  border-color: color-mix(in srgb, var(--joint) 32%, var(--border));
+  color: var(--text2);
+}
+
+.plan-guidance-panel article > .button:hover {
+  border-color: color-mix(in srgb, var(--joint) 52%, var(--border2));
+  color: var(--text);
+}
+
+.plan-guidance-trigger {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: max-content;
+  margin-left: auto;
+  padding: 7px 8px 7px 7px;
+  border-radius: 999px;
+  color: var(--text2);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.plan-guidance-trigger:hover {
+  border-color: color-mix(in srgb, var(--joint) 52%, var(--border2));
+  color: var(--text);
+}
+
+.plan-guidance-trigger .plan-guidance-signal {
+  width: 25px;
+  height: 25px;
+}
+
+.plan-guidance-trigger b {
+  display: grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--joint) 12%, var(--panel2));
+  color: var(--joint);
+  font-size: 8.5px;
+}
+
+.plan-guidance-card-enter-active,
+.plan-guidance-card-leave-active {
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.plan-guidance-card-enter-from,
+.plan-guidance-card-leave-to {
+  opacity: 0;
+  transform: translateY(5px) scale(0.985);
+}
+
+#plan-days:focus {
+  outline: none;
+}
+
 .plan-editor {
   display: grid;
   gap: 24px;
@@ -1691,6 +1892,16 @@
 }
 
 @media (max-width: 700px) {
+  .plan-guidance {
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: calc(100vw - 24px);
+  }
+
+  .plan-guidance-panel > article {
+    padding: 14px;
+  }
+
   .plans-index-header,
   .days-heading,
   .workout-header,
