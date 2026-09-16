@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import type { AnalysisTimelineDay, MuscleContribution } from '@/api/plan-analysis-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
@@ -15,6 +16,7 @@ import ProvenanceInspector from './ProvenanceInspector.vue'
 
 const mode = defineModel<EtuDisplayMode>('mode', { required: true })
 const selectedSlug = defineModel<string | null>('selectedSlug', { default: null })
+const { t } = useI18n()
 const props = withDefaults(
   defineProps<{
     items: MuscleStimulusPresentation[]
@@ -69,7 +71,7 @@ const metricUnit = computed(() => {
   return `${base}${props.metricUnitSuffix}`
 })
 const metricLabel = computed(() => {
-  const base = mode.value === 'NORMALIZED' ? 'ETU / FCSA' : 'Absolute ETU'
+  const base = t(mode.value === 'NORMALIZED' ? 'analysis.common.normalizedEtu' : 'analysis.common.absoluteEtu')
   return `${base} · ${props.scopeLabel}`
 })
 
@@ -95,7 +97,7 @@ function inspectMuscle(slug: string): void {
     <div class="stimulus-anatomy panel">
       <header>
         <div>
-          <span class="section-label">Stimulus anatomy</span>
+          <span class="section-label">{{ $t('analysis.stimulus.anatomy') }}</span>
           <strong>{{ anatomyTitle }}</strong>
         </div>
         <span class="mono">{{ anatomyMeta || metricUnit }}</span>
@@ -115,25 +117,25 @@ function inspectMuscle(slug: string): void {
         <div class="stimulus-heat-legend">
           <span>0</span>
           <i aria-hidden="true" />
-          <span>{{ formatNumber(maximumValue, 2) }} max</span>
+          <span>{{ $t('analysis.stimulus.max', { value: formatNumber(maximumValue, 2) }) }}</span>
         </div>
-        <p>Relative color reveals target bias; hover preserves exact {{ metricUnit }} values.</p>
+        <p>{{ $t('analysis.stimulus.legend', { unit: metricUnit }) }}</p>
       </footer>
     </div>
 
     <aside v-if="!selectedItem" class="stimulus-ranking panel">
       <header>
         <div>
-          <span class="section-label">Muscle ranking</span>
+          <span class="section-label">{{ $t('analysis.stimulus.ranking') }}</span>
           <strong>{{ rankingTitle }}</strong>
         </div>
-        <span class="mono">{{ ranked.length }} stimulated</span>
+        <span class="mono">{{ $t('analysis.stimulus.stimulated', { count: ranked.length }) }}</span>
       </header>
       <div class="stimulus-ranking-meta">
-        <span>Sorted by {{ metricLabel }}</span>
-        <span>Click a muscle to explain</span>
+        <span>{{ $t('analysis.stimulus.sortedBy', { metric: metricLabel }) }}</span>
+        <span>{{ $t('analysis.stimulus.clickExplain') }}</span>
       </div>
-      <div class="stimulus-ranking-list" role="list" aria-label="Muscles ranked by stimulus">
+      <div class="stimulus-ranking-list" role="list" :aria-label="$t('analysis.stimulus.rankingAria')">
         <button
           v-for="(item, index) in ranked"
           :key="item.slug"
@@ -141,7 +143,7 @@ function inspectMuscle(slug: string): void {
           :class="{ hovered: hoveredSlug === item.slug }"
           type="button"
           role="listitem"
-          :aria-label="`Explain ${muscleLabel(item.slug, muscles)}, ${formatNumber(primaryValue(item), 2)} ${metricUnit}`"
+          :aria-label="$t('analysis.stimulus.explainAria', { name: muscleLabel(item.slug, muscles), value: formatNumber(primaryValue(item), 2), unit: metricUnit })"
           @mouseenter="hoveredSlug = item.slug"
           @mouseleave="hoveredSlug = null"
           @focus="hoveredSlug = item.slug"
@@ -151,12 +153,12 @@ function inspectMuscle(slug: string): void {
           <span class="stimulus-rank mono">{{ String(index + 1).padStart(2, '0') }}</span>
           <span class="stimulus-muscle-name">
             <strong>{{ muscleLabel(item.slug, muscles) }}</strong>
-            <small v-if="!item.recoveryConverged" class="stimulus-diagnostic">Recovery diagnostic</small>
-            <small v-else>{{ formatNumber(item.fcsaCm2, 1) }} cm² projected FCSA</small>
+            <small v-if="!item.recoveryConverged" class="stimulus-diagnostic">{{ $t('analysis.common.recoveryDiagnostic') }}</small>
+            <small v-else>{{ $t('analysis.common.projectedFcsa', { value: formatNumber(item.fcsaCm2, 1) }) }}</small>
           </span>
           <span class="stimulus-row-visual">
             <i class="stimulus-strength-track"><b :style="{ width: relativeWidth(item) }" /></i>
-            <i class="intent-stack" :aria-label="`${formatNumber(item.intentionalEtu, 2)} intentional, ${formatNumber(item.incidentalEtu, 2)} incidental, ${formatNumber(item.unclassifiedEtu, 2)} unclassified ETU`">
+            <i class="intent-stack" :aria-label="$t('analysis.stimulus.intentAria', { intentional: formatNumber(item.intentionalEtu, 2), incidental: formatNumber(item.incidentalEtu, 2), unclassified: formatNumber(item.unclassifiedEtu, 2) })">
               <span class="intentional" :style="{ width: intentWidth(item, item.intentionalEtu) }" />
               <span class="incidental" :style="{ width: intentWidth(item, item.incidentalEtu) }" />
               <span class="unclassified" :style="{ width: intentWidth(item, item.unclassifiedEtu) }" />
@@ -170,9 +172,9 @@ function inspectMuscle(slug: string): void {
         </button>
       </div>
       <div class="intent-legend">
-        <span><i class="intentional" />Intentional</span>
-        <span><i class="incidental" />Incidental</span>
-        <span><i class="unclassified" />Unclassified</span>
+        <span><i class="intentional" />{{ $t('analysis.common.intentional') }}</span>
+        <span><i class="incidental" />{{ $t('analysis.common.incidental') }}</span>
+        <span><i class="unclassified" />{{ $t('analysis.common.unclassified') }}</span>
       </div>
     </aside>
 

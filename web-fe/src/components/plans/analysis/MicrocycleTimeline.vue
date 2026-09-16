@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import type { AnalysisTimelineDay } from '@/api/plan-analysis-types'
 import { weekdayLabel } from '@/features/plans/analysis'
@@ -9,6 +10,7 @@ const props = defineProps<{
   days: AnalysisTimelineDay[]
   selectedDayId: number | null
 }>()
+const { t } = useI18n()
 
 defineEmits<{ select: [dayId: number] }>()
 
@@ -22,7 +24,9 @@ const weeks = computed(() =>
 const cycleLength = computed(() => {
   const dayCount = props.days.length
   const weekCount = dayCount / 7
-  return `${dayCount} days${dayCount > 7 ? ` · ${formatNumber(weekCount, Number.isInteger(weekCount) ? 0 : 2)} weeks` : ''}`
+  return dayCount > 7
+    ? t('analysis.timeline.lengthWeeks', { days: dayCount, weeks: formatNumber(weekCount, Number.isInteger(weekCount) ? 0 : 2) })
+    : t('analysis.timeline.lengthDays', { days: dayCount })
 })
 
 function debtCount(day: AnalysisTimelineDay): number {
@@ -37,21 +41,21 @@ function debtCount(day: AnalysisTimelineDay): number {
   <section class="analysis-section timeline-section">
     <header class="analysis-section-heading">
       <div>
-        <span class="section-label">Microcycle timeline</span>
-        <h2>Select a day boundary</h2>
-        <p>Backend chronology · rest days preserve recovery intervals.</p>
+        <span class="section-label">{{ $t('analysis.timeline.label') }}</span>
+        <h2>{{ $t('analysis.timeline.title') }}</h2>
+        <p>{{ $t('analysis.timeline.subtitle') }}</p>
       </div>
       <span class="mono analysis-count">{{ cycleLength }}</span>
     </header>
     <div class="microcycle-week-list">
       <section v-for="week in weeks" :key="week.number" class="timeline-week-group">
         <header v-if="weeks.length > 1" class="timeline-week-heading">
-          <strong>Week {{ week.number }}</strong>
+          <strong>{{ $t('analysis.timeline.week', { number: week.number }) }}</strong>
           <span class="mono">
-            Days {{ (week.number - 1) * 7 + 1 }}–{{ (week.number - 1) * 7 + week.days.length }}
+            {{ $t('analysis.timeline.range', { start: (week.number - 1) * 7 + 1, end: (week.number - 1) * 7 + week.days.length }) }}
           </span>
         </header>
-        <div class="microcycle-timeline" role="list" :aria-label="`Analyzed microcycle week ${week.number}`">
+        <div class="microcycle-timeline" role="list" :aria-label="$t('analysis.timeline.aria', { number: week.number })">
           <button
             v-for="day in week.days"
             :key="day.day_id"
@@ -65,11 +69,11 @@ function debtCount(day: AnalysisTimelineDay): number {
             <span class="timeline-weekday mono">{{ weekdayLabel(day.weekday, day.day_ordinal) }}</span>
             <strong>{{ day.workout?.name || day.day_name }}</strong>
             <small v-if="day.workout">{{ formatNumber(day.workout.stimulus.total_etu_scalar, 0) }} ETU</small>
-            <small v-else>{{ formatNumber(day.elapsed_hours_since_previous_entry, 0) }} h recovery boundary</small>
+            <small v-else>{{ $t('analysis.timeline.recoveryBoundary', { hours: formatNumber(day.elapsed_hours_since_previous_entry, 0) }) }}</small>
             <span v-if="day.workout && debtCount(day)" class="timeline-warning">
-              {{ debtCount(day) }} active debts
+              {{ $t('analysis.timeline.debts', { count: debtCount(day) }) }}
             </span>
-            <span v-else class="timeline-rest-label">{{ day.workout ? 'Fresh entry' : 'Rest' }}</span>
+            <span v-else class="timeline-rest-label">{{ $t(day.workout ? 'analysis.timeline.fresh' : 'analysis.timeline.rest') }}</span>
           </button>
         </div>
       </section>

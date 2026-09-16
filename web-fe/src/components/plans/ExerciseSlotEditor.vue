@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import type { LoadingMode } from '@/api/plan-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
@@ -15,15 +16,14 @@ import {
   createVariant,
   effectiveLoadingPattern,
   initialRepRange,
-  loadingModeLabel,
   loadingModeShortLabel,
   LOADING_MODES,
-  roleLabel,
   type EditorSlot,
   type PlanValidationIssue,
 } from '@/features/plans/editor'
 
 const model = defineModel<EditorSlot>({ required: true })
+const { t } = useI18n()
 const props = defineProps<{
   index: number
   count: number
@@ -80,6 +80,11 @@ const slotCycleModel = computed<LoadingMode[] | null>({
     }
   },
 })
+const translatedRole = computed(() => t(`plans.roles.${model.value.role}`))
+
+function loadingModeLabel(mode: LoadingMode): string {
+  return t(`plans.loadingModes.${mode}`)
+}
 
 function applySlotLoadingMode(mode: LoadingMode): void {
   model.value.loading_mode = mode
@@ -151,29 +156,29 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
       <div class="slot-exercise-thumb">
         <MediaImage
           :src="displayedExercise?.image_url"
-          :alt="displayedExercise ? `${displayedExercise.name_full || displayedExercise.name} exercise` : 'No default exercise selected'"
-          label="No image"
+          :alt="displayedExercise ? displayedExercise.name_full || displayedExercise.name : $t('plans.slot.noExercise')"
+          :label="$t('plans.slot.noImage')"
         />
       </div>
       <button class="slot-summary-main" type="button" :aria-expanded="expanded" @click="expanded = !expanded">
         <span class="slot-title-copy">
           <span class="slot-role-badge">
-            <i aria-hidden="true" />{{ roleLabel(model.role) }}
+            <i aria-hidden="true" />{{ translatedRole }}
           </span>
           <span v-if="defaultIndex >= 0" class="slot-loading-badge" :class="`loading-${slotLoadingPattern[0]}`">
             <i v-for="(mode, patternIndex) in slotLoadingPattern" :key="patternIndex" :class="`loading-${mode}`" aria-hidden="true" />
             {{ slotLoadingPattern.length === 1 ? loadingModeLabel(slotLoadingPattern[0]!) : slotLoadingPattern.map(loadingModeShortLabel).join('·') }}
           </span>
-          <strong>{{ model.name?.trim() || 'Untitled exercise slot' }}</strong>
-          <small>{{ displayedExercise?.name_full || displayedExercise?.name || 'Choose default exercise' }}</small>
+          <strong>{{ model.name?.trim() || $t('plans.slot.untitled') }}</strong>
+          <small>{{ displayedExercise?.name_full || displayedExercise?.name || $t('plans.slot.chooseDefault') }}</small>
         </span>
-        <span class="slot-set-count mono">{{ setCount }} {{ setCount === 1 ? 'set' : 'sets' }}</span>
+        <span class="slot-set-count mono">{{ setCount }} {{ $t(setCount === 1 ? 'plans.slot.set' : 'plans.slot.sets') }}</span>
       </button>
       <div class="ordered-actions">
-        <button type="button" :disabled="index === 0" title="Move slot up" @click="$emit('move', -1)">↑</button>
-        <button type="button" :disabled="index === count - 1" title="Move slot down" @click="$emit('move', 1)">↓</button>
-        <button type="button" title="Duplicate exercise slot" aria-label="Duplicate exercise slot" @click="$emit('duplicate')">⧉</button>
-        <button class="danger-action" type="button" title="Remove slot" @click="$emit('remove')">×</button>
+        <button type="button" :disabled="index === 0" :title="$t('plans.slot.moveUp')" @click="$emit('move', -1)">↑</button>
+        <button type="button" :disabled="index === count - 1" :title="$t('plans.slot.moveDown')" @click="$emit('move', 1)">↓</button>
+        <button type="button" :title="$t('plans.slot.duplicate')" :aria-label="$t('plans.slot.duplicate')" @click="$emit('duplicate')">⧉</button>
+        <button class="danger-action" type="button" :title="$t('plans.slot.remove')" @click="$emit('remove')">×</button>
       </div>
     </header>
 
@@ -189,18 +194,18 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
         />
       </template>
       <div v-else class="empty-default initial-slot-setup">
-        <span class="section-label">Set up default exercise</span>
+        <span class="section-label">{{ $t('plans.slot.setup') }}</span>
         <section class="initial-setup-step">
           <span class="initial-step-number mono">1</span>
           <div class="initial-step-content">
             <div class="initial-step-heading">
-              <strong>Choose exercise</strong>
-              <small>Find the movement this slot should perform.</small>
+              <strong>{{ $t('plans.slot.chooseExercise') }}</strong>
+              <small>{{ $t('plans.slot.chooseExerciseHelp') }}</small>
             </div>
             <ExerciseSelector
               :model-value="pendingExerciseSlug"
               :exercises="exercises"
-              label="Exercise"
+              :label="$t('plans.slot.exercise')"
               @update:model-value="chooseInitialExercise"
             />
           </div>
@@ -209,9 +214,9 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           <span class="initial-step-number mono">2</span>
           <div class="initial-step-content">
             <div class="initial-step-heading">
-              <strong>Choose load</strong>
-              <small v-if="pendingExercise">This creates three editable sets.</small>
-              <small v-else>Select an exercise first.</small>
+              <strong>{{ $t('plans.slot.chooseLoad') }}</strong>
+              <small v-if="pendingExercise">{{ $t('plans.slot.chooseLoadHelp') }}</small>
+              <small v-else>{{ $t('plans.slot.selectExerciseFirst') }}</small>
             </div>
             <div v-if="pendingExercise" class="initial-load-options">
               <button
@@ -219,14 +224,14 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
                 :key="mode"
                 type="button"
                 :class="[`loading-${mode}`, { unprofiled: !pendingExercise.recommended_rep_profile[mode] }]"
-                :aria-label="`Choose ${loadingModeLabel(mode)} and create three sets`"
+                :aria-label="$t('plans.slot.chooseLoadAria', { mode: loadingModeLabel(mode) })"
                 @click="completeInitialSetup(mode)"
               >
                 <i aria-hidden="true" />
                 <span>{{ loadingModeLabel(mode) }}</span>
                 <small class="mono">
-                  {{ initialRange(mode).min }}–{{ initialRange(mode).max }} reps
-                  <template v-if="!pendingExercise.recommended_rep_profile[mode]"> · generic</template>
+                  {{ initialRange(mode).min }}–{{ initialRange(mode).max }} {{ $t('plans.slot.reps') }}
+                  <template v-if="!pendingExercise.recommended_rep_profile[mode]"> · {{ $t('plans.slot.generic') }}</template>
                 </small>
               </button>
             </div>
@@ -240,23 +245,23 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
       <div v-if="expanded" class="slot-details">
         <div class="form-grid two-columns">
           <label class="field">
-            <span class="field-label">Slot name</span>
-            <input v-model="model.name" class="text-input" maxlength="200" placeholder="Primary chest press" />
+            <span class="field-label">{{ $t('plans.slot.name') }}</span>
+            <input v-model="model.name" class="text-input" maxlength="200" :placeholder="$t('plans.slot.namePlaceholder')" />
           </label>
           <label class="field">
-            <span class="field-label">Role</span>
+            <span class="field-label">{{ $t('plans.slot.role') }}</span>
             <select v-model="model.role" class="select-input">
-              <option value="PRIMARY_PROGRESSIVE">Primary progressive</option>
-              <option value="SECONDARY_PROGRESSIVE">Secondary progressive</option>
-              <option value="VOLUME_ACCUMULATION">Volume accumulation</option>
-              <option value="ACCESSORY">Accessory</option>
+              <option value="PRIMARY_PROGRESSIVE">{{ $t('plans.roles.PRIMARY_PROGRESSIVE') }}</option>
+              <option value="SECONDARY_PROGRESSIVE">{{ $t('plans.roles.SECONDARY_PROGRESSIVE') }}</option>
+              <option value="VOLUME_ACCUMULATION">{{ $t('plans.roles.VOLUME_ACCUMULATION') }}</option>
+              <option value="ACCESSORY">{{ $t('plans.roles.ACCESSORY') }}</option>
             </select>
           </label>
         </div>
         <section class="slot-loading-prescription">
           <div class="slot-loading-heading">
-            <span class="field-label">Loading</span>
-            <p>Apply one mode or cycle to every set.</p>
+            <span class="field-label">{{ $t('plans.slot.loading') }}</span>
+            <p>{{ $t('plans.slot.loadingHelp') }}</p>
           </div>
           <LoadingModePicker
             :model-value="model.loading_mode"
@@ -265,23 +270,23 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           <LoadingCycleEditor v-model="slotCycleModel" :fallback-mode="model.loading_mode" />
         </section>
         <label class="field">
-          <span class="field-label">Goal</span>
-          <input v-model="model.goal" class="text-input" placeholder="Why this slot exists in the plan" />
+          <span class="field-label">{{ $t('plans.slot.goal') }}</span>
+          <input v-model="model.goal" class="text-input" :placeholder="$t('plans.slot.goalPlaceholder')" />
         </label>
         <label class="field">
-          <span class="field-label">Description</span>
-          <textarea v-model="model.description" class="text-area" rows="2" placeholder="Optional execution or programming context" />
+          <span class="field-label">{{ $t('plans.slot.description') }}</span>
+          <textarea v-model="model.description" class="text-area" rows="2" :placeholder="$t('plans.slot.descriptionPlaceholder')" />
         </label>
         <div class="slot-intent-layout">
           <div class="field">
-            <span class="field-label">Intentional target muscles</span>
+            <span class="field-label">{{ $t('plans.slot.targets') }}</span>
             <MuscleTargetSelector v-model="model.target_muscle_slugs" :muscles="muscles" />
-            <p class="intent-help">This is the purpose of the slot, not calculated recruitment.</p>
+            <p class="intent-help">{{ $t('plans.slot.targetHelp') }}</p>
           </div>
-          <aside v-if="model.target_muscle_slugs.length" class="slot-muscle-map" aria-label="Target muscle preview">
+          <aside v-if="model.target_muscle_slugs.length" class="slot-muscle-map" :aria-label="$t('plans.slot.targetPreview')">
             <header>
-              <span class="section-label">Intent map</span>
-              <span class="mono">{{ model.target_muscle_slugs.length }} targets</span>
+              <span class="section-label">{{ $t('plans.slot.intentMap') }}</span>
+              <span class="mono">{{ $t('plans.slot.targetCount', { count: model.target_muscle_slugs.length }) }}</span>
             </header>
             <BodyViewer :vector="targetVector" mode="etu" :interactive="false" />
           </aside>
@@ -289,10 +294,10 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
 
         <div class="fallback-heading">
           <div>
-            <span class="section-label">Fallback exercises</span>
-            <p>Alternatives keep this slot's purpose and identity.</p>
+            <span class="section-label">{{ $t('plans.slot.fallbacks') }}</span>
+            <p>{{ $t('plans.slot.fallbacksHelp') }}</p>
           </div>
-          <button class="button" type="button" @click="addFallback">+ Add fallback</button>
+          <button class="button" type="button" @click="addFallback">{{ $t('plans.slot.addFallback') }}</button>
         </div>
         <ExerciseVariantEditor
           v-for="(arrayIndex, fallbackIndex) in fallbackIndices"
@@ -313,7 +318,7 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
         </p>
       </div>
       <button class="slot-disclosure" type="button" @click="expanded = !expanded">
-        {{ expanded ? 'Hide slot details' : `Edit role, intent${fallbackIndices.length ? ', and fallbacks' : ', targets, and fallbacks'}` }}
+        {{ expanded ? $t('plans.slot.hideDetails') : $t(fallbackIndices.length ? 'plans.slot.editDetailsWithFallbacks' : 'plans.slot.editDetails') }}
         <span aria-hidden="true">{{ expanded ? '↑' : '↓' }}</span>
       </button>
     </div>

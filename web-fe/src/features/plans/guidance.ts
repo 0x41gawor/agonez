@@ -9,6 +9,7 @@ export interface PlanGuidanceItem {
   message: string
   rationale: string
   actionLabel: string
+  dayCount: number
   target: PlanGuidanceTarget
 }
 
@@ -25,6 +26,7 @@ export function evaluatePlanGuidance(plan: PlanEditorState): PlanGuidanceItem[] 
         : `All ${plan.days.length} days contain a workout. Rest days belong in the ordered microcycle too.`,
       rationale: 'Explicit rest days let Analysis preserve the recovery intervals you intended.',
       actionLabel: 'Review days',
+      dayCount: plan.days.length,
       target: 'days',
     },
   ]

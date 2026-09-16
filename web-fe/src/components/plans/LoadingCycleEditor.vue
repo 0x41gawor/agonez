@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { LoadingMode } from '@/api/plan-types'
+import { useI18n } from 'vue-i18n'
 import {
   LOADING_MODES,
-  loadingModeLabel,
   loadingModeShortLabel,
 } from '@/features/plans/editor'
 
@@ -11,6 +11,11 @@ const props = withDefaults(defineProps<{
   fallbackMode: LoadingMode
   compact?: boolean
 }>(), { compact: false })
+const { t } = useI18n()
+
+function loadingModeLabel(mode: LoadingMode): string {
+  return t(`plans.loadingModes.${mode}`)
+}
 
 function enable(): void {
   model.value = [props.fallbackMode, props.fallbackMode]
@@ -46,22 +51,22 @@ function updateStep(index: number, event: Event): void {
       type="button"
       @click="enable"
     >
-      ↻ {{ compact ? 'Cycle' : 'Add cycle' }}
+      ↻ {{ compact ? $t('plans.loadingCycle.cycle') : $t('plans.loadingCycle.add') }}
     </button>
     <template v-else>
       <div class="loading-cycle-heading">
         <span>
-          Cycle
+          {{ $t('plans.loadingCycle.cycle') }}
           <b class="mono">{{ model.map(loadingModeShortLabel).join('·') }}</b>
         </span>
-        <button type="button" :title="compact ? 'Use static loading' : undefined" @click="disable">
-          {{ compact ? '×' : 'Use static' }}
+        <button type="button" :title="compact ? $t('plans.loadingCycle.useStaticTitle') : undefined" @click="disable">
+          {{ compact ? '×' : $t('plans.loadingCycle.useStatic') }}
         </button>
       </div>
       <div class="loading-cycle-steps">
         <label v-for="(mode, index) in model" :key="index">
           <span class="mono">µ{{ index + 1 }}</span>
-          <select :value="mode" :aria-label="`Microcycle ${index + 1} loading mode`" @change="updateStep(index, $event)">
+          <select :value="mode" :aria-label="$t('plans.loadingCycle.microcycleMode', { number: index + 1 })" @change="updateStep(index, $event)">
             <option v-for="option in LOADING_MODES" :key="option" :value="option">
               {{ compact ? loadingModeShortLabel(option) : loadingModeLabel(option) }}
             </option>
@@ -69,7 +74,7 @@ function updateStep(index: number, event: Event): void {
           <button
             type="button"
             :disabled="model.length <= 2"
-            :aria-label="`Remove microcycle ${index + 1}`"
+            :aria-label="$t('plans.loadingCycle.removeStep', { number: index + 1 })"
             @click="removeStep(index)"
           >×</button>
         </label>
@@ -79,10 +84,10 @@ function updateStep(index: number, event: Event): void {
           :disabled="model.length >= 52"
           @click="addStep"
         >
-          + Step
+          {{ $t('plans.loadingCycle.addStep') }}
         </button>
       </div>
-      <small v-if="!compact">Repeats every {{ model.length }} microcycles.</small>
+      <small v-if="!compact">{{ $t('plans.loadingCycle.repeats', { count: model.length }) }}</small>
     </template>
   </div>
 </template>

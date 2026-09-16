@@ -19,7 +19,7 @@ import {
   type MuscleSourceGroup,
   type MuscleStimulusPresentation,
 } from '@/features/plans/analysis'
-import { formatNumber } from '@/utils/format'
+import { formatNumber, prettyToken } from '@/utils/format'
 
 const props = withDefaults(
   defineProps<{
@@ -121,7 +121,7 @@ function sourceShare(rawEtu: number): number {
 }
 
 function dayCode(day: AnalysisTimelineDay | null, dayId: number): string {
-  return day ? `D${String(day.day_ordinal + 1).padStart(2, '0')}` : `Day #${dayId}`
+  return day ? `D${String(day.day_ordinal + 1).padStart(2, '0')}` : `#${dayId}`
 }
 
 function roleClass(role: string): string {
@@ -129,8 +129,7 @@ function roleClass(role: string): string {
 }
 
 function tokenLabel(value: string): string {
-  const label = value.toLowerCase().replaceAll('_', ' ')
-  return label.charAt(0).toUpperCase() + label.slice(1)
+  return prettyToken(value)
 }
 
 function exerciseHref(slug: string): string {
@@ -160,31 +159,31 @@ function handleExerciseLinkClick(event: MouseEvent): void {
   >
     <header>
       <div>
-        <span class="section-label">Contribution provenance</span>
+        <span class="section-label">{{ $t('analysis.provenance.label') }}</span>
         <strong>{{ muscleLabel(muscleSlug, muscles) }}</strong>
-        <p>Where this muscle's modeled stimulus comes from.</p>
+        <p>{{ $t('analysis.provenance.muscleHelp') }}</p>
       </div>
       <div v-if="auxiliary" class="provenance-header-actions">
-        <span class="mono">{{ muscleContributions.length }} set records</span>
-        <button class="text-action" type="button" @click="$emit('close')">← Muscle ranking</button>
+        <span class="mono">{{ $t('analysis.common.setRecords', { count: muscleContributions.length }) }}</span>
+        <button class="text-action" type="button" @click="$emit('close')">{{ $t('analysis.provenance.back') }}</button>
       </div>
-      <span v-else class="mono">{{ muscleContributions.length }} set records</span>
+      <span v-else class="mono">{{ $t('analysis.common.setRecords', { count: muscleContributions.length }) }}</span>
     </header>
     <div v-if="musclePresentation" class="stimulus-selected-facts">
       <div>
-        <span>Displayed stimulus</span>
+        <span>{{ $t('analysis.provenance.displayed') }}</span>
         <strong>{{ formatNumber(selectedMetricValue, 2) }}</strong>
         <small class="mono">{{ metricUnit }}</small>
       </div>
       <div>
-        <span>Projected FCSA</span>
+        <span>{{ $t('analysis.provenance.projected') }}</span>
         <strong>{{ formatNumber(musclePresentation.fcsaCm2, 1) }}</strong>
         <small class="mono">cm²</small>
       </div>
       <div>
-        <span>Intentional share</span>
+        <span>{{ $t('analysis.provenance.intentionalShare') }}</span>
         <strong>{{ formatNumber(intentionalShare, 0) }}%</strong>
-        <small class="mono">of muscle ETU</small>
+        <small class="mono">{{ $t('analysis.provenance.ofMuscle') }}</small>
       </div>
     </div>
     <div v-if="muscleDays.length" class="provenance-days">
@@ -192,9 +191,9 @@ function handleExerciseLinkClick(event: MouseEvent): void {
         <header>
           <span class="provenance-day-code mono">{{ dayCode(dayGroup.day, dayGroup.dayId) }}</span>
           <span>
-            <strong>{{ dayGroup.day?.day_name || 'Plan day' }}</strong>
+            <strong>{{ dayGroup.day?.day_name || $t('analysis.provenance.planDay') }}</strong>
             <small>
-              {{ dayGroup.day ? weekdayLabel(dayGroup.day.weekday, dayGroup.day.day_ordinal) : 'Saved contribution' }}
+              {{ dayGroup.day ? weekdayLabel(dayGroup.day.weekday, dayGroup.day.day_ordinal) : $t('analysis.provenance.savedContribution') }}
               <template v-if="dayGroup.day?.workout"> · {{ dayGroup.day.workout.name }}</template>
             </small>
           </span>
@@ -213,7 +212,7 @@ function handleExerciseLinkClick(event: MouseEvent): void {
                 <a
                   class="analysis-exercise-link"
                   :href="exerciseHref(group.exercise_slug)"
-                  title="Click to inspect sets · Ctrl/Cmd+click to open in Atlas"
+                  :title="$t('analysis.provenance.linkTitle')"
                   @click="handleExerciseLinkClick"
                 >
                   <strong>{{ exerciseLabel(group.exercise_slug, exercises) }}</strong>
@@ -226,32 +225,32 @@ function handleExerciseLinkClick(event: MouseEvent): void {
               </span>
               <span class="provenance-totals mono">
                 {{ formatNumber(scaledEtu(group.etu), 2) }} {{ metricUnit }}
-                <small>{{ formatNumber(sourceShare(group.etu), 0) }}% of total</small>
+                <small>{{ $t('analysis.provenance.ofTotal', { value: formatNumber(sourceShare(group.etu), 0) }) }}</small>
               </span>
             </summary>
             <div class="provenance-set-list">
               <div v-for="(item, index) in group.sets.slice(0, 24)" :key="`${item.set_id}:${index}`">
-                <span>Set {{ index + 1 }} <small class="mono">#{{ item.set_id }}</small></span>
+                <span>{{ $t('analysis.provenance.set', { number: index + 1 }) }} <small class="mono">#{{ item.set_id }}</small></span>
                 <strong>{{ formatNumber(scaledEtu(item.etu_contribution ?? 0), 3) }} {{ metricUnit }}</strong>
-                <em>{{ formatNumber(item.effective_reps, 1) }} effective reps</em>
+                <em>{{ $t('analysis.provenance.effectiveReps', { value: formatNumber(item.effective_reps, 1) }) }}</em>
               </div>
-              <p v-if="group.sets.length > 24">{{ group.sets.length - 24 }} additional set records omitted from this compact view.</p>
+              <p v-if="group.sets.length > 24">{{ $t('analysis.provenance.omitted', { count: group.sets.length - 24 }) }}</p>
             </div>
           </details>
         </div>
       </section>
     </div>
-    <p v-else class="analysis-footnote">No set-level ETU provenance was returned for this muscle.</p>
+    <p v-else class="analysis-footnote">{{ $t('analysis.provenance.noMuscleData') }}</p>
   </aside>
 
   <aside v-else-if="jointSlug" class="provenance-inspector panel">
     <header>
       <div>
-        <span class="section-label">Contribution provenance</span>
+        <span class="section-label">{{ $t('analysis.provenance.label') }}</span>
         <strong>{{ jointLabel(jointSlug) }}</strong>
-        <p>Backend-returned sources for joint-load exposure and JRU.</p>
+        <p>{{ $t('analysis.provenance.jointHelp') }}</p>
       </div>
-      <span class="mono">{{ jointContributions?.length || 0 }} set records</span>
+      <span class="mono">{{ $t('analysis.common.setRecords', { count: jointContributions?.length || 0 }) }}</span>
     </header>
     <div class="provenance-groups">
       <details v-for="group in jointGroups" :key="group.exercise_slug">
@@ -259,7 +258,7 @@ function handleExerciseLinkClick(event: MouseEvent): void {
           <a
             class="analysis-exercise-link"
             :href="exerciseHref(group.exercise_slug)"
-            title="Click to inspect sets · Ctrl/Cmd+click to open in Atlas"
+            :title="$t('analysis.provenance.linkTitle')"
             @click="handleExerciseLinkClick"
           >
             <strong>{{ exerciseLabel(group.exercise_slug, exercises) }}</strong>
@@ -270,11 +269,11 @@ function handleExerciseLinkClick(event: MouseEvent): void {
         </summary>
         <div class="provenance-set-list">
           <div v-for="(item, index) in group.sets.slice(0, 24)" :key="`${item.set_id}:${index}`">
-            <span>Set {{ index + 1 }} <small class="mono">#{{ item.set_id }}</small></span>
-            <strong>{{ formatNumber(item.joint_load_exposure, 3) }} load</strong>
+            <span>{{ $t('analysis.provenance.set', { number: index + 1 }) }} <small class="mono">#{{ item.set_id }}</small></span>
+            <strong>{{ $t('analysis.provenance.load', { value: formatNumber(item.joint_load_exposure, 3) }) }}</strong>
             <em>{{ formatNumber(item.jru_contribution, 3) }} JRU</em>
           </div>
-          <p v-if="group.sets.length > 24">{{ group.sets.length - 24 }} additional set records omitted from this compact view.</p>
+          <p v-if="group.sets.length > 24">{{ $t('analysis.provenance.omitted', { count: group.sets.length - 24 }) }}</p>
         </div>
       </details>
     </div>

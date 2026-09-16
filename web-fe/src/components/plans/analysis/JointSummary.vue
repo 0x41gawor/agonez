@@ -29,23 +29,23 @@ const selectedContributions = computed(() =>
   <section class="analysis-section joint-summary-section">
     <header class="analysis-section-heading">
       <div>
-        <span class="section-label">Joint load recovery</span>
-        <h2>Modeled joint readiness cost</h2>
-        <p>JRU and hours-to-fresh do not represent literal tissue-healing time.</p>
+        <span class="section-label">{{ $t('analysis.joints.label') }}</span>
+        <h2>{{ $t('analysis.joints.title') }}</h2>
+        <p>{{ $t('analysis.joints.subtitle') }}</p>
       </div>
-      <span class="mono analysis-count">{{ summaries.length }} joints</span>
+      <span class="mono analysis-count">{{ $t('analysis.common.joints', { count: summaries.length }) }}</span>
     </header>
     <div class="analysis-table-wrap panel">
       <table class="analysis-table joint-analysis-table">
-        <thead><tr><th>Joint</th><th>Load exposure</th><th>JRU</th><th>Worst before</th><th>Max after</th><th><span class="sr-only">Inspect</span></th></tr></thead>
+        <thead><tr><th>{{ $t('analysis.joints.joint') }}</th><th>{{ $t('analysis.joints.exposure') }}</th><th>JRU</th><th>{{ $t('analysis.joints.worst') }}</th><th>{{ $t('analysis.joints.max') }}</th><th><span class="sr-only">{{ $t('analysis.joints.inspect') }}</span></th></tr></thead>
         <tbody>
           <tr v-for="item in sorted" :key="item.slug" :class="{ selected: selectedSlug === item.slug }">
-            <td><strong>{{ jointLabel(item.slug) }}</strong><small>{{ item.recovery_converged ? 'Periodic state converged' : 'Divergent under V1' }}</small></td>
+            <td><strong>{{ jointLabel(item.slug) }}</strong><small>{{ $t(item.recovery_converged ? 'analysis.joints.converged' : 'analysis.joints.divergent') }}</small></td>
             <td class="mono">{{ formatNumber(item.total_joint_load_exposure, 2) }}</td>
             <td class="mono">{{ formatNumber(item.total_jru, 2) }}</td>
             <td>{{ formatHours(item.worst_pre_workout_hours_to_fresh) }}</td>
             <td>{{ formatHours(item.maximum_post_workout_hours_to_fresh) }}</td>
-            <td><button class="text-action" type="button" @click="selectedSlug = item.slug">Explain</button></td>
+            <td><button class="text-action" type="button" @click="selectedSlug = item.slug">{{ $t('analysis.common.explain') }}</button></td>
           </tr>
         </tbody>
       </table>

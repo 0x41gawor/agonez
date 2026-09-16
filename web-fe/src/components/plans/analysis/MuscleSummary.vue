@@ -59,17 +59,17 @@ const sourceEtuFactor = computed(() =>
   <section class="analysis-section muscle-summary-section">
     <header class="analysis-section-heading summary-heading">
       <div>
-        <span class="section-label">Muscle summary</span>
-        <h2>{{ etuBasis === 'WEEKLY' ? 'Weekly stimulus distribution' : 'Complete microcycle stimulus' }}</h2>
-        <p>Anatomy and ranking show what the plan targets. Recovery is analyzed separately above.</p>
+        <span class="section-label">{{ $t('analysis.muscleSummary.label') }}</span>
+        <h2>{{ $t(etuBasis === 'WEEKLY' ? 'analysis.muscleSummary.weeklyTitle' : 'analysis.muscleSummary.cycleTitle') }}</h2>
+        <p>{{ $t('analysis.muscleSummary.subtitle') }}</p>
       </div>
       <div class="summary-controls">
-        <div class="metric-switch" aria-label="Stimulus metric">
+        <div class="metric-switch" :aria-label="$t('analysis.muscleSummary.metricAria')">
           <button type="button" :class="{ active: mode === 'ABSOLUTE' }" @click="mode = 'ABSOLUTE'">
-            Absolute ETU
+            {{ $t('analysis.common.absoluteEtu') }}
           </button>
           <button type="button" :class="{ active: mode === 'NORMALIZED' }" @click="mode = 'NORMALIZED'">
-            ETU / FCSA
+            {{ $t('analysis.common.normalizedEtu') }}
           </button>
         </div>
       </div>
@@ -82,9 +82,9 @@ const sourceEtuFactor = computed(() =>
       :etu-basis="etuBasis"
       :source-etu-factor="sourceEtuFactor"
       :metric-unit-suffix="etuBasis === 'WEEKLY' ? '/7d' : '/cycle'"
-      :scope-label="etuBasis === 'WEEKLY' ? '7 days' : 'full cycle'"
-      anatomy-title="Plan target bias"
-      ranking-title="Strongest plan biases"
+      :scope-label="$t(etuBasis === 'WEEKLY' ? 'analysis.muscleSummary.weeklyScope' : 'analysis.muscleSummary.cycleScope')"
+      :anatomy-title="$t('analysis.muscleSummary.anatomyTitle')"
+      :ranking-title="$t('analysis.muscleSummary.rankingTitle')"
       :timeline="timeline"
       :contributions-by-slug="contributionsBySlug"
       :muscles="muscles"

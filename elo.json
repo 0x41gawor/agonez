@@ -1,0 +1,137 @@
+{
+  "//": "Przyklady instancji do progression-schemas.json. Trzy policy pokazujace granice modelu.",
+
+  "example_1_cascade_independent_reprange_triple_progression": {
+    "//": "Wznosy bokiem, skok hantla 10->12 kg = +20%. Klasyczna kaskada.",
+
+    "plan": {
+      "progression_id": "pu_lat_raise_mon",
+      "exercise_id": "dumbbell_lateral_raise",
+      "policy": {
+        "base": "triple_progression",
+        "authoring_template": "independent_reprange_shared_load",
+        "set_trigger": "cascade",
+        "on_load_up": "reset_to_min"
+      },
+      "active_sets": { "min": 3, "max": 4 },
+      "set_slots": [
+        { "idx": 0, "role": "working", "rep_range": { "min": 16, "max": 20 }, "intensity": { "kind": "rir", "rir": 1 }, "load_rule": { "kind": "unit_working" }, "rest": { "seconds": 90 } },
+        { "idx": 1, "role": "working", "rep_range": { "min": 14, "max": 18 }, "intensity": { "kind": "rir", "rir": 1 }, "load_rule": { "kind": "unit_working" }, "rest": { "seconds": 90 } },
+        { "idx": 2, "role": "working", "rep_range": { "min": 12, "max": 16 }, "intensity": { "kind": "rir", "rir": 1 }, "load_rule": { "kind": "unit_working" }, "rest": { "seconds": 90 } },
+        { "idx": 3, "role": "working", "rep_range": { "min": 12, "max": 16 }, "intensity": { "kind": "rir", "rir": 1 }, "load_rule": { "kind": "unit_working" }, "rest": { "seconds": 90 }, "note": "Slot uspiony przy starcie. Budzony przez kontroler po kaskadzie." }
+      ]
+    },
+
+    "prescr_0": {
+      "//": "controller.state = { load: 10, active_sets: 3 } -> materializuje 3 z 4 slotow",
+      "progression_id": "pu_lat_raise_mon",
+      "exercise_id": "dumbbell_lateral_raise",
+      "exposure_idx": 0,
+      "sets": [
+        { "slot_idx": 0, "role": "working", "rep_range": { "min": 16, "max": 20 }, "intensity": { "kind": "rir", "rir": 1 }, "load": { "kind": "absolute", "value": 10, "unit": "kg", "derived_from": { "kind": "unit_working" } }, "rest": { "seconds": 90 } },
+        { "slot_idx": 1, "role": "working", "rep_range": { "min": 14, "max": 18 }, "intensity": { "kind": "rir", "rir": 1 }, "load": { "kind": "absolute", "value": 10, "unit": "kg" }, "rest": { "seconds": 90 } },
+        { "slot_idx": 2, "role": "working", "rep_range": { "min": 12, "max": 16 }, "intensity": { "kind": "rir", "rir": 1 }, "load": { "kind": "absolute", "value": 10, "unit": "kg" }, "rest": { "seconds": 90 } }
+      ]
+    },
+
+    "execution_0": {
+      "//": "Wszystkie trzy wbily sufit przy rir <= 1 -> gate spelniony, active_sets 3 < max 4 -> sets++",
+      "progression_id": "pu_lat_raise_mon",
+      "exercise_id": "dumbbell_lateral_raise",
+      "exposure_idx": 0,
+      "performed_at": "2026-09-07T18:20:00Z",
+      "unit_status": "completed",
+      "sets": [
+        { "slot_idx": 0, "role": "working", "prescribed": { "load": { "kind": "absolute", "value": 10 }, "rep_range": { "min": 16, "max": 20 }, "intensity": { "kind": "rir", "rir": 1 } }, "actual": { "load": 10, "unit": "kg", "reps": 20, "reported_rir": 1 }, "status": "completed" },
+        { "slot_idx": 1, "role": "working", "prescribed": { "load": { "kind": "absolute", "value": 10 }, "rep_range": { "min": 14, "max": 18 }, "intensity": { "kind": "rir", "rir": 1 } }, "actual": { "load": 10, "unit": "kg", "reps": 18, "reported_rir": 1 }, "status": "completed" },
+        { "slot_idx": 2, "role": "working", "prescribed": { "load": { "kind": "absolute", "value": 10 }, "rep_range": { "min": 12, "max": 16 }, "intensity": { "kind": "rir", "rir": 1 } }, "actual": { "load": 10, "unit": "kg", "reps": 16, "reported_rir": 1 }, "status": "completed" }
+      ]
+    },
+
+    "prescr_1": {
+      "//": "controller.state = { load: 10, active_sets: 4 }. Load BEZ ZMIAN, obudzony slot 3.",
+      "progression_id": "pu_lat_raise_mon",
+      "exercise_id": "dumbbell_lateral_raise",
+      "exposure_idx": 1,
+      "sets": [
+        { "slot_idx": 0, "role": "working", "rep_range": { "min": 16, "max": 20 }, "intensity": { "kind": "rir", "rir": 1 }, "load": { "kind": "absolute", "value": 10, "unit": "kg" }, "rest": { "seconds": 90 } },
+        { "slot_idx": 1, "role": "working", "rep_range": { "min": 14, "max": 18 }, "intensity": { "kind": "rir", "rir": 1 }, "load": { "kind": "absolute", "value": 10, "unit": "kg" }, "rest": { "seconds": 90 } },
+        { "slot_idx": 2, "role": "working", "rep_range": { "min": 12, "max": 16 }, "intensity": { "kind": "rir", "rir": 1 }, "load": { "kind": "absolute", "value": 10, "unit": "kg" }, "rest": { "seconds": 90 } },
+        { "slot_idx": 3, "role": "working", "rep_range": { "min": 12, "max": 16 }, "intensity": { "kind": "rir", "rir": 1 }, "load": { "kind": "absolute", "value": 10, "unit": "kg" }, "rest": { "seconds": 90 } }
+      ]
+    }
+  },
+
+  "example_2_e1rm_top_set_and_backoffs": {
+    "//": "Tu load_spec zarabia na siebie. Zero 'unknown'.",
+
+    "plan": {
+      "progression_id": "pu_bench_wed",
+      "exercise_id": "barbell_bench_press",
+      "policy": { "base": "e1rm_top_set_backoffs", "authoring_template": "custom" },
+      "active_sets": { "min": 4, "max": 4 },
+      "set_slots": [
+        { "idx": 0, "role": "working", "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 2 }, "load_rule": { "kind": "athlete_selected" }, "rest": { "seconds": 240 }, "note": "Top set. Wchodzisz i czujesz na ile dzis jestes." },
+        { "idx": 1, "role": "backoff", "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 2 }, "load_rule": { "kind": "pct_of_set", "ref_idx": 0, "pct_delta": -8 }, "rest": { "seconds": 180 } },
+        { "idx": 2, "role": "backoff", "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 1 }, "load_rule": { "kind": "pct_of_set", "ref_idx": 0, "pct_delta": -8 }, "rest": { "seconds": 180 } },
+        { "idx": 3, "role": "backoff", "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 0 }, "load_rule": { "kind": "pct_of_set", "ref_idx": 0, "pct_delta": -8 }, "rest": { "seconds": 180 } }
+      ]
+    },
+
+    "prescr_0": {
+      "progression_id": "pu_bench_wed",
+      "exercise_id": "barbell_bench_press",
+      "exposure_idx": 0,
+      "sets": [
+        { "slot_idx": 0, "role": "working", "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 2 }, "load": { "kind": "deferred", "rule": { "kind": "athlete_selected" }, "hint": 100 } },
+        { "slot_idx": 1, "role": "backoff", "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 2 }, "load": { "kind": "deferred", "rule": { "kind": "pct_of_set", "ref_idx": 0, "pct_delta": -8 } } },
+        { "slot_idx": 2, "role": "backoff", "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 1 }, "load": { "kind": "deferred", "rule": { "kind": "pct_of_set", "ref_idx": 0, "pct_delta": -8 } } },
+        { "slot_idx": 3, "role": "backoff", "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 0 }, "load": { "kind": "deferred", "rule": { "kind": "pct_of_set", "ref_idx": 0, "pct_delta": -8 } } }
+      ]
+    },
+
+    "execution_0": {
+      "//": "Atleta wszedl na 100 kg. Back-offy 92 kg. Deviation w slocie 3: brak talerzykow 1.25, wzial 92.5.",
+      "progression_id": "pu_bench_wed",
+      "exercise_id": "barbell_bench_press",
+      "exposure_idx": 0,
+      "performed_at": "2026-09-09T19:05:00Z",
+      "unit_status": "completed",
+      "sets": [
+        { "slot_idx": 0, "role": "working", "prescribed": { "load": { "kind": "deferred", "rule": { "kind": "athlete_selected" } }, "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 2 } }, "actual": { "load": 100, "unit": "kg", "reps": 5, "reported_rir": 2 }, "status": "completed" },
+        { "slot_idx": 1, "role": "backoff", "prescribed": { "load": { "kind": "absolute", "value": 92, "derived_from": { "kind": "pct_of_set", "ref_idx": 0, "pct_delta": -8 } }, "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 2 } }, "actual": { "load": 92, "unit": "kg", "reps": 5, "reported_rir": 2 }, "status": "completed" },
+        { "slot_idx": 2, "role": "backoff", "prescribed": { "load": { "kind": "absolute", "value": 92 }, "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 1 } }, "actual": { "load": 92, "unit": "kg", "reps": 5, "reported_rir": 1 }, "status": "completed" },
+        { "slot_idx": 3, "role": "backoff", "prescribed": { "load": { "kind": "absolute", "value": 92 }, "rep_range": { "min": 5, "max": 5 }, "intensity": { "kind": "rir", "rir": 0 } }, "actual": { "load": 92.5, "unit": "kg", "reps": 4, "reported_rir": 0 }, "status": "completed", "deviation_reason": "load_not_quantizable", "note": "Brak talerzykow 1.25 kg, zaokraglenie w gore." }
+      ]
+    }
+  },
+
+  "example_3_apre10": {
+    "//": "Warmupy maja role warmup, wiec NIE wchodza do gate'a. Seria 4 to table_derived (intra-session).",
+
+    "plan": {
+      "progression_id": "pu_smith_squat_fri",
+      "exercise_id": "smith_machine_back_squat",
+      "policy": { "base": "apre", "table": "apre10", "authoring_template": "custom" },
+      "active_sets": { "min": 4, "max": 4 },
+      "set_slots": [
+        { "idx": 0, "role": "warmup", "rep_range": { "min": 12, "max": 12 }, "intensity": { "kind": "unspecified" }, "load_rule": { "kind": "pct_of_working", "pct": 50 }, "rest": { "seconds": 60 } },
+        { "idx": 1, "role": "warmup", "rep_range": { "min": 10, "max": 10 }, "intensity": { "kind": "unspecified" }, "load_rule": { "kind": "pct_of_working", "pct": 75 }, "rest": { "seconds": 90 } },
+        { "idx": 2, "role": "amrap", "rep_range": { "min": 9, "max": 11 }, "intensity": { "kind": "rir", "rir": 0 }, "load_rule": { "kind": "unit_working" }, "rest": { "seconds": 180 }, "note": "rep_range to ESTYMATA kalibracyjna, nie gate. Wynik czytasz w tabeli APRE10." },
+        { "idx": 3, "role": "amrap", "rep_range": { "min": 8, "max": 12 }, "intensity": { "kind": "rir", "rir": 0 }, "load_rule": { "kind": "table_derived", "ref_idx": 2, "table": "apre10" }, "rest": { "seconds": 180 } }
+      ]
+    },
+
+    "prescr_0": {
+      "progression_id": "pu_smith_squat_fri",
+      "exercise_id": "smith_machine_back_squat",
+      "exposure_idx": 0,
+      "sets": [
+        { "slot_idx": 0, "role": "warmup", "rep_range": { "min": 12, "max": 12 }, "intensity": { "kind": "unspecified" }, "load": { "kind": "absolute", "value": 50, "unit": "kg", "derived_from": { "kind": "pct_of_working", "pct": 50 } } },
+        { "slot_idx": 1, "role": "warmup", "rep_range": { "min": 10, "max": 10 }, "intensity": { "kind": "unspecified" }, "load": { "kind": "absolute", "value": 75, "unit": "kg", "derived_from": { "kind": "pct_of_working", "pct": 75 } } },
+        { "slot_idx": 2, "role": "amrap", "rep_range": { "min": 9, "max": 11 }, "intensity": { "kind": "rir", "rir": 0 }, "load": { "kind": "absolute", "value": 100, "unit": "kg" } },
+        { "slot_idx": 3, "role": "amrap", "rep_range": { "min": 8, "max": 12 }, "intensity": { "kind": "rir", "rir": 0 }, "load": { "kind": "deferred", "rule": { "kind": "table_derived", "ref_idx": 2, "table": "apre10" }, "hint": 100 } }
+      ]
+    }
+  }
+}

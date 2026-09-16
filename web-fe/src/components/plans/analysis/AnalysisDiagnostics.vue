@@ -16,8 +16,8 @@ function exerciseHref(slug: string): string {
 <template>
   <section v-if="diagnostics.length" class="analysis-section diagnostics-section">
     <header class="analysis-section-heading">
-      <div><span class="section-label">Diagnostics</span><h2>Model and data notices</h2><p>Diagnostics remain inspectable and do not replace partial Analysis results.</p></div>
-      <span class="mono analysis-count">{{ diagnostics.length }} notices</span>
+      <div><span class="section-label">{{ $t('analysis.diagnostics.label') }}</span><h2>{{ $t('analysis.diagnostics.title') }}</h2><p>{{ $t('analysis.diagnostics.subtitle') }}</p></div>
+      <span class="mono analysis-count">{{ $t('analysis.diagnostics.notices', { count: diagnostics.length }) }}</span>
     </header>
     <div class="diagnostic-list">
       <details
@@ -34,17 +34,17 @@ function exerciseHref(slug: string): string {
         <div>
           <p>{{ diagnostic.message }}</p>
           <p v-if="diagnostic.exercise_slug">
-            <strong>Exercise:</strong>
+            <strong>{{ $t('analysis.diagnostics.exercise') }}</strong>
             <a class="analysis-exercise-link" :href="exerciseHref(diagnostic.exercise_slug)">
               {{ diagnostic.exercise_slug }}
             </a>
           </p>
           <div v-if="diagnostic.affected_muscle_slugs.length" class="diagnostic-resources">
-            <strong>Affected muscles</strong>
+            <strong>{{ $t('analysis.diagnostics.muscles') }}</strong>
             <span v-for="slug in diagnostic.affected_muscle_slugs" :key="slug">{{ muscleLabel(slug, muscles) }}</span>
           </div>
           <div v-if="diagnostic.affected_joint_slugs.length" class="diagnostic-resources">
-            <strong>Affected joints</strong>
+            <strong>{{ $t('analysis.diagnostics.joints') }}</strong>
             <span v-for="slug in diagnostic.affected_joint_slugs" :key="slug">{{ jointLabel(slug) }}</span>
           </div>
         </div>

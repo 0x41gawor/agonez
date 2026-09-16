@@ -73,7 +73,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="atlas-toolbar">
-    <div class="atlas-tabs" role="tablist" aria-label="Atlas collection">
+    <div class="atlas-tabs" role="tablist" :aria-label="$t('atlas.collection')">
       <button
         type="button"
         role="tab"
@@ -81,7 +81,7 @@ onBeforeUnmount(() => {
         :class="{ active: kind === 'exercises' }"
         @click="router.push({ name: 'exercises' })"
       >
-        Exercises <span class="mono">{{ exerciseCount }}</span>
+        {{ $t('atlas.exercises') }} <span class="mono">{{ exerciseCount }}</span>
       </button>
       <button
         type="button"
@@ -90,23 +90,23 @@ onBeforeUnmount(() => {
         :class="{ active: kind === 'muscles' }"
         @click="router.push({ name: 'muscles' })"
       >
-        Muscles <span class="mono">{{ muscleCount }}</span>
+        {{ $t('atlas.muscles') }} <span class="mono">{{ muscleCount }}</span>
       </button>
     </div>
 
     <label class="search-field">
-      <span class="sr-only">Search {{ kind }}</span>
+      <span class="sr-only">{{ $t('atlas.search', { kind: $t(`atlas.${kind}`) }) }}</span>
       <input
         type="search"
         :value="search"
-        :placeholder="`Search ${kind}…`"
+        :placeholder="$t('atlas.searchPlaceholder', { kind: $t(`atlas.${kind}`).toLowerCase() })"
         @input="emit('update:search', ($event.target as HTMLInputElement).value)"
       />
     </label>
 
     <div ref="filterRoot" class="filter-root">
       <button class="button" :class="{ active: open }" type="button" :aria-expanded="open" @click.stop="open = !open">
-        Filter <span v-if="activeFilters.length" class="filter-count mono">{{ activeFilters.length }}</span>
+        {{ $t('atlas.filter') }} <span v-if="activeFilters.length" class="filter-count mono">{{ activeFilters.length }}</span>
       </button>
       <div v-if="open" class="filter-popover panel">
         <section v-for="group in filterGroups" :key="group.key">
@@ -117,35 +117,35 @@ onBeforeUnmount(() => {
               :checked="filters[group.key]?.includes(option.value)"
               @change="toggleFilter(group.key, option.value)"
             />
-            <span>{{ option.value.replaceAll('_', ' ') }}</span>
+            <span>{{ $te(`tokens.${option.value}`) ? $t(`tokens.${option.value}`) : option.value.replaceAll('_', ' ') }}</span>
             <small class="mono">{{ option.count }}</small>
           </label>
         </section>
-        <button class="filter-close" type="button" aria-label="Close filters" @click="open = false">×</button>
+        <button class="filter-close" type="button" :aria-label="$t('atlas.closeFilters')" @click="open = false">×</button>
       </div>
     </div>
 
     <div class="sort-control">
-      <span>Sort</span>
-      <select :value="sort" aria-label="Sort by" @change="emit('update:sort', ($event.target as HTMLSelectElement).value)">
+      <span>{{ $t('atlas.sort') }}</span>
+      <select :value="sort" :aria-label="$t('atlas.sortBy')" @change="emit('update:sort', ($event.target as HTMLSelectElement).value)">
         <option v-for="option in sortOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
       </select>
-      <button class="icon-button mono" type="button" aria-label="Reverse sort order" @click="emit('update:order', order === 'asc' ? 'desc' : 'asc')">
+      <button class="icon-button mono" type="button" :aria-label="$t('atlas.reverseSort')" @click="emit('update:order', order === 'asc' ? 'desc' : 'asc')">
         {{ order === 'asc' ? '↑' : '↓' }}
       </button>
     </div>
 
     <div class="toolbar-spacer" />
-    <div class="view-control" aria-label="Display style">
-      <button type="button" :class="{ active: view === 'list' }" :aria-pressed="view === 'list'" @click="emit('update:view', 'list')">List</button>
-      <button type="button" :class="{ active: view === 'grid' }" :aria-pressed="view === 'grid'" @click="emit('update:view', 'grid')">Grid</button>
+    <div class="view-control" :aria-label="$t('atlas.displayStyle')">
+      <button type="button" :class="{ active: view === 'list' }" :aria-pressed="view === 'list'" @click="emit('update:view', 'list')">{{ $t('atlas.list') }}</button>
+      <button type="button" :class="{ active: view === 'grid' }" :aria-pressed="view === 'grid'" @click="emit('update:view', 'grid')">{{ $t('atlas.grid') }}</button>
     </div>
   </div>
 
   <div v-if="activeFilters.length" class="active-chips">
     <button v-for="value in activeFilters" :key="value" class="chip" type="button" @click="removeFilter(value)">
-      {{ value.replaceAll('_', ' ') }} <span>×</span>
+      {{ $te(`tokens.${value}`) ? $t(`tokens.${value}`) : value.replaceAll('_', ' ') }} <span>×</span>
     </button>
-    <button class="button ghost" type="button" @click="clearFilters">Clear all</button>
+    <button class="button ghost" type="button" @click="clearFilters">{{ $t('atlas.clearAll') }}</button>
   </div>
 </template>

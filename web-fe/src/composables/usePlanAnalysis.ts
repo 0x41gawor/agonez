@@ -7,6 +7,7 @@ import type {
   PlanAnalysisResult,
 } from '@/api/plan-analysis-types'
 import { plansApi } from '@/api/plans'
+import { i18n } from '@/i18n'
 import type {
   AnalysisPhase,
   EtuDisplayMode,
@@ -106,7 +107,7 @@ export function usePlanAnalysis(
     } catch (caught) {
       if (sequence !== requestSequence) return false
       error.value =
-        caught instanceof Error ? caught.message : 'The persisted plan could not be analyzed.'
+        caught instanceof Error ? caught.message : i18n.global.t('plans.editor.validation.analysisFailed')
       return false
     } finally {
       if (sequence === requestSequence) loading.value = false

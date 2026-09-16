@@ -23,7 +23,7 @@ const emit = defineEmits<{ hover: [slug: string | null] }>()
         :to="{ name: 'exercise-detail', params: { slug: item.slug } }"
         @mouseenter="emit('hover', item.slug)" @mouseleave="emit('hover', null)" @focus="emit('hover', item.slug)" @blur="emit('hover', null)"
       >
-        <MediaImage :src="item.image_url" :alt="item.name" label="exercise visual unavailable" />
+        <MediaImage :src="item.image_url" :alt="item.name" :label="$t('atlas.exerciseVisualUnavailable')" />
         <div class="atlas-card-body">
           <h2>{{ item.name }} <span v-if="item.has_engine_vectors" class="status-dot" /></h2>
           <p>{{ item.name_full }}</p>
@@ -41,7 +41,7 @@ const emit = defineEmits<{ hover: [slug: string | null] }>()
         :to="{ name: 'muscle-detail', params: { slug: item.slug } }"
         @mouseenter="emit('hover', item.slug)" @mouseleave="emit('hover', null)" @focus="emit('hover', item.slug)" @blur="emit('hover', null)"
       >
-        <MediaImage :src="item.image_url" :alt="item.display_name" label="muscle visual unavailable" />
+        <MediaImage :src="item.image_url" :alt="item.display_name" :label="$t('atlas.muscleVisualUnavailable')" />
         <div class="atlas-card-body">
           <h2>{{ item.display_name }}</h2>
           <p><i>{{ item.name }}</i></p>

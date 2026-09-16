@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { onBeforeRouteLeave } from 'vue-router'
 
 import type { PlanAIExportResult } from '@/api/plan-export-types'
@@ -13,10 +14,15 @@ import { usePlanAnalysis } from '@/composables/usePlanAnalysis'
 import { usePlanDraft } from '@/composables/usePlanDraft'
 import { DEFAULT_PLAN_EXPORT_REQUEST } from '@/features/plans/export'
 import { evaluatePlanGuidance, type PlanGuidanceTarget } from '@/features/plans/guidance'
+import { useAtlasCatalogStore } from '@/stores/atlasCatalog'
+import { useLocaleStore } from '@/stores/locale'
 
 const props = defineProps<{ planId: string }>()
+const { t } = useI18n()
 const numericPlanId = computed(() => Number(props.planId))
 const editor = usePlanDraft(numericPlanId)
+const catalog = useAtlasCatalogStore()
+const locale = useLocaleStore()
 const activeTab = ref<'PLAN' | 'ANALYSIS'>('PLAN')
 const analysisVisited = ref(false)
 const persistedLockVersion = computed(() => editor.draft.value?.lock_version ?? null)
@@ -28,14 +34,20 @@ const exportOpen = ref(false)
 const guidanceItems = computed(() =>
   editor.draft.value ? evaluatePlanGuidance(editor.draft.value) : [],
 )
+const initialLoading = computed(() =>
+  editor.loading.value || (catalog.loading && catalog.loadedLocale === null),
+)
+const initialLoadError = computed(() => editor.loadError.value ?? (
+  catalog.loadedLocale === null ? catalog.error?.message ?? null : null
+))
 
 const saveStatus = computed(() => {
-  if (editor.saving.value) return 'Saving…'
-  if (editor.conflict.value) return 'Conflict'
-  if (editor.saveError.value) return 'Save failed'
-  if (editor.dirty.value) return 'Unsaved changes'
-  if (editor.savedAt.value) return 'Saved'
-  return 'Up to date'
+  if (editor.saving.value) return t('plans.creatorView.statuses.saving')
+  if (editor.conflict.value) return t('plans.creatorView.statuses.conflict')
+  if (editor.saveError.value) return t('plans.creatorView.statuses.failed')
+  if (editor.dirty.value) return t('plans.creatorView.statuses.unsaved')
+  if (editor.savedAt.value) return t('plans.creatorView.statuses.saved')
+  return t('plans.creatorView.statuses.current')
 })
 
 function handleShortcut(event: KeyboardEvent): void {
@@ -66,7 +78,7 @@ async function exportPlan(): Promise<void> {
     exportOpen.value = true
   } catch (caught) {
     exportError.value =
-      caught instanceof Error ? caught.message : 'The saved plan could not be exported.'
+      caught instanceof Error ? caught.message : t('plans.creatorView.exportFallbackError')
   } finally {
     exporting.value = false
   }
@@ -83,7 +95,7 @@ function showAnalysis(): void {
 }
 
 function reloadAfterConflict(): void {
-  if (!window.confirm('Reload the latest server draft and discard your unsaved local changes?')) return
+  if (!window.confirm(t('plans.creatorView.confirmReload'))) return
   void editor.reloadLatest()
 }
 
@@ -98,16 +110,22 @@ function reviewGuidance(target: PlanGuidanceTarget): void {
   })
 }
 
+function loadPage(): void {
+  void Promise.all([editor.load(), catalog.load()])
+}
+
 onBeforeRouteLeave(() => {
   if (!editor.dirty.value) return true
-  return window.confirm('Leave this plan and discard unsaved changes?')
+  return window.confirm(t('plans.creatorView.confirmLeave'))
 })
 
 onMounted(() => {
   window.addEventListener('keydown', handleShortcut)
-  void editor.load()
+  loadPage()
 })
 onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
+
+watch(() => locale.current, () => void catalog.load(true))
 </script>
 
 <template>
@@ -115,10 +133,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
     <div class="plan-creator-sticky">
       <div class="plan-creator-toolbar page-wrap">
         <div class="plan-title-cluster">
-          <RouterLink class="plan-back" to="/plans" aria-label="Back to My Plans">←</RouterLink>
+          <RouterLink class="plan-back" to="/plans" :aria-label="$t('plans.creatorView.back')">←</RouterLink>
           <div>
-            <span class="eyebrow">PlanCreator</span>
-            <h1>{{ editor.draft.value?.name || 'Workout plan' }}</h1>
+            <span class="eyebrow">{{ $t('plans.creator') }}</span>
+            <h1>{{ editor.draft.value?.name || $t('plans.creatorView.fallbackTitle') }}</h1>
           </div>
         </div>
         <div class="save-cluster">
@@ -129,10 +147,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
             class="button export-plan-button"
             type="button"
             :disabled="!editor.draft.value || exporting"
-            title="Export the saved basic plan as AI-friendly JSON"
+            :title="$t('plans.creatorView.exportTitle')"
             @click="exportPlan"
           >
-            {{ exporting ? 'Preparing…' : 'Export JSON' }}
+            {{ exporting ? $t('plans.creatorView.preparing') : $t('plans.creatorView.exportJson') }}
           </button>
           <button
             class="button primary save-button"
@@ -140,19 +158,19 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
             :disabled="!editor.draft.value || editor.saving.value || !editor.dirty.value"
             @click="savePlan"
           >
-            {{ editor.saving.value ? 'Saving…' : 'Save plan' }}
+            {{ editor.saving.value ? $t('plans.creatorView.statuses.saving') : $t('plans.creatorView.savePlan') }}
             <span class="save-shortcut mono">Ctrl S</span>
           </button>
         </div>
       </div>
-      <nav class="plan-tabs" aria-label="PlanCreator sections">
+      <nav class="plan-tabs" :aria-label="$t('plans.creatorView.navigation')">
         <button
           type="button"
           :class="{ active: activeTab === 'PLAN' }"
           :aria-current="activeTab === 'PLAN' ? 'page' : undefined"
           @click="showPlan"
         >
-          PLAN
+          {{ $t('plans.creatorView.planTab') }}
         </button>
         <button
           type="button"
@@ -160,11 +178,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
           :aria-current="activeTab === 'ANALYSIS' ? 'page' : undefined"
           @click="showAnalysis"
         >
-          ANALYSIS
-          <small v-if="analysis.stale.value">Stale</small>
+          {{ $t('plans.creatorView.analysisTab') }}
+          <small v-if="analysis.stale.value">{{ $t('plans.creatorView.stale') }}</small>
         </button>
-        <button type="button" disabled title="Planned for the next PlanCreator stage">
-          MODULATION <small>Later</small>
+        <button type="button" disabled :title="$t('plans.creatorView.modulationPlanned')">
+          {{ $t('plans.creatorView.modulationTab') }} <small>{{ $t('plans.creatorView.later') }}</small>
         </button>
       </nav>
     </div>
@@ -172,36 +190,36 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
     <main class="page-wrap plan-creator-content">
       <div v-if="editor.conflict.value" class="conflict-banner" role="alert">
         <div>
-          <strong>A newer draft exists on the server.</strong>
-          <p>Your local edits are still here and were not overwritten. Reload only when you are ready to discard them.</p>
+          <strong>{{ $t('plans.creatorView.conflictTitle') }}</strong>
+          <p>{{ $t('plans.creatorView.conflictBody') }}</p>
         </div>
-        <button class="button" type="button" @click="reloadAfterConflict">Reload latest draft</button>
+        <button class="button" type="button" @click="reloadAfterConflict">{{ $t('plans.creatorView.reloadLatest') }}</button>
       </div>
       <div v-else-if="editor.saveError.value" class="plan-inline-error" role="alert">
         <span>{{ editor.saveError.value }}</span>
-        <button type="button" @click="editor.saveError.value = null">Dismiss</button>
+        <button type="button" @click="editor.saveError.value = null">{{ $t('common.dismiss') }}</button>
       </div>
       <div v-else-if="exportError" class="plan-inline-error" role="alert">
-        <span>Plan export failed: {{ exportError }}</span>
-        <button type="button" @click="exportError = null">Dismiss</button>
+        <span>{{ $t('plans.creatorView.exportFailed', { message: exportError }) }}</span>
+        <button type="button" @click="exportError = null">{{ $t('common.dismiss') }}</button>
       </div>
 
-      <div v-if="editor.loading.value" class="plan-editor-loading" aria-label="Loading plan editor">
+      <div v-if="initialLoading" class="plan-editor-loading" :aria-label="$t('plans.creatorView.loading')">
         <div class="skeleton" />
         <div class="skeleton tall" />
       </div>
       <ErrorState
-        v-else-if="editor.loadError.value"
-        title="The plan could not be loaded"
-        :message="editor.loadError.value"
-        @retry="editor.load"
+        v-else-if="initialLoadError"
+        :title="$t('plans.creatorView.loadError')"
+        :message="initialLoadError"
+        @retry="loadPage"
       />
       <template v-else-if="editor.draft.value">
         <PlanEditor
           v-show="activeTab === 'PLAN'"
           v-model="editor.draft.value"
-          :exercises="editor.exercises.value"
-          :muscles="editor.muscles.value"
+          :exercises="catalog.exercises"
+          :muscles="catalog.muscles"
           :issues="editor.validationIssues.value"
         />
         <PlanAnalysis
@@ -220,8 +238,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
           :selected-day-id="analysis.selectedDayId.value"
           :muscle-contributions-by-slug="analysis.muscleContributionsBySlug.value"
           :joint-contributions-by-slug="analysis.jointContributionsBySlug.value"
-          :muscles="editor.muscles.value"
-          :exercises="editor.exercises.value"
+          :muscles="catalog.muscles"
+          :exercises="catalog.exercises"
           @refresh="analysis.refresh"
           @save="savePlan"
           @show-plan="showPlan"

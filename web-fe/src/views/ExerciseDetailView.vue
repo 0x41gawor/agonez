@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import { atlasApi } from '@/api/atlas'
 import { ApiError } from '@/api/client'
@@ -13,6 +14,7 @@ import DetailLoading from '@/components/detail/DetailLoading.vue'
 import ObjectDataCard from '@/components/detail/ObjectDataCard.vue'
 import TechniqueGuide from '@/components/detail/TechniqueGuide.vue'
 import { useAtlasStore } from '@/stores/atlas'
+import { useLocaleStore } from '@/stores/locale'
 import { domainLabel, formatNumber, prettyToken } from '@/utils/format'
 import { exerciseVector, normalizeVector, type VisualizationMode } from '@/utils/vectors'
 import { youtubeEmbedUrl } from '@/utils/youtube'
@@ -20,6 +22,8 @@ import { youtubeEmbedUrl } from '@/utils/youtube'
 const props = defineProps<{ slug: string }>()
 const router = useRouter()
 const atlas = useAtlasStore()
+const locale = useLocaleStore()
+const { t } = useI18n()
 const exercise = ref<ExerciseDetail | null>(null)
 const loading = ref(true)
 const error = ref<Error | null>(null)
@@ -49,13 +53,13 @@ async function load(): Promise<void> {
     exercise.value = detail
     mode.value = detail.engine?.etu_vector ? 'etu' : detail.propulsive_fcsa_contribution_vector ? 'propulsive' : 'etu'
   } catch (caught) {
-    if ((caught as Error).name !== 'AbortError') error.value = caught instanceof Error ? caught : new Error('Exercise data is unavailable.')
+    if ((caught as Error).name !== 'AbortError') error.value = caught instanceof Error ? caught : new Error(t('atlas.detail.exerciseUnavailable'))
   } finally {
     if (!controller.signal.aborted) loading.value = false
   }
 }
 
-watch(() => props.slug, () => void load(), { immediate: true })
+watch(() => [props.slug, locale.current], () => void load(), { immediate: true })
 onBeforeUnmount(() => controller?.abort())
 
 const notFound = computed(() => error.value instanceof ApiError && error.value.status === 404)
@@ -75,30 +79,30 @@ const videos = computed(() => (exercise.value?.video_links ?? []).map((link) => 
 const jointRows = computed(() => Object.entries(jointVector.value ?? {}).sort((a, b) => b[1] - a[1]))
 const totalEtu = computed(() => Object.values(exercise.value?.engine?.etu_vector ?? {}).reduce((sum, value) => sum + value, 0))
 const peakJoint = computed(() => jointRows.value[0]?.[0] ?? '—')
-const vectorTitle = computed(() => mode.value === 'recovery' ? 'Muscle recovery exposure' : mode.value === 'propulsive' ? 'Propulsive FCSA contribution' : 'Muscle ETU exposure')
-const vectorSubtitle = computed(() => mode.value === 'recovery' ? 'active tension × recovery cost modifier' : mode.value === 'propulsive' ? 'from core schema · engine vectors pending' : 'effective training units per muscle')
+const vectorTitle = computed(() => t(mode.value === 'recovery' ? 'atlas.detail.muscleRecoveryExposure' : mode.value === 'propulsive' ? 'atlas.detail.propulsiveFcsa' : 'atlas.detail.muscleEtu'))
+const vectorSubtitle = computed(() => t(mode.value === 'recovery' ? 'atlas.detail.recoverySubtitle' : mode.value === 'propulsive' ? 'atlas.detail.propulsiveSubtitle' : 'atlas.detail.etuSubtitle'))
 const vectorColor = computed(() => mode.value === 'recovery' ? 'var(--rec)' : mode.value === 'propulsive' ? 'var(--accent)' : 'var(--etu)')
 function formatRecommendedRange(range: RepRange | null): string {
-  return range ? `${range.min}–${range.max} reps` : 'Not recommended'
+  return range ? t('atlas.detail.reps', { min: range.min, max: range.max }) : t('atlas.detail.notRecommended')
 }
 const groups = computed(() => exercise.value ? [
-  { title: 'Classification', rows: [
-    { label: 'Body part', value: exercise.value.body_part },
-    { label: 'Target category', value: prettyToken(exercise.value.target_category) },
-    { label: 'Mechanics tier', value: prettyToken(exercise.value.mechanics_tier) },
-    { label: 'Resistance source', value: prettyToken(exercise.value.resistance_source) },
-    { label: 'Execution pattern', value: prettyToken(exercise.value.execution_pattern) },
+  { title: t('atlas.detail.classification'), rows: [
+    { label: t('atlas.detail.bodyPart'), value: exercise.value.body_part },
+    { label: t('atlas.detail.targetCategory'), value: prettyToken(exercise.value.target_category) },
+    { label: t('atlas.detail.mechanicsTier'), value: prettyToken(exercise.value.mechanics_tier) },
+    { label: t('atlas.detail.resistanceSource'), value: prettyToken(exercise.value.resistance_source) },
+    { label: t('atlas.detail.executionPattern'), value: prettyToken(exercise.value.execution_pattern) },
   ] },
-  { title: 'Recommended rep ranges', rows: [
-    { label: 'High load', value: formatRecommendedRange(exercise.value.recommended_rep_profile.high_load) },
-    { label: 'Moderate load', value: formatRecommendedRange(exercise.value.recommended_rep_profile.moderate_load) },
-    { label: 'Low load', value: formatRecommendedRange(exercise.value.recommended_rep_profile.low_load) },
+  { title: t('atlas.detail.recommendedRanges'), rows: [
+    { label: t('atlas.detail.highLoad'), value: formatRecommendedRange(exercise.value.recommended_rep_profile.high_load) },
+    { label: t('atlas.detail.moderateLoad'), value: formatRecommendedRange(exercise.value.recommended_rep_profile.moderate_load) },
+    { label: t('atlas.detail.lowLoad'), value: formatRecommendedRange(exercise.value.recommended_rep_profile.low_load) },
   ] },
-  { title: 'Quantitative', rows: [
-    { label: 'Load capacity', value: formatNumber(exercise.value.load_capacity, 0), unit: 'kg' },
-    { label: 'Systemic FCSA demand', value: formatNumber(exercise.value.systemic_propulsive_fcsa_demand), unit: 'cm²' },
-    { label: 'Total ETU', value: hasEtu.value ? formatNumber(totalEtu.value) : 'pending', unit: hasEtu.value ? 'cm²' : '' },
-    { label: 'Muscles exposed', value: String(Object.keys(exercise.value.engine?.active_tension_exposure_vector ?? exercise.value.propulsive_fcsa_contribution_vector ?? {}).length) },
+  { title: t('atlas.detail.quantitative'), rows: [
+    { label: t('atlas.loadCapacity'), value: formatNumber(exercise.value.load_capacity, 0), unit: 'kg' },
+    { label: t('atlas.detail.systemicFcsa'), value: formatNumber(exercise.value.systemic_propulsive_fcsa_demand), unit: 'cm²' },
+    { label: t('atlas.detail.totalEtu'), value: hasEtu.value ? formatNumber(totalEtu.value) : t('atlas.detail.pending'), unit: hasEtu.value ? 'cm²' : '' },
+    { label: t('atlas.detail.musclesExposed'), value: String(Object.keys(exercise.value.engine?.active_tension_exposure_vector ?? exercise.value.propulsive_fcsa_contribution_vector ?? {}).length) },
   ] },
 ] : [])
 
@@ -130,8 +134,8 @@ async function saveVideo(): Promise<void> {
     closeVideoForm()
   } catch (caught) {
     videoError.value = caught instanceof ApiError && caught.status === 422
-      ? 'Paste a valid YouTube video link.'
-      : caught instanceof Error ? caught.message : 'The video could not be saved.'
+      ? t('atlas.detail.invalidYoutube')
+      : caught instanceof Error ? caught.message : t('atlas.detail.videoSaveFailed')
   } finally {
     videoSaving.value = false
   }
@@ -140,17 +144,17 @@ async function saveVideo(): Promise<void> {
 
 <template>
   <div class="page-wrap detail-page exercise-detail-page">
-    <nav class="breadcrumbs" aria-label="Breadcrumb">
-      <RouterLink to="/atlas/exercises">Atlas</RouterLink><span>/</span>
-      <RouterLink to="/atlas/exercises">Exercises</RouterLink><span>/</span>
+    <nav class="breadcrumbs" :aria-label="$t('atlas.detail.breadcrumb')">
+      <RouterLink to="/atlas/exercises">{{ $t('app.atlas') }}</RouterLink><span>/</span>
+      <RouterLink to="/atlas/exercises">{{ $t('atlas.exercises') }}</RouterLink><span>/</span>
       <span>{{ exercise?.name ?? prettyToken(slug) }}</span>
     </nav>
 
     <DetailLoading v-if="loading" />
     <section v-else-if="notFound" class="state-page compact">
-      <span class="eyebrow">404 · Exercise</span><h1>Exercise not found</h1>
-      <p>No exercise with slug “{{ slug }}” exists in the current Atlas.</p>
-      <RouterLink class="button" to="/atlas/exercises">Browse exercises</RouterLink>
+      <span class="eyebrow">404 · {{ $t('atlas.table.exercise') }}</span><h1>{{ $t('atlas.detail.exercise404') }}</h1>
+      <p>{{ $t('atlas.detail.exercise404Message', { slug }) }}</p>
+      <RouterLink class="button" to="/atlas/exercises">{{ $t('atlas.detail.browseExercises') }}</RouterLink>
     </section>
     <ErrorState v-else-if="error" :message="error.message" @retry="load" />
 
@@ -160,11 +164,11 @@ async function saveVideo(): Promise<void> {
         :title="exercise.name"
         :subtitle="exercise.name_full"
         :slug="exercise.slug"
-        :chips="[`${exercise.body_part} body`, prettyToken(exercise.target_category), prettyToken(exercise.mechanics_tier), prettyToken(exercise.resistance_source), prettyToken(exercise.execution_pattern)]"
+        :chips="[$t('atlas.detail.bodyChip', { body: exercise.body_part }), prettyToken(exercise.target_category), prettyToken(exercise.mechanics_tier), prettyToken(exercise.resistance_source), prettyToken(exercise.execution_pattern)]"
         :stats="[
-          { label: 'Load capacity', value: formatNumber(exercise.load_capacity, 0), unit: 'kg' },
-          { label: 'Systemic FCSA demand', value: formatNumber(exercise.systemic_propulsive_fcsa_demand), unit: 'cm²' },
-          ...(hasEtu ? [{ label: 'Total ETU', value: formatNumber(totalEtu), unit: 'cm²' }, { label: 'Peak joint exposure', value: prettyToken(peakJoint) }] : []),
+          { label: $t('atlas.loadCapacity'), value: formatNumber(exercise.load_capacity, 0), unit: 'kg' },
+          { label: $t('atlas.detail.systemicFcsa'), value: formatNumber(exercise.systemic_propulsive_fcsa_demand), unit: 'cm²' },
+          ...(hasEtu ? [{ label: $t('atlas.detail.totalEtu'), value: formatNumber(totalEtu), unit: 'cm²' }, { label: $t('atlas.detail.peakJoint'), value: prettyToken(peakJoint) }] : []),
         ]"
       />
 
@@ -173,10 +177,10 @@ async function saveVideo(): Promise<void> {
           <header class="viz-controls">
             <div v-if="hasEtu || hasRecovery" class="mode-control">
               <button type="button" :class="{ active: mode === 'etu' }" :disabled="!hasEtu" @click="mode = 'etu'">ETU</button>
-              <button type="button" :class="{ active: mode === 'recovery' }" :disabled="!hasRecovery" @click="mode = 'recovery'">Recovery</button>
+              <button type="button" :class="{ active: mode === 'recovery' }" :disabled="!hasRecovery" @click="mode = 'recovery'">{{ $t('atlas.detail.recovery') }}</button>
             </div>
-            <label v-if="jointVector"><input v-model="showJoints" type="checkbox" /> Joint load</label>
-            <span class="mono">normalized / proj. FCSA</span>
+            <label v-if="jointVector"><input v-model="showJoints" type="checkbox" /> {{ $t('atlas.detail.jointLoad') }}</label>
+            <span class="mono">{{ $t('atlas.detail.normalizedFcsa') }}</span>
           </header>
           <div v-if="rawVector && Object.keys(rawVector).length" class="viz-body">
             <BodyViewer
@@ -190,20 +194,20 @@ async function saveVideo(): Promise<void> {
             />
           </div>
           <div v-else class="engine-pending">
-            <strong>Engine vectors pending</strong>
-            <p>ETU, recovery and joint-load exposure have not been evaluated for this exercise yet.</p>
+            <strong>{{ $t('atlas.detail.enginePending') }}</strong>
+            <p>{{ $t('atlas.detail.enginePendingMessage') }}</p>
           </div>
           <footer v-if="rawVector && Object.keys(rawVector).length">
-            <div class="viz-legend"><strong>{{ vectorTitle }}</strong><span :style="{ background: `linear-gradient(to right, var(--anatMuscle), ${vectorColor})` }" /><small class="mono">0 → max</small></div>
-            <div v-if="showJoints" class="joint-legend"><strong>Joint load</strong><i /><span class="mono">ring weight ∝ exposure index</span></div>
-            <p>Hover the body or table — both stay in sync. Near-zero values recede into neutral anatomy.</p>
+            <div class="viz-legend"><strong>{{ vectorTitle }}</strong><span :style="{ background: `linear-gradient(to right, var(--anatMuscle), ${vectorColor})` }" /><small class="mono">{{ $t('atlas.detail.zeroMax') }}</small></div>
+            <div v-if="showJoints" class="joint-legend"><strong>{{ $t('atlas.detail.jointLoad') }}</strong><i /><span class="mono">{{ $t('atlas.detail.ringExposure') }}</span></div>
+            <p>{{ $t('atlas.detail.syncHint') }}</p>
           </footer>
         </section>
 
         <div class="exercise-data-column">
           <section v-if="vectorRows.length" class="vector-panel panel">
             <header><h2>{{ vectorTitle }}</h2><span class="mono">{{ vectorSubtitle }}</span></header>
-            <div class="vector-head"><span>Muscle</span><span>Raw cm²</span><span>/ capacity</span><span>Relative intensity</span></div>
+            <div class="vector-head"><span>{{ $t('atlas.detail.muscle') }}</span><span>{{ $t('atlas.detail.rawCm2') }}</span><span>{{ $t('atlas.detail.capacity') }}</span><span>{{ $t('atlas.detail.relativeIntensity') }}</span></div>
             <button
               v-for="row in vectorRows"
               :key="row.slug"
@@ -222,24 +226,24 @@ async function saveVideo(): Promise<void> {
           </section>
 
           <section v-if="showJoints && jointRows.length" class="joint-panel panel">
-            <header><h2>Joint load exposure</h2><span class="mono">model-derived index · not a safety score</span></header>
+            <header><h2>{{ $t('atlas.detail.jointLoadExposure') }}</h2><span class="mono">{{ $t('atlas.detail.jointDisclaimer') }}</span></header>
             <div v-for="[joint, value] in jointRows" :key="joint" class="joint-row"><span>{{ prettyToken(joint) }}</span><span class="mono">{{ value.toFixed(2) }}</span><i><b :style="{ width: `${Math.min(100, value * 100)}%` }" /></i></div>
           </section>
 
           <div class="data-groups exercise-groups"><DataGroup v-for="group in groups" :key="group.title" :title="group.title" :rows="group.rows" /></div>
           <section class="media-section panel">
             <header>
-              <h2>Demonstration videos</h2>
+              <h2>{{ $t('atlas.detail.videos') }}</h2>
               <button
                 v-if="!addingVideo"
                 class="media-add-button"
                 type="button"
-                aria-label="Add a demonstration video"
+                :aria-label="$t('atlas.detail.addVideoLabel')"
                 @click="openVideoForm"
-              ><span aria-hidden="true">+</span> Add video</button>
+              ><span aria-hidden="true">+</span> {{ $t('atlas.detail.addVideo') }}</button>
             </header>
             <form v-if="addingVideo" class="video-add-form" @submit.prevent="saveVideo">
-              <label for="exercise-video-url">YouTube link</label>
+              <label for="exercise-video-url">{{ $t('atlas.detail.youtubeLink') }}</label>
               <input
                 id="exercise-video-url"
                 ref="videoInput"
@@ -247,13 +251,13 @@ async function saveVideo(): Promise<void> {
                 type="url"
                 inputmode="url"
                 autocomplete="url"
-                placeholder="Paste a YouTube link"
+                :placeholder="$t('atlas.detail.pasteYoutube')"
                 required
               />
               <button class="button primary" type="submit" :disabled="videoSaving || !videoUrl.trim()">
-                {{ videoSaving ? 'Saving…' : 'Save' }}
+                {{ videoSaving ? $t('atlas.detail.saving') : $t('atlas.detail.save') }}
               </button>
-              <button class="button ghost" type="button" :disabled="videoSaving" @click="closeVideoForm">Cancel</button>
+              <button class="button ghost" type="button" :disabled="videoSaving" @click="closeVideoForm">{{ $t('atlas.detail.cancel') }}</button>
               <p v-if="videoError" role="alert">{{ videoError }}</p>
             </form>
             <div v-if="videos.length" class="video-grid">
@@ -261,7 +265,7 @@ async function saveVideo(): Promise<void> {
                 <div v-if="video.embedUrl" class="video-frame">
                   <iframe
                     :src="video.embedUrl"
-                    :title="`${exercise.name} demonstration video ${index + 1}`"
+                    :title="$t('atlas.detail.videoTitle', { name: exercise.name, index: index + 1 })"
                     loading="lazy"
                     referrerpolicy="strict-origin-when-cross-origin"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -269,18 +273,18 @@ async function saveVideo(): Promise<void> {
                   />
                 </div>
                 <a :href="video.link" target="_blank" rel="noopener noreferrer">
-                  <span>{{ video.embedUrl ? 'Watch on YouTube' : domainLabel(video.link) }}</span><b>↗</b>
+                  <span>{{ video.embedUrl ? $t('atlas.detail.watchYoutube') : domainLabel(video.link) }}</span><b>↗</b>
                 </a>
               </article>
             </div>
-            <p v-else class="honest-empty">No video links stored for this exercise yet.</p>
+            <p v-else class="honest-empty">{{ $t('atlas.detail.noExerciseVideos') }}</p>
           </section>
           <TechniqueGuide :data="exercise.technique" />
           <ObjectDataCard
             class="exercise-comments"
-            title="Comments"
+            :title="$t('atlas.detail.comments')"
             :data="exercise.comments"
-            empty-message="No contextual comments or caveats are stored yet — kept separate from canonical technique."
+            :empty-message="$t('atlas.detail.noComments')"
           />
         </div>
       </div>

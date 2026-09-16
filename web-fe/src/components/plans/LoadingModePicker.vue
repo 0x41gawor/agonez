@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import type { LoadingMode } from '@/api/plan-types'
+import { useI18n } from 'vue-i18n'
 import {
   LOADING_MODES,
-  loadingModeLabel,
   loadingModeShortLabel,
 } from '@/features/plans/editor'
 
 defineProps<{ compact?: boolean }>()
 const model = defineModel<LoadingMode>({ required: true })
 const emit = defineEmits<{ select: [mode: LoadingMode] }>()
+const { t } = useI18n()
+
+function loadingModeLabel(mode: LoadingMode): string {
+  return t(`plans.loadingModes.${mode}`)
+}
 
 function select(mode: LoadingMode): void {
   model.value = mode
@@ -17,7 +22,7 @@ function select(mode: LoadingMode): void {
 </script>
 
 <template>
-  <div class="loading-mode-picker" :class="{ compact }" role="radiogroup" aria-label="Loading mode">
+  <div class="loading-mode-picker" :class="{ compact }" role="radiogroup" :aria-label="$t('plans.slot.loading')">
     <button
       v-for="mode in LOADING_MODES"
       :key="mode"
@@ -30,7 +35,7 @@ function select(mode: LoadingMode): void {
       @click="select(mode)"
     >
       <i aria-hidden="true" />
-      {{ compact ? loadingModeShortLabel(mode) : loadingModeLabel(mode).replace(' load', '') }}
+      {{ compact ? loadingModeShortLabel(mode) : loadingModeLabel(mode) }}
     </button>
   </div>
 </template>

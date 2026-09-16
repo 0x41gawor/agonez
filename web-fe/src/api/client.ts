@@ -1,5 +1,6 @@
 import type { QueryRecord } from './types'
 import { apiUrl } from './url'
+import { activeLocale, i18n } from '@/i18n'
 
 export class ApiError extends Error {
   constructor(
@@ -27,6 +28,9 @@ export function buildQuery(params: QueryRecord = {}): string {
 }
 
 async function requestJson<T>(path: string, request: RequestInit): Promise<T> {
+  const headers = new Headers(request.headers)
+  headers.set('Accept-Language', activeLocale())
+  request.headers = headers
   const response = await fetch(apiUrl(path), request)
 
   if (!response.ok) {
@@ -38,7 +42,7 @@ async function requestJson<T>(path: string, request: RequestInit): Promise<T> {
       // Keep a non-JSON proxy error as readable text.
     }
     const detail = typeof details === 'object' && details && 'detail' in details ? String(details.detail) : response.statusText
-    throw new ApiError(detail || 'The Agonez request failed.', response.status, details)
+    throw new ApiError(detail || i18n.global.t('errors.requestFailed'), response.status, details)
   }
   return response.json() as Promise<T>
 }
@@ -72,7 +76,10 @@ export async function putJson<T>(path: string, body: unknown, signal?: AbortSign
 }
 
 export async function deleteRequest(path: string, signal?: AbortSignal): Promise<void> {
-  const request: RequestInit = { method: 'DELETE', headers: { Accept: 'application/json' } }
+  const request: RequestInit = {
+    method: 'DELETE',
+    headers: { Accept: 'application/json', 'Accept-Language': activeLocale() },
+  }
   if (signal) request.signal = signal
   const response = await fetch(apiUrl(path), request)
   if (response.ok) return
@@ -85,5 +92,5 @@ export async function deleteRequest(path: string, signal?: AbortSignal): Promise
     // Keep a non-JSON proxy error as readable text.
   }
   const detail = typeof details === 'object' && details && 'detail' in details ? String(details.detail) : response.statusText
-  throw new ApiError(detail || 'The Agonez request failed.', response.status, details)
+  throw new ApiError(detail || i18n.global.t('errors.requestFailed'), response.status, details)
 }

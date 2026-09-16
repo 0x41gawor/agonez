@@ -40,29 +40,29 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown))
     >
       <header>
         <div>
-          <span class="eyebrow">JSON import</span>
-          <h2 id="plan-import-title">Create “{{ document.plan_name }}”</h2>
-          <p>{{ filename }} · validated locally</p>
+          <span class="eyebrow">{{ $t('plans.import.eyebrow') }}</span>
+          <h2 id="plan-import-title">{{ $t('plans.import.title', { name: document.plan_name }) }}</h2>
+          <p>{{ $t('plans.import.validated', { filename }) }}</p>
         </div>
         <button
           class="plan-export-close"
           type="button"
-          aria-label="Close import"
+          :aria-label="$t('plans.import.close')"
           :disabled="importing"
           @click="$emit('close')"
         >×</button>
       </header>
 
-      <div class="plan-import-summary" aria-label="Import summary">
-        <div><span>Days</span><strong class="mono">{{ document.days.length }}</strong></div>
-        <div><span>Exercises</span><strong class="mono">{{ exerciseCount }}</strong></div>
-        <div><span>Sets</span><strong class="mono">{{ setCount }}</strong></div>
-        <div><span>Volume level</span><strong class="mono">{{ document.resolution_context.global_volume_level }}</strong></div>
+      <div class="plan-import-summary" :aria-label="$t('plans.import.summary')">
+        <div><span>{{ $t('plans.import.days') }}</span><strong class="mono">{{ document.days.length }}</strong></div>
+        <div><span>{{ $t('plans.import.exercises') }}</span><strong class="mono">{{ exerciseCount }}</strong></div>
+        <div><span>{{ $t('plans.import.sets') }}</span><strong class="mono">{{ setCount }}</strong></div>
+        <div><span>{{ $t('plans.import.volumeLevel') }}</span><strong class="mono">{{ document.resolution_context.global_volume_level }}</strong></div>
       </div>
 
       <div class="plan-export-warning">
-        <strong>Editor defaults are derived.</strong>
-        <span>Per workout: exercise 1 becomes primary progressive, exercise 2 secondary progressive, and later exercises accessory.</span>
+        <strong>{{ $t('plans.import.defaultsTitle') }}</strong>
+        <span>{{ $t('plans.import.defaultsBody') }}</span>
       </div>
 
       <div class="plan-import-days">
@@ -70,20 +70,20 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown))
           <span class="mono">D{{ String(day.day).padStart(2, '0') }}</span>
           <div>
             <strong>{{ day.name }}</strong>
-            <small>{{ day.weekday ?? 'No weekday' }} · {{ day.rest ? 'Rest day' : `${day.exercises.length} exercises` }}</small>
+            <small>{{ day.weekday ?? $t('plans.import.noWeekday') }} · {{ day.rest ? $t('plans.import.restDay') : $t('plans.import.exerciseCount', { count: day.exercises.length }) }}</small>
           </div>
-          <span class="mono">{{ day.exercises.reduce((total, exercise) => total + exercise.sets.length, 0) }} sets</span>
+          <span class="mono">{{ $t('plans.import.setCount', { count: day.exercises.reduce((total, exercise) => total + exercise.sets.length, 0) }) }}</span>
         </article>
-        <p v-if="!document.days.length" class="selector-empty">This file creates an empty plan.</p>
+        <p v-if="!document.days.length" class="selector-empty">{{ $t('plans.import.empty') }}</p>
       </div>
 
       <footer>
         <p v-if="error" role="alert">{{ error }}</p>
-        <span v-else>The server will verify every exercise slug before creating anything.</span>
+        <span v-else>{{ $t('plans.import.verify') }}</span>
         <div>
-          <button class="button" type="button" :disabled="importing" @click="$emit('close')">Cancel</button>
+          <button class="button" type="button" :disabled="importing" @click="$emit('close')">{{ $t('plans.import.cancel') }}</button>
           <button class="button primary" type="button" :disabled="importing" @click="$emit('confirm')">
-            {{ importing ? 'Importing…' : 'Import and open' }}
+            {{ importing ? $t('plans.import.importing') : $t('plans.import.confirm') }}
           </button>
         </div>
       </footer>

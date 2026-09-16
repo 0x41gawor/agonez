@@ -10,7 +10,7 @@ const emit = defineEmits<{ hover: [slug: string | null] }>()
   <div class="atlas-table-wrap panel">
     <table class="atlas-table exercise-table">
       <thead>
-        <tr><th>Exercise</th><th>Body</th><th>Target</th><th>Mechanics</th><th>Resistance</th><th class="number">Load kg</th><th>FCSA demand cm²</th></tr>
+        <tr><th>{{ $t('atlas.table.exercise') }}</th><th>{{ $t('atlas.table.body') }}</th><th>{{ $t('atlas.table.target') }}</th><th>{{ $t('atlas.table.mechanics') }}</th><th>{{ $t('atlas.table.resistance') }}</th><th class="number">{{ $t('atlas.table.loadKg') }}</th><th>{{ $t('atlas.table.fcsaDemand') }}</th></tr>
       </thead>
       <tbody>
         <tr
@@ -22,7 +22,7 @@ const emit = defineEmits<{ hover: [slug: string | null] }>()
           @focusin="emit('hover', item.slug)"
           @focusout="emit('hover', null)"
         >
-          <td><RouterLink class="atlas-cell-link atlas-cell-primary" :to="{ name: 'exercise-detail', params: { slug: item.slug } }"><span><strong>{{ item.name }} <span v-if="item.has_engine_vectors" class="status-dot" title="Engine vectors available" /></strong><small>{{ item.name_full }}</small></span></RouterLink></td>
+          <td><RouterLink class="atlas-cell-link atlas-cell-primary" :to="{ name: 'exercise-detail', params: { slug: item.slug } }"><span><strong>{{ item.name }} <span v-if="item.has_engine_vectors" class="status-dot" :title="$t('atlas.table.vectorsAvailable')" /></strong><small>{{ item.name_full }}</small></span></RouterLink></td>
           <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'exercise-detail', params: { slug: item.slug } }">{{ item.body_part }}</RouterLink></td>
           <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'exercise-detail', params: { slug: item.slug } }"><span class="chip">{{ prettyToken(item.target_category) }}</span></RouterLink></td>
           <td><RouterLink class="atlas-cell-link" tabindex="-1" aria-hidden="true" :to="{ name: 'exercise-detail', params: { slug: item.slug } }">{{ prettyToken(item.mechanics_tier) }}</RouterLink></td>

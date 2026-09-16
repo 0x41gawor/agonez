@@ -167,3 +167,21 @@ Post-delivery visual refinement: loaded days now start collapsed; DEFAULT exerci
 catalog images appear in slot summaries; slot roles use distinct dark/light semantic
 accents; expanded slots with target muscles reuse the Atlas front/rear anatomy renderer
 as a compact intent map. The updated suite passes 35 tests.
+
+## Frontend localization foundation (2026-09-16)
+
+- [x] Add Vue I18n with lazy English, Polish, French, Spanish, and German domain bundles and English fallback.
+- [x] Add a persisted, accessible header language selector and update document
+  language metadata.
+- [x] Migrate shell, Atlas, PlanCreator editor/import/export/guidance, and Analysis UI
+  copy to message bundles in both light and dark themes.
+- [x] Make number, percentage, date, domain token, recovery, diagnostic, and joint
+  labels locale-aware.
+- [x] Attach `Accept-Language` to API requests in preparation for localized database
+  content.
+- [x] Separate locale-keyed Atlas catalogs from the editable PlanCreator draft so a
+  locale switch can refetch display data without losing unsaved plan edits.
+- [x] Add localization and catalog-isolation regression tests.
+
+The database-content integration boundary and extension procedure live in
+`docs/frontend-localization.md`.

@@ -4,6 +4,7 @@ import type {
   MuscleContribution,
 } from '@/api/plan-analysis-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
+import { i18n } from '@/i18n'
 import { formatNumber, prettyToken } from '@/utils/format'
 
 export type AnalysisPhase = 'BEFORE' | 'AFTER'
@@ -22,41 +23,17 @@ export interface MuscleStimulusPresentation {
   recoveryConverged: boolean
 }
 
-const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const
-
-export const JOINT_LABELS: Record<string, string> = {
-  acromioclavicular_joint: 'Acromioclavicular joint',
-  cervical_spine: 'Cervical spine',
-  elbow_joint: 'Elbow joint',
-  glenohumeral_joint: 'Glenohumeral joint',
-  hip_joint: 'Hip joint',
-  lumbar_spine: 'Lumbar spine',
-  patellofemoral_joint: 'Patellofemoral joint',
-  radiocarpal_joint: 'Radiocarpal joint',
-  scapulothoracic_articulation: 'Scapulothoracic articulation',
-  talocrural_joint: 'Talocrural joint',
-  tibiofemoral_joint: 'Tibiofemoral joint',
-}
-
-const DIAGNOSTIC_TITLES: Record<string, string> = {
-  RECOVERY_DIVERGENCE: 'Recovery model did not reach steady state',
-  ORDINAL_TIMING_ASSUMPTION: 'Timing assumption',
-  ORDINAL_TIMING_WRAPPED: 'Weekly timing wrapped',
-  WEEKDAY_SEQUENCE_MISMATCH: 'Weekday metadata differs from plan order',
-  MISSING_ETU_VECTOR: 'ETU data unavailable',
-  MISSING_ACTIVE_TENSION_VECTOR: 'Active-tension data unavailable',
-  MISSING_RECOVERY_MODIFIER_VECTOR: 'Recovery-modifier data unavailable',
-  MISSING_JOINT_LOAD_VECTOR: 'Joint-load data unavailable',
-  MISSING_FCSA: 'FCSA normalization unavailable',
-}
-
 export function weekdayLabel(weekday: number | null, ordinal: number): string {
-  if (weekday != null) return WEEKDAYS[weekday - 1] ?? `D${ordinal + 1}`
+  if (weekday != null) {
+    const key = `analysis.labels.weekdays.${weekday - 1}`
+    return i18n.global.te(key) ? i18n.global.t(key) : `D${ordinal + 1}`
+  }
   return `D${String(ordinal + 1).padStart(2, '0')}`
 }
 
 export function jointLabel(slug: string): string {
-  return JOINT_LABELS[slug] ?? prettyToken(slug)
+  const key = `analysis.labels.joints.${slug}`
+  return i18n.global.te(key) ? i18n.global.t(key) : prettyToken(slug)
 }
 
 export function muscleLabel(slug: string, muscles: MuscleListItem[]): string {
@@ -70,14 +47,15 @@ export function exerciseLabel(slug: string, exercises: ExerciseCatalogItem[]): s
 }
 
 export function diagnosticTitle(diagnostic: AnalysisDiagnostic): string {
-  if (diagnostic.code.startsWith('MALFORMED_')) return 'Malformed engine data'
-  return DIAGNOSTIC_TITLES[diagnostic.code] ?? prettyToken(diagnostic.code)
+  if (diagnostic.code.startsWith('MALFORMED_')) return i18n.global.t('analysis.labels.malformed')
+  const key = `analysis.labels.diagnostics.${diagnostic.code}`
+  return i18n.global.te(key) ? i18n.global.t(key) : prettyToken(diagnostic.code)
 }
 
 export function formatHours(value: number): string {
-  if (value <= 0.005) return 'Fresh · 0 h'
-  if (value >= 1000) return `${formatNumber(value, 0)} h modeled debt`
-  return `${formatNumber(value, value < 10 ? 1 : 0)} h to fresh`
+  if (value <= 0.005) return i18n.global.t('analysis.labels.fresh')
+  if (value >= 1000) return i18n.global.t('analysis.labels.modeledDebt', { value: formatNumber(value, 0) })
+  return i18n.global.t('analysis.labels.toFresh', { value: formatNumber(value, value < 10 ? 1 : 0) })
 }
 
 /** Fixed, transparent display bands. The source hours remain untouched elsewhere. */

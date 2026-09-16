@@ -15,7 +15,7 @@ const props = withDefaults(
     status?: string
     legendTitle?: string
   }>(),
-  { selectedSlug: null, vector: null, mode: 'etu', joints: null, showJoints: false, status: 'Hover an entry to preview it on the body.' },
+  { selectedSlug: null, vector: null, mode: 'etu', joints: null, showJoints: false },
 )
 
 const emit = defineEmits<{ hover: [slug: string | null] }>()
@@ -33,12 +33,12 @@ function select(slug: string): void {
 </script>
 
 <template>
-  <aside class="anatomy-rail" :class="{ open }" aria-label="Interactive anatomy">
+  <aside class="anatomy-rail" :class="{ open }" :aria-label="$t('atlas.anatomy.interactive')">
     <div class="anatomy-panel panel">
       <header>
-        <span class="section-label">Anatomy</span>
-        <span class="anatomy-views mono">front · rear <span>· side v2</span></span>
-        <button class="anatomy-close" type="button" aria-label="Close anatomy" @click="open = false">×</button>
+        <span class="section-label">{{ $t('atlas.anatomy.label') }}</span>
+        <span class="anatomy-views mono">{{ $t('atlas.anatomy.views') }} <span>{{ $t('atlas.anatomy.sideLater') }}</span></span>
+        <button class="anatomy-close" type="button" :aria-label="$t('atlas.anatomy.close')" @click="open = false">×</button>
       </header>
       <BodyViewer
         :selected-slug="selectedSlug"
@@ -51,15 +51,15 @@ function select(slug: string): void {
       />
       <footer>
         <div v-if="vector" class="anatomy-legend">
-          <strong>{{ legendTitle ?? 'Relative exposure' }}</strong>
+          <strong>{{ legendTitle ?? $t('atlas.anatomy.relativeExposure') }}</strong>
           <span :style="{ background: gradient }" />
-          <small class="mono">low → high</small>
+          <small class="mono">{{ $t('atlas.anatomy.lowHigh') }}</small>
         </div>
-        <p>{{ status }}</p>
+        <p>{{ status ?? $t('atlas.anatomy.hoverPrompt') }}</p>
       </footer>
     </div>
   </aside>
   <button class="anatomy-fab" type="button" @click="open = !open">
-    <span /> Anatomy
+    <span /> {{ $t('atlas.anatomy.label') }}
   </button>
 </template>

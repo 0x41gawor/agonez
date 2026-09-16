@@ -13,7 +13,7 @@ defineProps<{
 
 <template>
   <header class="detail-hero panel">
-    <MediaImage :src="imageUrl" :alt="title" label="signature visual unavailable" loading="eager" />
+    <MediaImage :src="imageUrl" :alt="title" :label="$t('common.visualUnavailable')" loading="eager" />
     <div class="detail-identity">
       <div class="detail-title-row"><h1>{{ title }}</h1><span class="chip mono">{{ slug }}</span></div>
       <p>{{ subtitle }}</p>

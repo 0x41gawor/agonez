@@ -34,49 +34,49 @@ defineExpose({ addSlot })
   <section class="workout-editor">
     <header class="workout-header">
       <div>
-        <span class="eyebrow">Workout unit</span>
-        <h3>{{ model.name || 'Training session' }}</h3>
+        <span class="eyebrow">{{ $t('plans.workout.unit') }}</span>
+        <h3>{{ model.name || $t('plans.workout.session') }}</h3>
       </div>
       <button class="button ghost danger-text" type="button" @click="$emit('remove')">
-        Make rest day
+        {{ $t('plans.workout.makeRest') }}
       </button>
     </header>
 
     <div class="form-grid two-columns">
       <label class="field">
-        <span class="field-label">Workout name</span>
+        <span class="field-label">{{ $t('plans.workout.name') }}</span>
         <input v-model="model.name" class="text-input" maxlength="200" />
         <span v-if="issues.some((issue) => issue.path === `${path}.name`)" class="field-error">
           {{ issues.find((issue) => issue.path === `${path}.name`)?.message }}
         </span>
       </label>
       <label class="field">
-        <span class="field-label">Description</span>
-        <input v-model="model.description" class="text-input" placeholder="Optional session focus" />
+        <span class="field-label">{{ $t('plans.workout.description') }}</span>
+        <input v-model="model.description" class="text-input" :placeholder="$t('plans.workout.sessionFocus')" />
       </label>
     </div>
 
     <button class="notes-disclosure" type="button" @click="notesOpen = !notesOpen">
-      {{ notesOpen ? 'Hide preparation notes' : 'Warm-up and stretch notes' }}
+      {{ notesOpen ? $t('plans.workout.hideNotes') : $t('plans.workout.showNotes') }}
       <span aria-hidden="true">{{ notesOpen ? '↑' : '↓' }}</span>
     </button>
     <div v-if="notesOpen" class="form-grid two-columns workout-notes">
       <label class="field">
-        <span class="field-label">Warm-up notes</span>
-        <textarea v-model="model.warmup_notes" class="text-area" rows="3" placeholder="Text only for this version" />
+        <span class="field-label">{{ $t('plans.workout.warmup') }}</span>
+        <textarea v-model="model.warmup_notes" class="text-area" rows="3" :placeholder="$t('plans.workout.textOnly')" />
       </label>
       <label class="field">
-        <span class="field-label">Stretch notes</span>
-        <textarea v-model="model.stretch_notes" class="text-area" rows="3" placeholder="Text only for this version" />
+        <span class="field-label">{{ $t('plans.workout.stretch') }}</span>
+        <textarea v-model="model.stretch_notes" class="text-area" rows="3" :placeholder="$t('plans.workout.textOnly')" />
       </label>
     </div>
 
     <div class="slot-list-heading">
       <div>
-        <span class="eyebrow">Exercise slots</span>
-        <h3>{{ model.exercise_slots.length ? `${model.exercise_slots.length} planned roles` : 'Build this workout' }}</h3>
+        <span class="eyebrow">{{ $t('plans.workout.slotsLabel') }}</span>
+        <h3>{{ model.exercise_slots.length ? $t('plans.workout.plannedRoles', { count: model.exercise_slots.length }) : $t('plans.workout.build') }}</h3>
       </div>
-      <button class="button primary" type="button" title="Add exercise slot (Ctrl/⌘ + Shift + E)" aria-keyshortcuts="Control+Shift+E Meta+Shift+E" @click="addSlot">+ Add exercise slot</button>
+      <button class="button primary" type="button" :title="$t('plans.workout.addSlotTitle')" aria-keyshortcuts="Control+Shift+E Meta+Shift+E" @click="addSlot">{{ $t('plans.workout.addSlot') }}</button>
     </div>
 
     <div v-if="model.exercise_slots.length" class="slot-list">
@@ -95,15 +95,15 @@ defineExpose({ addSlot })
         @remove="removeOrdered(model.exercise_slots, index)"
       />
       <div class="slot-list-footer">
-        <button class="button add-slot-bottom" type="button" title="Add exercise slot (Ctrl/⌘ + Shift + E)" aria-keyshortcuts="Control+Shift+E Meta+Shift+E" @click="addSlot">
-          <span>+ Add exercise slot</span>
+        <button class="button add-slot-bottom" type="button" :title="$t('plans.workout.addSlotTitle')" aria-keyshortcuts="Control+Shift+E Meta+Shift+E" @click="addSlot">
+          <span>{{ $t('plans.workout.addSlot') }}</span>
           <span class="slot-shortcut mono" aria-hidden="true">Ctrl ⇧ E</span>
         </button>
       </div>
     </div>
     <div v-else class="workout-empty">
-      <p>No exercise slots yet. Add a slot for each stable role in this workout.</p>
-      <button class="button" type="button" @click="addSlot">Add first exercise slot</button>
+      <p>{{ $t('plans.workout.noSlots') }}</p>
+      <button class="button" type="button" @click="addSlot">{{ $t('plans.workout.addFirstSlot') }}</button>
     </div>
   </section>
 </template>

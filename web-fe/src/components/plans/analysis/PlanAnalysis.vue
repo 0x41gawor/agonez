@@ -55,11 +55,11 @@ const hasTrainingSessions = computed(
 
 <template>
   <div class="analysis-page">
-    <div v-if="loading && !result" class="analysis-loading" aria-label="Analyzing saved plan">
+    <div v-if="loading && !result" class="analysis-loading" :aria-label="$t('analysis.page.analyzingAria')">
       <div class="analysis-loading-copy">
-        <span class="section-label">Authoritative model</span>
-        <h2>Analyzing the saved plan…</h2>
-        <p>Resolving stimulus, recovery, timing, and source provenance.</p>
+        <span class="section-label">{{ $t('analysis.page.authoritative') }}</span>
+        <h2>{{ $t('analysis.page.analyzing') }}</h2>
+        <p>{{ $t('analysis.page.resolving') }}</p>
       </div>
       <div class="analysis-loading-grid">
         <div class="skeleton" />
@@ -70,25 +70,25 @@ const hasTrainingSessions = computed(
 
     <ErrorState
       v-else-if="error && !result"
-      title="The saved plan could not be analyzed"
+      :title="$t('analysis.page.loadError')"
       :message="error"
       @retry="$emit('refresh')"
     />
 
     <div v-else-if="!result" class="analysis-empty panel">
       <span class="analysis-empty-mark" aria-hidden="true">∑</span>
-      <h2>No Analysis snapshot yet</h2>
-      <p>Run the backend model against the currently saved plan draft.</p>
-      <button class="button primary" type="button" @click="$emit('refresh')">Run Analysis</button>
+      <h2>{{ $t('analysis.page.noSnapshot') }}</h2>
+      <p>{{ $t('analysis.page.noSnapshotHelp') }}</p>
+      <button class="button primary" type="button" @click="$emit('refresh')">{{ $t('analysis.page.run') }}</button>
     </div>
 
     <template v-else>
       <div v-if="loading" class="analysis-refreshing" role="status">
-        <span class="status-dot" /> Refreshing from the saved draft…
+        <span class="status-dot" /> {{ $t('analysis.page.refreshing') }}
       </div>
       <div v-if="error" class="analysis-inline-error" role="alert">
-        <span><strong>Refresh failed.</strong> The previous snapshot remains visible. {{ error }}</span>
-        <button class="button" type="button" @click="$emit('refresh')">Try again</button>
+        <span><strong>{{ $t('analysis.page.refreshFailed') }}</strong> {{ $t('analysis.page.previousVisible') }} {{ error }}</span>
+        <button class="button" type="button" @click="$emit('refresh')">{{ $t('common.retry') }}</button>
       </div>
 
       <AnalysisSnapshot
@@ -122,9 +122,9 @@ const hasTrainingSessions = computed(
       />
       <section v-else class="analysis-empty panel">
         <span class="analysis-empty-mark" aria-hidden="true">○</span>
-        <h2>No timeline boundary is available</h2>
-        <p>Add at least one day in PLAN, save it, then refresh Analysis.</p>
-        <button class="button" type="button" @click="$emit('showPlan')">Open PLAN</button>
+        <h2>{{ $t('analysis.page.noBoundary') }}</h2>
+        <p>{{ $t('analysis.page.noBoundaryHelp') }}</p>
+        <button class="button" type="button" @click="$emit('showPlan')">{{ $t('analysis.page.openPlan') }}</button>
       </section>
 
       <MuscleSummary

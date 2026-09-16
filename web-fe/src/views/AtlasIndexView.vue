@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, watch, shallowRef, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import { atlasApi } from '@/api/atlas'
 import type { ExerciseDetail, ExerciseListQuery, ExerciseListResponse, MuscleListQuery, MuscleListResponse } from '@/api/types'
@@ -15,12 +16,15 @@ import ErrorState from '@/components/common/ErrorState.vue'
 import LoadingRows from '@/components/common/LoadingRows.vue'
 import { useDebouncedValue } from '@/composables/useDebouncedValue'
 import { useAtlasStore } from '@/stores/atlas'
+import { useLocaleStore } from '@/stores/locale'
 import { exerciseVector, normalizeVector, type VisualizationMode } from '@/utils/vectors'
 
 const props = defineProps<{ kind: 'exercises' | 'muscles' }>()
 const route = useRoute()
 const router = useRouter()
 const atlas = useAtlasStore()
+const locale = useLocaleStore()
+const { t } = useI18n()
 const { hoverExercise, hoverMuscle } = storeToRefs(atlas)
 
 const response = shallowRef<ExerciseListResponse | MuscleListResponse | null>(null)
@@ -61,6 +65,7 @@ function hydrateFromRoute(): void {
 hydrateFromRoute()
 
 const requestKey = computed(() => JSON.stringify({
+  locale: locale.current,
   kind: props.kind,
   search: debouncedSearch.value,
   filters: browse.value.filters,
@@ -97,7 +102,7 @@ async function loadList(): Promise<void> {
       response.value = await atlasApi.muscles(query, listController.signal)
     }
   } catch (caught) {
-    if ((caught as Error).name !== 'AbortError') error.value = caught instanceof Error ? caught : new Error('Atlas data is unavailable.')
+    if ((caught as Error).name !== 'AbortError') error.value = caught instanceof Error ? caught : new Error(t('errors.atlasUnavailable'))
   } finally {
     if (!listController.signal.aborted) loading.value = false
   }
@@ -136,10 +141,11 @@ watch(hoverExercise, (slug) => {
   hoverTimer = setTimeout(async () => {
     try {
       await atlas.loadCapacities()
-      let detail = exerciseCache.get(slug)
+      const cacheKey = `${locale.current}:${slug}`
+      let detail = exerciseCache.get(cacheKey)
       if (!detail) {
         detail = await atlasApi.exercise(slug)
-        exerciseCache.set(slug, detail)
+        exerciseCache.set(cacheKey, detail)
       }
       const etu = exerciseVector(detail, 'etu')
       const raw = etu ?? exerciseVector(detail, 'propulsive')
@@ -172,41 +178,42 @@ const filterGroups = computed<FilterGroup[]>(() => {
   if (props.kind === 'exercises') {
     const facets = exerciseResponse.value?.facets
     return [
-      { key: 'body_part', label: 'Body part', options: Object.entries(facets?.body_part ?? {}).map(([value, count]) => ({ value, count })) },
-      { key: 'target_category', label: 'Target category', options: Object.entries(facets?.target_category ?? {}).map(([value, count]) => ({ value, count })) },
-      { key: 'mechanics_tier', label: 'Mechanics tier', options: Object.entries(facets?.mechanics_tier ?? {}).map(([value, count]) => ({ value, count })) },
-      { key: 'resistance_source', label: 'Resistance', options: Object.entries(facets?.resistance_source ?? {}).map(([value, count]) => ({ value, count })) },
+      { key: 'body_part', label: t('atlas.bodyPart'), options: Object.entries(facets?.body_part ?? {}).map(([value, count]) => ({ value, count })) },
+      { key: 'target_category', label: t('atlas.targetCategory'), options: Object.entries(facets?.target_category ?? {}).map(([value, count]) => ({ value, count })) },
+      { key: 'mechanics_tier', label: t('atlas.mechanicsTier'), options: Object.entries(facets?.mechanics_tier ?? {}).map(([value, count]) => ({ value, count })) },
+      { key: 'resistance_source', label: t('atlas.resistance'), options: Object.entries(facets?.resistance_source ?? {}).map(([value, count]) => ({ value, count })) },
     ]
   }
   const facets = muscleResponse.value?.facets
   return [
-    { key: 'body_part', label: 'Body part', options: Object.entries(facets?.body_part ?? {}).map(([value, count]) => ({ value, count })) },
-    { key: 'complex', label: 'Complex', options: Object.entries(facets?.complex ?? {}).map(([value, count]) => ({ value, count })) },
+    { key: 'body_part', label: t('atlas.bodyPart'), options: Object.entries(facets?.body_part ?? {}).map(([value, count]) => ({ value, count })) },
+    { key: 'complex', label: t('atlas.complex'), options: Object.entries(facets?.complex ?? {}).map(([value, count]) => ({ value, count })) },
   ]
 })
 
 const sortOptions = computed(() => props.kind === 'exercises' ? [
-  { value: 'name', label: 'Name' }, { value: 'name_full', label: 'Full name' },
-  { value: 'load_capacity', label: 'Load capacity' }, { value: 'systemic_propulsive_fcsa_demand', label: 'FCSA demand' },
-  { value: 'created_at', label: 'Date added' }, { value: 'updated_at', label: 'Date modified' },
+  { value: 'name', label: t('atlas.name') }, { value: 'name_full', label: t('atlas.fullName') },
+  { value: 'load_capacity', label: t('atlas.loadCapacity') }, { value: 'systemic_propulsive_fcsa_demand', label: t('atlas.fcsaDemand') },
+  { value: 'created_at', label: t('atlas.dateAdded') }, { value: 'updated_at', label: t('atlas.dateModified') },
 ] : [
-  { value: 'name', label: 'Name' }, { value: 'mass_g', label: 'Mass' }, { value: 'mv_cm3', label: 'Volume' },
-  { value: 'fiber_bias_type_ii', label: 'Type II bias' }, { value: 'pcsa_fiber_cm2', label: 'PCSA (fiber)' },
-  { value: 'pcsa_projected_fcsa_cm2', label: 'Projected FCSA' },
+  { value: 'name', label: t('atlas.name') }, { value: 'mass_g', label: t('atlas.mass') }, { value: 'mv_cm3', label: t('atlas.volume') },
+  { value: 'fiber_bias_type_ii', label: t('atlas.typeIIBias') }, { value: 'pcsa_fiber_cm2', label: t('atlas.pcsaFiber') },
+  { value: 'pcsa_projected_fcsa_cm2', label: t('atlas.projectedFcsa') },
 ])
 
 const anatomyStatus = computed(() => {
   if (props.kind === 'exercises' && hoverExercise.value) {
     const item = exerciseResponse.value?.items.find((entry) => entry.slug === hoverExercise.value)
-    if (hoverVectorLoading.value) return `${item?.name ?? hoverExercise.value} — loading modeled exposure…`
-    if (hoverVector.value) return `${item?.name ?? hoverExercise.value} — ${hoverMode.value === 'etu' ? 'modeled training-stimulus exposure' : 'propulsive contribution (ETU pending)'}, normalized per muscle capacity.`
-    return `${item?.name ?? hoverExercise.value} — no muscle vector evaluated yet.`
+    const name = item?.name ?? hoverExercise.value
+    if (hoverVectorLoading.value) return t('atlas.loadingExposure', { name })
+    if (hoverVector.value) return t(hoverMode.value === 'etu' ? 'atlas.modeledExposure' : 'atlas.propulsiveExposure', { name })
+    return t('atlas.noVector', { name })
   }
   if (props.kind === 'muscles' && hoverMuscle.value) {
     const item = muscleResponse.value?.items.find((entry) => entry.slug === hoverMuscle.value)
-    return item ? `${item.display_name} — ${item.body_part} body · ${item.complex.replaceAll('_', ' ')} complex` : hoverMuscle.value
+    return item ? t('atlas.muscleStatus', { name: item.display_name, body: item.body_part, complex: item.complex.replaceAll('_', ' ') }) : hoverMuscle.value
   }
-  return 'Hover an entry to preview it on the body. Select any muscle to open it.'
+  return t('atlas.hoverPrompt')
 })
 
 function updateSearch(value: string): void { browse.value.search = value; browse.value.page = 1 }
@@ -243,8 +250,8 @@ function updateView(value: 'list' | 'grid'): void {
         <LoadingRows v-if="loading && !response" />
         <ErrorState v-else-if="error" :message="error.message" @retry="loadList" />
         <div v-else-if="response && !response.items.length" class="inline-state">
-          <h2>No entries match</h2><p>Adjust the search or remove one or more filters.</p>
-          <button class="button" type="button" @click="updateSearch(''); updateFilters(Object.fromEntries(Object.keys(browse.filters).map((key) => [key, []])))">Clear filters</button>
+          <h2>{{ $t('atlas.noMatches') }}</h2><p>{{ $t('atlas.noMatchesHelp') }}</p>
+          <button class="button" type="button" @click="updateSearch(''); updateFilters(Object.fromEntries(Object.keys(browse.filters).map((key) => [key, []])))">{{ $t('atlas.clearFilters') }}</button>
         </div>
         <template v-else-if="response">
           <ExerciseTable
@@ -279,7 +286,7 @@ function updateView(value: 'list' | 'grid'): void {
         :vector="kind === 'exercises' ? hoverVector : null"
         :mode="hoverMode"
         :status="anatomyStatus"
-        :legend-title="hoverMode === 'etu' ? 'ETU exposure' : 'Propulsive contribution'"
+        :legend-title="$t(hoverMode === 'etu' ? 'atlas.etuExposure' : 'atlas.propulsiveContribution')"
         @hover="kind === 'muscles' ? hoverMuscle = $event : undefined"
       />
     </div>

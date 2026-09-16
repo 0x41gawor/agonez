@@ -27,22 +27,22 @@ function addDay(): void {
     <section class="plan-overview panel">
       <div class="plan-overview-heading">
         <div>
-          <span class="eyebrow">Plan definition</span>
-          <h2>Microcycle identity</h2>
+          <span class="eyebrow">{{ $t('plans.editor.definition') }}</span>
+          <h2>{{ $t('plans.editor.identity') }}</h2>
         </div>
-        <span class="mono revision-chip">Draft r{{ model.revision_no }} · v{{ model.lock_version }}</span>
+        <span class="mono revision-chip">{{ $t('plans.editor.revision', { revision: model.revision_no, version: model.lock_version }) }}</span>
       </div>
       <div class="form-grid plan-fields">
         <label class="field">
-          <span class="field-label">Plan name</span>
+          <span class="field-label">{{ $t('plans.editor.planName') }}</span>
           <input v-model="model.name" class="text-input plan-name-input" maxlength="200" placeholder="PPLPP" />
           <span v-if="issues.some((issue) => issue.path === 'name')" class="field-error">
             {{ issues.find((issue) => issue.path === 'name')?.message }}
           </span>
         </label>
         <label class="field plan-description">
-          <span class="field-label">Description</span>
-          <textarea v-model="model.description" class="text-area" rows="2" placeholder="Training intent and plan context" />
+          <span class="field-label">{{ $t('plans.editor.description') }}</span>
+          <textarea v-model="model.description" class="text-area" rows="2" :placeholder="$t('plans.editor.descriptionPlaceholder')" />
         </label>
       </div>
     </section>
@@ -50,11 +50,11 @@ function addDay(): void {
     <section id="plan-days" class="days-section" tabindex="-1">
       <header class="days-heading">
         <div>
-          <span class="eyebrow">Ordered microcycle</span>
-          <h2>{{ model.days.length ? `${model.days.length} training days` : 'Start the plan structure' }}</h2>
-          <p>Days may contain one workout unit or remain explicit rest days.</p>
+          <span class="eyebrow">{{ $t('plans.editor.orderedMicrocycle') }}</span>
+          <h2>{{ model.days.length ? $t('plans.editor.trainingDays', { count: model.days.length }) : $t('plans.editor.startStructure') }}</h2>
+          <p>{{ $t('plans.editor.daysHelp') }}</p>
         </div>
-        <button class="button primary" type="button" @click="addDay">+ Add training day</button>
+        <button class="button primary" type="button" @click="addDay">{{ $t('plans.editor.addDay') }}</button>
       </header>
 
       <div v-if="model.days.length" class="day-list">
@@ -75,9 +75,9 @@ function addDay(): void {
       </div>
       <div v-else class="new-plan-empty panel">
         <span class="empty-plan-mark mono">01</span>
-        <h2>Your plan has no days yet</h2>
-        <p>Add a training day, then decide whether it contains a workout or represents recovery.</p>
-        <button class="button primary" type="button" @click="addDay">Add training day</button>
+        <h2>{{ $t('plans.editor.emptyDaysTitle') }}</h2>
+        <p>{{ $t('plans.editor.emptyDaysMessage') }}</p>
+        <button class="button primary" type="button" @click="addDay">{{ $t('plans.editor.addTrainingDay') }}</button>
       </div>
     </section>
   </div>

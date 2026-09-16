@@ -1,0 +1,86 @@
+import { describe, expect, it, vi } from 'vitest'
+
+import { getJson } from '@/api/client'
+import {
+  activeLocale,
+  detectInitialLocale,
+  i18n,
+  intlLocale,
+  loadLocale,
+  LOCALE_STORAGE_KEY,
+  normalizeLocale,
+  setActiveLocale,
+  SUPPORTED_LOCALES,
+} from '@/i18n'
+import { formatNumber } from '@/utils/format'
+
+function messageLeaves(value: unknown, prefix = ''): string[] {
+  if (Array.isArray(value)) return [prefix]
+  if (value && typeof value === 'object') {
+    return Object.entries(value).flatMap(([key, child]) =>
+      messageLeaves(child, prefix ? `${prefix}.${key}` : key),
+    )
+  }
+  return [prefix]
+}
+
+describe('frontend locale runtime', () => {
+  it('normalizes every supported regional tag and rejects unsupported languages', () => {
+    expect(normalizeLocale('pl-PL')).toBe('pl')
+    expect(normalizeLocale('EN-us')).toBe('en')
+    expect(normalizeLocale('fr-CA')).toBe('fr')
+    expect(normalizeLocale('es-MX')).toBe('es')
+    expect(normalizeLocale('de-DE')).toBe('de')
+    expect(normalizeLocale('it-IT')).toBeNull()
+  })
+
+  it('keeps every locale bundle structurally complete against English', async () => {
+    await Promise.all(SUPPORTED_LOCALES.map((locale) => loadLocale(locale)))
+    const english = messageLeaves(i18n.global.getLocaleMessage('en')).sort()
+
+    for (const locale of SUPPORTED_LOCALES.filter((value) => value !== 'en')) {
+      expect(messageLeaves(i18n.global.getLocaleMessage(locale)).sort(), locale).toEqual(english)
+    }
+  })
+
+  it.each([
+    ['fr', 'fr-FR'],
+    ['es', 'es-ES'],
+    ['de', 'de-DE'],
+  ] as const)('activates %s with its regional formatting locale', async (locale, expectedIntl) => {
+    await setActiveLocale(locale, { persist: false })
+
+    expect(activeLocale()).toBe(locale)
+    expect(document.documentElement.lang).toBe(locale)
+    expect(intlLocale()).toBe(expectedIntl)
+    expect(i18n.global.t('plans.title')).not.toBe('plans.title')
+  })
+
+  it('prefers a saved locale and persists an explicit change', async () => {
+    localStorage.setItem(LOCALE_STORAGE_KEY, 'pl-PL')
+    expect(detectInitialLocale()).toBe('pl')
+
+    await setActiveLocale('pl')
+    expect(activeLocale()).toBe('pl')
+    expect(document.documentElement.lang).toBe('pl')
+    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('pl')
+    expect(formatNumber(1234.5, 1)).toContain(',5')
+  })
+
+  it('sends the selected language with API requests', async () => {
+    await setActiveLocale('pl', { persist: false })
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await getJson('/api/example')
+
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect(new Headers(request.headers).get('Accept-Language')).toBe('pl')
+    vi.unstubAllGlobals()
+  })
+})

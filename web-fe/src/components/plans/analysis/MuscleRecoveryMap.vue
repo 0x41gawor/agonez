@@ -55,8 +55,8 @@ const selectedStimulus = computed(() =>
   <div class="recovery-map panel">
     <header>
       <div>
-        <span class="section-label">Local muscle recovery</span>
-        <strong>{{ phase === 'BEFORE' ? 'Right before' : 'Right after' }} {{ day.workout?.name || day.day_name }}</strong>
+        <span class="section-label">{{ $t('analysis.recovery.label') }}</span>
+        <strong>{{ $t(phase === 'BEFORE' ? 'analysis.common.rightBefore' : 'analysis.common.rightAfter') }} {{ day.workout?.name || day.day_name }}</strong>
       </div>
       <span class="mono">hours_to_fresh</span>
     </header>
@@ -64,36 +64,36 @@ const selectedStimulus = computed(() =>
       :selected-slug="selectedSlug"
       :vector="displayVector"
       :tooltip-values="realValues"
-      tooltip-value-label="Modeled recovery debt"
+      :tooltip-value-label="$t('analysis.recovery.debt')"
       mode="recovery"
       @select="selectedSlug = $event"
     />
-    <div class="recovery-band-legend" aria-label="Recovery display bands">
+    <div class="recovery-band-legend" :aria-label="$t('analysis.recovery.bands')">
       <span><i class="fresh" />0 h</span>
       <span><i class="low" />0–24</span>
       <span><i class="medium" />24–48</span>
       <span><i class="high" />48–72</span>
       <span><i class="max" />72+ h</span>
     </div>
-    <p class="recovery-map-note">Color is capped at 72 h for readability. Hover and details preserve the actual backend value.</p>
+    <p class="recovery-map-note">{{ $t('analysis.recovery.note') }}</p>
   </div>
 
   <aside class="recovery-inspector panel">
     <header>
       <div>
-        <span class="section-label">Recovery state</span>
-        <strong>{{ selectedSlug ? muscleLabel(selectedSlug, muscles) : 'Strongest modeled debts' }}</strong>
+        <span class="section-label">{{ $t('analysis.recovery.state') }}</span>
+        <strong>{{ selectedSlug ? muscleLabel(selectedSlug, muscles) : $t('analysis.recovery.strongest') }}</strong>
       </div>
-      <button v-if="selectedSlug" class="text-action" type="button" @click="selectedSlug = null">Show ranking</button>
+      <button v-if="selectedSlug" class="text-action" type="button" @click="selectedSlug = null">{{ $t('analysis.recovery.showRanking') }}</button>
     </header>
     <div v-if="selectedSlug && selectedState" class="selected-muscle-facts">
-      <div><span>Current state</span><strong>{{ formatHours(selectedState.hours_to_fresh) }}</strong></div>
-      <div><span>Workout ETU</span><strong>{{ formatNumber(selectedStimulus?.etu_absolute, 2) }}</strong></div>
-      <div><span>Microcycle ETU</span><strong>{{ formatNumber(selectedSummary?.total_etu, 2) }}</strong></div>
-      <div><span>ETU / 7 days</span><strong>{{ formatNumber(selectedSummary?.weekly_etu, 2) }}</strong></div>
-      <div><span>ETU / FCSA</span><strong>{{ formatNumber(selectedSummary?.etu_per_fcsa_cm2, 2) }}</strong></div>
-      <div><span>Workout MRU</span><strong>{{ formatNumber(selectedStimulus?.mru, 2) }}</strong></div>
-      <p>Modeled local performance/recovery debt—not soreness, protein synthesis, injury, or literal healing.</p>
+      <div><span>{{ $t('analysis.recovery.current') }}</span><strong>{{ formatHours(selectedState.hours_to_fresh) }}</strong></div>
+      <div><span>{{ $t('analysis.recovery.workoutEtu') }}</span><strong>{{ formatNumber(selectedStimulus?.etu_absolute, 2) }}</strong></div>
+      <div><span>{{ $t('analysis.recovery.microcycleEtu') }}</span><strong>{{ formatNumber(selectedSummary?.total_etu, 2) }}</strong></div>
+      <div><span>{{ $t('analysis.recovery.weeklyEtu') }}</span><strong>{{ formatNumber(selectedSummary?.weekly_etu, 2) }}</strong></div>
+      <div><span>{{ $t('analysis.recovery.normalizedEtu') }}</span><strong>{{ formatNumber(selectedSummary?.etu_per_fcsa_cm2, 2) }}</strong></div>
+      <div><span>{{ $t('analysis.recovery.workoutMru') }}</span><strong>{{ formatNumber(selectedStimulus?.mru, 2) }}</strong></div>
+      <p>{{ $t('analysis.recovery.caveat') }}</p>
     </div>
     <div v-else class="recovery-ranking">
       <button

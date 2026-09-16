@@ -11,6 +11,7 @@ import type {
   WorkoutUnitDraft,
 } from '@/api/plan-types'
 import type { RecommendedRepProfile } from '@/api/types'
+import { i18n } from '@/i18n'
 
 interface EditorIdentity {
   clientKey: string
@@ -168,7 +169,7 @@ export function createDay(ordinal: number): EditorDay {
     clientKey: clientKey('day', null),
     ordinal,
     weekday: null,
-    name: `Day ${ordinal + 1}`,
+    name: i18n.global.t('plans.editor.defaultDay', { number: ordinal + 1 }),
     description: null,
     workout_unit: null,
   }
@@ -178,7 +179,7 @@ export function createWorkout(dayName: string): EditorWorkoutUnit {
   return {
     id: null,
     clientKey: clientKey('workout', null),
-    name: dayName.trim() || 'Training session',
+    name: dayName.trim() || i18n.global.t('plans.editor.trainingSession'),
     description: null,
     warmup_notes: null,
     stretch_notes: null,
@@ -225,11 +226,7 @@ export const LOADING_MODES: readonly LoadingMode[] = [
 ]
 
 export function loadingModeLabel(mode: LoadingMode): string {
-  return {
-    high_load: 'High load',
-    moderate_load: 'Moderate load',
-    low_load: 'Low load',
-  }[mode]
+  return i18n.global.t(`plans.loadingModes.${mode}`)
 }
 
 export function loadingModeShortLabel(mode: LoadingMode): string {
@@ -296,29 +293,32 @@ export function createSet(
 }
 
 function duplicatedDayName(name: string, days: EditorDay[]): string {
-  const trimmed = name.trim() || 'Day'
-  const root = trimmed.replace(/ copy(?: \d+)?$/i, '')
+  const suffixText = i18n.global.t('plans.editor.copySuffix')
+  const trimmed = name.trim() || i18n.global.t('plans.editor.defaultDayRoot')
+  const root = trimmed.replace(/ (?:copy|kopia)(?: \d+)?$/i, '')
   const existing = new Set(days.map((day) => day.name.trim().toLocaleLowerCase()))
-  let candidate = `${root} copy`
+  let candidate = `${root}${suffixText}`
   let suffix = 2
   while (existing.has(candidate.toLocaleLowerCase())) {
-    candidate = `${root} copy ${suffix}`
+    candidate = `${root}${suffixText} ${suffix}`
     suffix += 1
   }
   return candidate
 }
 
 function duplicatedSlotName(name: string | null, slots: EditorSlot[]): string {
-  const trimmed = name?.trim() || 'Untitled exercise slot'
-  const root = trimmed.replace(/ copy(?: \d+)?$/i, '')
+  const suffixText = i18n.global.t('plans.editor.copySuffix')
+  const untitled = i18n.global.t('plans.slot.untitled')
+  const trimmed = name?.trim() || untitled
+  const root = trimmed.replace(/ (?:copy|kopia)(?: \d+)?$/i, '')
   const existing = new Set(
-    slots.map((slot) => (slot.name?.trim() || 'Untitled exercise slot').toLocaleLowerCase()),
+    slots.map((slot) => (slot.name?.trim() || untitled).toLocaleLowerCase()),
   )
-  let suffix = ' copy'
+  let suffix = suffixText
   let candidate = `${root.slice(0, 200 - suffix.length)}${suffix}`
   let copyNumber = 2
   while (existing.has(candidate.toLocaleLowerCase())) {
-    suffix = ` copy ${copyNumber}`
+    suffix = `${suffixText} ${copyNumber}`
     candidate = `${root.slice(0, 200 - suffix.length)}${suffix}`
     copyNumber += 1
   }
@@ -422,24 +422,19 @@ export function removeOrdered<T extends { ordinal: number }>(items: T[], index: 
 }
 
 export function roleLabel(role: ExerciseSlotRole): string {
-  return {
-    PRIMARY_PROGRESSIVE: 'Primary progressive',
-    SECONDARY_PROGRESSIVE: 'Secondary progressive',
-    VOLUME_ACCUMULATION: 'Volume accumulation',
-    ACCESSORY: 'Accessory',
-  }[role]
+  return i18n.global.t(`plans.roles.${role}`)
 }
 
 export function validatePlanEditor(editor: PlanEditorState): PlanValidationIssue[] {
   const issues: PlanValidationIssue[] = []
-  if (!editor.name.trim()) issues.push({ path: 'name', message: 'Plan name is required.' })
+  if (!editor.name.trim()) issues.push({ path: 'name', message: i18n.global.t('plans.editor.validation.planName') })
 
   editor.days.forEach((day) => {
     const dayPath = `days.${day.clientKey}`
-    if (!day.name.trim()) issues.push({ path: `${dayPath}.name`, message: 'Day name is required.' })
+    if (!day.name.trim()) issues.push({ path: `${dayPath}.name`, message: i18n.global.t('plans.editor.validation.dayName') })
     if (!day.workout_unit) return
     if (!day.workout_unit.name.trim()) {
-      issues.push({ path: `${dayPath}.workout.name`, message: 'Workout name is required.' })
+      issues.push({ path: `${dayPath}.workout.name`, message: i18n.global.t('plans.editor.validation.workoutName') })
     }
     day.workout_unit.exercise_slots.forEach((slot) => {
       const slotPath = `${dayPath}.slots.${slot.clientKey}`
@@ -447,24 +442,24 @@ export function validatePlanEditor(editor: PlanEditorState): PlanValidationIssue
       if (slot.variants.length && defaults.length !== 1) {
         issues.push({
           path: `${slotPath}.variants`,
-          message: 'A populated slot needs exactly one default exercise.',
+          message: i18n.global.t('plans.editor.validation.defaultExercise'),
         })
       }
       slot.variants.forEach((variant) => {
         const variantPath = `${slotPath}.variants.${variant.clientKey}`
         if (!variant.exercise_slug) {
-          issues.push({ path: variantPath, message: 'Choose an exercise before saving.' })
+          issues.push({ path: variantPath, message: i18n.global.t('plans.editor.validation.chooseExercise') })
         }
         variant.sets.forEach((item) => {
           const setPath = `${variantPath}.sets.${item.clientKey}`
           if (!Number.isInteger(item.reps.min) || item.reps.min <= 0) {
-            issues.push({ path: setPath, message: 'Minimum reps must be a positive whole number.' })
+            issues.push({ path: setPath, message: i18n.global.t('plans.editor.validation.minReps') })
           }
           if (!Number.isInteger(item.reps.max) || item.reps.max < item.reps.min) {
-            issues.push({ path: setPath, message: 'Maximum reps must be at least the minimum.' })
+            issues.push({ path: setPath, message: i18n.global.t('plans.editor.validation.maxReps') })
           }
           if (!Number.isInteger(item.rir) || item.rir < 0 || item.rir > 4) {
-            issues.push({ path: setPath, message: 'RIR must be between 0 and 4.' })
+            issues.push({ path: setPath, message: i18n.global.t('plans.editor.validation.rir') })
           }
         })
       })

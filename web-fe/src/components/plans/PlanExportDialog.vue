@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import type { PlanAIExportResult } from '@/api/plan-export-types'
 import { planExportFilename } from '@/features/plans/export'
@@ -9,6 +10,7 @@ const props = defineProps<{
   editorDirty: boolean
 }>()
 const emit = defineEmits<{ close: [] }>()
+const { t } = useI18n()
 
 const copied = ref(false)
 const copyError = ref<string | null>(null)
@@ -39,7 +41,7 @@ async function copyJson(): Promise<void> {
     window.clearTimeout(copiedTimer)
     copiedTimer = window.setTimeout(() => (copied.value = false), 1800)
   } catch {
-    copyError.value = 'Copy is unavailable in this browser. Download the JSON instead.'
+    copyError.value = t('plans.export.copyUnavailable')
   }
 }
 
@@ -74,35 +76,32 @@ onBeforeUnmount(() => {
     >
       <header>
         <div>
-          <span class="eyebrow">External sanity check</span>
-          <h2 id="plan-export-title">Export plan for AI</h2>
-          <p>
-            Saved basic version · default exercises ·
-            {{ document.days.length }} days · {{ exerciseCount }} exercises
-          </p>
+          <span class="eyebrow">{{ $t('plans.export.eyebrow') }}</span>
+          <h2 id="plan-export-title">{{ $t('plans.export.title') }}</h2>
+          <p>{{ $t('plans.export.summary', { days: document.days.length, exercises: exerciseCount }) }}</p>
         </div>
-        <button class="plan-export-close" type="button" aria-label="Close export" @click="$emit('close')">×</button>
+        <button class="plan-export-close" type="button" :aria-label="$t('plans.export.close')" @click="$emit('close')">×</button>
       </header>
 
       <div v-if="editorDirty" class="plan-export-warning" role="status">
-        <strong>Unsaved PLAN changes are not included.</strong>
-        Save the plan and export again if you want those edits in the file.
+        <strong>{{ $t('plans.export.unsavedTitle') }}</strong>
+        {{ $t('plans.export.unsavedBody') }}
       </div>
 
       <div class="plan-export-schema">
         <span class="mono">{{ document.format }}</span>
-        <span>Days → exercises → sets with rep range and RIR</span>
+        <span>{{ $t('plans.export.schema') }}</span>
       </div>
       <pre class="plan-export-preview"><code>{{ json }}</code></pre>
 
       <footer>
         <p v-if="copyError" role="alert">{{ copyError }}</p>
-        <span v-else>Ready to paste into an LLM or attach as a JSON file.</span>
+        <span v-else>{{ $t('plans.export.ready') }}</span>
         <div>
           <button class="button" type="button" @click="copyJson">
-            {{ copied ? 'Copied' : 'Copy JSON' }}
+            {{ copied ? $t('plans.export.copied') : $t('plans.export.copy') }}
           </button>
-          <button class="button primary" type="button" @click="downloadJson">Download .json</button>
+          <button class="button primary" type="button" @click="downloadJson">{{ $t('plans.export.download') }}</button>
         </div>
       </footer>
     </section>

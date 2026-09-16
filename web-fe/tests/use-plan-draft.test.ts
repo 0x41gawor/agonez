@@ -2,10 +2,9 @@ import { ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/api/client'
-import { atlasApi } from '@/api/atlas'
 import { plansApi } from '@/api/plans'
 import { usePlanDraft } from '@/composables/usePlanDraft'
-import { exercise, muscle, planArtifact } from './fixtures/plans'
+import { planArtifact } from './fixtures/plans'
 
 vi.mock('@/api/plans', () => ({
   plansApi: {
@@ -14,25 +13,11 @@ vi.mock('@/api/plans', () => ({
   },
 }))
 
-vi.mock('@/api/atlas', () => ({
-  atlasApi: {
-    exerciseCatalog: vi.fn(),
-    muscles: vi.fn(),
-  },
-}))
-
 describe('usePlanDraft save orchestration', () => {
   beforeEach(() => {
     vi.mocked(plansApi.draft).mockReset()
     vi.mocked(plansApi.saveDraft).mockReset()
-    vi.mocked(atlasApi.exerciseCatalog).mockReset()
-    vi.mocked(atlasApi.muscles).mockReset()
     vi.mocked(plansApi.draft).mockResolvedValue(planArtifact())
-    vi.mocked(atlasApi.exerciseCatalog).mockResolvedValue({ items: [exercise], total: 1 })
-    vi.mocked(atlasApi.muscles).mockResolvedValue({
-      items: [muscle], total: 1, page: 1, per_page: 100,
-      facets: { body_part: {}, complex: {} },
-    })
   })
 
   it('replaces editor state with the successful server response and new lock version', async () => {
@@ -49,7 +34,7 @@ describe('usePlanDraft save orchestration', () => {
     expect(state.draft.value?.lock_version).toBe(5)
     expect(state.draft.value?.name).toBe('Edited plan')
     expect(state.dirty.value).toBe(false)
-    expect(atlasApi.exerciseCatalog).toHaveBeenCalledOnce()
+    expect(plansApi.draft).toHaveBeenCalledOnce()
   })
 
   it('keeps local edits and exposes a conflict instead of silently overwriting', async () => {

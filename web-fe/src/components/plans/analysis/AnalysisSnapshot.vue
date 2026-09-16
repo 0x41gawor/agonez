@@ -48,27 +48,27 @@ const displayedTotalEtu = computed(() =>
   <section class="analysis-snapshot panel">
     <header class="analysis-section-heading">
       <div>
-        <span class="section-label">Analysis snapshot</span>
-        <h2>Resolved plan state</h2>
-        <p>Analysis inspects one persisted volume × focus-area snapshot.</p>
+        <span class="section-label">{{ $t('analysis.snapshot.label') }}</span>
+        <h2>{{ $t('analysis.snapshot.title') }}</h2>
+        <p>{{ $t('analysis.snapshot.subtitle') }}</p>
       </div>
-      <span class="revision-chip mono">Draft r{{ result.revision_no }} · v{{ result.lock_version }}</span>
+      <span class="revision-chip mono">{{ $t('analysis.snapshot.revision', { revision: result.revision_no, version: result.lock_version }) }}</span>
     </header>
 
     <div class="snapshot-controls">
       <div class="snapshot-control" aria-disabled="true">
-        <span>Volume</span>
-        <strong>Default · Level {{ result.resolution_context.global_volume_level }}</strong>
-        <small class="mono">Modulation later</small>
+        <span>{{ $t('analysis.snapshot.volume') }}</span>
+        <strong>{{ $t('analysis.snapshot.defaultLevel', { level: result.resolution_context.global_volume_level }) }}</strong>
+        <small class="mono">{{ $t('analysis.snapshot.modulationLater') }}</small>
       </div>
       <div class="snapshot-control snapshot-control-basis">
-        <span>ETU basis</span>
-        <div class="metric-switch" aria-label="ETU time basis">
+        <span>{{ $t('analysis.snapshot.basis') }}</span>
+        <div class="metric-switch" :aria-label="$t('analysis.snapshot.basisAria')">
           <button type="button" :class="{ active: etuBasis === 'MICROCYCLE' }" @click="etuBasis = 'MICROCYCLE'">
-            Full cycle
+            {{ $t('analysis.snapshot.fullCycle') }}
           </button>
           <button type="button" :class="{ active: etuBasis === 'WEEKLY' }" @click="etuBasis = 'WEEKLY'">
-            Per 7 days
+            {{ $t('analysis.snapshot.perWeek') }}
           </button>
         </div>
         <small class="mono">
@@ -76,24 +76,24 @@ const displayedTotalEtu = computed(() =>
         </small>
       </div>
       <div class="snapshot-control" aria-disabled="true">
-        <span>Focus</span>
-        <strong>{{ result.resolution_context.focus_area || 'None' }}</strong>
-        <small class="mono">Modulation later</small>
+        <span>{{ $t('analysis.snapshot.focus') }}</span>
+        <strong>{{ result.resolution_context.focus_area || $t('analysis.snapshot.none') }}</strong>
+        <small class="mono">{{ $t('analysis.snapshot.modulationLater') }}</small>
       </div>
     </div>
 
     <div v-if="stale" class="analysis-stale" role="status">
       <div>
-        <span class="status-chip">Out of date</span>
-        <strong v-if="dirty">Plan has unsaved changes.</strong>
-        <strong v-else-if="lockMismatch">Analysis lock version differs from the loaded plan.</strong>
-        <strong v-else>Saved plan changed after this Analysis was loaded.</strong>
-        <p>Displayed values remain based on saved draft version {{ result.lock_version }}.</p>
+        <span class="status-chip">{{ $t('analysis.snapshot.outOfDate') }}</span>
+        <strong v-if="dirty">{{ $t('analysis.snapshot.unsaved') }}</strong>
+        <strong v-else-if="lockMismatch">{{ $t('analysis.snapshot.lockMismatch') }}</strong>
+        <strong v-else>{{ $t('analysis.snapshot.changed') }}</strong>
+        <p>{{ $t('analysis.snapshot.versionNote', { version: result.lock_version }) }}</p>
       </div>
       <div class="analysis-banner-actions">
-        <button v-if="dirty" class="button" type="button" @click="$emit('save')">Save PLAN</button>
-        <button v-if="dirty" class="button subtle" type="button" @click="$emit('showPlan')">Review PLAN</button>
-        <button v-else class="button primary" type="button" @click="$emit('refresh')">Refresh Analysis</button>
+        <button v-if="dirty" class="button" type="button" @click="$emit('save')">{{ $t('analysis.snapshot.savePlan') }}</button>
+        <button v-if="dirty" class="button subtle" type="button" @click="$emit('showPlan')">{{ $t('analysis.snapshot.reviewPlan') }}</button>
+        <button v-else class="button primary" type="button" @click="$emit('refresh')">{{ $t('analysis.snapshot.refresh') }}</button>
       </div>
     </div>
 
@@ -104,29 +104,29 @@ const displayedTotalEtu = computed(() =>
     >
       <div class="analysis-model-mark" aria-hidden="true">{{ result.recovery_converged ? '✓' : '↗' }}</div>
       <div>
-        <span class="section-label">Recovery model</span>
-        <strong>{{ result.recovery_converged ? 'Steady state reached' : 'Recovery debt diverges' }}</strong>
+        <span class="section-label">{{ $t('analysis.snapshot.recoveryModel') }}</span>
+        <strong>{{ $t(result.recovery_converged ? 'analysis.snapshot.converged' : 'analysis.snapshot.divergent') }}</strong>
         <p v-if="divergence">
-          Repeated microcycles did not settle under {{ result.model_version }}. This is a model diagnostic, not a physiological diagnosis.
+          {{ $t('analysis.snapshot.divergenceHelp', { version: result.model_version }) }}
         </p>
-        <p v-else>Periodic recovery state converged after {{ result.simulation_cycles }} simulated cycles.</p>
+        <p v-else>{{ $t('analysis.snapshot.convergedHelp', { count: result.simulation_cycles }) }}</p>
       </div>
       <div v-if="divergence" class="divergence-counts mono">
-        <span><strong>{{ divergence.affected_muscle_slugs.length }}</strong> muscles</span>
-        <span><strong>{{ divergence.affected_joint_slugs.length }}</strong> joints</span>
+        <span>{{ $t('analysis.common.muscles', { count: divergence.affected_muscle_slugs.length }) }}</span>
+        <span>{{ $t('analysis.common.joints', { count: divergence.affected_joint_slugs.length }) }}</span>
       </div>
     </div>
 
-    <div class="analysis-overview-grid" aria-label="Plan Analysis overview">
+    <div class="analysis-overview-grid" :aria-label="$t('analysis.snapshot.overview')">
       <div>
-        <span>{{ etuBasis === 'WEEKLY' ? 'ETU / 7 days' : 'Microcycle ETU' }}</span>
+        <span>{{ $t(etuBasis === 'WEEKLY' ? 'analysis.snapshot.weeklyEtu' : 'analysis.snapshot.cycleEtu') }}</span>
         <strong>{{ formatNumber(displayedTotalEtu, 1) }}</strong>
-        <small>{{ etuBasis === 'WEEKLY' ? `normalized from ${result.model_parameters.microcycle_days} days` : `${result.model_parameters.microcycle_days}-day aggregate` }}</small>
+        <small>{{ $t(etuBasis === 'WEEKLY' ? 'analysis.snapshot.normalizedFrom' : 'analysis.snapshot.dayAggregate', { count: result.model_parameters.microcycle_days }) }}</small>
       </div>
-      <div><span>Stimulated muscles</span><strong>{{ stimulatedMuscles }}</strong><small>non-zero ETU</small></div>
-      <div><span>Muscles not fresh</span><strong>{{ musclesNotFresh }}</strong><small>before ≥1 workout</small></div>
-      <div><span>Joints not fresh</span><strong>{{ jointsNotFresh }}</strong><small>before ≥1 workout</small></div>
-      <div><span>Simulation</span><strong>{{ result.simulation_cycles }}</strong><small>cycles evaluated</small></div>
+      <div><span>{{ $t('analysis.snapshot.stimulated') }}</span><strong>{{ stimulatedMuscles }}</strong><small>{{ $t('analysis.snapshot.nonZero') }}</small></div>
+      <div><span>{{ $t('analysis.snapshot.musclesNotFresh') }}</span><strong>{{ musclesNotFresh }}</strong><small>{{ $t('analysis.snapshot.beforeWorkout') }}</small></div>
+      <div><span>{{ $t('analysis.snapshot.jointsNotFresh') }}</span><strong>{{ jointsNotFresh }}</strong><small>{{ $t('analysis.snapshot.beforeWorkout') }}</small></div>
+      <div><span>{{ $t('analysis.snapshot.simulation') }}</span><strong>{{ result.simulation_cycles }}</strong><small>{{ $t('analysis.snapshot.cycles') }}</small></div>
     </div>
   </section>
 </template>

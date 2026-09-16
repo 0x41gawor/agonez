@@ -93,16 +93,16 @@ watch(
   <section class="analysis-section selected-workout-section">
     <header class="analysis-section-heading selected-workout-heading">
       <div>
-        <span class="section-label">Selected day analysis</span>
+        <span class="section-label">{{ $t('analysis.workout.label') }}</span>
         <h2>{{ day.workout?.name || day.day_name }}</h2>
         <p>
-          {{ day.workout ? 'Inspect recovery state or the stimulus applied at this boundary.' : 'Rest boundary · no workout stimulus is added.' }}
+          {{ $t(day.workout ? 'analysis.workout.workoutHelp' : 'analysis.workout.restHelp') }}
         </p>
       </div>
     </header>
 
     <div class="selected-day-toolbar">
-      <div class="selected-day-tabs" role="tablist" aria-label="Selected day analysis mode">
+      <div class="selected-day-tabs" role="tablist" :aria-label="$t('analysis.workout.modeAria')">
         <button
           type="button"
           role="tab"
@@ -110,7 +110,7 @@ watch(
           :class="{ active: activeView === 'RECOVERY' }"
           @click="activeView = 'RECOVERY'"
         >
-          Local recovery
+          {{ $t('analysis.workout.localRecovery') }}
         </button>
         <button
           type="button"
@@ -120,23 +120,23 @@ watch(
           :disabled="!day.workout"
           @click="activeView = 'STIMULUS'"
         >
-          Workout stimulus
+          {{ $t('analysis.workout.stimulus') }}
         </button>
       </div>
-      <div v-if="activeView === 'RECOVERY'" class="phase-switch" aria-label="Recovery snapshot state">
+      <div v-if="activeView === 'RECOVERY'" class="phase-switch" :aria-label="$t('analysis.workout.recoveryStateAria')">
         <button type="button" :class="{ active: phase === 'BEFORE' }" @click="phase = 'BEFORE'">
-          Right before
+          {{ $t('analysis.common.rightBefore') }}
         </button>
         <button type="button" :class="{ active: phase === 'AFTER' }" @click="phase = 'AFTER'">
-          Right after
+          {{ $t('analysis.common.rightAfter') }}
         </button>
       </div>
-      <div v-else class="metric-switch" aria-label="Workout stimulus metric">
+      <div v-else class="metric-switch" :aria-label="$t('analysis.workout.metricAria')">
         <button type="button" :class="{ active: etuMode === 'ABSOLUTE' }" @click="etuMode = 'ABSOLUTE'">
-          Absolute ETU
+          {{ $t('analysis.common.absoluteEtu') }}
         </button>
         <button type="button" :class="{ active: etuMode === 'NORMALIZED' }" @click="etuMode = 'NORMALIZED'">
-          ETU / FCSA
+          {{ $t('analysis.common.normalizedEtu') }}
         </button>
       </div>
     </div>
@@ -155,7 +155,7 @@ watch(
       <div class="workout-analysis-data single-card">
         <section class="analysis-data-card panel">
           <header>
-            <div><span class="section-label">Joint-load recovery</span><strong>{{ phase === 'BEFORE' ? 'Entry readiness' : 'Post-workout state' }}</strong></div>
+            <div><span class="section-label">{{ $t('analysis.workout.jointRecovery') }}</span><strong>{{ $t(phase === 'BEFORE' ? 'analysis.workout.entryReadiness' : 'analysis.workout.postWorkout') }}</strong></div>
             <span class="mono">JRU → hours_to_fresh</span>
           </header>
           <div class="compact-metric-list">
@@ -164,7 +164,7 @@ watch(
               <strong>{{ formatHours(item.hours_to_fresh) }}</strong>
             </div>
           </div>
-          <p class="analysis-footnote">Modeled joint-load readiness cost—not literal biological healing.</p>
+          <p class="analysis-footnote">{{ $t('analysis.workout.jointFootnote') }}</p>
         </section>
       </div>
     </template>
@@ -178,10 +178,10 @@ watch(
       etu-basis="MICROCYCLE"
       :source-etu-factor="1"
       metric-unit-suffix="/workout"
-      scope-label="selected workout"
-      anatomy-title="Workout target bias"
-      :anatomy-meta="`${formatNumber(day.workout.stimulus.total_etu_scalar, 1)} total ETU`"
-      ranking-title="Strongest workout biases"
+      :scope-label="$t('analysis.workout.scope')"
+      :anatomy-title="$t('analysis.workout.anatomyTitle')"
+      :anatomy-meta="$t('analysis.workout.totalEtu', { value: formatNumber(day.workout.stimulus.total_etu_scalar, 1) })"
+      :ranking-title="$t('analysis.workout.rankingTitle')"
       :timeline="timeline"
       :contributions-by-slug="dayContributionsBySlug"
       :muscles="muscles"

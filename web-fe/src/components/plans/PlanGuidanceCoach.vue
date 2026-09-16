@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import type { PlanGuidanceItem } from '@/features/plans/guidance'
 
@@ -11,6 +12,16 @@ const props = defineProps<{
 const emit = defineEmits<{
   review: [target: PlanGuidanceItem['target']]
 }>()
+const { t } = useI18n()
+
+function itemCopy(item: PlanGuidanceItem, field: 'label' | 'title' | 'message' | 'rationale' | 'actionLabel'): string {
+  if (item.id !== 'missing-rest-day') return item[field]
+  const key = field === 'actionLabel' ? 'action' : field
+  if (field === 'message') {
+    return t(item.dayCount === 1 ? 'plans.guidance.missingRest.one' : 'plans.guidance.missingRest.many', { count: item.dayCount })
+  }
+  return t(`plans.guidance.missingRest.${key}`)
+}
 
 const open = ref(true)
 const issueKey = computed(() => props.items.map((item) => item.id).join('|'))
@@ -34,24 +45,24 @@ function review(item: PlanGuidanceItem): void {
         key="panel"
         class="plan-guidance-panel"
         aria-live="polite"
-        aria-label="Plan guidance"
+        :aria-label="$t('plans.guidance.aria')"
         @keydown.esc="open = false"
       >
         <header>
           <span class="plan-guidance-signal" aria-hidden="true"><i /></span>
           <div>
-            <span class="eyebrow">Plan check</span>
-            <strong>{{ items.length }} {{ items.length === 1 ? 'suggestion' : 'suggestions' }}</strong>
+            <span class="eyebrow">{{ $t('plans.guidance.check') }}</span>
+            <strong>{{ $t('plans.guidance.suggestions', { count: items.length }) }}</strong>
           </div>
-          <button type="button" aria-label="Minimize plan guidance" title="Minimize" @click="open = false">−</button>
+          <button type="button" :aria-label="$t('plans.guidance.minimize')" :title="$t('plans.guidance.minimizeTitle')" @click="open = false">−</button>
         </header>
 
         <article v-for="item in items" :key="item.id">
-          <span class="plan-guidance-label mono">{{ item.label }}</span>
-          <h2>{{ item.title }}</h2>
-          <p>{{ item.message }}</p>
-          <p class="plan-guidance-rationale"><span aria-hidden="true">↳</span>{{ item.rationale }}</p>
-          <button class="button" type="button" @click="review(item)">{{ item.actionLabel }} <span aria-hidden="true">↑</span></button>
+          <span class="plan-guidance-label mono">{{ itemCopy(item, 'label') }}</span>
+          <h2>{{ itemCopy(item, 'title') }}</h2>
+          <p>{{ itemCopy(item, 'message') }}</p>
+          <p class="plan-guidance-rationale"><span aria-hidden="true">↳</span>{{ itemCopy(item, 'rationale') }}</p>
+          <button class="button" type="button" @click="review(item)">{{ itemCopy(item, 'actionLabel') }} <span aria-hidden="true">↑</span></button>
         </article>
       </aside>
 
@@ -65,10 +76,9 @@ function review(item: PlanGuidanceItem): void {
         @click="open = true"
       >
         <span class="plan-guidance-signal" aria-hidden="true"><i /></span>
-        <span>Plan check</span>
+        <span>{{ $t('plans.guidance.check') }}</span>
         <b class="mono">{{ items.length }}</b>
       </button>
     </Transition>
   </div>
 </template>
-

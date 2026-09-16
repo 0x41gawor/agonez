@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { plansApi } from '@/api/plans'
@@ -12,8 +13,10 @@ import {
   PlanImportValidationError,
   parsePlanImportJson,
 } from '@/features/plans/import'
+import { formatDateTime } from '@/utils/format'
 
 const router = useRouter()
+const { t } = useI18n()
 const plans = ref<PlanSummary[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -36,7 +39,7 @@ async function loadPlans(): Promise<void> {
   try {
     plans.value = (await plansApi.list()).items
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Plans could not be loaded.'
+    error.value = caught instanceof Error ? caught.message : t('plans.list.loadFailed')
   } finally {
     loading.value = false
   }
@@ -53,19 +56,19 @@ async function createPlan(): Promise<void> {
     })
     await router.push({ name: 'plan-editor', params: { planId: plan.id } })
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'The plan could not be created.'
+    error.value = caught instanceof Error ? caught.message : t('plans.list.createFailed')
   } finally {
     creating.value = false
   }
 }
 
 async function deletePlan(plan: PlanSummary): Promise<void> {
-  if (!window.confirm(`Delete “${plan.name}” and its complete draft?`)) return
+  if (!window.confirm(t('plans.list.confirmDelete', { name: plan.name }))) return
   try {
     await plansApi.delete(plan.id)
     plans.value = plans.value.filter((item) => item.id !== plan.id)
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'The plan could not be deleted.'
+    error.value = caught instanceof Error ? caught.message : t('plans.list.deleteFailed')
   }
 }
 
@@ -79,7 +82,7 @@ async function duplicatePlan(plan: PlanSummary): Promise<void> {
     plans.value = (await plansApi.list()).items
     duplicatedPlan.value = { id: duplicate.id, name: duplicate.name }
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'The plan could not be duplicated.'
+    error.value = caught instanceof Error ? caught.message : t('plans.list.duplicateFailed')
   } finally {
     duplicatingPlanId.value = null
   }
@@ -99,7 +102,7 @@ async function readImportFile(event: Event): Promise<void> {
   importError.value = null
   importValidationIssues.value = []
   if (file.size > PLAN_IMPORT_MAX_BYTES) {
-    importValidationIssues.value = ['The JSON file must be 1 MiB or smaller.']
+    importValidationIssues.value = [t('plans.list.fileTooLarge')]
     return
   }
   try {
@@ -110,7 +113,7 @@ async function readImportFile(event: Event): Promise<void> {
     importValidationIssues.value =
       caught instanceof PlanImportValidationError
         ? caught.issues
-        : ['The selected JSON file could not be read.']
+        : [t('plans.list.fileUnreadable')]
   }
 }
 
@@ -129,16 +132,14 @@ async function importPlan(): Promise<void> {
     const plan = await plansApi.importPlan(importDocument.value)
     await router.push({ name: 'plan-editor', params: { planId: plan.id } })
   } catch (caught) {
-    importError.value = caught instanceof Error ? caught.message : 'The plan could not be imported.'
+    importError.value = caught instanceof Error ? caught.message : t('plans.list.importFailed')
   } finally {
     importing.value = false
   }
 }
 
 function updatedLabel(value: string): string {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(value),
-  )
+  return formatDateTime(value)
 }
 
 onMounted(() => void loadPlans())
@@ -148,14 +149,14 @@ onMounted(() => void loadPlans())
   <div class="page-wrap plans-index">
     <header class="plans-index-header">
       <div>
-        <span class="eyebrow">PlanCreator</span>
-        <h1>My Plans</h1>
-        <p>Build the stable structure of each training microcycle.</p>
+        <span class="eyebrow">{{ $t('plans.creator') }}</span>
+        <h1>{{ $t('plans.title') }}</h1>
+        <p>{{ $t('plans.list.subtitle') }}</p>
       </div>
       <div class="plans-index-actions">
-        <button class="button" type="button" @click="chooseImportFile">Import JSON</button>
+        <button class="button" type="button" @click="chooseImportFile">{{ $t('plans.list.importJson') }}</button>
         <button class="button primary" type="button" @click="createOpen = !createOpen">
-          {{ createOpen ? 'Close' : '+ New plan' }}
+          {{ createOpen ? $t('common.close') : $t('plans.list.newPlan') }}
         </button>
         <input
           ref="importInput"
@@ -169,51 +170,51 @@ onMounted(() => void loadPlans())
 
     <form v-if="createOpen" class="create-plan-panel panel" @submit.prevent="createPlan">
       <div>
-        <span class="eyebrow">New draft</span>
-        <h2>Create a workout plan</h2>
+        <span class="eyebrow">{{ $t('plans.list.newDraft') }}</span>
+        <h2>{{ $t('plans.list.createTitle') }}</h2>
       </div>
       <label class="field">
-        <span class="field-label">Plan name</span>
+        <span class="field-label">{{ $t('plans.list.planName') }}</span>
         <input v-model="name" class="text-input" maxlength="200" placeholder="PPLPP" autofocus />
       </label>
       <label class="field">
-        <span class="field-label">Description</span>
-        <input v-model="description" class="text-input" placeholder="Optional training intent" />
+        <span class="field-label">{{ $t('plans.list.description') }}</span>
+        <input v-model="description" class="text-input" :placeholder="$t('plans.list.descriptionPlaceholder')" />
       </label>
       <button class="button primary" type="submit" :disabled="!name.trim() || creating">
-        {{ creating ? 'Creating…' : 'Create and open' }}
+        {{ creating ? $t('plans.list.creating') : $t('plans.list.createAndOpen') }}
       </button>
     </form>
 
     <div v-if="error && !loading" class="plan-inline-error" role="alert">
       <span>{{ error }}</span>
-      <button type="button" @click="error = null">Dismiss</button>
+      <button type="button" @click="error = null">{{ $t('common.dismiss') }}</button>
     </div>
     <div v-if="importValidationIssues.length" class="plan-import-errors panel" role="alert">
       <div>
-        <strong>The JSON file is not importable.</strong>
+        <strong>{{ $t('plans.list.importInvalid') }}</strong>
         <ul>
           <li v-for="issue in importValidationIssues.slice(0, 8)" :key="issue">{{ issue }}</li>
         </ul>
         <small v-if="importValidationIssues.length > 8">
-          And {{ importValidationIssues.length - 8 }} more issues.
+          {{ $t('plans.list.moreIssues', { count: importValidationIssues.length - 8 }) }}
         </small>
       </div>
-      <button type="button" aria-label="Dismiss import errors" @click="importValidationIssues = []">×</button>
+      <button type="button" :aria-label="$t('plans.list.dismissImportErrors')" @click="importValidationIssues = []">×</button>
     </div>
     <div v-if="duplicatedPlan" class="plan-inline-success" role="status">
-      <span>Created “{{ duplicatedPlan.name }}” as an independent deep copy.</span>
+      <span>{{ $t('plans.list.duplicateCreated', { name: duplicatedPlan.name }) }}</span>
       <RouterLink :to="{ name: 'plan-editor', params: { planId: duplicatedPlan.id } }">
-        Open copy →
+        {{ $t('plans.list.openCopy') }}
       </RouterLink>
     </div>
 
-    <div v-if="loading" class="plans-loading panel" aria-label="Loading plans">
+    <div v-if="loading" class="plans-loading panel" :aria-label="$t('plans.list.loading')">
       <div v-for="index in 3" :key="index" class="skeleton" />
     </div>
     <ErrorState
       v-else-if="error && !plans.length"
-      title="Plans could not be loaded"
+      :title="$t('plans.list.loadError')"
       :message="error"
       @retry="loadPlans"
     />
@@ -223,10 +224,10 @@ onMounted(() => void loadPlans())
           <span class="plan-card-mark mono">P{{ String(plan.id).padStart(3, '0') }}</span>
           <span>
             <strong>{{ plan.name }}</strong>
-            <small>{{ plan.description || 'No description' }}</small>
+            <small>{{ plan.description || $t('common.noDescription') }}</small>
           </span>
           <span class="plan-card-meta mono">
-            Draft v{{ plan.draft_lock_version ?? '—' }}<br />{{ updatedLabel(plan.updated_at) }}
+            {{ $t('plans.list.draftVersion', { version: plan.draft_lock_version ?? '—' }) }}<br />{{ updatedLabel(plan.updated_at) }}
           </span>
         </RouterLink>
         <div class="plan-card-actions">
@@ -234,8 +235,8 @@ onMounted(() => void loadPlans())
             class="plan-card-action plan-duplicate"
             type="button"
             :disabled="duplicatingPlanId !== null"
-            :aria-label="`Duplicate ${plan.name}`"
-            :title="`Duplicate ${plan.name}`"
+            :aria-label="$t('plans.list.duplicate', { name: plan.name })"
+            :title="$t('plans.list.duplicate', { name: plan.name })"
             @click="duplicatePlan(plan)"
           >
             {{ duplicatingPlanId === plan.id ? '…' : '⧉' }}
@@ -244,8 +245,8 @@ onMounted(() => void loadPlans())
             class="plan-card-action plan-delete"
             type="button"
             :disabled="duplicatingPlanId !== null"
-            :aria-label="`Delete ${plan.name}`"
-            :title="`Delete ${plan.name}`"
+            :aria-label="$t('plans.list.delete', { name: plan.name })"
+            :title="$t('plans.list.delete', { name: plan.name })"
             @click="deletePlan(plan)"
           >×</button>
         </div>
@@ -253,11 +254,11 @@ onMounted(() => void loadPlans())
     </div>
     <div v-else class="new-plan-empty panel">
       <span class="empty-plan-mark mono">PLAN</span>
-      <h2>No workout plans yet</h2>
-      <p>Create the source artifact that Analysis and Modulation will eventually consume.</p>
+      <h2>{{ $t('plans.list.emptyTitle') }}</h2>
+      <p>{{ $t('plans.list.emptyMessage') }}</p>
       <div class="new-plan-empty-actions">
-        <button class="button" type="button" @click="chooseImportFile">Import JSON</button>
-        <button class="button primary" type="button" @click="createOpen = true">Create first plan</button>
+        <button class="button" type="button" @click="chooseImportFile">{{ $t('plans.list.importJson') }}</button>
+        <button class="button primary" type="button" @click="createOpen = true">{{ $t('plans.list.createFirst') }}</button>
       </div>
     </div>
     <PlanImportDialog

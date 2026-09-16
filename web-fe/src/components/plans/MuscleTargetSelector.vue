@@ -43,13 +43,13 @@ function toggle(slug: string): void {
         :key="muscle?.slug"
         class="chip target-chip"
         type="button"
-        :title="`Remove ${muscle?.display_name}`"
+        :title="$t('plans.targets.remove', { name: muscle?.display_name })"
         @click="muscle && toggle(muscle.slug)"
       >
         {{ muscle?.display_name }} <span aria-hidden="true">×</span>
       </button>
       <button class="button ghost compact" type="button" @click="open = !open">
-        {{ open ? 'Close targets' : modelValue.length ? 'Edit targets' : '+ Add target muscles' }}
+        {{ open ? $t('plans.targets.close') : modelValue.length ? $t('plans.targets.edit') : $t('plans.targets.add') }}
       </button>
     </div>
     <div v-if="open" class="target-selector-panel">
@@ -57,8 +57,8 @@ function toggle(slug: string): void {
         v-model="query"
         class="text-input"
         type="search"
-        placeholder="Find a muscle…"
-        aria-label="Find a target muscle"
+        :placeholder="$t('plans.targets.find')"
+        :aria-label="$t('plans.targets.findAria')"
       />
       <div class="target-options">
         <label v-for="muscle in filtered" :key="muscle.slug" class="target-option">

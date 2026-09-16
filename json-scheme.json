@@ -1,0 +1,447 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agonez.app/schemas/plans/planrun/progression-schemas.json",
+  "title": "Agonez :: plans.planrun :: exercise-unit (plan | prescr | execution)",
+  "description": "Bundle trzech schematow dla POJEDYNCZEGO exercise-unit. Wejscia: #/$defs/plan_exercise_unit, #/$defs/prescr_exercise_unit, #/$defs/execution_exercise_unit. Domena atlas.exercises (kwantyzacja loadu, sprzet, nazwy) jest POZA tym schematem i jest referowana wylacznie przez exercise_id.",
+
+  "$defs": {
+
+    "//": { "$comment": "===================== TYPY WSPOLNE =====================" },
+
+    "progression_id": {
+      "type": "string",
+      "description": "Tozsamosc PETLI progresji, nie cwiczenia. Dwie instancje tego samego exercise_id w mikrocyklu (np. bench pon. + pt.) maja rozne progression_id => dwie niezalezne petle. Ten sam progression_id spina plan -> prescr[n] -> execution[n] przez caly plan-run.",
+      "minLength": 1
+    },
+
+    "exercise_id": {
+      "type": "string",
+      "description": "Referencja do atlas.exercises. plans.planrun nie wie nic o sprzecie ani o kwantyzacji loadu.",
+      "minLength": 1
+    },
+
+    "rep_range": {
+      "type": "object",
+      "description": "Zmienna STATYCZNA planu. Semantyka (gate vs estimate) NIE jest polem - rozstrzyga ja kontroler na podstawie policy.base.",
+      "properties": {
+        "min": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "max": { "type": "integer", "minimum": 1, "maximum": 100 }
+      },
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "$comment": "Niezmiennik do wymuszenia w kodzie: max >= min. JSON Schema nie wyrazi tego deklaratywnie."
+    },
+
+    "intensity": {
+      "description": "Kontrakt jakosci wykonania. NIGDY nie jest inputem komendy kontrolera - jest warunkiem porownywalnosci reps miedzy sesjami.",
+      "oneOf": [
+        {
+          "type": "object",
+          "title": "RIR",
+          "properties": {
+            "kind": { "const": "rir" },
+            "rir": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "Reps In Reserve DO KTOREGO nalezy dojechac. rir=0 == do upadku."
+            }
+          },
+          "required": ["kind", "rir"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "Nieokreslona",
+          "description": "Dla rol technicznych (warmup), gdzie effort nie jest przedmiotem kontraktu.",
+          "properties": { "kind": { "const": "unspecified" } },
+          "required": ["kind"],
+          "additionalProperties": false
+        }
+      ]
+    },
+
+    "set_role": {
+      "type": "string",
+      "enum": ["warmup", "working", "backoff", "amrap"],
+      "description": "Metadana dla usera ORAZ filtr dla kontrolera. Gate progresji patrzy WYLACZNIE na role 'working'. 'amrap' oznacza: liczba powtorzen nie jest z gory zadana (rep_range jest wtedy tylko estymata kalibracyjna)."
+    },
+
+    "rest_spec": {
+      "type": "object",
+      "description": "Bez tego reps nie sa porownywalne miedzy sesjami - sufit mozna wbic przerwa zamiast adaptacja.",
+      "properties": {
+        "seconds": { "type": "integer", "minimum": 0, "maximum": 3600 },
+        "min_seconds": { "type": "integer", "minimum": 0, "maximum": 3600 },
+        "max_seconds": { "type": "integer", "minimum": 0, "maximum": 3600 },
+        "description": {
+          "type": "string",
+          "description": "Zamiast liczby, np. 'do pelnego oddechu', 'az tetno zejdzie'."
+        },
+        "comment": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "anyOf": [
+        { "required": ["seconds"] },
+        { "required": ["min_seconds", "max_seconds"] },
+        { "required": ["description"] }
+      ]
+    },
+
+    "//2": { "$comment": "===================== LOAD: RULE (plan) vs SPEC (prescr) =====================" },
+
+    "load_rule": {
+      "description": "WARSTWA PLANU. Opisuje RELACJE, nigdy kilogramy. Plan nie wie ile wazy sztanga - wie tylko, ze ta seria to 50% ciezaru roboczego, albo ze atleta wybiera sam.",
+      "oneOf": [
+        {
+          "type": "object",
+          "title": "Ciezar roboczy jednostki (shared load)",
+          "description": "Domyslne dla DP/TP. Jeden ciezar na caly exercise-unit, trzymany w stanie kontrolera.",
+          "properties": { "kind": { "const": "unit_working" } },
+          "required": ["kind"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "Wlasna petla loadu (independent load)",
+          "description": "Independent-Load Double Progression. Ta seria ma wlasny licznik loadu w stanie kontrolera.",
+          "properties": { "kind": { "const": "independent" } },
+          "required": ["kind"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "Procent ciezaru roboczego",
+          "description": "Rampupy (pct 50, 75) i proste back-offy. Zastepuje hack 'rampup50' w polu RIR.",
+          "properties": {
+            "kind": { "const": "pct_of_working" },
+            "pct": { "type": "number", "exclusiveMinimum": 0, "maximum": 200 }
+          },
+          "required": ["kind", "pct"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "Procent innej serii",
+          "description": "Back-offy w e1RM: '-8% z top setu'. ref_idx wskazuje slot, pct_delta jest ujemny dla back-offu.",
+          "properties": {
+            "kind": { "const": "pct_of_set" },
+            "ref_idx": { "type": "integer", "minimum": 0 },
+            "pct_delta": { "type": "number", "minimum": -100, "maximum": 200 }
+          },
+          "required": ["kind", "ref_idx", "pct_delta"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "Wybor atlety",
+          "description": "Top set w e1RM. Load nie jest znany przed sesja - atleta wchodzi i czuje na ile dzis jest.",
+          "properties": { "kind": { "const": "athlete_selected" } },
+          "required": ["kind"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "Z tabeli (intra-session)",
+          "description": "APRE seria 4: load wynika z wyniku AMRAP w serii ref_idx TEJ SAMEJ sesji. W v1 tabele czyta user/trener recznie.",
+          "properties": {
+            "kind": { "const": "table_derived" },
+            "ref_idx": { "type": "integer", "minimum": 0 },
+            "table": { "type": "string", "examples": ["apre3", "apre6", "apre10", "dapre"] }
+          },
+          "required": ["kind", "ref_idx", "table"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "Wariant (progresja porzadkowa)",
+          "description": "Cwiczenia z masa ciala: 'ciezar' jest zmienna porzadkowa, nie liczbowa. Drabina wariantow zyje w atlas.exercises.",
+          "properties": {
+            "kind": { "const": "ordinal_variant" },
+            "ladder_id": { "type": "string" }
+          },
+          "required": ["kind", "ladder_id"],
+          "additionalProperties": false
+        }
+      ]
+    },
+
+    "load_spec": {
+      "description": "WARSTWA PRESCR. Drzewo domykane do kilogramow. 'absolute' = rozwiazane przed sesja. 'deferred' = rozwiazuje sie w trakcie sesji (top set, APRE) lub jest pochodna innej serii. Eliminuje 'load: unknown'.",
+      "oneOf": [
+        {
+          "type": "object",
+          "title": "Rozwiazany",
+          "properties": {
+            "kind": { "const": "absolute" },
+            "value": { "type": "number", "minimum": 0 },
+            "unit": { "type": "string", "enum": ["kg", "lb", "bodyweight", "level"], "default": "kg" },
+            "derived_from": {
+              "$ref": "#/$defs/load_rule",
+              "description": "Audyt: z jakiej reguly planu ta liczba powstala. Opcjonalne."
+            }
+          },
+          "required": ["kind", "value"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "title": "Odroczony",
+          "properties": {
+            "kind": { "const": "deferred" },
+            "rule": { "$ref": "#/$defs/load_rule" },
+            "hint": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Niewiazaca podpowiedz dla usera (np. ostatni znany load). Kontroler jej NIE uzywa do gate'a."
+            }
+          },
+          "required": ["kind", "rule"],
+          "additionalProperties": false
+        }
+      ]
+    },
+
+    "//3": { "$comment": "===================== POLICY =====================" },
+
+    "policy": {
+      "type": "object",
+      "description": "Rescue jest DEKORATOREM, nie osobna rodzina modeli - to zabija iloczyn kartezjanski nazw.",
+      "properties": {
+        "base": {
+          "type": "string",
+          "enum": [
+            "single_progression",
+            "single_progression_2for2",
+            "double_progression",
+            "triple_progression",
+            "e1rm_top_set_backoffs",
+            "apre"
+          ]
+        },
+        "authoring_template": {
+          "type": "string",
+          "enum": [
+            "shared_reprange_shared_load",
+            "independent_reprange_shared_load",
+            "shared_reprange_independent_load",
+            "independent_reprange_independent_load",
+            "custom"
+          ],
+          "description": "WARSTWA AUTORINGU, nie silnika. Silnik widzi tylko per-slot rep_range i load_rule. To pole istnieje dla kompatybilnosci z literatura, dla UI (wypelnij wszystkie sloty tym samym zakresem) i dla walidatora."
+        },
+        "set_trigger": {
+          "type": "string",
+          "enum": ["cascade", "rescue"],
+          "description": "Tylko dla base=triple_progression. cascade = sets++ po wbiciu sufitu przez wszystkie aktywne sety. rescue = sets++ dopiero po stagnacji."
+        },
+        "on_load_up": {
+          "type": "string",
+          "enum": ["reset_to_min"],
+          "default": "reset_to_min",
+          "description": "Enum jednowartosciowy celowo - decrement przy S_min=S_max-1 jest tozsamy z resetem, a ratchet dywerguje bez deloadu. Zostawiony jako punkt rozszerzenia."
+        },
+        "rescue": {
+          "type": "object",
+          "description": "Dekorator na dowolna base. 'Utknales na 12 kg -> wroc na 10 kg, dolóz serie, odbuduj pojemnosc, wroc na 12 kg z wieksza baza.'",
+          "properties": {
+            "kind": { "type": "string", "enum": ["add_set"] },
+            "trigger_stall_sessions": { "type": "integer", "minimum": 1, "default": 2 }
+          },
+          "required": ["kind"],
+          "additionalProperties": false
+        },
+        "table": {
+          "type": "string",
+          "description": "Tylko dla base=apre.",
+          "examples": ["apre3", "apre6", "apre10"]
+        }
+      },
+      "required": ["base"],
+      "additionalProperties": false
+    },
+
+    "//4": { "$comment": "===================== PLAN =====================" },
+
+    "plan_exercise_unit": {
+      "type": "object",
+      "title": "plan :: exercise-unit",
+      "description": "IMMUTABLE przez caly plan-run. Zawiera WYLACZNIE zmienne statyczne i strukture. Zero kilogramow, zero stanu, zero reps. Deklaruje wszystkie sloty do S_max - sloty powyzej active_sets.min sa uspione i budzone przez kontroler.",
+      "properties": {
+        "progression_id": { "$ref": "#/$defs/progression_id" },
+        "exercise_id": { "$ref": "#/$defs/exercise_id" },
+        "policy": { "$ref": "#/$defs/policy" },
+        "active_sets": {
+          "type": "object",
+          "description": "Dla policy innych niz triple_progression: min == max. Przyda sie takze warstwie periodyzacji do deloadow.",
+          "properties": {
+            "min": { "type": "integer", "minimum": 1, "maximum": 20 },
+            "max": { "type": "integer", "minimum": 1, "maximum": 20 }
+          },
+          "required": ["min", "max"],
+          "additionalProperties": false
+        },
+        "set_slots": {
+          "type": "array",
+          "description": "Dlugosc MUSI rownac sie active_sets.max. Kolejnosc = idx.",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "properties": {
+              "idx": { "type": "integer", "minimum": 0 },
+              "role": { "$ref": "#/$defs/set_role", "default": "working" },
+              "rep_range": { "$ref": "#/$defs/rep_range" },
+              "intensity": { "$ref": "#/$defs/intensity" },
+              "load_rule": { "$ref": "#/$defs/load_rule" },
+              "rest": { "$ref": "#/$defs/rest_spec" },
+              "note": { "type": "string", "description": "Widoczne dla usera, np. 'tempo 3-0-1-0'." }
+            },
+            "required": ["idx", "role", "rep_range", "intensity", "load_rule"],
+            "additionalProperties": false
+          }
+        },
+        "note": { "type": "string" }
+      },
+      "required": ["progression_id", "exercise_id", "policy", "active_sets", "set_slots"],
+      "additionalProperties": false
+    },
+
+    "//5": { "$comment": "===================== PRESCR =====================" },
+
+    "prescr_exercise_unit": {
+      "type": "object",
+      "title": "prescr :: exercise-unit",
+      "description": "Materializacja planu na konkretna ekspozycje. Rozniace sie od planu: (a) jest load_spec, (b) jest tylko active_sets aktualnych slotow, nie wszystkie. Wytwarzany przez zewnetrzny kontroler - w v1 recznie przez trenera lub usera.",
+      "properties": {
+        "progression_id": { "$ref": "#/$defs/progression_id" },
+        "exercise_id": { "$ref": "#/$defs/exercise_id" },
+        "exposure_idx": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Numer ekspozycji tej PETLI (nie numer tygodnia). prescr[n] <-> execution[n]."
+        },
+        "policy": { "$ref": "#/$defs/policy" },
+        "sets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "properties": {
+              "slot_idx": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Wskazuje slot w plan.set_slots. Pozwala odtworzyc, ktory slot zostal obudzony."
+              },
+              "role": { "$ref": "#/$defs/set_role" },
+              "rep_range": { "$ref": "#/$defs/rep_range" },
+              "intensity": { "$ref": "#/$defs/intensity" },
+              "load": { "$ref": "#/$defs/load_spec" },
+              "rest": { "$ref": "#/$defs/rest_spec" },
+              "note": { "type": "string" }
+            },
+            "required": ["slot_idx", "role", "rep_range", "intensity", "load"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["progression_id", "exercise_id", "exposure_idx", "sets"],
+      "additionalProperties": false
+    },
+
+    "//6": { "$comment": "===================== EXECUTION =====================" },
+
+    "executed_set": {
+      "type": "object",
+      "description": "prescribed i actual sa ROZDZIELONE. actual.load != prescribed.load to codziennosc (brak talerzykow, zajety hantel), a nie patologia - bez tego rozdzielenia gate falszywie blokuje progresje.",
+      "properties": {
+        "slot_idx": { "type": "integer", "minimum": 0 },
+        "role": { "$ref": "#/$defs/set_role" },
+        "prescribed": {
+          "type": "object",
+          "description": "Snapshot tego, co bylo zalecone - kopiowany z prescr w momencie wykonania. Immutable, niezalezny od pozniejszych edycji prescr.",
+          "properties": {
+            "load": { "$ref": "#/$defs/load_spec" },
+            "rep_range": { "$ref": "#/$defs/rep_range" },
+            "intensity": { "$ref": "#/$defs/intensity" }
+          },
+          "required": ["load", "rep_range", "intensity"],
+          "additionalProperties": false
+        },
+        "actual": {
+          "type": "object",
+          "description": "Co sie realnie stalo. reps sa ZMIENNA EMERGENTNA - nikt ich nie zadal, sa efektem fizjologii.",
+          "properties": {
+            "load": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Zawsze rozwiazany do liczby. Przy ordinal_variant: numer poziomu drabiny."
+            },
+            "unit": { "type": "string", "enum": ["kg", "lb", "bodyweight", "level"], "default": "kg" },
+            "reps": { "type": "integer", "minimum": 0 },
+            "reported_rir": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "Osiagniety RIR zgloszony przez usera. Gate porownuje go z prescribed.intensity.rir. To NIE jest to samo pole co prescribed."
+            }
+          },
+          "required": ["load", "reps"],
+          "additionalProperties": false
+        },
+        "status": {
+          "type": "string",
+          "enum": ["completed", "failed", "skipped", "substituted"],
+          "description": "failed = seria podjeta ale nie dowieziona. skipped = nie podjeta. substituted = zrobiona na innym sprzecie/cwiczeniu."
+        },
+        "deviation_reason": {
+          "type": "string",
+          "enum": [
+            "equipment_unavailable",
+            "load_not_quantizable",
+            "injury_or_pain",
+            "time_constraint",
+            "fatigue",
+            "coach_override",
+            "athlete_choice",
+            "other"
+          ],
+          "description": "Wymagane, gdy actual rozjezdza sie z prescribed. Bez tego kontroler nie odrozni zlej sesji od zlej infrastruktury silowni."
+        },
+        "note": { "type": "string" }
+      },
+      "required": ["slot_idx", "role", "prescribed", "actual", "status"],
+      "additionalProperties": false
+    },
+
+    "execution_exercise_unit": {
+      "type": "object",
+      "title": "execution :: exercise-unit",
+      "description": "Jedyne wiarygodne zrodlo prawdy dla kontrolera. To na tym odpala sie gate progresji.",
+      "properties": {
+        "progression_id": { "$ref": "#/$defs/progression_id" },
+        "exercise_id": {
+          "$ref": "#/$defs/exercise_id",
+          "description": "Faktycznie wykonane cwiczenie. Moze roznic sie od prescr przy status=substituted."
+        },
+        "exposure_idx": { "type": "integer", "minimum": 0 },
+        "performed_at": { "type": "string", "format": "date-time" },
+        "sets": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/executed_set" }
+        },
+        "unit_status": {
+          "type": "string",
+          "enum": ["completed", "partial", "skipped"],
+          "description": "Agregat. 'skipped' z pusta tablica sets to legalny stan - kontroler musi umiec obsluzyc opuszczony trening."
+        },
+        "note": { "type": "string" }
+      },
+      "required": ["progression_id", "exercise_id", "exposure_idx", "sets", "unit_status"],
+      "additionalProperties": false
+    }
+  }
+}

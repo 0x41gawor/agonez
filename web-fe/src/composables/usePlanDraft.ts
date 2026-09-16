@@ -1,9 +1,8 @@
 import { computed, ref, type Ref } from 'vue'
 
 import { ApiError } from '@/api/client'
-import { atlasApi } from '@/api/atlas'
+import { i18n } from '@/i18n'
 import { plansApi } from '@/api/plans'
-import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import {
   toPlanDraftUpdate,
   toPlanEditorState,
@@ -14,8 +13,6 @@ import {
 
 export function usePlanDraft(planId: Ref<number>) {
   const draft = ref<PlanEditorState | null>(null)
-  const exercises = ref<ExerciseCatalogItem[]>([])
-  const muscles = ref<MuscleListItem[]>([])
   const baseline = ref('')
   const loading = ref(true)
   const saving = ref(false)
@@ -42,16 +39,10 @@ export function usePlanDraft(planId: Ref<number>) {
     loading.value = true
     loadError.value = null
     try {
-      const [artifact, exerciseResult, muscleResult] = await Promise.all([
-        plansApi.draft(planId.value),
-        atlasApi.exerciseCatalog(),
-        atlasApi.muscles({ page: 1, per_page: 100, sort: 'name', order: 'asc' }),
-      ])
-      exercises.value = exerciseResult.items
-      muscles.value = muscleResult.items
+      const artifact = await plansApi.draft(planId.value)
       acceptServerDraft(artifact)
     } catch (error) {
-      loadError.value = error instanceof Error ? error.message : 'The plan could not be loaded.'
+      loadError.value = error instanceof Error ? error.message : i18n.global.t('plans.editor.validation.loadFailed')
     } finally {
       loading.value = false
     }
@@ -61,7 +52,7 @@ export function usePlanDraft(planId: Ref<number>) {
     if (!draft.value || saving.value) return false
     validationIssues.value = validatePlanEditor(draft.value)
     if (validationIssues.value.length) {
-      saveError.value = 'Fix the highlighted plan fields before saving.'
+      saveError.value = i18n.global.t('plans.editor.validation.fixFields')
       return false
     }
 
@@ -76,9 +67,9 @@ export function usePlanDraft(planId: Ref<number>) {
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
         conflict.value = true
-        saveError.value = 'This plan changed after you loaded it. Your local edits were not overwritten.'
+        saveError.value = i18n.global.t('plans.editor.validation.conflict')
       } else {
-        saveError.value = error instanceof Error ? error.message : 'The plan could not be saved.'
+        saveError.value = error instanceof Error ? error.message : i18n.global.t('plans.editor.validation.saveFailed')
       }
       return false
     } finally {
@@ -96,8 +87,6 @@ export function usePlanDraft(planId: Ref<number>) {
 
   return {
     draft,
-    exercises,
-    muscles,
     loading,
     saving,
     loadError,

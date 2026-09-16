@@ -9,7 +9,7 @@ const emit = defineEmits<{ hover: [slug: string | null] }>()
 <template>
   <div class="atlas-table-wrap panel">
     <table class="atlas-table muscle-table">
-      <thead><tr><th>Muscle</th><th>Body</th><th>Complex</th><th>Mass g</th><th class="number">Vol cm³</th><th>Fiber I / II</th><th>Proj. FCSA cm²</th></tr></thead>
+      <thead><tr><th>{{ $t('atlas.table.muscle') }}</th><th>{{ $t('atlas.table.body') }}</th><th>{{ $t('atlas.table.complex') }}</th><th>{{ $t('atlas.table.massG') }}</th><th class="number">{{ $t('atlas.table.volumeCm3') }}</th><th>{{ $t('atlas.table.fibers') }}</th><th>{{ $t('atlas.table.projectedFcsa') }}</th></tr></thead>
       <tbody>
         <tr
           v-for="item in items"

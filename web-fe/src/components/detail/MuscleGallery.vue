@@ -126,8 +126,8 @@ onBeforeUnmount(() => {
 <template>
   <section class="media-section muscle-gallery panel">
     <header>
-      <h2>Gallery</h2>
-      <span class="mono">{{ images.length }} {{ images.length === 1 ? 'image' : 'images' }}</span>
+      <h2>{{ $t('atlas.gallery.title') }}</h2>
+      <span class="mono">{{ images.length }} {{ $t(images.length === 1 ? 'atlas.gallery.image' : 'atlas.gallery.images') }}</span>
     </header>
     <div class="gallery-preview-grid">
       <a
@@ -139,11 +139,11 @@ onBeforeUnmount(() => {
         rel="noopener noreferrer"
         @click="openFromPreview($event, index)"
       >
-        <MediaImage :src="image" :alt="`${title} gallery image ${index + 1}`" />
+        <MediaImage :src="image" :alt="$t('atlas.gallery.alt', { title, index: index + 1 })" />
         <span v-if="index === 3 && images.length > 4" class="gallery-more">
-          +{{ images.length - 4 }} more
+          {{ $t('atlas.gallery.more', { count: images.length - 4 }) }}
         </span>
-        <span class="sr-only">Open image {{ index + 1 }} in gallery. Control-click opens it in a new tab.</span>
+        <span class="sr-only">{{ $t('atlas.gallery.previewLabel', { index: index + 1 }) }}</span>
       </a>
     </div>
   </section>
@@ -155,7 +155,7 @@ onBeforeUnmount(() => {
         class="gallery-lightbox"
         role="dialog"
         aria-modal="true"
-        :aria-label="`${title} image gallery`"
+        :aria-label="$t('atlas.gallery.dialogLabel', { title })"
       >
         <header>
           <div>
@@ -163,32 +163,32 @@ onBeforeUnmount(() => {
             <span class="mono">{{ activeIndex + 1 }} / {{ images.length }}</span>
           </div>
           <div class="gallery-lightbox-actions">
-            <a :href="activeImageUrl" target="_blank" rel="noopener noreferrer">Open original ↗</a>
-            <button ref="closeButton" type="button" aria-label="Close gallery" @click="closeGallery">×</button>
+            <a :href="activeImageUrl" target="_blank" rel="noopener noreferrer">{{ $t('atlas.gallery.openOriginal') }}</a>
+            <button ref="closeButton" type="button" :aria-label="$t('atlas.gallery.close')" @click="closeGallery">×</button>
           </div>
         </header>
 
         <div class="gallery-lightbox-stage" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
-          <button type="button" aria-label="Previous image" @click="previous">‹</button>
+          <button type="button" :aria-label="$t('atlas.gallery.previous')" @click="previous">‹</button>
           <div class="gallery-lightbox-image">
             <MediaImage
               :key="activeImage"
               :src="activeImage"
-              :alt="`${title} gallery image ${activeIndex + 1} of ${images.length}`"
+              :alt="$t('atlas.gallery.altOf', { title, index: activeIndex + 1, total: images.length })"
               loading="eager"
             />
           </div>
-          <button type="button" aria-label="Next image" @click="next">›</button>
+          <button type="button" :aria-label="$t('atlas.gallery.next')" @click="next">›</button>
         </div>
 
-        <footer v-if="images.length > 1" class="gallery-thumbnail-rail" aria-label="Gallery thumbnails">
+        <footer v-if="images.length > 1" class="gallery-thumbnail-rail" :aria-label="$t('atlas.gallery.thumbnails')">
           <button
             v-for="(image, index) in images"
             :key="image"
             type="button"
             :data-gallery-index="index"
             :class="{ active: index === activeIndex }"
-            :aria-label="`View image ${index + 1}`"
+            :aria-label="$t('atlas.gallery.viewImage', { index: index + 1 })"
             :aria-current="index === activeIndex ? 'true' : undefined"
             @click="show(index)"
           >

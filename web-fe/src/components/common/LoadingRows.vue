@@ -3,7 +3,7 @@ withDefaults(defineProps<{ count?: number }>(), { count: 7 })
 </script>
 
 <template>
-  <div class="loading-rows panel" aria-busy="true" aria-label="Loading Atlas data">
+  <div class="loading-rows panel" aria-busy="true" :aria-label="$t('common.loadingAtlas')">
     <div v-for="index in count" :key="index" class="loading-row">
       <div class="skeleton" />
       <div class="skeleton" />

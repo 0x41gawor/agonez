@@ -44,19 +44,19 @@ function select(slug: string): void {
       :href="currentExerciseHref"
       role="button"
       :aria-expanded="open"
-      :title="currentExerciseHref ? 'Click to choose an exercise · Ctrl/Cmd+click to open in Atlas' : 'Click to choose an exercise'"
+      :title="$t(currentExerciseHref ? 'plans.selector.triggerTitle' : 'plans.selector.emptyTriggerTitle')"
       @click="handleTriggerClick"
     >
       <span class="exercise-selector-copy">
-        <span class="exercise-selector-label">{{ label ?? 'Exercise' }}</span>
-        <strong>{{ current?.name_full || current?.name || (modelValue ? modelValue.replaceAll('_', ' ') : 'Choose exercise') }}</strong>
+        <span class="exercise-selector-label">{{ label ?? $t('plans.slot.exercise') }}</span>
+        <strong>{{ current?.name_full || current?.name || (modelValue ? modelValue.replaceAll('_', ' ') : $t('plans.slot.chooseExercise')) }}</strong>
         <small v-if="current">{{ current.resistance_source }} · {{ current.slug }}</small>
       </span>
       <span class="exercise-selector-side">
         <span v-if="current" class="exercise-selector-facts">
           <span class="exercise-mechanics-tag">{{ prettyToken(current.mechanics_tier) }}</span>
           <span class="exercise-demand-tag mono">
-            {{ formatNumber(current.systemic_propulsive_fcsa_demand, 0) }} cm² systemic FCSA
+            {{ $t('plans.selector.systemicFcsa', { value: formatNumber(current.systemic_propulsive_fcsa_demand, 0) }) }}
           </span>
         </span>
         <span class="exercise-selector-chevron" aria-hidden="true">{{ open ? '−' : '⌄' }}</span>
@@ -64,16 +64,16 @@ function select(slug: string): void {
     </a>
 
     <div v-if="open" class="catalog-selector-panel">
-      <label class="field-label" :for="`exercise-search-${label ?? 'exercise'}`">Find exercise</label>
+      <label class="field-label" :for="`exercise-search-${label ?? 'exercise'}`">{{ $t('plans.selector.find') }}</label>
       <input
         :id="`exercise-search-${label ?? 'exercise'}`"
         v-model="query"
         class="text-input"
         type="search"
-        placeholder="Name, target, slug, resistance, or mechanics…"
+        :placeholder="$t('plans.selector.placeholder')"
         autocomplete="off"
       />
-      <div class="catalog-options" role="listbox" :aria-label="label ?? 'Exercise options'">
+      <div class="catalog-options" role="listbox" :aria-label="label ?? $t('plans.selector.options')">
         <button
           v-for="exercise in filtered"
           :key="exercise.slug"
@@ -91,11 +91,11 @@ function select(slug: string): void {
           <span class="exercise-option-facts">
             <span class="exercise-mechanics-tag">{{ prettyToken(exercise.mechanics_tier) }}</span>
             <span class="exercise-option-demand mono">
-              {{ formatNumber(exercise.systemic_propulsive_fcsa_demand, 0) }} cm² FCSA
+              {{ $t('plans.selector.fcsa', { value: formatNumber(exercise.systemic_propulsive_fcsa_demand, 0) }) }}
             </span>
           </span>
         </button>
-        <p v-if="!filtered.length" class="selector-empty">No catalog exercises match this search.</p>
+        <p v-if="!filtered.length" class="selector-empty">{{ $t('plans.selector.noMatches') }}</p>
       </div>
     </div>
   </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import TechniqueValue from '@/components/detail/TechniqueValue.vue'
 
@@ -21,84 +22,85 @@ interface TechniqueGroupDefinition {
 }
 
 const props = defineProps<{ data: Record<string, unknown> }>()
+const { t } = useI18n()
 
 // Canonical UI order. This intentionally lives in frontend code rather than
 // configuration or the database, so JSON key ordering cannot change the guide.
 const TLDR_SEQUENCE: TechniqueFieldDefinition[] = [
-  { key: 'setup', label: 'Setup', icon: '🧰' },
-  { key: 'execution', label: 'Execution', icon: '▶' },
-  { key: 'focus', label: 'Focus', icon: '🎯', tone: 'cue' },
-  { key: 'stop_when', label: 'Stop when', icon: '✋', tone: 'warning' },
+  { key: 'setup', label: 'atlas.technique.setup', icon: '🧰' },
+  { key: 'execution', label: 'atlas.technique.execution', icon: '▶' },
+  { key: 'focus', label: 'atlas.technique.focus', icon: '🎯', tone: 'cue' },
+  { key: 'stop_when', label: 'atlas.technique.stopWhen', icon: '✋', tone: 'warning' },
 ]
 
 const TECHNIQUE_GROUPS: TechniqueGroupDefinition[] = [
   {
     key: 'overview',
-    label: 'Movement overview',
+    label: 'atlas.technique.movementOverview',
     icon: '🧭',
-    description: 'What the movement is and how the joints travel.',
+    description: 'atlas.technique.movementOverviewDescription',
     fields: [
-      { key: 'overview', label: 'Overview', icon: '◎' },
-      { key: 'plane_of_movement', label: 'Plane of movement', icon: '↗', tone: 'motion' },
-      { key: 'primary_joint_actions', label: 'Primary joint actions', icon: '⚙', tone: 'motion' },
+      { key: 'overview', label: 'atlas.technique.overview', icon: '◎' },
+      { key: 'plane_of_movement', label: 'atlas.technique.plane', icon: '↗', tone: 'motion' },
+      { key: 'primary_joint_actions', label: 'atlas.technique.jointActions', icon: '⚙', tone: 'motion' },
     ],
   },
   {
     key: 'preparation',
-    label: 'Preparation',
+    label: 'atlas.technique.preparation',
     icon: '🧰',
-    description: 'Build a repeatable base before the first repetition.',
+    description: 'atlas.technique.preparationDescription',
     fields: [
-      { key: 'equipment_setup', label: 'Equipment setup', icon: '🔧' },
-      { key: 'starting_position', label: 'Starting position', icon: '📍' },
-      { key: 'grip', label: 'Grip', icon: '✊' },
-      { key: 'stance', label: 'Stance', icon: '🦶' },
-      { key: 'bracing', label: 'Bracing', icon: '🛡', tone: 'safety' },
+      { key: 'equipment_setup', label: 'atlas.technique.equipment', icon: '🔧' },
+      { key: 'starting_position', label: 'atlas.technique.startingPosition', icon: '📍' },
+      { key: 'grip', label: 'atlas.technique.grip', icon: '✊' },
+      { key: 'stance', label: 'atlas.technique.stance', icon: '🦶' },
+      { key: 'bracing', label: 'atlas.technique.bracing', icon: '🛡', tone: 'safety' },
     ],
   },
   {
     key: 'execution',
-    label: 'The repetition',
+    label: 'atlas.technique.repetition',
     icon: '🔁',
-    description: 'How to move through one complete, controlled repetition.',
+    description: 'atlas.technique.repetitionDescription',
     fields: [
-      { key: 'concentric', label: 'Concentric', icon: '↑', tone: 'motion' },
-      { key: 'eccentric', label: 'Eccentric', icon: '↓', tone: 'motion' },
-      { key: 'end_position', label: 'End position', icon: '◎' },
-      { key: 'range_of_motion', label: 'Range of motion', icon: '↔', tone: 'motion' },
-      { key: 'tempo_notes', label: 'Tempo notes', icon: '⏱' },
+      { key: 'concentric', label: 'atlas.technique.concentric', icon: '↑', tone: 'motion' },
+      { key: 'eccentric', label: 'atlas.technique.eccentric', icon: '↓', tone: 'motion' },
+      { key: 'end_position', label: 'atlas.technique.endPosition', icon: '◎' },
+      { key: 'range_of_motion', label: 'atlas.technique.range', icon: '↔', tone: 'motion' },
+      { key: 'tempo_notes', label: 'atlas.technique.tempo', icon: '⏱' },
     ],
   },
   {
     key: 'cues',
-    label: 'Coaching cues',
+    label: 'atlas.technique.cues',
     icon: '💡',
-    description: 'Short attention anchors for keeping the movement on track.',
+    description: 'atlas.technique.cuesDescription',
     fields: [
-      { key: 'internal_cues', label: 'Internal cues', icon: '🧠', tone: 'cue' },
-      { key: 'external_cues', label: 'External cues', icon: '👁', tone: 'cue' },
+      { key: 'internal_cues', label: 'atlas.technique.internalCues', icon: '🧠', tone: 'cue' },
+      { key: 'external_cues', label: 'atlas.technique.externalCues', icon: '👁', tone: 'cue' },
     ],
   },
   {
     key: 'effort',
-    label: 'Effort and failure',
+    label: 'atlas.technique.effort',
     icon: '🌡',
-    description: 'Recognize the boundary between a hard repetition and a changed exercise.',
+    description: 'atlas.technique.effortDescription',
     fields: [
-      { key: 'technical_failure', label: 'Technical failure', icon: '⚠', tone: 'warning' },
-      { key: 'rir_1_indicators', label: 'RIR 1 indicators', icon: '😤', tone: 'effort' },
-      { key: 'rir_0_definition', label: 'RIR 0 definition', icon: '😫', tone: 'danger' },
+      { key: 'technical_failure', label: 'atlas.technique.technicalFailure', icon: '⚠', tone: 'warning' },
+      { key: 'rir_1_indicators', label: 'atlas.technique.rir1', icon: '😤', tone: 'effort' },
+      { key: 'rir_0_definition', label: 'atlas.technique.rir0', icon: '😫', tone: 'danger' },
     ],
   },
   {
     key: 'troubleshooting',
-    label: 'Troubleshooting',
+    label: 'atlas.technique.troubleshooting',
     icon: '🧩',
-    description: 'Common corrections, safety boundaries, and acceptable variation.',
+    description: 'atlas.technique.troubleshootingDescription',
     fields: [
-      { key: 'common_mistakes', label: 'Common mistakes', icon: '⚠', tone: 'warning' },
-      { key: 'safety_notes', label: 'Safety notes', icon: '🛡', tone: 'safety' },
-      { key: 'individualization', label: 'Individualization', icon: '🧬' },
+      { key: 'common_mistakes', label: 'atlas.technique.commonMistakes', icon: '⚠', tone: 'warning' },
+      { key: 'safety_notes', label: 'atlas.technique.safetyNotes', icon: '🛡', tone: 'safety' },
+      { key: 'individualization', label: 'atlas.technique.individualization', icon: '🧬' },
     ],
   },
 ]
@@ -127,14 +129,20 @@ const tldr = computed(() => {
   const extras = Object.keys(record)
     .filter((key) => !known.has(key) && hasContent(record[key]))
     .map((key) => ({ key, label: fallbackLabel(key), icon: '•', tone: 'neutral' as TechniqueTone }))
-  return [...desired, ...extras].map((field) => ({ ...field, value: record[field.key] }))
+  return [...desired, ...extras].map((field) => ({
+    ...field,
+    label: field.label.startsWith('atlas.') ? t(field.label) : field.label,
+    value: record[field.key],
+  }))
 })
 
 const groups = computed(() => TECHNIQUE_GROUPS.map((group) => ({
   ...group,
+  label: t(group.label),
+  description: t(group.description),
   fields: group.fields
     .filter((field) => hasContent(props.data[field.key]))
-    .map((field) => ({ ...field, value: props.data[field.key] })),
+    .map((field) => ({ ...field, label: t(field.label), value: props.data[field.key] })),
 })).filter((group) => group.fields.length))
 
 const extras = computed(() => Object.keys(props.data)
@@ -147,14 +155,14 @@ const empty = computed(() => !tldr.value.length && !groups.value.length && !extr
 <template>
   <section class="technique-guide panel">
     <header>
-      <div><h2>Technique</h2><span>Canonical execution guide</span></div>
-      <span class="chip mono">ordered protocol</span>
+      <div><h2>{{ $t('atlas.technique.title') }}</h2><span>{{ $t('atlas.technique.subtitle') }}</span></div>
+      <span class="chip mono">{{ $t('atlas.technique.protocol') }}</span>
     </header>
 
-    <p v-if="empty" class="honest-empty">Canonical execution instructions have not been authored for this exercise yet.</p>
+    <p v-if="empty" class="honest-empty">{{ $t('atlas.technique.empty') }}</p>
     <div v-else class="technique-guide-body">
       <section v-if="tldr.length" class="technique-tldr">
-        <header><span>⚡</span><div><h3>TL;DR</h3><p>The shortest useful version before you start.</p></div></header>
+        <header><span>⚡</span><div><h3>TL;DR</h3><p>{{ $t('atlas.technique.tldrDescription') }}</p></div></header>
         <div>
           <article v-for="field in tldr" :key="field.key" :class="`tone-${field.tone ?? 'neutral'}`">
             <h4><span aria-hidden="true">{{ field.icon }}</span>{{ field.label }}</h4>
@@ -174,7 +182,7 @@ const empty = computed(() => !tldr.value.length && !groups.value.length && !extr
       </section>
 
       <section v-if="extras.length" class="technique-group">
-        <header><span aria-hidden="true">＋</span><div><h3>Additional notes</h3><p>Further technique fields supplied by the exercise record.</p></div></header>
+        <header><span aria-hidden="true">＋</span><div><h3>{{ $t('atlas.technique.additional') }}</h3><p>{{ $t('atlas.technique.additionalDescription') }}</p></div></header>
         <div class="technique-field-list">
           <article v-for="field in extras" :key="field.key">
             <h4><span aria-hidden="true">{{ field.icon }}</span>{{ field.label }}</h4>

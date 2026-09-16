@@ -45,12 +45,12 @@ const visibleLoadingMode = computed<LoadingMode>({
   <div class="set-editor" :class="[{ invalid: error }, `loading-${effectivePattern[0]}`]">
     <span class="set-number mono">{{ index + 1 }}</span>
     <label>
-      <span>Min reps</span>
+      <span>{{ $t('plans.setEditor.minReps') }}</span>
       <input v-model.number="model.reps.min" type="number" min="1" max="32767" inputmode="numeric" />
     </label>
     <span class="set-range-separator" aria-hidden="true">–</span>
     <label>
-      <span>Max reps</span>
+      <span>{{ $t('plans.setEditor.maxReps') }}</span>
       <input v-model.number="model.reps.max" type="number" min="1" max="32767" inputmode="numeric" />
     </label>
     <label>
@@ -60,7 +60,7 @@ const visibleLoadingMode = computed<LoadingMode>({
       </select>
     </label>
     <div class="set-loading-control">
-      <span class="set-loading-label">Load</span>
+      <span class="set-loading-label">{{ $t('plans.setEditor.load') }}</span>
       <LoadingModePicker v-model="visibleLoadingMode" compact />
       <LoadingCycleEditor
         v-model="model.loading_cycle"
@@ -68,11 +68,11 @@ const visibleLoadingMode = computed<LoadingMode>({
         compact
       />
     </div>
-    <div class="ordered-actions" aria-label="Set actions">
-      <button type="button" :disabled="index === 0" title="Move set up" @click="$emit('move', -1)">↑</button>
-      <button type="button" :disabled="index === count - 1" title="Move set down" @click="$emit('move', 1)">↓</button>
-      <button type="button" title="Duplicate set" @click="$emit('duplicate')">⧉</button>
-      <button class="danger-action" type="button" title="Remove set" @click="$emit('remove')">×</button>
+    <div class="ordered-actions" :aria-label="$t('plans.setEditor.actions')">
+      <button type="button" :disabled="index === 0" :title="$t('plans.setEditor.moveUp')" @click="$emit('move', -1)">↑</button>
+      <button type="button" :disabled="index === count - 1" :title="$t('plans.setEditor.moveDown')" @click="$emit('move', 1)">↓</button>
+      <button type="button" :title="$t('plans.setEditor.duplicate')" @click="$emit('duplicate')">⧉</button>
+      <button class="danger-action" type="button" :title="$t('plans.setEditor.remove')" @click="$emit('remove')">×</button>
     </div>
     <p v-if="error" class="field-error">{{ error }}</p>
   </div>

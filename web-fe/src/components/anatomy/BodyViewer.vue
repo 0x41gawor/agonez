@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { fetchAnatomySource } from '@/api/anatomy'
 import { SVG_TO_DB, heatmapMix, jointStyle, type VisualizationMode } from '@/utils/vectors'
@@ -24,13 +25,14 @@ const props = withDefaults(
     mode: 'etu',
     joints: null,
     tooltipValues: null,
-    tooltipValueLabel: 'Relative intensity',
+    tooltipValueLabel: '',
     tooltipValueUnit: '',
     tooltipValueDigits: 2,
     showJoints: false,
     interactive: true,
   },
 )
+const { t } = useI18n()
 
 const emit = defineEmits<{
   hover: [slug: string | null]
@@ -183,14 +185,15 @@ function showTooltip(group: SVGGElement, event?: MouseEvent): void {
   const slug = SVG_TO_DB[group.id] ?? group.id
   const value = type === 'joint' ? props.joints?.[slug] : props.vector?.[slug]
   const tooltipValue = props.tooltipValues?.[slug]
-  let detail = value == null ? prettyToken(type) : `${prettyToken(type)} · ${(value * 100).toFixed(1)}% relative intensity`
+  const tooltipLabel = props.tooltipValueLabel || t('atlas.anatomy.relativeIntensity')
+  let detail = value == null ? prettyToken(type) : `${prettyToken(type)} · ${(value * 100).toFixed(1)}% ${t('atlas.anatomy.relativeIntensity').toLowerCase()}`
   if (tooltipValue != null) {
     detail =
       props.mode === 'recovery' && tooltipValue <= 0.005
-        ? `${props.tooltipValueLabel} · fresh (0 h)`
+        ? `${tooltipLabel} · ${t('atlas.anatomy.fresh')}`
         : props.mode === 'recovery'
-          ? `${props.tooltipValueLabel} · ${formatNumber(tooltipValue, tooltipValue < 10 ? 1 : 0)} h to fresh`
-          : `${props.tooltipValueLabel} · ${formatNumber(tooltipValue, props.tooltipValueDigits)}${props.tooltipValueUnit ? ` ${props.tooltipValueUnit}` : ''}`
+          ? `${tooltipLabel} · ${t('atlas.anatomy.hoursToFresh', { hours: formatNumber(tooltipValue, tooltipValue < 10 ? 1 : 0) })}`
+          : `${tooltipLabel} · ${formatNumber(tooltipValue, props.tooltipValueDigits)}${props.tooltipValueUnit ? ` ${props.tooltipValueUnit}` : ''}`
   }
   tip.value = {
     visible: true,
@@ -272,10 +275,10 @@ watch(
       <div class="body-skeleton skeleton" />
       <div class="body-skeleton skeleton" />
     </template>
-    <p v-else-if="error" class="anatomy-error">Anatomy unavailable</p>
+    <p v-else-if="error" class="anatomy-error">{{ $t('atlas.anatomy.unavailable') }}</p>
     <template v-else>
-      <div class="body-view"><div ref="front" /><span>FRONT</span></div>
-      <div class="body-view"><div ref="rear" /><span>REAR</span></div>
+      <div class="body-view"><div ref="front" /><span>{{ $t('atlas.anatomy.front') }}</span></div>
+      <div class="body-view"><div ref="rear" /><span>{{ $t('atlas.anatomy.rear') }}</span></div>
     </template>
   </div>
   <div
