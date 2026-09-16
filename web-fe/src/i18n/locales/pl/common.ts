@@ -18,6 +18,11 @@ export default {
     french: 'Français',
     spanish: 'Español',
     german: 'Deutsch',
+    italian: 'Italiano',
+    portugueseBrazil: 'Português (Brasil)',
+    swedish: 'Svenska',
+    dutch: 'Nederlands',
+    ukrainian: 'Українська',
   },
   theme: {
     dark: 'Ciemny',

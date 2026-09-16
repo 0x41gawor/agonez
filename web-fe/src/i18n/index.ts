@@ -1,7 +1,18 @@
 import { nextTick } from 'vue'
 import { createI18n } from 'vue-i18n'
 
-export const SUPPORTED_LOCALES = ['en', 'pl', 'fr', 'es', 'de'] as const
+export const SUPPORTED_LOCALES = [
+  'en',
+  'pl',
+  'fr',
+  'es',
+  'de',
+  'it',
+  'pt-BR',
+  'sv',
+  'nl',
+  'uk',
+] as const
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en'
@@ -13,6 +24,11 @@ const loaders: Record<SupportedLocale, () => Promise<{ default: Record<string, u
   fr: () => import('./locales/fr'),
   es: () => import('./locales/es'),
   de: () => import('./locales/de'),
+  it: () => import('./locales/it'),
+  'pt-BR': () => import('./locales/pt-BR'),
+  sv: () => import('./locales/sv'),
+  nl: () => import('./locales/nl'),
+  uk: () => import('./locales/uk'),
 }
 const loaded = new Set<SupportedLocale>()
 
@@ -27,8 +43,13 @@ export const i18n = createI18n({
 
 export function normalizeLocale(value: string | null | undefined): SupportedLocale | null {
   if (!value) return null
-  const language = value.trim().toLowerCase().split('-')[0]
-  return SUPPORTED_LOCALES.find((locale) => locale === language) ?? null
+  const candidate = value.trim().replace('_', '-').toLowerCase()
+  const exact = SUPPORTED_LOCALES.find((locale) => locale.toLowerCase() === candidate)
+  if (exact) return exact
+
+  const language = candidate.split('-')[0]
+  if (language === 'pt') return 'pt-BR'
+  return SUPPORTED_LOCALES.find((locale) => locale.split('-')[0] === language) ?? null
 }
 
 export function detectInitialLocale(): SupportedLocale {
@@ -52,6 +73,11 @@ export function intlLocale(locale: SupportedLocale = activeLocale()): string {
     fr: 'fr-FR',
     es: 'es-ES',
     de: 'de-DE',
+    it: 'it-IT',
+    'pt-BR': 'pt-BR',
+    sv: 'sv-SE',
+    nl: 'nl-NL',
+    uk: 'uk-UA',
   }[locale]
 }
 

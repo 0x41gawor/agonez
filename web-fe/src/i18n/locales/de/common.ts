@@ -7,6 +7,7 @@ export default {
   locale: {
     label: 'Sprache', changeTo: 'Sprache zu {language} wechseln', english: 'English', polish: 'Polski',
     french: 'Français', spanish: 'Español', german: 'Deutsch',
+    italian: 'Italiano', portugueseBrazil: 'Português (Brasil)', swedish: 'Svenska', dutch: 'Nederlands', ukrainian: 'Українська',
   },
   theme: { dark: 'Dunkel', light: 'Hell', switchTo: 'Zum {theme}en Design wechseln' },
   common: {

@@ -1,15 +1,27 @@
 from typing import Final
 
 DEFAULT_CONTENT_LOCALE: Final = "en"
-SUPPORTED_CONTENT_LOCALES: Final = ("en", "pl", "fr", "es", "de")
+SUPPORTED_CONTENT_LOCALES: Final = ("en", "pl", "fr", "es", "de", "it", "nl", "sv", "pt-BR", "uk")
+
+# "pt-br" -> "pt-BR", "en" -> "en", ...
+_LOCALE_BY_TAG: Final = {locale.lower(): locale for locale in SUPPORTED_CONTENT_LOCALES}
+# "pt" -> "pt-BR", "en" -> "en", ...
+_LOCALE_BY_LANGUAGE: Final = {
+    locale.split("-", 1)[0].lower(): locale for locale in SUPPORTED_CONTENT_LOCALES
+}
 
 
 def normalize_content_locale(value: str | None) -> str | None:
-    """Reduce a language tag to a supported base locale."""
+    """Map a language tag to a supported locale, preferring an exact match."""
     if not value:
         return None
-    language = value.strip().lower().replace("_", "-").split("-", 1)[0]
-    return language if language in SUPPORTED_CONTENT_LOCALES else None
+    tag = value.strip().lower().replace("_", "-")
+    if not tag:
+        return None
+    exact = _LOCALE_BY_TAG.get(tag)
+    if exact is not None:
+        return exact
+    return _LOCALE_BY_LANGUAGE.get(tag.split("-", 1)[0])
 
 
 def negotiate_content_locale(accept_language: str | None) -> str:
