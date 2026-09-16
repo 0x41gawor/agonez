@@ -41,11 +41,12 @@ The Atlas HTTP layer depends on an Atlas service, which depends on an Atlas repo
 
 1. Implement `/api/atlas/exercises` with repeatable filters, validated sorting, pagination, facets, engine-vector presence, and slug-based image URLs.
 2. Implement `/api/atlas/exercises/{slug}` with the core vector and the optional engine vector bundle. Preserve the distinction between `null` (not evaluated) and `{}` (evaluated but empty).
-3. Implement `/api/atlas/muscles` with repeatable filters, sorting, pagination, facets, display names, and image URLs.
-4. Implement `/api/atlas/muscles/{slug}` with all morphology, architecture, programming, article/video, gallery, and image fields.
-5. Implement related exercises from measured `engine.exercises.etu_vector` entries, followed by conservative target-category fallbacks.
-6. Implement `/api/atlas/meta`, `/health/live`, and `/health/ready`.
-7. Mount media at `/media`, expose `media/anatomy.svg` at `/assets/anatomy.svg`, and
+3. [x] Negotiate `Accept-Language` for Atlas reads and overlay published exercise and muscle translations with field-level canonical fallbacks.
+4. Implement `/api/atlas/muscles` with repeatable filters, sorting, pagination, facets, display names, and image URLs.
+5. Implement `/api/atlas/muscles/{slug}` with all morphology, architecture, programming, article/video, gallery, and image fields.
+6. Implement related exercises from measured `engine.exercises.etu_vector` entries, followed by conservative target-category fallbacks.
+7. Implement `/api/atlas/meta`, `/health/live`, and `/health/ready`.
+8. Mount media at `/media`, expose `media/anatomy.svg` at `/assets/anatomy.svg`, and
    return `null` for absent files; never advertise broken URLs.
 
 ## Configuration and deployment

@@ -59,6 +59,7 @@ class AtlasService:
         order: str,
         page: int,
         per_page: int,
+        locale: str = "en",
     ) -> ExerciseListResponse:
         rows, summary = await self._repository.list_exercises(
             q=q,
@@ -70,6 +71,7 @@ class AtlasService:
             order=order,
             limit=per_page,
             offset=(page - 1) * per_page,
+            locale=locale,
         )
         items = [
             ExerciseListItem(
@@ -91,8 +93,8 @@ class AtlasService:
             ),
         )
 
-    async def get_exercise(self, slug: str) -> ExerciseDetail:
-        row = await self._repository.get_exercise(slug)
+    async def get_exercise(self, slug: str, *, locale: str = "en") -> ExerciseDetail:
+        row = await self._repository.get_exercise(slug, locale=locale)
         if row is None:
             raise AtlasEntityNotFoundError("exercise", slug)
         engine = None
@@ -134,8 +136,8 @@ class AtlasService:
             engine=engine,
         )
 
-    async def list_exercise_catalog(self) -> ExerciseCatalogResponse:
-        rows = await self._repository.list_exercise_catalog()
+    async def list_exercise_catalog(self, *, locale: str = "en") -> ExerciseCatalogResponse:
+        rows = await self._repository.list_exercise_catalog(locale=locale)
         items = [
             ExerciseCatalogItem(
                 **row,
@@ -173,6 +175,7 @@ class AtlasService:
         order: str,
         page: int,
         per_page: int,
+        locale: str = "en",
     ) -> MuscleListResponse:
         rows, summary = await self._repository.list_muscles(
             q=q,
@@ -182,11 +185,11 @@ class AtlasService:
             order=order,
             limit=per_page,
             offset=(page - 1) * per_page,
+            locale=locale,
         )
         items = [
             MuscleListItem(
                 **row,
-                display_name=self.display_name(row["slug"]),
                 image_url=self._media.image_url("muscles", row["slug"]),
             )
             for row in rows
@@ -202,13 +205,12 @@ class AtlasService:
             ),
         )
 
-    async def get_muscle(self, slug: str) -> MuscleDetail:
-        row = await self._repository.get_muscle(slug)
+    async def get_muscle(self, slug: str, *, locale: str = "en") -> MuscleDetail:
+        row = await self._repository.get_muscle(slug, locale=locale)
         if row is None:
             raise AtlasEntityNotFoundError("muscle", slug)
         payload = {
             **row,
-            "display_name": self.display_name(row["slug"]),
             "article_links": list(row["article_links"] or []),
             "video_links": list(row["video_links"] or []),
             "image_url": self._media.image_url("muscles", row["slug"]),
@@ -222,14 +224,16 @@ class AtlasService:
         muscle_slug: str,
         limit: int,
         sort: Literal["etu", "name"],
+        locale: str = "en",
     ) -> RelatedExerciseResponse:
-        muscle = await self._repository.get_muscle(muscle_slug)
+        muscle = await self._repository.get_muscle(muscle_slug, locale=locale)
         if muscle is None:
             raise AtlasEntityNotFoundError("muscle", muscle_slug)
 
         capacity = self._as_positive_float(muscle["pcsa_projected_fcsa_cm2"])
         measured_rows = await self._repository.measured_related_exercises(
-            muscle_slug=muscle_slug
+            muscle_slug=muscle_slug,
+            locale=locale,
         )
         measured = [self._measured_relation(row, capacity) for row in measured_rows]
         measured_slugs = [item.slug for item in measured]
@@ -237,6 +241,7 @@ class AtlasService:
         fallback_rows = await self._repository.fallback_related_exercises(
             target_categories=TARGET_CATEGORIES_BY_COMPLEX.get(muscle["complex"], ()),
             excluded_slugs=measured_slugs,
+            locale=locale,
         )
         fallback = [self._fallback_relation(row) for row in fallback_rows]
 
@@ -261,10 +266,6 @@ class AtlasService:
                 muscles=row["muscle_count"],
             ),
         )
-
-    @staticmethod
-    def display_name(slug: str) -> str:
-        return slug.replace("_", " ").capitalize()
 
     @staticmethod
     def _as_positive_float(value: Any) -> float | None:

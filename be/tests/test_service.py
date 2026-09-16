@@ -45,7 +45,13 @@ class FakeRepository:
             },
         )
 
-    async def get_muscle(self, slug: str) -> dict[str, Any] | None:
+    async def get_muscle(
+        self,
+        slug: str,
+        *,
+        locale: str = "en",
+    ) -> dict[str, Any] | None:
+        del locale
         if slug == "missing":
             return None
         return {
@@ -54,7 +60,8 @@ class FakeRepository:
             "pcsa_projected_fcsa_cm2": 40.0,
         }
 
-    async def list_exercise_catalog(self) -> list[dict[str, Any]]:
+    async def list_exercise_catalog(self, *, locale: str = "en") -> list[dict[str, Any]]:
+        del locale
         return [
             {
                 "slug": "dragon_flag",
@@ -72,7 +79,13 @@ class FakeRepository:
             }
         ]
 
-    async def get_exercise(self, slug: str) -> dict[str, Any] | None:
+    async def get_exercise(
+        self,
+        slug: str,
+        *,
+        locale: str = "en",
+    ) -> dict[str, Any] | None:
+        del locale
         if slug == "missing":
             return None
         return {"slug": slug, "video_links": list(self.video_links)}
@@ -83,8 +96,13 @@ class FakeRepository:
         self.video_links = [*self.video_links, url]
         return {"video_links": list(self.video_links)}
 
-    async def measured_related_exercises(self, *, muscle_slug: str) -> list[dict[str, Any]]:
-        del muscle_slug
+    async def measured_related_exercises(
+        self,
+        *,
+        muscle_slug: str,
+        locale: str = "en",
+    ) -> list[dict[str, Any]]:
+        del muscle_slug, locale
         return [
             {
                 "slug": "neutral_grip_lat_pulldown",

@@ -2,6 +2,22 @@
 
 Derived from the UI as built. All list endpoints support the browsing controls the UI exposes; all field names mirror the `core` / `engine` schemas so the backend can map rows 1:1.
 
+## Localization
+
+Atlas GET endpoints accept `Accept-Language`. Supported base locales are `en`, `pl`,
+`fr`, `es`, and `de`; regional tags and weighted language lists are negotiated to the
+best supported locale. Exercise `name`, `name_full`, `technique`, and `comments` are
+resolved from a published `core.exercise_translations` row. Muscle `display_name` and
+`bible_markdown` are resolved from `core.muscle_translations`.
+
+Fallback is field-by-field, not row-by-row: a translated exercise name can be returned
+alongside canonical technique when technique has not been translated yet. Missing or
+unpublished translations fall back to `core.exercises` / `core.muscles`. Stable IDs,
+slugs, enum values, metrics, media URLs, and relationship keys are never translated.
+Localized names are used by name sorting and free-text search; canonical names and
+slugs remain searchable. Responses declare `Content-Language` and
+`Vary: Accept-Language`.
+
 ---
 
 ## 1. GET /api/atlas/exercises

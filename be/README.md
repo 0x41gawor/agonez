@@ -41,6 +41,13 @@ Repeat a filter key to select several values, for example:
 
 Pagination defaults to `page=1&per_page=50` and permits at most 100 rows per page.
 
+Atlas read endpoints negotiate localized exercise and muscle content from the
+`Accept-Language` header. Supported base locales are `en`, `pl`, `fr`, `es`, and
+`de`; regional tags such as `fr-CA` are reduced to their supported base locale.
+Localized fields fall back independently to their canonical `core.exercises` or
+`core.muscles` value. Exercise translations must have `status = 'published'` to be
+served. Responses include `Content-Language` and `Vary: Accept-Language`.
+
 ## Configuration
 
 `NOME`, `AGANDSKODE`, `MINA`, and `MAMMOONE` are required exported environment

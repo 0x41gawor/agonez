@@ -1,7 +1,8 @@
 from typing import Annotated, Literal, cast
 
-from fastapi import APIRouter, Depends, Path, Query, Request, status
+from fastapi import APIRouter, Depends, Header, Path, Query, Request, Response, status
 
+from agonez_api.core.localization import negotiate_content_locale
 from agonez_api.modules.atlas.schemas import (
     AtlasMeta,
     ExerciseCatalogResponse,
@@ -29,9 +30,23 @@ def get_atlas_service(request: Request) -> AtlasService:
 AtlasServiceDependency = Annotated[AtlasService, Depends(get_atlas_service)]
 
 
+def get_content_locale(
+    response: Response,
+    accept_language: Annotated[str | None, Header(alias="Accept-Language")] = None,
+) -> str:
+    locale = negotiate_content_locale(accept_language)
+    response.headers["Content-Language"] = locale
+    response.headers["Vary"] = "Accept-Language"
+    return locale
+
+
+ContentLocaleDependency = Annotated[str, Depends(get_content_locale)]
+
+
 @router.get("/exercises", response_model=ExerciseListResponse)
 async def list_exercises(
     service: AtlasServiceDependency,
+    locale: ContentLocaleDependency,
     q: Annotated[str | None, Query(min_length=1, max_length=255)] = None,
     body_part: Annotated[list[str] | None, Query()] = None,
     target_category: Annotated[list[str] | None, Query()] = None,
@@ -59,19 +74,25 @@ async def list_exercises(
         order=order,
         page=page,
         per_page=per_page,
+        locale=locale,
     )
 
 
 @router.get("/exercises/catalog", response_model=ExerciseCatalogResponse)
 async def list_exercise_catalog(
     service: AtlasServiceDependency,
+    locale: ContentLocaleDependency,
 ) -> ExerciseCatalogResponse:
-    return await service.list_exercise_catalog()
+    return await service.list_exercise_catalog(locale=locale)
 
 
 @router.get("/exercises/{slug}", response_model=ExerciseDetail)
-async def get_exercise(slug: Slug, service: AtlasServiceDependency) -> ExerciseDetail:
-    return await service.get_exercise(slug)
+async def get_exercise(
+    slug: Slug,
+    service: AtlasServiceDependency,
+    locale: ContentLocaleDependency,
+) -> ExerciseDetail:
+    return await service.get_exercise(slug, locale=locale)
 
 
 @router.post(
@@ -90,6 +111,7 @@ async def add_exercise_video(
 @router.get("/muscles", response_model=MuscleListResponse)
 async def list_muscles(
     service: AtlasServiceDependency,
+    locale: ContentLocaleDependency,
     q: Annotated[str | None, Query(min_length=1, max_length=255)] = None,
     body_part: Annotated[list[str] | None, Query()] = None,
     complex: Annotated[list[str] | None, Query()] = None,
@@ -113,6 +135,7 @@ async def list_muscles(
         order=order,
         page=page,
         per_page=per_page,
+        locale=locale,
     )
 
 
@@ -120,15 +143,25 @@ async def list_muscles(
 async def get_related_exercises(
     slug: Slug,
     service: AtlasServiceDependency,
+    locale: ContentLocaleDependency,
     limit: Annotated[int, Query(ge=1, le=50)] = 8,
     sort: Literal["etu", "name"] = "etu",
 ) -> RelatedExerciseResponse:
-    return await service.related_exercises(muscle_slug=slug, limit=limit, sort=sort)
+    return await service.related_exercises(
+        muscle_slug=slug,
+        limit=limit,
+        sort=sort,
+        locale=locale,
+    )
 
 
 @router.get("/muscles/{slug}", response_model=MuscleDetail)
-async def get_muscle(slug: Slug, service: AtlasServiceDependency) -> MuscleDetail:
-    return await service.get_muscle(slug)
+async def get_muscle(
+    slug: Slug,
+    service: AtlasServiceDependency,
+    locale: ContentLocaleDependency,
+) -> MuscleDetail:
+    return await service.get_muscle(slug, locale=locale)
 
 
 @router.get("/meta", response_model=AtlasMeta)

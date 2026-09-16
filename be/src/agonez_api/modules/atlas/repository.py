@@ -6,8 +6,8 @@ from agonez_api.core.database import DatabasePool
 Row = dict[str, Any]
 
 EXERCISE_SORTS = {
-    "name": "LOWER(e.name)",
-    "name_full": "LOWER(e.name_full)",
+    "name": "LOWER(COALESCE(et.name, e.name))",
+    "name_full": "LOWER(COALESCE(et.name_full, e.name_full))",
     "load_capacity": "eng.load_capacity_kg",
     "systemic_propulsive_fcsa_demand": "eng.systemic_propulsive_fcsa_demand",
     "created_at": "e.created_at",
@@ -15,7 +15,7 @@ EXERCISE_SORTS = {
 }
 
 MUSCLE_SORTS = {
-    "name": "LOWER(m.name)",
+    "name": "LOWER(COALESCE(mt.display_name, m.name))",
     "mass_g": "m.mass_g",
     "mv_cm3": "m.mv_cm3",
     "fiber_bias_type_ii": "m.fiber_bias_type_ii",
@@ -43,6 +43,7 @@ class AtlasRepository:
         order: str,
         limit: int,
         offset: int,
+        locale: str = "en",
     ) -> tuple[list[Row], Row]:
         where_sql, params = self._exercise_where(
             q=q,
@@ -56,8 +57,8 @@ class AtlasRepository:
         items_sql = f"""
             SELECT
                 e.slug,
-                e.name,
-                e.name_full,
+                COALESCE(et.name, e.name) AS name,
+                COALESCE(et.name_full, e.name_full) AS name_full,
                 e.body_part::text AS body_part,
                 e.target_category::text AS target_category,
                 e.mechanics_tier::text AS mechanics_tier,
@@ -78,12 +79,16 @@ class AtlasRepository:
                     )
                 ) AS has_engine_vectors
             FROM core.exercises AS e
+            LEFT JOIN core.exercise_translations AS et
+                ON et.exercise_id = e.id
+                AND et.locale = %s
+                AND et.status = 'published'
             LEFT JOIN engine.exercises AS eng ON eng.slug = e.slug
             {where_sql}
             ORDER BY {sort_expression} {direction} NULLS LAST, e.slug ASC
             LIMIT %s OFFSET %s
         """
-        items = await self._fetch_all(items_sql, (*params, limit, offset))
+        items = await self._fetch_all(items_sql, (locale, *params, limit, offset))
 
         summary_sql = f"""
             WITH filtered AS (
@@ -93,6 +98,10 @@ class AtlasRepository:
                     e.mechanics_tier::text AS mechanics_tier,
                     e.resistance_source::text AS resistance_source
                 FROM core.exercises AS e
+                LEFT JOIN core.exercise_translations AS et
+                    ON et.exercise_id = e.id
+                    AND et.locale = %s
+                    AND et.status = 'published'
                 {where_sql}
             )
             SELECT
@@ -126,16 +135,16 @@ class AtlasRepository:
                     ) AS counts
                 ), '{{}}'::jsonb) AS resistance_source
         """
-        summary = await self._fetch_one(summary_sql, params)
+        summary = await self._fetch_one(summary_sql, (locale, *params))
         return items, summary
 
-    async def get_exercise(self, slug: str) -> Row | None:
+    async def get_exercise(self, slug: str, *, locale: str = "en") -> Row | None:
         return await self._fetch_optional(
             """
             SELECT
                 e.slug,
-                e.name,
-                e.name_full,
+                COALESCE(et.name, e.name) AS name,
+                COALESCE(et.name_full, e.name_full) AS name_full,
                 e.body_part::text AS body_part,
                 e.target_category::text AS target_category,
                 e.mechanics_tier::text AS mechanics_tier,
@@ -147,8 +156,8 @@ class AtlasRepository:
                 eng.load_capacity_kg AS load_capacity,
                 eng.systemic_propulsive_fcsa_demand,
                 eng.propulsive_fcsa_contribution_vector,
-                e.technique,
-                e.comments,
+                COALESCE(et.technique, e.technique) AS technique,
+                COALESCE(et.comments, e.comments) AS comments,
                 e.video_links,
                 eng.slug AS engine_slug,
                 eng.propulsive_fcsa_contribution_vector AS engine_propulsive_vector,
@@ -157,28 +166,37 @@ class AtlasRepository:
                 eng.muscle_recovery_cost_modifier_vector AS engine_recovery_modifier_vector,
                 eng.joint_load_exposure_vector AS engine_joint_load_vector
             FROM core.exercises AS e
+            LEFT JOIN core.exercise_translations AS et
+                ON et.exercise_id = e.id
+                AND et.locale = %s
+                AND et.status = 'published'
             LEFT JOIN engine.exercises AS eng ON eng.slug = e.slug
             WHERE e.slug = %s
             """,
-            (slug,),
+            (locale, slug),
         )
 
-    async def list_exercise_catalog(self) -> list[Row]:
+    async def list_exercise_catalog(self, *, locale: str = "en") -> list[Row]:
         return await self._fetch_all(
             """
             SELECT
                 e.slug,
-                e.name,
-                e.name_full,
+                COALESCE(et.name, e.name) AS name,
+                COALESCE(et.name_full, e.name_full) AS name_full,
                 e.target_category::text AS target_category,
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
                 eng.systemic_propulsive_fcsa_demand,
                 e.recommended_rep_profile
             FROM core.exercises AS e
+            LEFT JOIN core.exercise_translations AS et
+                ON et.exercise_id = e.id
+                AND et.locale = %s
+                AND et.status = 'published'
             LEFT JOIN engine.exercises AS eng ON eng.slug = e.slug
-            ORDER BY LOWER(e.name_full) ASC, e.slug ASC
-            """
+            ORDER BY LOWER(COALESCE(et.name_full, e.name_full)) ASC, e.slug ASC
+            """,
+            (locale,),
         )
 
     async def add_exercise_video(self, *, slug: str, url: str) -> Row | None:
@@ -209,6 +227,7 @@ class AtlasRepository:
         order: str,
         limit: int,
         offset: int,
+        locale: str = "en",
     ) -> tuple[list[Row], Row]:
         where_sql, params = self._muscle_where(
             q=q,
@@ -221,6 +240,7 @@ class AtlasRepository:
             SELECT
                 m.slug,
                 m.name,
+                COALESCE(mt.display_name, m.name) AS display_name,
                 m.body_part::text AS body_part,
                 m.complex::text AS complex,
                 m.mass_g,
@@ -229,16 +249,20 @@ class AtlasRepository:
                 m.fiber_bias_type_ii,
                 m.pcsa_projected_fcsa_cm2
             FROM core.muscles AS m
+            LEFT JOIN core.muscle_translations AS mt
+                ON mt.muscle_id = m.id AND mt.locale = %s
             {where_sql}
             ORDER BY {sort_expression} {direction} NULLS LAST, m.slug ASC
             LIMIT %s OFFSET %s
         """
-        items = await self._fetch_all(items_sql, (*params, limit, offset))
+        items = await self._fetch_all(items_sql, (locale, *params, limit, offset))
 
         summary_sql = f"""
             WITH filtered AS (
                 SELECT m.body_part::text AS body_part, m.complex::text AS complex
                 FROM core.muscles AS m
+                LEFT JOIN core.muscle_translations AS mt
+                    ON mt.muscle_id = m.id AND mt.locale = %s
                 {where_sql}
             )
             SELECT
@@ -258,15 +282,16 @@ class AtlasRepository:
                     ) AS counts
                 ), '{{}}'::jsonb) AS complex
         """
-        summary = await self._fetch_one(summary_sql, params)
+        summary = await self._fetch_one(summary_sql, (locale, *params))
         return items, summary
 
-    async def get_muscle(self, slug: str) -> Row | None:
+    async def get_muscle(self, slug: str, *, locale: str = "en") -> Row | None:
         return await self._fetch_optional(
             """
             SELECT
                 m.slug,
                 m.name,
+                COALESCE(mt.display_name, m.name) AS display_name,
                 m.body_part::text AS body_part,
                 m.complex::text AS complex,
                 m.mass_g,
@@ -284,35 +309,42 @@ class AtlasRepository:
                 m.smh_factor::text AS smh_factor,
                 m.strength_curve::text AS strength_curve,
                 m.leverage_peak::text AS leverage_peak,
-                m.bible_markdown,
+                COALESCE(mt.bible_markdown, m.bible_markdown) AS bible_markdown,
                 m.article_links,
                 m.video_links
             FROM core.muscles AS m
+            LEFT JOIN core.muscle_translations AS mt
+                ON mt.muscle_id = m.id AND mt.locale = %s
             WHERE m.slug = %s
             """,
-            (slug,),
+            (locale, slug),
         )
 
     async def measured_related_exercises(
         self,
         *,
         muscle_slug: str,
+        locale: str = "en",
     ) -> list[Row]:
         return await self._fetch_all(
             """
             SELECT
                 e.slug,
-                e.name,
-                e.name_full,
+                COALESCE(et.name, e.name) AS name,
+                COALESCE(et.name_full, e.name_full) AS name_full,
                 e.target_category::text AS target_category,
                 e.mechanics_tier::text AS mechanics_tier,
                 (eng.etu_vector ->> %s)::double precision AS etu_cm2
             FROM engine.exercises AS eng
             JOIN core.exercises AS e ON e.slug = eng.slug
+            LEFT JOIN core.exercise_translations AS et
+                ON et.exercise_id = e.id
+                AND et.locale = %s
+                AND et.status = 'published'
             WHERE eng.etu_vector ? %s
               AND jsonb_typeof(eng.etu_vector -> %s) = 'number'
             """,
-            (muscle_slug, muscle_slug, muscle_slug),
+            (muscle_slug, locale, muscle_slug, muscle_slug),
         )
 
     async def fallback_related_exercises(
@@ -320,10 +352,11 @@ class AtlasRepository:
         *,
         target_categories: Sequence[str],
         excluded_slugs: Sequence[str],
+        locale: str = "en",
     ) -> list[Row]:
         if not target_categories:
             return []
-        params: list[Any] = [list(target_categories)]
+        params: list[Any] = [locale, list(target_categories)]
         excluded_sql = ""
         if excluded_slugs:
             excluded_sql = "AND NOT (e.slug = ANY(%s))"
@@ -332,11 +365,15 @@ class AtlasRepository:
             f"""
             SELECT
                 e.slug,
-                e.name,
-                e.name_full,
+                COALESCE(et.name, e.name) AS name,
+                COALESCE(et.name_full, e.name_full) AS name_full,
                 e.target_category::text AS target_category,
                 e.mechanics_tier::text AS mechanics_tier
             FROM core.exercises AS e
+            LEFT JOIN core.exercise_translations AS et
+                ON et.exercise_id = e.id
+                AND et.locale = %s
+                AND et.status = 'published'
             WHERE e.target_category::text = ANY(%s)
             {excluded_sql}
             """,
@@ -379,7 +416,10 @@ class AtlasRepository:
         clauses: list[str] = []
         params: list[Any] = []
         if q:
-            clauses.append("CONCAT_WS(' ', e.name, e.name_full, e.slug) ILIKE %s")
+            clauses.append(
+                "CONCAT_WS(' ', COALESCE(et.name, e.name), "
+                "COALESCE(et.name_full, e.name_full), e.name, e.name_full, e.slug) ILIKE %s"
+            )
             params.append(f"%{q}%")
         for column, values in (
             ("e.body_part", body_parts),
@@ -402,7 +442,9 @@ class AtlasRepository:
         clauses: list[str] = []
         params: list[Any] = []
         if q:
-            clauses.append("CONCAT_WS(' ', m.name, m.slug) ILIKE %s")
+            clauses.append(
+                "CONCAT_WS(' ', COALESCE(mt.display_name, m.name), m.name, m.slug) ILIKE %s"
+            )
             params.append(f"%{q}%")
         if body_parts:
             clauses.append("m.body_part::text = ANY(%s)")

@@ -39,6 +39,7 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
         parameter["name"] for parameter in paths["/api/atlas/exercises"]["get"]["parameters"]
     }
     assert {
+        "Accept-Language",
         "q",
         "body_part",
         "target_category",
