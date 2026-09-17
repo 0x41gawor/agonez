@@ -27,16 +27,16 @@ a newer server revision after a `409 Conflict`.
 ## Architecture
 
 - Vue 3 + TypeScript + Vite
-- Vue I18n with lazy English, Polish, French, Spanish, and German domain bundles and locale-aware formatting
+- Vue I18n with lazy English, Polish, French, Spanish, German, Italian, Brazilian Portuguese, Swedish, Dutch, and Ukrainian domain bundles and locale-aware formatting
 - Vue Router for Atlas, My Plans, and PlanCreator routes
 - Pinia for Atlas metadata, per-index browse state, hover state, and muscle capacities
 - Focused API, anatomy, index, detail, and shell components
 - Nginx production image with SPA fallback and a same-origin reverse proxy
 
 The header language selector translates application-owned UI immediately and sends
-the selected locale as `Accept-Language` on API requests. Atlas content remains
-canonical until backend translation tables are connected. The design and backend
-handoff contract are documented in `docs/frontend-localization.md`.
+the selected locale as `Accept-Language` on API requests. The backend resolves
+localized Atlas exercise and muscle fields with a canonical-content fallback. The
+localization contract is documented in `docs/frontend-localization.md`.
 
 The design source bundle and implementation handoffs are preserved in
 `docs/reference/`. They are reference material only; production code has no mock-data

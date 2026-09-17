@@ -6,7 +6,7 @@ export default {
       malformed: 'Dati del motore non validi',
       joints: {
         acromioclavicular_joint: 'Articolazione acromioclavicolare', cervical_spine: 'Colonna cervicale', elbow_joint: 'Articolazione del gomito',
-        glenohumeral_joint: 'Articolazione glenomerale', hip_joint: 'Articolazione dell’anca', lumbar_spine: 'Colonna lombare',
+        glenohumeral_joint: 'Articolazione gleno-omerale', hip_joint: 'Articolazione dell’anca', lumbar_spine: 'Colonna lombare',
         patellofemoral_joint: 'Articolazione femoro-rotulea', radiocarpal_joint: 'Articolazione radiocarpica',
         scapulothoracic_articulation: 'Articolazione scapolo-toracica', talocrural_joint: 'Articolazione tibio-tarsica', tibiofemoral_joint: 'Articolazione femoro-tibiale',
       },

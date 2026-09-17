@@ -37,7 +37,7 @@ export default {
       definition: 'Definizione del piano', identity: 'Identità del microciclo', revision: 'Bozza r{revision} · v{version}',
       planName: 'Nome del piano', description: 'Descrizione', descriptionPlaceholder: 'Obiettivo di allenamento e contesto del piano',
       orderedMicrocycle: 'Microciclo ordinato', trainingDays: 'Giorni di allenamento: {count}', startStructure: 'Inizia la struttura del piano',
-      daysHelp: 'Ogni giorno può contenere una unità di allenamento o restare un giorno di riposo esplicito.',
+      daysHelp: 'Ogni giorno può contenere un’unità di allenamento o restare un giorno di riposo esplicito.',
       addDay: '+ Aggiungi giorno di allenamento', emptyDaysTitle: 'Il tuo piano non ha ancora giorni',
       emptyDaysMessage: 'Aggiungi un giorno di allenamento, poi decidi se contiene un allenamento o serve al recupero.', addTrainingDay: 'Aggiungi giorno di allenamento',
       defaultDay: 'Giorno {number}', defaultDayRoot: 'Giorno', trainingSession: 'Sessione di allenamento', copySuffix: ' copia',

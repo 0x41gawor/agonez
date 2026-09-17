@@ -31,7 +31,12 @@ describe('frontend locale runtime', () => {
     expect(normalizeLocale('fr-CA')).toBe('fr')
     expect(normalizeLocale('es-MX')).toBe('es')
     expect(normalizeLocale('de-DE')).toBe('de')
-    expect(normalizeLocale('it-IT')).toBeNull()
+    expect(normalizeLocale('it-IT')).toBe('it')
+    expect(normalizeLocale('pt-PT')).toBe('pt-BR')
+    expect(normalizeLocale('sv-SE')).toBe('sv')
+    expect(normalizeLocale('nl-BE')).toBe('nl')
+    expect(normalizeLocale('uk-UA')).toBe('uk')
+    expect(normalizeLocale('ja-JP')).toBeNull()
   })
 
   it('keeps every locale bundle structurally complete against English', async () => {
@@ -47,6 +52,11 @@ describe('frontend locale runtime', () => {
     ['fr', 'fr-FR'],
     ['es', 'es-ES'],
     ['de', 'de-DE'],
+    ['it', 'it-IT'],
+    ['pt-BR', 'pt-BR'],
+    ['sv', 'sv-SE'],
+    ['nl', 'nl-NL'],
+    ['uk', 'uk-UA'],
   ] as const)('activates %s with its regional formatting locale', async (locale, expectedIntl) => {
     await setActiveLocale(locale, { persist: false })
 

@@ -41,7 +41,7 @@ export default {
       savePlan: 'PLAN opslaan', reviewPlan: 'PLAN bekijken', refresh: 'Analyse vernieuwen', recoveryModel: 'Herstelmodel',
       converged: 'Stabiele toestand bereikt', divergent: 'Herstelschuld divergeert',
       divergenceHelp: 'Herhaalde microcycli zijn onder {version} niet gestabiliseerd. Dit is een modeldiagnose, geen fysiologische diagnose.',
-      convergedHelp: 'De periodieke hersteltoestand is geconvergeerd. Gesimuleerde cycli: {count}.', overview: 'Overzicht van de planalyse',
+      convergedHelp: 'De periodieke hersteltoestand is geconvergeerd. Gesimuleerde cycli: {count}.', overview: 'Overzicht van de plananalyse',
       weeklyEtu: 'ETU / 7 dagen', cycleEtu: 'ETU van de microcyclus', normalizedFrom: 'genormaliseerd vanuit {count} d', dayAggregate: 'som over {count} d',
       stimulated: 'Geprikkelde spieren', nonZero: 'ETU groter dan nul', musclesNotFresh: 'Niet-herstelde spieren', jointsNotFresh: 'Niet-herstelde gewrichten',
       beforeWorkout: 'vóór ≥1 training', simulation: 'Simulatie', cycles: 'beoordeelde cycli',

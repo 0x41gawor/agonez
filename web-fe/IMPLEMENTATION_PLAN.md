@@ -170,7 +170,7 @@ as a compact intent map. The updated suite passes 35 tests.
 
 ## Frontend localization foundation (2026-09-16)
 
-- [x] Add Vue I18n with lazy English, Polish, French, Spanish, and German domain bundles and English fallback.
+- [x] Add Vue I18n with lazy English, Polish, French, Spanish, German, Italian, Brazilian Portuguese, Swedish, Dutch, and Ukrainian domain bundles and English fallback.
 - [x] Add a persisted, accessible header language selector and update document
   language metadata.
 - [x] Migrate shell, Atlas, PlanCreator editor/import/export/guidance, and Analysis UI
