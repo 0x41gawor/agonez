@@ -1,0 +1,172 @@
+{
+  "model_version": "plan-analysis-v2",
+  "plan_id": 21,
+  "revision_id": 21,
+  "revision_no": 1,
+  "lock_version": 3,
+  "resolution_context": {
+    "global_volume_level": 0,
+    "focus_area": null,
+    "axis_overrides": {"upper": 1}
+  },
+  "timing_assumptions": [
+    {
+      "day_id": 81,
+      "day_ordinal": 0,
+      "timing_source": "MICROCYCLE_ORDINAL",
+      "hour_offset": 0.0,
+      "detail": "Microcycle day 1 fixes this boundary at hour 0. Saved weekday 1 is display metadata only."
+    },
+    {
+      "day_id": 82,
+      "day_ordinal": 1,
+      "timing_source": "MICROCYCLE_ORDINAL",
+      "hour_offset": 24.0,
+      "detail": "Microcycle day 2 fixes this boundary at hour 24. Saved weekday 2 is display metadata only."
+    }
+  ],
+  "model_parameters": {
+    "microcycle_days": 2,
+    "microcycle_hours": 48.0,
+    "microcycle_weeks": 0.2857142857,
+    "weekly_normalization_factor": 3.5,
+    "effective_reps_by_rir": {"0": 5.0, "1": 4.0, "2": 3.0, "3": 2.0, "4": 1.0},
+    "rir_recovery_multiplier": {"0": 1.15, "1": 1.05, "2": 1.0, "3": 1.0, "4": 1.0},
+    "cumulative_set_penalty_step": 0.05,
+    "cumulative_set_penalty_cap": 1.3,
+    "meaningful_contribution_epsilon": 1e-09,
+    "recovery_convergence_epsilon_hours": 1e-06,
+    "recovery_max_cycles": 256,
+    "muscle_recovery_velocity_v1": 0.7,
+    "joint_recovery_velocity_v1": 1.05
+  },
+  "recovery_converged": true,
+  "simulation_cycles": 1,
+  "plan_summary": {
+    "total_etu_scalar": 75.0,
+    "weekly_etu_scalar": 262.5,
+    "muscles": [
+      {
+        "slug": "pectoralis_major_sternal",
+        "fcsa_cm2": 53.48,
+        "total_etu": 75.0,
+        "weekly_etu": 262.5,
+        "etu_per_fcsa_cm2": 1.4023934181,
+        "weekly_etu_per_fcsa_cm2": 4.9083769634,
+        "intentional_etu": 75.0,
+        "weekly_intentional_etu": 262.5,
+        "incidental_etu": 0.0,
+        "weekly_incidental_etu": 0.0,
+        "unclassified_etu": 0.0,
+        "weekly_unclassified_etu": 0.0,
+        "total_mru": 94.5,
+        "maximum_post_workout_hours_to_fresh": 2.5241692475,
+        "worst_pre_workout_hours_to_fresh": 0.0,
+        "recovery_converged": true
+      }
+    ],
+    "joints": [
+      {
+        "slug": "glenohumeral_joint",
+        "total_joint_load_exposure": 0.9,
+        "total_jru": 0.9,
+        "maximum_post_workout_hours_to_fresh": 0.8571428571,
+        "worst_pre_workout_hours_to_fresh": 0.0,
+        "recovery_converged": true
+      }
+    ]
+  },
+  "timeline": [
+    {
+      "day_id": 81,
+      "day_ordinal": 0,
+      "day_name": "Upper A",
+      "weekday": 1,
+      "hour_offset": 0.0,
+      "elapsed_hours_since_previous_entry": 24.0,
+      "workout": {
+        "workout_unit_id": 55,
+        "name": "Upper A workout",
+        "stimulus": {
+          "total_etu_scalar": 75.0,
+          "muscles": [
+            {
+              "slug": "pectoralis_major_sternal",
+              "etu_absolute": 75.0,
+              "mru": 94.5,
+              "recovery_hours_added": 2.5241692475
+            }
+          ],
+          "joints": [
+            {
+              "slug": "glenohumeral_joint",
+              "joint_load_exposure": 0.9,
+              "jru": 0.9,
+              "recovery_hours_added": 0.8571428571
+            }
+          ]
+        }
+      },
+      "muscle_recovery_before": [{"slug": "pectoralis_major_sternal", "hours_to_fresh": 0.0}],
+      "muscle_recovery_after": [{"slug": "pectoralis_major_sternal", "hours_to_fresh": 2.5241692475}],
+      "joint_recovery_before": [{"slug": "glenohumeral_joint", "hours_to_fresh": 0.0}],
+      "joint_recovery_after": [{"slug": "glenohumeral_joint", "hours_to_fresh": 0.8571428571}]
+    },
+    {
+      "day_id": 82,
+      "day_ordinal": 1,
+      "day_name": "Rest",
+      "weekday": 2,
+      "hour_offset": 24.0,
+      "elapsed_hours_since_previous_entry": 24.0,
+      "workout": null,
+      "muscle_recovery_before": [{"slug": "pectoralis_major_sternal", "hours_to_fresh": 0.0}],
+      "muscle_recovery_after": [{"slug": "pectoralis_major_sternal", "hours_to_fresh": 0.0}],
+      "joint_recovery_before": [{"slug": "glenohumeral_joint", "hours_to_fresh": 0.0}],
+      "joint_recovery_after": [{"slug": "glenohumeral_joint", "hours_to_fresh": 0.0}]
+    }
+  ],
+  "contributions": [
+    {
+      "type": "MUSCLE",
+      "day_id": 81,
+      "workout_unit_id": 55,
+      "slot_id": 301,
+      "slot_role": "PRIMARY_PROGRESSIVE",
+      "variant_id": 401,
+      "exercise_id": 1,
+      "exercise_slug": "barbell_bench_press",
+      "set_id": 501,
+      "muscle_slug": "pectoralis_major_sternal",
+      "intent_classification": "INTENTIONAL",
+      "effective_reps": 3.0,
+      "etu_vector_value": 25.0,
+      "etu_contribution": 75.0,
+      "active_tension_value": 30.0,
+      "recovery_modifier_value": 1.05,
+      "base_mru": 94.5,
+      "rir_recovery_multiplier": 1.0,
+      "cumulative_recovery_multiplier": 1.0,
+      "mru_contribution": 94.5
+    },
+    {
+      "type": "JOINT",
+      "day_id": 81,
+      "workout_unit_id": 55,
+      "slot_id": 301,
+      "slot_role": "PRIMARY_PROGRESSIVE",
+      "variant_id": 401,
+      "exercise_id": 1,
+      "exercise_slug": "barbell_bench_press",
+      "set_id": 501,
+      "joint_slug": "glenohumeral_joint",
+      "effective_reps": 3.0,
+      "joint_load_vector_value": 0.3,
+      "joint_load_exposure": 0.9,
+      "rir_recovery_multiplier": 1.0,
+      "cumulative_recovery_multiplier": 1.0,
+      "jru_contribution": 0.9
+    }
+  ],
+  "diagnostics": []
+}

@@ -1,0 +1,3249 @@
+openapi: 3.1.0
+info:
+  title: Agonez Atlas API
+  description: REST API for the Agonez exercise and muscle Atlas and the relational PlanCreator draft editor. Authentication and ownership are intentionally deferred in this first PlanCreator iteration.
+  version: 0.1.0
+paths:
+  /assets/anatomy.svg:
+    get:
+      tags:
+      - Atlas
+      summary: Anatomy Asset
+      operationId: anatomy_asset_assets_anatomy_svg_get
+      responses:
+        '200':
+          description: Successful Response
+        '404':
+          description: Anatomy asset has not been installed
+  /api/atlas/exercises:
+    get:
+      tags:
+      - Atlas
+      summary: List Exercises
+      operationId: list_exercises_api_atlas_exercises_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          title: Q
+      - name: body_part
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Body Part
+      - name: target_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Target Category
+      - name: mechanics_tier
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Mechanics Tier
+      - name: resistance_source
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Resistance Source
+      - name: sort
+        in: query
+        required: false
+        schema:
+          enum:
+          - name
+          - name_full
+          - load_capacity
+          - systemic_propulsive_fcsa_demand
+          - created_at
+          - updated_at
+          type: string
+          default: name
+          title: Sort
+      - name: order
+        in: query
+        required: false
+        schema:
+          enum:
+          - asc
+          - desc
+          type: string
+          default: asc
+          title: Order
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Per Page
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/atlas/exercises/catalog:
+    get:
+      tags:
+      - Atlas
+      summary: List Exercise Catalog
+      operationId: list_exercise_catalog_api_atlas_exercises_catalog_get
+      parameters:
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseCatalogResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/atlas/exercises/{slug}:
+    get:
+      tags:
+      - Atlas
+      summary: Get Exercise
+      operationId: get_exercise_api_atlas_exercises__slug__get
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[a-z0-9]+(?:_[a-z0-9]+)*$
+          title: Slug
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/atlas/exercises/{slug}/videos:
+    post:
+      tags:
+      - Atlas
+      summary: Add Exercise Video
+      operationId: add_exercise_video_api_atlas_exercises__slug__videos_post
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[a-z0-9]+(?:_[a-z0-9]+)*$
+          title: Slug
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseVideoCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseVideoLinks'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/atlas/muscles:
+    get:
+      tags:
+      - Atlas
+      summary: List Muscles
+      operationId: list_muscles_api_atlas_muscles_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          title: Q
+      - name: body_part
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Body Part
+      - name: complex
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Complex
+      - name: sort
+        in: query
+        required: false
+        schema:
+          enum:
+          - name
+          - mass_g
+          - mv_cm3
+          - fiber_bias_type_ii
+          - pcsa_fiber_cm2
+          - pcsa_projected_fcsa_cm2
+          type: string
+          default: name
+          title: Sort
+      - name: order
+        in: query
+        required: false
+        schema:
+          enum:
+          - asc
+          - desc
+          type: string
+          default: asc
+          title: Order
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Per Page
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MuscleListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/atlas/muscles/{slug}/exercises:
+    get:
+      tags:
+      - Atlas
+      summary: Get Related Exercises
+      operationId: get_related_exercises_api_atlas_muscles__slug__exercises_get
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[a-z0-9]+(?:_[a-z0-9]+)*$
+          title: Slug
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 8
+          title: Limit
+      - name: sort
+        in: query
+        required: false
+        schema:
+          enum:
+          - etu
+          - name
+          type: string
+          default: etu
+          title: Sort
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelatedExerciseResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/atlas/muscles/{slug}:
+    get:
+      tags:
+      - Atlas
+      summary: Get Muscle
+      operationId: get_muscle_api_atlas_muscles__slug__get
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[a-z0-9]+(?:_[a-z0-9]+)*$
+          title: Slug
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MuscleDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/atlas/meta:
+    get:
+      tags:
+      - Atlas
+      summary: Get Meta
+      operationId: get_meta_api_atlas_meta_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtlasMeta'
+  /api/plans:
+    get:
+      tags:
+      - Plans
+      summary: List Plans
+      operationId: list_plans_api_plans_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanListResponse'
+    post:
+      tags:
+      - Plans
+      summary: Create Plan
+      operationId: create_plan_api_plans_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDraftArtifact'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/plans/import:
+    post:
+      tags:
+      - Plans
+      summary: Import Plan
+      operationId: import_plan_api_plans_import_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanAIImportDocument'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDraftArtifact'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/plans/catalog/progression-models:
+    get:
+      tags:
+      - Plans
+      summary: List Progression Models
+      operationId: list_progression_models_api_plans_catalog_progression_models_get
+      parameters:
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressionModelCatalogResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/plans/{plan_id}/duplicate:
+    post:
+      tags:
+      - Plans
+      summary: Duplicate Plan
+      operationId: duplicate_plan_api_plans__plan_id__duplicate_post
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDraftArtifact'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/plans/{plan_id}:
+    get:
+      tags:
+      - Plans
+      summary: Get Plan
+      operationId: get_plan_api_plans__plan_id__get
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Plans
+      summary: Delete Plan
+      operationId: delete_plan_api_plans__plan_id__delete
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/plans/{plan_id}/draft:
+    get:
+      tags:
+      - Plans
+      summary: Get Draft
+      operationId: get_draft_api_plans__plan_id__draft_get
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDraftArtifact'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Plans
+      summary: Save Draft
+      operationId: save_draft_api_plans__plan_id__draft_put
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanDraftUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDraftArtifact'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/plans/{plan_id}/draft/analysis:
+    post:
+      tags:
+      - Plans
+      summary: Analyze Draft
+      operationId: analyze_draft_api_plans__plan_id__draft_analysis_post
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanAnalysisRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanAnalysisResult'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/plans/{plan_id}/draft/export:
+    post:
+      tags:
+      - Plans
+      summary: Export Draft
+      operationId: export_draft_api_plans__plan_id__draft_export_post
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanExportRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanAIExportResult'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    AnalysisDiagnostic:
+      properties:
+        code:
+          type: string
+          title: Code
+        severity:
+          $ref: '#/components/schemas/DiagnosticSeverity'
+        message:
+          type: string
+          title: Message
+        exercise_slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Exercise Slug
+        affected_muscle_slugs:
+          items:
+            type: string
+          type: array
+          title: Affected Muscle Slugs
+        affected_joint_slugs:
+          items:
+            type: string
+          type: array
+          title: Affected Joint Slugs
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - severity
+      - message
+      title: AnalysisDiagnostic
+    AnalysisModelParameters:
+      properties:
+        microcycle_days:
+          type: integer
+          minimum: 0.0
+          title: Microcycle Days
+        microcycle_hours:
+          type: number
+          minimum: 0.0
+          title: Microcycle Hours
+        microcycle_weeks:
+          type: number
+          minimum: 0.0
+          title: Microcycle Weeks
+        weekly_normalization_factor:
+          type: number
+          minimum: 0.0
+          title: Weekly Normalization Factor
+        effective_reps_by_rir:
+          additionalProperties:
+            type: number
+          type: object
+          title: Effective Reps By Rir
+        rir_recovery_multiplier:
+          additionalProperties:
+            type: number
+          type: object
+          title: Rir Recovery Multiplier
+        cumulative_set_penalty_step:
+          type: number
+          title: Cumulative Set Penalty Step
+        cumulative_set_penalty_cap:
+          type: number
+          title: Cumulative Set Penalty Cap
+        meaningful_contribution_epsilon:
+          type: number
+          title: Meaningful Contribution Epsilon
+        recovery_convergence_epsilon_hours:
+          type: number
+          title: Recovery Convergence Epsilon Hours
+        recovery_max_cycles:
+          type: integer
+          title: Recovery Max Cycles
+        muscle_recovery_velocity_v1:
+          type: number
+          title: Muscle Recovery Velocity V1
+        joint_recovery_velocity_v1:
+          type: number
+          title: Joint Recovery Velocity V1
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle_days
+      - microcycle_hours
+      - microcycle_weeks
+      - weekly_normalization_factor
+      - effective_reps_by_rir
+      - rir_recovery_multiplier
+      - cumulative_set_penalty_step
+      - cumulative_set_penalty_cap
+      - meaningful_contribution_epsilon
+      - recovery_convergence_epsilon_hours
+      - recovery_max_cycles
+      - muscle_recovery_velocity_v1
+      - joint_recovery_velocity_v1
+      title: AnalysisModelParameters
+    AnalysisTimelineDay:
+      properties:
+        day_id:
+          type: integer
+          title: Day Id
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        day_name:
+          type: string
+          title: Day Name
+        weekday:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Weekday
+        hour_offset:
+          type: number
+          title: Hour Offset
+        elapsed_hours_since_previous_entry:
+          type: number
+          title: Elapsed Hours Since Previous Entry
+        workout:
+          anyOf:
+          - $ref: '#/components/schemas/TimelineWorkout'
+          - type: 'null'
+        muscle_recovery_before:
+          items:
+            $ref: '#/components/schemas/RecoveryState'
+          type: array
+          title: Muscle Recovery Before
+        muscle_recovery_after:
+          items:
+            $ref: '#/components/schemas/RecoveryState'
+          type: array
+          title: Muscle Recovery After
+        joint_recovery_before:
+          items:
+            $ref: '#/components/schemas/RecoveryState'
+          type: array
+          title: Joint Recovery Before
+        joint_recovery_after:
+          items:
+            $ref: '#/components/schemas/RecoveryState'
+          type: array
+          title: Joint Recovery After
+      additionalProperties: false
+      type: object
+      required:
+      - day_id
+      - day_ordinal
+      - day_name
+      - weekday
+      - hour_offset
+      - elapsed_hours_since_previous_entry
+      - workout
+      - muscle_recovery_before
+      - muscle_recovery_after
+      - joint_recovery_before
+      - joint_recovery_after
+      title: AnalysisTimelineDay
+    AtlasCounts:
+      properties:
+        exercises:
+          type: integer
+          title: Exercises
+        muscles:
+          type: integer
+          title: Muscles
+      additionalProperties: false
+      type: object
+      required:
+      - exercises
+      - muscles
+      title: AtlasCounts
+    AtlasMeta:
+      properties:
+        body_part:
+          items:
+            type: string
+          type: array
+          title: Body Part
+        target_category:
+          items:
+            type: string
+          type: array
+          title: Target Category
+        mechanics_tier:
+          items:
+            type: string
+          type: array
+          title: Mechanics Tier
+        resistance_source:
+          items:
+            type: string
+          type: array
+          title: Resistance Source
+        muscle_complex:
+          items:
+            type: string
+          type: array
+          title: Muscle Complex
+        counts:
+          $ref: '#/components/schemas/AtlasCounts'
+      additionalProperties: false
+      type: object
+      required:
+      - body_part
+      - target_category
+      - mechanics_tier
+      - resistance_source
+      - muscle_complex
+      - counts
+      title: AtlasMeta
+    DayArtifact:
+      properties:
+        id:
+          type: integer
+          title: Id
+        ordinal:
+          type: integer
+          title: Ordinal
+        weekday:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Weekday
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        workout_unit:
+          anyOf:
+          - $ref: '#/components/schemas/WorkoutUnitArtifact'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - ordinal
+      - weekday
+      - name
+      - description
+      - workout_unit
+      title: DayArtifact
+    DayDraft:
+      properties:
+        id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Id
+        ordinal:
+          type: integer
+          minimum: 0.0
+          title: Ordinal
+        weekday:
+          anyOf:
+          - type: integer
+            maximum: 7.0
+            minimum: 1.0
+          - type: 'null'
+          title: Weekday
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        workout_unit:
+          anyOf:
+          - $ref: '#/components/schemas/WorkoutUnitDraft'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - name
+      title: DayDraft
+    DiagnosticSeverity:
+      type: string
+      enum:
+      - INFO
+      - WARNING
+      - ERROR
+      title: DiagnosticSeverity
+    ExerciseCatalogItem:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        name_full:
+          type: string
+          title: Name Full
+        target_category:
+          type: string
+          title: Target Category
+        mechanics_tier:
+          type: string
+          title: Mechanics Tier
+        resistance_source:
+          type: string
+          title: Resistance Source
+        systemic_propulsive_fcsa_demand:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Systemic Propulsive Fcsa Demand
+        recommended_rep_profile:
+          $ref: '#/components/schemas/RecommendedRepProfile'
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      - name_full
+      - target_category
+      - mechanics_tier
+      - resistance_source
+      - systemic_propulsive_fcsa_demand
+      - recommended_rep_profile
+      - image_url
+      title: ExerciseCatalogItem
+    ExerciseCatalogResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ExerciseCatalogItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      - total
+      title: ExerciseCatalogResponse
+    ExerciseDetail:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        name_full:
+          type: string
+          title: Name Full
+        body_part:
+          type: string
+          title: Body Part
+        target_category:
+          type: string
+          title: Target Category
+        mechanics_tier:
+          type: string
+          title: Mechanics Tier
+        resistance_source:
+          type: string
+          title: Resistance Source
+        execution_pattern:
+          type: string
+          title: Execution Pattern
+        load_capacity:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Capacity
+        systemic_propulsive_fcsa_demand:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Systemic Propulsive Fcsa Demand
+        recommended_rep_profile:
+          $ref: '#/components/schemas/RecommendedRepProfile'
+        propulsive_fcsa_contribution_vector:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Propulsive Fcsa Contribution Vector
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        technique:
+          additionalProperties: true
+          type: object
+          title: Technique
+        comments:
+          additionalProperties: true
+          type: object
+          title: Comments
+        video_links:
+          items:
+            type: string
+          type: array
+          title: Video Links
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
+        engine:
+          anyOf:
+          - $ref: '#/components/schemas/ExerciseEngine'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      - name_full
+      - body_part
+      - target_category
+      - mechanics_tier
+      - resistance_source
+      - execution_pattern
+      - load_capacity
+      - systemic_propulsive_fcsa_demand
+      - recommended_rep_profile
+      - propulsive_fcsa_contribution_vector
+      - created_at
+      - updated_at
+      - technique
+      - comments
+      - video_links
+      - image_url
+      - engine
+      title: ExerciseDetail
+    ExerciseEngine:
+      properties:
+        propulsive_fcsa_contribution_vector:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Propulsive Fcsa Contribution Vector
+        active_tension_exposure_vector:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Active Tension Exposure Vector
+        etu_vector:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Etu Vector
+        muscle_recovery_cost_modifier_vector:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Muscle Recovery Cost Modifier Vector
+        joint_load_exposure_vector:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          title: Joint Load Exposure Vector
+      additionalProperties: false
+      type: object
+      required:
+      - propulsive_fcsa_contribution_vector
+      - active_tension_exposure_vector
+      - etu_vector
+      - muscle_recovery_cost_modifier_vector
+      - joint_load_exposure_vector
+      title: ExerciseEngine
+    ExerciseFacets:
+      properties:
+        body_part:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Body Part
+        target_category:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Target Category
+        mechanics_tier:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Mechanics Tier
+        resistance_source:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Resistance Source
+      additionalProperties: false
+      type: object
+      title: ExerciseFacets
+    ExerciseListItem:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        name_full:
+          type: string
+          title: Name Full
+        body_part:
+          type: string
+          title: Body Part
+        target_category:
+          type: string
+          title: Target Category
+        mechanics_tier:
+          type: string
+          title: Mechanics Tier
+        resistance_source:
+          type: string
+          title: Resistance Source
+        execution_pattern:
+          type: string
+          title: Execution Pattern
+        load_capacity:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Capacity
+        systemic_propulsive_fcsa_demand:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Systemic Propulsive Fcsa Demand
+        recommended_rep_profile:
+          $ref: '#/components/schemas/RecommendedRepProfile'
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        has_engine_vectors:
+          type: boolean
+          title: Has Engine Vectors
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      - name_full
+      - body_part
+      - target_category
+      - mechanics_tier
+      - resistance_source
+      - execution_pattern
+      - load_capacity
+      - systemic_propulsive_fcsa_demand
+      - recommended_rep_profile
+      - created_at
+      - updated_at
+      - has_engine_vectors
+      - image_url
+      title: ExerciseListItem
+    ExerciseListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ExerciseListItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        page:
+          type: integer
+          title: Page
+        per_page:
+          type: integer
+          title: Per Page
+        facets:
+          $ref: '#/components/schemas/ExerciseFacets'
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - per_page
+      - facets
+      title: ExerciseListResponse
+    ExerciseSlotArtifact:
+      properties:
+        id:
+          type: integer
+          title: Id
+        ordinal:
+          type: integer
+          title: Ordinal
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        goal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Goal
+        role:
+          $ref: '#/components/schemas/ExerciseSlotRole'
+        volume_axis:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Volume Axis
+        loading_mode:
+          $ref: '#/components/schemas/LoadingMode'
+          default: moderate_load
+        loading_cycle:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/LoadingMode'
+            type: array
+            maxItems: 52
+            minItems: 2
+          - type: 'null'
+          title: Loading Cycle
+        target_muscle_slugs:
+          items:
+            type: string
+          type: array
+          title: Target Muscle Slugs
+        variants:
+          items:
+            $ref: '#/components/schemas/ExerciseVariantArtifact'
+          type: array
+          title: Variants
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - ordinal
+      - name
+      - description
+      - goal
+      - role
+      - volume_axis
+      - target_muscle_slugs
+      - variants
+      title: ExerciseSlotArtifact
+    ExerciseSlotDraft:
+      properties:
+        id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Id
+        ordinal:
+          type: integer
+          minimum: 0.0
+          title: Ordinal
+        name:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        goal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Goal
+        role:
+          $ref: '#/components/schemas/ExerciseSlotRole'
+        volume_axis:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Volume Axis
+        loading_mode:
+          $ref: '#/components/schemas/LoadingMode'
+          default: moderate_load
+        loading_cycle:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/LoadingMode'
+            type: array
+            maxItems: 52
+            minItems: 2
+          - type: 'null'
+          title: Loading Cycle
+        target_muscle_slugs:
+          items:
+            type: string
+          type: array
+          title: Target Muscle Slugs
+        variants:
+          items:
+            $ref: '#/components/schemas/ExerciseVariantDraft'
+          type: array
+          title: Variants
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - role
+      title: ExerciseSlotDraft
+    ExerciseSlotRole:
+      type: string
+      enum:
+      - PRIMARY_PROGRESSIVE
+      - SECONDARY_PROGRESSIVE
+      - VOLUME_ACCUMULATION
+      - ACCESSORY
+      title: ExerciseSlotRole
+    ExerciseVariantArtifact:
+      properties:
+        id:
+          type: integer
+          title: Id
+        ordinal:
+          type: integer
+          title: Ordinal
+        variant_type:
+          $ref: '#/components/schemas/ExerciseVariantType'
+        exercise_slug:
+          type: string
+          title: Exercise Slug
+        progression_model_slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Progression Model Slug
+        sets:
+          items:
+            $ref: '#/components/schemas/SetInfraArtifact'
+          type: array
+          title: Sets
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - ordinal
+      - variant_type
+      - exercise_slug
+      - sets
+      title: ExerciseVariantArtifact
+    ExerciseVariantDraft:
+      properties:
+        id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Id
+        ordinal:
+          type: integer
+          minimum: 0.0
+          title: Ordinal
+        variant_type:
+          $ref: '#/components/schemas/ExerciseVariantType'
+        exercise_slug:
+          type: string
+          maxLength: 200
+          minLength: 1
+          pattern: ^[a-z0-9_]+$
+          title: Exercise Slug
+        progression_model_slug:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 1
+            pattern: ^[a-z0-9_]+$
+          - type: 'null'
+          title: Progression Model Slug
+        sets:
+          items:
+            $ref: '#/components/schemas/SetInfraDraft'
+          type: array
+          title: Sets
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - variant_type
+      - exercise_slug
+      title: ExerciseVariantDraft
+    ExerciseVariantType:
+      type: string
+      enum:
+      - DEFAULT
+      - FALLBACK
+      title: ExerciseVariantType
+    ExerciseVideoCreate:
+      properties:
+        url:
+          type: string
+          maxLength: 2048
+          minLength: 1
+          title: Url
+      additionalProperties: false
+      type: object
+      required:
+      - url
+      title: ExerciseVideoCreate
+    ExerciseVideoLinks:
+      properties:
+        video_links:
+          items:
+            type: string
+          type: array
+          title: Video Links
+      additionalProperties: false
+      type: object
+      required:
+      - video_links
+      title: ExerciseVideoLinks
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    IntentClassification:
+      type: string
+      enum:
+      - INTENTIONAL
+      - INCIDENTAL
+      - UNCLASSIFIED
+      title: IntentClassification
+    JointAnalysisSummary:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        total_joint_load_exposure:
+          type: number
+          title: Total Joint Load Exposure
+        total_jru:
+          type: number
+          title: Total Jru
+        maximum_post_workout_hours_to_fresh:
+          type: number
+          title: Maximum Post Workout Hours To Fresh
+        worst_pre_workout_hours_to_fresh:
+          type: number
+          title: Worst Pre Workout Hours To Fresh
+        recovery_converged:
+          type: boolean
+          title: Recovery Converged
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - total_joint_load_exposure
+      - total_jru
+      - maximum_post_workout_hours_to_fresh
+      - worst_pre_workout_hours_to_fresh
+      - recovery_converged
+      title: JointAnalysisSummary
+    JointContribution:
+      properties:
+        type:
+          type: string
+          const: JOINT
+          title: Type
+          default: JOINT
+        day_id:
+          type: integer
+          title: Day Id
+        workout_unit_id:
+          type: integer
+          title: Workout Unit Id
+        slot_id:
+          type: integer
+          title: Slot Id
+        slot_role:
+          $ref: '#/components/schemas/ExerciseSlotRole'
+        variant_id:
+          type: integer
+          title: Variant Id
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        exercise_slug:
+          type: string
+          title: Exercise Slug
+        set_id:
+          type: integer
+          title: Set Id
+        joint_slug:
+          type: string
+          title: Joint Slug
+        effective_reps:
+          type: number
+          title: Effective Reps
+        joint_load_vector_value:
+          type: number
+          title: Joint Load Vector Value
+        joint_load_exposure:
+          type: number
+          title: Joint Load Exposure
+        rir_recovery_multiplier:
+          type: number
+          title: Rir Recovery Multiplier
+        cumulative_recovery_multiplier:
+          type: number
+          title: Cumulative Recovery Multiplier
+        jru_contribution:
+          type: number
+          title: Jru Contribution
+      additionalProperties: false
+      type: object
+      required:
+      - day_id
+      - workout_unit_id
+      - slot_id
+      - slot_role
+      - variant_id
+      - exercise_id
+      - exercise_slug
+      - set_id
+      - joint_slug
+      - effective_reps
+      - joint_load_vector_value
+      - joint_load_exposure
+      - rir_recovery_multiplier
+      - cumulative_recovery_multiplier
+      - jru_contribution
+      title: JointContribution
+    JointStimulus:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        joint_load_exposure:
+          type: number
+          title: Joint Load Exposure
+        jru:
+          type: number
+          title: Jru
+        recovery_hours_added:
+          type: number
+          title: Recovery Hours Added
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - joint_load_exposure
+      - jru
+      - recovery_hours_added
+      title: JointStimulus
+    LoadingMode:
+      type: string
+      enum:
+      - high_load
+      - moderate_load
+      - low_load
+      title: LoadingMode
+    MuscleAnalysisSummary:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        fcsa_cm2:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Fcsa Cm2
+        total_etu:
+          type: number
+          title: Total Etu
+        weekly_etu:
+          type: number
+          title: Weekly Etu
+        etu_per_fcsa_cm2:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Etu Per Fcsa Cm2
+        weekly_etu_per_fcsa_cm2:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Weekly Etu Per Fcsa Cm2
+        intentional_etu:
+          type: number
+          title: Intentional Etu
+        weekly_intentional_etu:
+          type: number
+          title: Weekly Intentional Etu
+        incidental_etu:
+          type: number
+          title: Incidental Etu
+        weekly_incidental_etu:
+          type: number
+          title: Weekly Incidental Etu
+        unclassified_etu:
+          type: number
+          title: Unclassified Etu
+        weekly_unclassified_etu:
+          type: number
+          title: Weekly Unclassified Etu
+        total_mru:
+          type: number
+          title: Total Mru
+        maximum_post_workout_hours_to_fresh:
+          type: number
+          title: Maximum Post Workout Hours To Fresh
+        worst_pre_workout_hours_to_fresh:
+          type: number
+          title: Worst Pre Workout Hours To Fresh
+        recovery_converged:
+          type: boolean
+          title: Recovery Converged
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - fcsa_cm2
+      - total_etu
+      - weekly_etu
+      - etu_per_fcsa_cm2
+      - weekly_etu_per_fcsa_cm2
+      - intentional_etu
+      - weekly_intentional_etu
+      - incidental_etu
+      - weekly_incidental_etu
+      - unclassified_etu
+      - weekly_unclassified_etu
+      - total_mru
+      - maximum_post_workout_hours_to_fresh
+      - worst_pre_workout_hours_to_fresh
+      - recovery_converged
+      title: MuscleAnalysisSummary
+    MuscleContribution:
+      properties:
+        type:
+          type: string
+          const: MUSCLE
+          title: Type
+          default: MUSCLE
+        day_id:
+          type: integer
+          title: Day Id
+        workout_unit_id:
+          type: integer
+          title: Workout Unit Id
+        slot_id:
+          type: integer
+          title: Slot Id
+        slot_role:
+          $ref: '#/components/schemas/ExerciseSlotRole'
+        variant_id:
+          type: integer
+          title: Variant Id
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        exercise_slug:
+          type: string
+          title: Exercise Slug
+        set_id:
+          type: integer
+          title: Set Id
+        muscle_slug:
+          type: string
+          title: Muscle Slug
+        intent_classification:
+          $ref: '#/components/schemas/IntentClassification'
+        effective_reps:
+          type: number
+          title: Effective Reps
+        etu_vector_value:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Etu Vector Value
+        etu_contribution:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Etu Contribution
+        active_tension_value:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Active Tension Value
+        recovery_modifier_value:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Recovery Modifier Value
+        base_mru:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Base Mru
+        rir_recovery_multiplier:
+          type: number
+          title: Rir Recovery Multiplier
+        cumulative_recovery_multiplier:
+          type: number
+          title: Cumulative Recovery Multiplier
+        mru_contribution:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Mru Contribution
+      additionalProperties: false
+      type: object
+      required:
+      - day_id
+      - workout_unit_id
+      - slot_id
+      - slot_role
+      - variant_id
+      - exercise_id
+      - exercise_slug
+      - set_id
+      - muscle_slug
+      - intent_classification
+      - effective_reps
+      - etu_vector_value
+      - etu_contribution
+      - active_tension_value
+      - recovery_modifier_value
+      - base_mru
+      - rir_recovery_multiplier
+      - cumulative_recovery_multiplier
+      - mru_contribution
+      title: MuscleContribution
+    MuscleDetail:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        display_name:
+          type: string
+          title: Display Name
+        body_part:
+          type: string
+          title: Body Part
+        complex:
+          type: string
+          title: Complex
+        mass_g:
+          type: number
+          title: Mass G
+        mv_cm3:
+          type: number
+          title: Mv Cm3
+        mass_reference:
+          type: string
+          title: Mass Reference
+        architecture:
+          type: string
+          title: Architecture
+        fiber_bias_type_i:
+          type: number
+          title: Fiber Bias Type I
+        fiber_bias_type_ii:
+          type: number
+          title: Fiber Bias Type Ii
+        optimal_fiber_length_cm:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Optimal Fiber Length Cm
+        pennation_angle_deg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Pennation Angle Deg
+        pennation_cos:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Pennation Cos
+        pcsa:
+          type: number
+          title: Pcsa
+        pcsa_fiber_cm2:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Pcsa Fiber Cm2
+        pcsa_projected_fcsa_cm2:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Pcsa Projected Fcsa Cm2
+        smh_factor:
+          type: string
+          title: Smh Factor
+        strength_curve:
+          type: string
+          title: Strength Curve
+        leverage_peak:
+          type: string
+          title: Leverage Peak
+        bible_markdown:
+          type: string
+          title: Bible Markdown
+        article_links:
+          items:
+            type: string
+          type: array
+          title: Article Links
+        video_links:
+          items:
+            type: string
+          type: array
+          title: Video Links
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
+        gallery:
+          items:
+            type: string
+          type: array
+          title: Gallery
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      - display_name
+      - body_part
+      - complex
+      - mass_g
+      - mv_cm3
+      - mass_reference
+      - architecture
+      - fiber_bias_type_i
+      - fiber_bias_type_ii
+      - optimal_fiber_length_cm
+      - pennation_angle_deg
+      - pennation_cos
+      - pcsa
+      - pcsa_fiber_cm2
+      - pcsa_projected_fcsa_cm2
+      - smh_factor
+      - strength_curve
+      - leverage_peak
+      - bible_markdown
+      - article_links
+      - video_links
+      - image_url
+      - gallery
+      title: MuscleDetail
+    MuscleFacets:
+      properties:
+        body_part:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Body Part
+        complex:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Complex
+      additionalProperties: false
+      type: object
+      title: MuscleFacets
+    MuscleListItem:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        display_name:
+          type: string
+          title: Display Name
+        body_part:
+          type: string
+          title: Body Part
+        complex:
+          type: string
+          title: Complex
+        mass_g:
+          type: number
+          title: Mass G
+        mv_cm3:
+          type: number
+          title: Mv Cm3
+        fiber_bias_type_i:
+          type: number
+          title: Fiber Bias Type I
+        fiber_bias_type_ii:
+          type: number
+          title: Fiber Bias Type Ii
+        pcsa_projected_fcsa_cm2:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Pcsa Projected Fcsa Cm2
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      - display_name
+      - body_part
+      - complex
+      - mass_g
+      - mv_cm3
+      - fiber_bias_type_i
+      - fiber_bias_type_ii
+      - pcsa_projected_fcsa_cm2
+      - image_url
+      title: MuscleListItem
+    MuscleListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/MuscleListItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        page:
+          type: integer
+          title: Page
+        per_page:
+          type: integer
+          title: Per Page
+        facets:
+          $ref: '#/components/schemas/MuscleFacets'
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - per_page
+      - facets
+      title: MuscleListResponse
+    MuscleStimulus:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        etu_absolute:
+          type: number
+          title: Etu Absolute
+        mru:
+          type: number
+          title: Mru
+        recovery_hours_added:
+          type: number
+          title: Recovery Hours Added
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - etu_absolute
+      - mru
+      - recovery_hours_added
+      title: MuscleStimulus
+    PlanAIExportDay:
+      properties:
+        day:
+          type: integer
+          minimum: 1.0
+          title: Day
+        name:
+          type: string
+          title: Name
+        weekday:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Weekday
+        rest:
+          type: boolean
+          title: Rest
+        exercises:
+          items:
+            $ref: '#/components/schemas/PlanAIExportExercise'
+          type: array
+          title: Exercises
+      additionalProperties: false
+      type: object
+      required:
+      - day
+      - name
+      - weekday
+      - rest
+      - exercises
+      title: PlanAIExportDay
+    PlanAIExportExercise:
+      properties:
+        name:
+          type: string
+          title: Name
+        slug:
+          type: string
+          title: Slug
+        progression_model:
+          anyOf:
+          - $ref: '#/components/schemas/PlanAIProgressionModel'
+          - type: 'null'
+        sets:
+          items:
+            $ref: '#/components/schemas/PlanAIExportSet'
+          type: array
+          title: Sets
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - slug
+      - progression_model
+      - sets
+      title: PlanAIExportExercise
+    PlanAIExportResult:
+      properties:
+        format:
+          type: string
+          const: agonez-plan-sanity-v2
+          title: Format
+          default: agonez-plan-sanity-v2
+        plan_name:
+          type: string
+          title: Plan Name
+        resolution_context:
+          $ref: '#/components/schemas/PlanResolutionContext'
+        days:
+          items:
+            $ref: '#/components/schemas/PlanAIExportDay'
+          type: array
+          title: Days
+      additionalProperties: false
+      type: object
+      required:
+      - plan_name
+      - resolution_context
+      - days
+      title: PlanAIExportResult
+    PlanAIExportSet:
+      properties:
+        reps:
+          $ref: '#/components/schemas/RepRange'
+        rir:
+          type: integer
+          maximum: 4.0
+          minimum: 0.0
+          title: Rir
+      additionalProperties: false
+      type: object
+      required:
+      - reps
+      - rir
+      title: PlanAIExportSet
+    PlanAIImportDay:
+      properties:
+        day:
+          type: integer
+          maximum: 365.0
+          minimum: 1.0
+          title: Day
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+        weekday:
+          anyOf:
+          - type: string
+            enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+          - type: 'null'
+          title: Weekday
+        rest:
+          type: boolean
+          title: Rest
+        exercises:
+          items:
+            $ref: '#/components/schemas/PlanAIImportExercise'
+          type: array
+          maxItems: 100
+          title: Exercises
+      additionalProperties: false
+      type: object
+      required:
+      - day
+      - name
+      - weekday
+      - rest
+      - exercises
+      title: PlanAIImportDay
+    PlanAIImportDocument:
+      properties:
+        format:
+          type: string
+          enum:
+          - agonez-plan-sanity-v1
+          - agonez-plan-sanity-v2
+          title: Format
+        plan_name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Plan Name
+        resolution_context:
+          $ref: '#/components/schemas/PlanResolutionContext'
+        days:
+          items:
+            $ref: '#/components/schemas/PlanAIImportDay'
+          type: array
+          maxItems: 365
+          title: Days
+      additionalProperties: false
+      type: object
+      required:
+      - format
+      - plan_name
+      - resolution_context
+      - days
+      title: PlanAIImportDocument
+    PlanAIImportExercise:
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+        slug:
+          type: string
+          maxLength: 200
+          minLength: 1
+          pattern: ^[a-z0-9_]+$
+          title: Slug
+        progression_model:
+          anyOf:
+          - $ref: '#/components/schemas/PlanAIImportProgressionModel'
+          - type: 'null'
+        sets:
+          items:
+            $ref: '#/components/schemas/PlanAIImportSet'
+          type: array
+          maxItems: 100
+          title: Sets
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - slug
+      - sets
+      title: PlanAIImportExercise
+    PlanAIImportProgressionModel:
+      properties:
+        slug:
+          type: string
+          maxLength: 200
+          minLength: 1
+          pattern: ^[a-z0-9_]+$
+          title: Slug
+        name:
+          anyOf:
+          - type: string
+            minLength: 1
+          - type: 'null'
+          title: Name
+        name_full:
+          anyOf:
+          - type: string
+            minLength: 1
+          - type: 'null'
+          title: Name Full
+        when_to_use:
+          anyOf:
+          - type: string
+            minLength: 1
+          - type: 'null'
+          title: When To Use
+        how_to_apply:
+          anyOf:
+          - type: string
+            minLength: 1
+          - type: 'null'
+          title: How To Apply
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      title: PlanAIImportProgressionModel
+    PlanAIImportSet:
+      properties:
+        reps:
+          $ref: '#/components/schemas/RepRange'
+        rir:
+          type: integer
+          maximum: 4.0
+          minimum: 0.0
+          title: Rir
+      additionalProperties: false
+      type: object
+      required:
+      - reps
+      - rir
+      title: PlanAIImportSet
+    PlanAIProgressionModel:
+      properties:
+        slug:
+          type: string
+          maxLength: 200
+          minLength: 1
+          pattern: ^[a-z0-9_]+$
+          title: Slug
+        name:
+          type: string
+          minLength: 1
+          title: Name
+        name_full:
+          type: string
+          minLength: 1
+          title: Name Full
+        when_to_use:
+          type: string
+          minLength: 1
+          title: When To Use
+        how_to_apply:
+          type: string
+          minLength: 1
+          title: How To Apply
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      - name_full
+      - when_to_use
+      - how_to_apply
+      title: PlanAIProgressionModel
+    PlanAnalysisRequest:
+      properties:
+        resolution_context:
+          $ref: '#/components/schemas/PlanResolutionContext'
+      additionalProperties: false
+      type: object
+      title: PlanAnalysisRequest
+    PlanAnalysisResult:
+      properties:
+        model_version:
+          type: string
+          title: Model Version
+        plan_id:
+          type: integer
+          title: Plan Id
+        revision_id:
+          type: integer
+          title: Revision Id
+        revision_no:
+          type: integer
+          title: Revision No
+        lock_version:
+          type: integer
+          title: Lock Version
+        resolution_context:
+          $ref: '#/components/schemas/PlanResolutionContext'
+        timing_assumptions:
+          items:
+            $ref: '#/components/schemas/TimingAssumption'
+          type: array
+          title: Timing Assumptions
+        model_parameters:
+          $ref: '#/components/schemas/AnalysisModelParameters'
+        recovery_converged:
+          type: boolean
+          title: Recovery Converged
+        simulation_cycles:
+          type: integer
+          title: Simulation Cycles
+        plan_summary:
+          $ref: '#/components/schemas/PlanAnalysisSummary'
+        timeline:
+          items:
+            $ref: '#/components/schemas/AnalysisTimelineDay'
+          type: array
+          title: Timeline
+        contributions:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/MuscleContribution'
+            - $ref: '#/components/schemas/JointContribution'
+            discriminator:
+              propertyName: type
+              mapping:
+                JOINT: '#/components/schemas/JointContribution'
+                MUSCLE: '#/components/schemas/MuscleContribution'
+          type: array
+          title: Contributions
+        diagnostics:
+          items:
+            $ref: '#/components/schemas/AnalysisDiagnostic'
+          type: array
+          title: Diagnostics
+      additionalProperties: false
+      type: object
+      required:
+      - model_version
+      - plan_id
+      - revision_id
+      - revision_no
+      - lock_version
+      - resolution_context
+      - timing_assumptions
+      - model_parameters
+      - recovery_converged
+      - simulation_cycles
+      - plan_summary
+      - timeline
+      - contributions
+      - diagnostics
+      title: PlanAnalysisResult
+    PlanAnalysisSummary:
+      properties:
+        total_etu_scalar:
+          type: number
+          title: Total Etu Scalar
+        weekly_etu_scalar:
+          type: number
+          title: Weekly Etu Scalar
+        muscles:
+          items:
+            $ref: '#/components/schemas/MuscleAnalysisSummary'
+          type: array
+          title: Muscles
+        joints:
+          items:
+            $ref: '#/components/schemas/JointAnalysisSummary'
+          type: array
+          title: Joints
+      additionalProperties: false
+      type: object
+      required:
+      - total_etu_scalar
+      - weekly_etu_scalar
+      - muscles
+      - joints
+      title: PlanAnalysisSummary
+    PlanCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: PlanCreate
+    PlanDetail:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        revisions:
+          items:
+            $ref: '#/components/schemas/RevisionSummary'
+          type: array
+          title: Revisions
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - created_at
+      - updated_at
+      - revisions
+      title: PlanDetail
+    PlanDraftArtifact:
+      properties:
+        id:
+          type: integer
+          title: Id
+        revision_id:
+          type: integer
+          title: Revision Id
+        revision_no:
+          type: integer
+          title: Revision No
+        lock_version:
+          type: integer
+          title: Lock Version
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        days:
+          items:
+            $ref: '#/components/schemas/DayArtifact'
+          type: array
+          title: Days
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - revision_id
+      - revision_no
+      - lock_version
+      - name
+      - description
+      - days
+      title: PlanDraftArtifact
+    PlanDraftUpdate:
+      properties:
+        id:
+          type: integer
+          minimum: 1.0
+          title: Id
+        revision_id:
+          type: integer
+          minimum: 1.0
+          title: Revision Id
+        revision_no:
+          type: integer
+          minimum: 1.0
+          title: Revision No
+        lock_version:
+          type: integer
+          minimum: 1.0
+          title: Lock Version
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        days:
+          items:
+            $ref: '#/components/schemas/DayDraft'
+          type: array
+          title: Days
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - revision_id
+      - revision_no
+      - lock_version
+      - name
+      title: PlanDraftUpdate
+    PlanExportRequest:
+      properties:
+        resolution_context:
+          $ref: '#/components/schemas/PlanResolutionContext'
+      additionalProperties: false
+      type: object
+      title: PlanExportRequest
+    PlanListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/PlanSummary'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: PlanListResponse
+    PlanResolutionContext:
+      properties:
+        global_volume_level:
+          type: integer
+          maximum: 32767.0
+          minimum: 0.0
+          title: Global Volume Level
+          default: 0
+        focus_area:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Focus Area
+        axis_overrides:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Axis Overrides
+      additionalProperties: false
+      type: object
+      title: PlanResolutionContext
+    PlanRevisionStatus:
+      type: string
+      enum:
+      - DRAFT
+      - RELEASED
+      - ARCHIVED
+      title: PlanRevisionStatus
+    PlanSummary:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        draft_revision_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Draft Revision Id
+        draft_lock_version:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Draft Lock Version
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - created_at
+      - updated_at
+      - draft_revision_id
+      - draft_lock_version
+      title: PlanSummary
+    ProgressionModelCatalogItem:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        display_order:
+          type: integer
+          minimum: 1.0
+          title: Display Order
+        name:
+          type: string
+          title: Name
+        name_full:
+          type: string
+          title: Name Full
+        when_to_use:
+          type: string
+          title: When To Use
+        how_to_apply:
+          type: string
+          title: How To Apply
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - display_order
+      - name
+      - name_full
+      - when_to_use
+      - how_to_apply
+      title: ProgressionModelCatalogItem
+    ProgressionModelCatalogResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ProgressionModelCatalogItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      - total
+      title: ProgressionModelCatalogResponse
+    RecommendedRepProfile:
+      properties:
+        high_load:
+          anyOf:
+          - $ref: '#/components/schemas/RecommendedRepRange'
+          - type: 'null'
+        moderate_load:
+          anyOf:
+          - $ref: '#/components/schemas/RecommendedRepRange'
+          - type: 'null'
+        low_load:
+          anyOf:
+          - $ref: '#/components/schemas/RecommendedRepRange'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - high_load
+      - moderate_load
+      - low_load
+      title: RecommendedRepProfile
+    RecommendedRepRange:
+      properties:
+        min:
+          type: integer
+          maximum: 32767.0
+          minimum: 1.0
+          title: Min
+        max:
+          type: integer
+          maximum: 32767.0
+          minimum: 1.0
+          title: Max
+      additionalProperties: false
+      type: object
+      required:
+      - min
+      - max
+      title: RecommendedRepRange
+    RecoveryState:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        hours_to_fresh:
+          type: number
+          title: Hours To Fresh
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - hours_to_fresh
+      title: RecoveryState
+    RelatedExercise:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        name_full:
+          type: string
+          title: Name Full
+        target_category:
+          type: string
+          title: Target Category
+        mechanics_tier:
+          type: string
+          title: Mechanics Tier
+        relation:
+          type: string
+          enum:
+          - measured
+          - by_target
+          title: Relation
+        etu_cm2:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Etu Cm2
+        normalized_etu:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Normalized Etu
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      - name_full
+      - target_category
+      - mechanics_tier
+      - relation
+      - etu_cm2
+      - normalized_etu
+      title: RelatedExercise
+    RelatedExerciseResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/RelatedExercise'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: RelatedExerciseResponse
+    RepRange:
+      properties:
+        min:
+          type: integer
+          maximum: 32767.0
+          minimum: 1.0
+          title: Min
+        max:
+          type: integer
+          maximum: 32767.0
+          minimum: 1.0
+          title: Max
+      additionalProperties: false
+      type: object
+      required:
+      - min
+      - max
+      title: RepRange
+    RevisionSummary:
+      properties:
+        id:
+          type: integer
+          title: Id
+        revision_no:
+          type: integer
+          title: Revision No
+        status:
+          $ref: '#/components/schemas/PlanRevisionStatus'
+        lock_version:
+          type: integer
+          title: Lock Version
+        based_on_revision_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Based On Revision Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        released_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Released At
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - revision_no
+      - status
+      - lock_version
+      - based_on_revision_id
+      - created_at
+      - updated_at
+      - released_at
+      title: RevisionSummary
+    SetInfraArtifact:
+      properties:
+        id:
+          type: integer
+          title: Id
+        ordinal:
+          type: integer
+          title: Ordinal
+        reps:
+          $ref: '#/components/schemas/RepRange'
+        rir:
+          type: integer
+          title: Rir
+        min_volume_level:
+          type: integer
+          title: Min Volume Level
+        loading_mode:
+          anyOf:
+          - $ref: '#/components/schemas/LoadingMode'
+          - type: 'null'
+        loading_cycle:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/LoadingMode'
+            type: array
+            maxItems: 52
+            minItems: 2
+          - type: 'null'
+          title: Loading Cycle
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - ordinal
+      - reps
+      - rir
+      - min_volume_level
+      title: SetInfraArtifact
+    SetInfraDraft:
+      properties:
+        id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Id
+        ordinal:
+          type: integer
+          minimum: 0.0
+          title: Ordinal
+        reps:
+          $ref: '#/components/schemas/RepRange'
+        rir:
+          type: integer
+          maximum: 4.0
+          minimum: 0.0
+          title: Rir
+        min_volume_level:
+          type: integer
+          maximum: 32767.0
+          minimum: 0.0
+          title: Min Volume Level
+          default: 0
+        loading_mode:
+          anyOf:
+          - $ref: '#/components/schemas/LoadingMode'
+          - type: 'null'
+        loading_cycle:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/LoadingMode'
+            type: array
+            maxItems: 52
+            minItems: 2
+          - type: 'null'
+          title: Loading Cycle
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - reps
+      - rir
+      title: SetInfraDraft
+    TimelineWorkout:
+      properties:
+        workout_unit_id:
+          type: integer
+          title: Workout Unit Id
+        name:
+          type: string
+          title: Name
+        stimulus:
+          $ref: '#/components/schemas/WorkoutStimulus'
+      additionalProperties: false
+      type: object
+      required:
+      - workout_unit_id
+      - name
+      - stimulus
+      title: TimelineWorkout
+    TimingAssumption:
+      properties:
+        day_id:
+          type: integer
+          title: Day Id
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        timing_source:
+          type: string
+          enum:
+          - MICROCYCLE_ORDINAL
+          - WEEKDAY
+          - ORDINAL_ASSUMPTION
+          title: Timing Source
+        hour_offset:
+          type: number
+          title: Hour Offset
+        detail:
+          type: string
+          title: Detail
+      additionalProperties: false
+      type: object
+      required:
+      - day_id
+      - day_ordinal
+      - timing_source
+      - hour_offset
+      - detail
+      title: TimingAssumption
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    WorkoutStimulus:
+      properties:
+        total_etu_scalar:
+          type: number
+          title: Total Etu Scalar
+        muscles:
+          items:
+            $ref: '#/components/schemas/MuscleStimulus'
+          type: array
+          title: Muscles
+        joints:
+          items:
+            $ref: '#/components/schemas/JointStimulus'
+          type: array
+          title: Joints
+      additionalProperties: false
+      type: object
+      required:
+      - total_etu_scalar
+      - muscles
+      - joints
+      title: WorkoutStimulus
+    WorkoutUnitArtifact:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        warmup_notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Warmup Notes
+        stretch_notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stretch Notes
+        exercise_slots:
+          items:
+            $ref: '#/components/schemas/ExerciseSlotArtifact'
+          type: array
+          title: Exercise Slots
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - warmup_notes
+      - stretch_notes
+      - exercise_slots
+      title: WorkoutUnitArtifact
+    WorkoutUnitDraft:
+      properties:
+        id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Id
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        warmup_notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Warmup Notes
+        stretch_notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stretch Notes
+        exercise_slots:
+          items:
+            $ref: '#/components/schemas/ExerciseSlotDraft'
+          type: array
+          title: Exercise Slots
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: WorkoutUnitDraft

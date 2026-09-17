@@ -1,0 +1,41 @@
+{
+  "format": "agonez-plan-sanity-v2",
+  "plan_name": "Imported upper and rest",
+  "resolution_context": {
+    "global_volume_level": 0,
+    "focus_area": null,
+    "axis_overrides": {}
+  },
+  "days": [
+    {
+      "day": 1,
+      "name": "Upper A",
+      "weekday": "Monday",
+      "rest": false,
+      "exercises": [
+        {
+          "name": "Barbell Bench Press",
+          "slug": "barbell_bench_press",
+          "progression_model": {
+            "slug": "shared_reprange_shared_load_double_progression",
+            "name": "Double progression",
+            "name_full": "Double progression with shared rep range and load",
+            "when_to_use": "Use when working sets share one rep range and load.",
+            "how_to_apply": "Add repetitions inside the range, then increase load."
+          },
+          "sets": [
+            {"reps": {"min": 6, "max": 8}, "rir": 2},
+            {"reps": {"min": 6, "max": 8}, "rir": 2}
+          ]
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "name": "Rest",
+      "weekday": "Tuesday",
+      "rest": true,
+      "exercises": []
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "id": 21,
+  "revision_id": 21,
+  "revision_no": 1,
+  "lock_version": 3,
+  "name": "Upper and rest",
+  "description": "Example persisted draft artifact.",
+  "days": [
+    {
+      "id": 81,
+      "ordinal": 0,
+      "weekday": 1,
+      "name": "Upper A",
+      "description": null,
+      "workout_unit": {
+        "id": 55,
+        "name": "Upper A workout",
+        "description": null,
+        "warmup_notes": "Complete two specific warm-up sets.",
+        "stretch_notes": null,
+        "exercise_slots": [
+          {
+            "id": 301,
+            "ordinal": 0,
+            "name": "Primary horizontal press",
+            "description": null,
+            "goal": "Progressive chest stimulus",
+            "role": "PRIMARY_PROGRESSIVE",
+            "volume_axis": "upper",
+            "loading_mode": "moderate_load",
+            "loading_cycle": ["moderate_load", "high_load", "low_load"],
+            "target_muscle_slugs": ["pectoralis_major_sternal"],
+            "variants": [
+              {
+                "id": 401,
+                "ordinal": 0,
+                "variant_type": "DEFAULT",
+                "exercise_slug": "barbell_bench_press",
+                "progression_model_slug": "shared_reprange_shared_load_double_progression",
+                "sets": [
+                  {
+                    "id": 501,
+                    "ordinal": 0,
+                    "reps": {"min": 6, "max": 8},
+                    "rir": 2,
+                    "min_volume_level": 0,
+                    "loading_mode": null,
+                    "loading_cycle": null
+                  },
+                  {
+                    "id": null,
+                    "ordinal": 1,
+                    "reps": {"min": 8, "max": 10},
+                    "rir": 2,
+                    "min_volume_level": 1,
+                    "loading_mode": "low_load",
+                    "loading_cycle": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 82,
+      "ordinal": 1,
+      "weekday": 2,
+      "name": "Rest",
+      "description": null,
+      "workout_unit": null
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "slug": "dragon_flag",
+  "name": "Dragon Flag",
+  "name_full": "Flat Bench Dragon Flag",
+  "body_part": "Core",
+  "target_category": "Core",
+  "mechanics_tier": "Secondary_Compound",
+  "resistance_source": "Bodyweight",
+  "execution_pattern": "Bilateral",
+  "load_capacity": 55.0,
+  "systemic_propulsive_fcsa_demand": 115.0,
+  "recommended_rep_profile": {
+    "high_load": null,
+    "moderate_load": {"min": 8, "max": 12},
+    "low_load": {"min": 12, "max": 20}
+  },
+  "propulsive_fcsa_contribution_vector": {
+    "obliques": 37.35,
+    "iliopsoas": 27.97,
+    "rectus_abdominis": 17.34
+  },
+  "created_at": "2026-09-01T10:00:00Z",
+  "updated_at": "2026-09-01T10:00:00Z",
+  "technique": {
+    "tldr": {
+      "setup": "Anchor the upper body on a flat bench.",
+      "execution": "Raise and lower the rigid body under control.",
+      "focus": "Maintain trunk anti-extension.",
+      "stop_when": "The rigid body position can no longer be maintained."
+    }
+  },
+  "comments": {},
+  "video_links": [],
+  "image_url": "/media/exercises/dragon_flag.png",
+  "engine": {
+    "propulsive_fcsa_contribution_vector": {
+      "obliques": 37.35,
+      "iliopsoas": 27.97,
+      "rectus_abdominis": 17.34
+    },
+    "active_tension_exposure_vector": {
+      "obliques": 37.35,
+      "iliopsoas": 27.97,
+      "rectus_abdominis": 17.34
+    },
+    "etu_vector": {
+      "obliques": 33.62,
+      "iliopsoas": 26.57,
+      "rectus_abdominis": 16.47
+    },
+    "muscle_recovery_cost_modifier_vector": {
+      "obliques": 1.05,
+      "iliopsoas": 1.0,
+      "rectus_abdominis": 1.1
+    },
+    "joint_load_exposure_vector": {
+      "lumbar_spine": 0.68,
+      "hip_joint": 0.52,
+      "glenohumeral_joint": 0.46
+    }
+  }
+}
