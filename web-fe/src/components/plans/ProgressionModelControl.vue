@@ -68,14 +68,14 @@ onBeforeUnmount(() => {
   <div ref="root" class="progression-model-control">
     <div class="progression-model-row">
       <span class="progression-mark" aria-hidden="true">
-        <svg viewBox="0 0 30 24" fill="none">
-          <path class="axis" d="M3.5 3.5V20.5H27" />
-          <path class="trend" d="M6 17.5L11 13.5L15.5 15L23.5 6.5" />
-          <path class="arrow" d="M19.5 6.5H23.5V10.5" />
-          <circle cx="6" cy="17.5" r="1.35" />
-          <circle cx="11" cy="13.5" r="1.35" />
-          <circle cx="15.5" cy="15" r="1.35" />
-          <circle cx="23.5" cy="6.5" r="1.35" />
+        <svg viewBox="0 0 36 28" fill="none">
+          <path class="axis" d="M1.5 26.5H34.5" />
+          <rect class="bar" x="4.5" y="21" width="4" height="5.5" rx="1" />
+          <rect class="bar" x="12.5" y="17" width="4" height="9.5" rx="1" />
+          <rect class="bar" x="20.5" y="13" width="4" height="13.5" rx="1" />
+          <rect class="bar" x="28.5" y="9" width="4" height="17.5" rx="1" />
+          <path class="trend" d="M2.5 15L32.5 2.5" />
+          <path class="arrow" d="M27.8 1.5L32.5 2.5L29.9 6.6" />
         </svg>
       </span>
       <button
@@ -191,32 +191,33 @@ onBeforeUnmount(() => {
   place-items: center;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: color-mix(in srgb, var(--accent) 6%, transparent);
-  color: color-mix(in srgb, var(--accent2) 72%, var(--text2));
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+  color: color-mix(in srgb, var(--accent2) 45%, var(--text3));
 }
 
 .progression-mark svg {
-  width: 31px;
-  height: 25px;
+  width: 38px;
+  height: 30px;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.5;
+  stroke-width: 1.1;
 }
 
 .progression-mark .axis {
-  opacity: 0.42;
-  stroke-width: 1.15;
+  opacity: 0.35;
+  stroke-width: 1;
+}
+
+.progression-mark .bar {
+  fill: currentColor;
+  fill-opacity: 0.08;
+  stroke-width: 1;
 }
 
 .progression-mark .trend,
 .progression-mark .arrow {
-  stroke-width: 1.8;
-}
-
-.progression-mark circle {
-  fill: var(--panel);
-  stroke-width: 1.35;
+  stroke-width: 1.3;
 }
 
 .progression-model-trigger {
