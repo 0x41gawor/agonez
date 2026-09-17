@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import type { ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import ExerciseSlotEditor from '@/components/plans/ExerciseSlotEditor.vue'
 import {
@@ -13,12 +14,15 @@ import {
 } from '@/features/plans/editor'
 
 const model = defineModel<EditorWorkoutUnit>({ required: true })
-defineProps<{
+withDefaults(defineProps<{
   exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
+  progressionModels?: ProgressionModelCatalogItem[]
   path: string
   issues: PlanValidationIssue[]
-}>()
+}>(), {
+  progressionModels: () => [],
+})
 defineEmits<{ remove: [] }>()
 
 const notesOpen = ref(false)
@@ -88,6 +92,7 @@ defineExpose({ addSlot })
         :count="model.exercise_slots.length"
         :exercises="exercises"
         :muscles="muscles"
+        :progression-models="progressionModels"
         :path="`${path.replace('.workout', '')}.slots.${slot.clientKey}`"
         :issues="issues"
         @move="moveOrdered(model.exercise_slots, index, $event)"

@@ -16,6 +16,7 @@ import { DEFAULT_PLAN_EXPORT_REQUEST } from '@/features/plans/export'
 import { evaluatePlanGuidance, type PlanGuidanceTarget } from '@/features/plans/guidance'
 import { useAtlasCatalogStore } from '@/stores/atlasCatalog'
 import { useLocaleStore } from '@/stores/locale'
+import { useProgressionModelStore } from '@/stores/progressionModels'
 
 const props = defineProps<{ planId: string }>()
 const { t } = useI18n()
@@ -23,6 +24,7 @@ const numericPlanId = computed(() => Number(props.planId))
 const editor = usePlanDraft(numericPlanId)
 const catalog = useAtlasCatalogStore()
 const locale = useLocaleStore()
+const progressionModels = useProgressionModelStore()
 const activeTab = ref<'PLAN' | 'ANALYSIS'>('PLAN')
 const analysisVisited = ref(false)
 const persistedLockVersion = computed(() => editor.draft.value?.lock_version ?? null)
@@ -111,7 +113,7 @@ function reviewGuidance(target: PlanGuidanceTarget): void {
 }
 
 function loadPage(): void {
-  void Promise.all([editor.load(), catalog.load()])
+  void Promise.all([editor.load(), catalog.load(), progressionModels.load()])
 }
 
 onBeforeRouteLeave(() => {
@@ -125,7 +127,10 @@ onMounted(() => {
 })
 onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
 
-watch(() => locale.current, () => void catalog.load(true))
+watch(() => locale.current, () => {
+  void catalog.load(true)
+  void progressionModels.load(true)
+})
 </script>
 
 <template>
@@ -220,6 +225,7 @@ watch(() => locale.current, () => void catalog.load(true))
           v-model="editor.draft.value"
           :exercises="catalog.exercises"
           :muscles="catalog.muscles"
+          :progression-models="progressionModels.items"
           :issues="editor.validationIssues.value"
         />
         <PlanAnalysis

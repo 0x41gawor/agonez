@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import DayEditor from '@/components/plans/DayEditor.vue'
 import {
@@ -11,11 +12,14 @@ import {
 } from '@/features/plans/editor'
 
 const model = defineModel<PlanEditorState>({ required: true })
-defineProps<{
+withDefaults(defineProps<{
   exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
+  progressionModels?: ProgressionModelCatalogItem[]
   issues: PlanValidationIssue[]
-}>()
+}>(), {
+  progressionModels: () => [],
+})
 
 function addDay(): void {
   model.value.days.push(createDay(model.value.days.length))
@@ -66,6 +70,7 @@ function addDay(): void {
           :count="model.days.length"
           :exercises="exercises"
           :muscles="muscles"
+          :progression-models="progressionModels"
           :path="`days.${day.clientKey}`"
           :issues="issues"
           @duplicate="duplicateDay(model.days, index)"

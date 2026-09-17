@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { LoadingMode } from '@/api/plan-types'
+import type { LoadingMode, ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem } from '@/api/types'
 import ExerciseSelector from '@/components/plans/ExerciseSelector.vue'
+import ProgressionModelControl from '@/components/plans/ProgressionModelControl.vue'
 import SetPrescriptionEditor from '@/components/plans/SetPrescriptionEditor.vue'
 import {
   createSet,
@@ -17,6 +18,7 @@ import {
 const model = defineModel<EditorVariant>({ required: true })
 const props = withDefaults(defineProps<{
   exercises: ExerciseCatalogItem[]
+  progressionModels?: ProgressionModelCatalogItem[]
   path: string
   issues: PlanValidationIssue[]
   fallbackIndex?: number
@@ -26,10 +28,12 @@ const props = withDefaults(defineProps<{
 }>(), {
   slotLoadingMode: 'moderate_load',
   slotLoadingCycle: null,
+  progressionModels: () => [],
 })
 defineEmits<{
   remove: []
   move: [direction: -1 | 1]
+  progressionOpen: []
 }>()
 
 function addSet(): void {
@@ -76,6 +80,12 @@ function duplicateSet(index: number): void {
     <p v-if="issues.some((issue) => issue.path === path)" class="field-error">
       {{ issues.find((issue) => issue.path === path)?.message }}
     </p>
+
+    <ProgressionModelControl
+      v-model="model.progression_model_slug"
+      :models="progressionModels"
+      @opened="$emit('progressionOpen')"
+    />
 
     <div class="sets-heading">
       <span class="section-label">{{ $t('plans.variant.prescription') }}</span>

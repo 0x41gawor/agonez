@@ -185,6 +185,18 @@ export default {
       moderate_load: 'Moderate load',
       low_load: 'Low load',
     },
+    progression: {
+      label: 'Progression model',
+      none: 'None',
+      noneHelp: 'No progression strategy assigned',
+      choose: 'Choose progression model',
+      search: 'Find a model…',
+      noMatches: 'No progression models match your search.',
+      info: 'About this progression model',
+      whenToUse: 'When to use',
+      howToApply: 'How to apply',
+      metadataOnly: 'Plan metadata only — selecting a model does not change the set prescription.',
+    },
     loadingCycle: {
       cycle: 'Cycle',
       add: 'Add cycle',

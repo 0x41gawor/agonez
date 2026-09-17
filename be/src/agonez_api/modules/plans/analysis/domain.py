@@ -26,6 +26,7 @@ class ResolvedSet:
 class ResolvedExercise:
     variant_id: int
     exercise_slug: str
+    progression_model_slug: str | None
     sets: tuple[ResolvedSet, ...]
 
 

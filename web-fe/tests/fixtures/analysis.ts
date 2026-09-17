@@ -220,7 +220,7 @@ export function largeMuscleProvenance(count = 2000): AnalysisContribution[] {
 
 export function planExportResult(): PlanAIExportResult {
   return {
-    format: 'agonez-plan-sanity-v1',
+    format: 'agonez-plan-sanity-v2',
     plan_name: 'PPLPP',
     resolution_context: {
       global_volume_level: 0,
@@ -237,6 +237,13 @@ export function planExportResult(): PlanAIExportResult {
           {
             name: 'Barbell Bench Press',
             slug: 'barbell_bench_press',
+            progression_model: {
+              slug: 'double_progression',
+              name: 'Double progression',
+              name_full: 'Double progression by repetitions and load',
+              when_to_use: 'Use for stable rep ranges.',
+              how_to_apply: 'Add repetitions, then load.',
+            },
             sets: [{ reps: { min: 5, max: 7 }, rir: 2 }],
           },
         ],

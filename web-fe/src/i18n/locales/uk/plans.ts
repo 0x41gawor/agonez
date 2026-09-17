@@ -83,6 +83,12 @@ export default {
     },
     roles: { PRIMARY_PROGRESSIVE: 'Основна прогресія', SECONDARY_PROGRESSIVE: 'Другорядна прогресія', VOLUME_ACCUMULATION: 'Накопичення обсягу', ACCESSORY: 'Допоміжна' },
     loadingModes: { high_load: 'Високе навантаження', moderate_load: 'Помірне навантаження', low_load: 'Низьке навантаження' },
+    progression: {
+      label: 'Модель прогресії', none: 'Немає', noneHelp: 'Стратегію прогресії не призначено', choose: 'Вибрати модель прогресії', search: 'Знайти модель…',
+      noMatches: 'Жодна модель прогресії не відповідає пошуку.', info: 'Про цю модель прогресії',
+      whenToUse: 'Коли застосовувати', howToApply: 'Як застосовувати',
+      metadataOnly: 'Лише метадані плану — вибір моделі не змінює призначення підходів.',
+    },
     loadingCycle: {
       cycle: 'Цикл', add: 'Додати цикл', useStatic: 'Сталий режим', useStaticTitle: 'Використати стале навантаження',
       microcycleMode: 'Режим навантаження мікроциклу {number}', removeStep: 'Видалити мікроцикл {number}', addStep: '+ Крок',

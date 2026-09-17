@@ -1,6 +1,6 @@
 # Agonez Plan JSON specification
 
-Version: `agonez-plan-sanity-v1`  
+Version: `agonez-plan-sanity-v2`
 Purpose: create a new Agonez PlanCreator draft from an AI-friendly, resolved training plan.  
 Media type: `application/json`  
 Text encoding: UTF-8
@@ -9,9 +9,10 @@ This is an interchange format, not a database backup. It deliberately describes 
 exercises, and concrete set prescriptions without exposing PlanCreator IDs, revisions,
 exercise-slot IDs, fallbacks, or other persistence details.
 
-Loading modes and loading cycles are intentionally not part of V1. Exported repetition
+Loading modes and loading cycles are intentionally not part of V2. Exported repetition
 ranges are already concrete. Import creates `moderate_load` slots and leaves each set in
-inherit mode; richer unresolved loading patterns require a future interchange version.
+inherit mode. V2 adds the progression model selected for each default exercise; this is
+planning metadata and does not change the concrete set prescription.
 
 The same format is produced by PlanCreator's **Export JSON** action and accepted by the
 **Import JSON** action on the **My Plans** page.
@@ -20,7 +21,7 @@ The same format is produced by PlanCreator's **Export JSON** action and accepted
 
 ```json
 {
-  "format": "agonez-plan-sanity-v1",
+  "format": "agonez-plan-sanity-v2",
   "plan_name": "Three-day full body strength",
   "resolution_context": {
     "global_volume_level": 0,
@@ -37,6 +38,13 @@ The same format is produced by PlanCreator's **Export JSON** action and accepted
         {
           "name": "High-Bar Barbell Back Squat",
           "slug": "high_bar_back_squat",
+          "progression_model": {
+            "slug": "double_progression",
+            "name": "Double progression",
+            "name_full": "Double progression by repetitions and load",
+            "when_to_use": "Use when a stable repetition range can guide load increases.",
+            "how_to_apply": "Add repetitions inside the range, then increase load after reaching its top."
+          },
           "sets": [
             { "reps": { "min": 5, "max": 7 }, "rir": 2 },
             { "reps": { "min": 5, "max": 7 }, "rir": 2 },
@@ -46,6 +54,7 @@ The same format is produced by PlanCreator's **Export JSON** action and accepted
         {
           "name": "Barbell Bench Press",
           "slug": "barbell_bench_press",
+          "progression_model": null,
           "sets": [
             { "reps": { "min": 6, "max": 8 }, "rir": 2 },
             { "reps": { "min": 6, "max": 8 }, "rir": 1 }
@@ -54,6 +63,7 @@ The same format is produced by PlanCreator's **Export JSON** action and accepted
         {
           "name": "Pendlay Row",
           "slug": "pendlay_row",
+          "progression_model": null,
           "sets": [
             { "reps": { "min": 6, "max": 10 }, "rir": 2 },
             { "reps": { "min": 6, "max": 10 }, "rir": 1 }
@@ -77,6 +87,7 @@ The same format is produced by PlanCreator's **Export JSON** action and accepted
         {
           "name": "Pendlay Row",
           "slug": "pendlay_row",
+          "progression_model": null,
           "sets": [
             { "reps": { "min": 5, "max": 8 }, "rir": 2 },
             { "reps": { "min": 5, "max": 8 }, "rir": 1 }
@@ -98,7 +109,7 @@ valid JSON and must not be emitted. The browser accepts files up to 1 MiB.
 
 | Field | JSON type | Constraints | Meaning |
 |---|---|---|---|
-| `format` | string | Exactly `agonez-plan-sanity-v1` | Selects this contract and prevents accidental import of unrelated JSON. |
+| `format` | string | Exactly `agonez-plan-sanity-v2` | Selects this contract and prevents accidental import of unrelated JSON. |
 | `plan_name` | string | Non-blank; maximum 200 characters | Name of the new independent PlanCreator plan. Duplicate names are allowed. |
 | `resolution_context` | object | See below | Records which volume/focus context produced the concrete set list. |
 | `days` | array | 0–365 day objects | The complete microcycle in chronological order. A microcycle may exceed seven days. |
@@ -140,11 +151,30 @@ microcycle longer than seven days. The order of the `days` array is always autho
 |---|---|---|---|
 | `name` | string | Non-blank; maximum 200 characters | Human-readable label used as the imported exercise-slot name. |
 | `slug` | string | 1–200 characters; regex `^[a-z0-9_]+$` | Authoritative Atlas exercise identity. It must already exist in `core.exercises`. |
+| `progression_model` | object or `null` | See below; the field itself is required | Progression strategy attached to this default exercise. Use `null` when no model is selected. |
 | `sets` | array | 0–100 set objects | Concrete ordered work sets for this exercise. |
 
 The `slug`, not `name`, selects the exercise. A correct display name does not compensate
 for an unknown or misspelled slug. Import is rejected atomically if any slug does not exist
 in the live Atlas catalog. Repeating a slug is allowed and creates separate exercise slots.
+
+### `progression_model`
+
+The field is always present in V2. Use `null` to make the absence of a progression model
+explicit. Otherwise provide an object with the following fields:
+
+| Field | JSON type | Constraints | Meaning |
+|---|---|---|---|
+| `slug` | string | Required; 1–200 characters; regex `^[a-z0-9_]+$` | Authoritative identity from `core.progression_models`. It must already exist in the target Agonez instance. |
+| `name` | string or `null` | Optional on import; non-blank when provided | Localized short label for human/LLM readability. Export always includes it. It does not select the model. |
+| `name_full` | string or `null` | Optional on import; non-blank when provided | Localized expanded label. Export always includes it. |
+| `when_to_use` | string or `null` | Optional on import; non-blank when provided | Localized guidance explaining suitable use cases. Export always includes it. |
+| `how_to_apply` | string or `null` | Optional on import; non-blank when provided | Localized application guidance. Export always includes it. |
+
+Only `slug` is authoritative. The descriptive fields are a portable explanation for an
+external reviewer; import does not write them back to the catalog. Import is rejected
+atomically if the progression-model slug is unknown. Model selection is variant-level
+metadata: it does not alter repetitions, RIR, loading mode, or loading cycle.
 
 ### Set object
 
@@ -168,6 +198,7 @@ The import endpoint creates a complete new draft in one database transaction:
 | Day with `rest: true` | Day prescription without a workout unit |
 | Day with `rest: false` | Day prescription plus a workout unit named after the day |
 | Exercise | Exercise slot with one `DEFAULT` exercise variant |
+| Exercise `progression_model` | Progression-model reference on that `DEFAULT` variant |
 | Set | Basic-level set-infrastructure prescription |
 
 Internal IDs, ordinals, revision numbers, and lock versions are generated by Agonez and
@@ -196,11 +227,21 @@ Validation occurs twice:
 1. The web application validates JSON syntax, all fields, types, ranges, array limits,
    day numbering, weekday spelling, and rest-day consistency before showing a review.
 2. The backend repeats structural validation and resolves every exercise slug against the
-   current Atlas catalog inside the import transaction.
+   current Atlas and progression-model catalogs inside the import transaction.
 
 If validation fails, no plan is created. Typical errors include an unsupported `format`,
 unknown fields, non-consecutive day numbers, a populated rest day, invalid RIR, reversed
 rep ranges, and unknown exercise slugs.
+
+Unknown progression-model slugs also reject the entire import. A missing
+`progression_model` field is invalid in V2; use `null` when no model should be assigned.
+
+## V1 backward compatibility
+
+The importer continues to accept `agonez-plan-sanity-v1` documents created before
+progression models were added. V1 exercise objects must not contain a
+`progression_model` field and import them with no selected model. New exports always use
+V2. Do not generate new V1 documents.
 
 ## LLM authoring rules
 
@@ -214,9 +255,13 @@ When generating this format:
 5. Emit each concrete set separately and keep `rir` within `0`–`4`.
 6. Put the main progressive exercise first and the secondary progressive exercise second
    when the default role inference is desired.
-7. Use `resolution_context.global_volume_level: 0`, `focus_area: null`, and
+7. Include `progression_model` on every exercise. Use `null` unless a known catalog model
+   is intentionally selected; never invent a progression-model slug.
+8. Treat progression as metadata. Do not silently modify the set list to imitate the
+   selected model.
+9. Use `resolution_context.global_volume_level: 0`, `focus_area: null`, and
    `axis_overrides: {}` unless another resolved context is explicitly known.
-8. Do not include IDs, roles, target muscles, comments, units, load values, tempos, rest
+10. Do not include IDs, roles, target muscles, comments, units, load values, tempos, rest
    times, or any other fields not defined by this version.
 
 Before returning the document, verify that it parses as strict JSON and that every object

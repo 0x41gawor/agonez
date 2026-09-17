@@ -12,8 +12,10 @@ the IDs of all other editable children—survive reorder and ordinary edits.
 
 Loading intent and repeating loading patterns are persisted, while applying those
 patterns across future microcycles remains part of the deferred Modulation resolver.
-Release workflow, macrocycles, execution, load tracking, and progression remain
-deferred. See `loading-prescriptions.md` for inheritance semantics.
+Release workflow, macrocycles, execution, load tracking, and progression execution remain
+deferred. Plan drafts can now attach progression-model metadata independently to every
+default or fallback exercise variant. See `loading-prescriptions.md` for loading
+inheritance semantics.
 
 ## Existing-system decisions
 

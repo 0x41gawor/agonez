@@ -12,6 +12,8 @@ from agonez_api.modules.plans.schemas import (
     PlanDraftUpdate,
     PlanListResponse,
     PlanSummary,
+    ProgressionModelCatalogItem,
+    ProgressionModelCatalogResponse,
     RevisionSummary,
     SetInfraArtifact,
     WorkoutUnitArtifact,
@@ -34,6 +36,15 @@ class PlanService:
     async def list_plans(self) -> PlanListResponse:
         rows = await self._repository.list_plans()
         return PlanListResponse(items=[PlanSummary.model_validate(row) for row in rows])
+
+    async def list_progression_models(
+        self,
+        *,
+        locale: str = "en",
+    ) -> ProgressionModelCatalogResponse:
+        rows = await self._repository.list_progression_models(locale=locale)
+        items = [ProgressionModelCatalogItem.model_validate(row) for row in rows]
+        return ProgressionModelCatalogResponse(items=items, total=len(items))
 
     async def get_plan(self, plan_id: int) -> PlanDetail:
         plan, revisions = await self._repository.get_plan(plan_id)
@@ -82,6 +93,7 @@ class PlanService:
                     ordinal=variant["ordinal"],
                     variant_type=variant["variant_type"],
                     exercise_slug=variant["exercise_slug"],
+                    progression_model_slug=variant.get("progression_model_slug"),
                     sets=sets_by_variant.get(variant_id, []),
                 )
             )

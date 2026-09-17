@@ -26,6 +26,7 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     assert "/assets/anatomy.svg" in paths
     assert "post" in paths["/api/plans"]
     assert "get" in paths["/api/plans"]
+    assert "get" in paths["/api/plans/catalog/progression-models"]
     assert "post" in paths["/api/plans/import"]
     assert "get" in paths["/api/plans/{plan_id}"]
     assert "delete" in paths["/api/plans/{plan_id}"]
@@ -65,3 +66,4 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     assert "recommended_rep_profile" in schemas["ExerciseListItem"]["properties"]
     assert "loading_mode" in schemas["ExerciseSlotDraft"]["properties"]
     assert "loading_cycle" in schemas["SetInfraDraft"]["properties"]
+    assert "progression_model_slug" in schemas["ExerciseVariantDraft"]["properties"]

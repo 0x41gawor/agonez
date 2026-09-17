@@ -1,7 +1,8 @@
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Body, Depends, Path, Request, Response, status
+from fastapi import APIRouter, Body, Depends, Header, Path, Request, Response, status
 
+from agonez_api.core.localization import negotiate_content_locale
 from agonez_api.modules.plans.analysis.schemas import (
     PlanAIExportResult,
     PlanAIImportDocument,
@@ -16,6 +17,7 @@ from agonez_api.modules.plans.schemas import (
     PlanDraftArtifact,
     PlanDraftUpdate,
     PlanListResponse,
+    ProgressionModelCatalogResponse,
 )
 from agonez_api.modules.plans.service import PlanService
 
@@ -29,6 +31,19 @@ def get_plan_service(request: Request) -> PlanService:
 
 def get_plan_analysis_service(request: Request) -> PlanAnalysisService:
     return cast(PlanAnalysisService, request.app.state.plan_analysis_service)
+
+
+def get_content_locale(
+    response: Response,
+    accept_language: Annotated[str | None, Header(alias="Accept-Language")] = None,
+) -> str:
+    locale = negotiate_content_locale(accept_language)
+    response.headers["Content-Language"] = locale
+    response.headers["Vary"] = "Accept-Language"
+    return locale
+
+
+ContentLocaleDependency = Annotated[str, Depends(get_content_locale)]
 
 
 @router.post("", response_model=PlanDraftArtifact, status_code=status.HTTP_201_CREATED)
@@ -52,6 +67,17 @@ async def list_plans(
     service: Annotated[PlanService, Depends(get_plan_service)],
 ) -> PlanListResponse:
     return await service.list_plans()
+
+
+@router.get(
+    "/catalog/progression-models",
+    response_model=ProgressionModelCatalogResponse,
+)
+async def list_progression_models(
+    service: Annotated[PlanService, Depends(get_plan_service)],
+    locale: ContentLocaleDependency,
+) -> ProgressionModelCatalogResponse:
+    return await service.list_progression_models(locale=locale)
 
 
 @router.post(
@@ -114,5 +140,6 @@ async def export_draft(
     plan_id: PlanId,
     payload: Annotated[PlanExportRequest, Body()],
     service: Annotated[PlanAnalysisService, Depends(get_plan_analysis_service)],
+    locale: ContentLocaleDependency,
 ) -> PlanAIExportResult:
-    return await service.export_draft(plan_id, payload)
+    return await service.export_draft(plan_id, payload, locale=locale)

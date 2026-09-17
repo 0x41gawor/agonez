@@ -14,6 +14,7 @@ from agonez_api.modules.plans.analysis.schemas import (
     PlanAIExportExercise,
     PlanAIExportResult,
     PlanAIExportSet,
+    PlanAIProgressionModel,
     PlanAnalysisRequest,
     PlanAnalysisResult,
     PlanExportRequest,
@@ -49,6 +50,8 @@ class PlanAnalysisService:
         self,
         plan_id: int,
         request: PlanExportRequest,
+        *,
+        locale: str = "en",
     ) -> PlanAIExportResult:
         source = await self._repository.get_analysis_source(plan_id)
         draft = PlanService.assemble_draft(source.draft)
@@ -57,7 +60,16 @@ class PlanAnalysisService:
             cast(str, row["exercise_slug"]): cast(str, row["exercise_name"])
             for row in source.exercises
         }
-        return build_plan_ai_export(draft, resolved, exercise_names)
+        progression_models = {
+            cast(str, row["slug"]): row
+            for row in await self._repository.list_progression_models(locale=locale)
+        }
+        return build_plan_ai_export(
+            draft,
+            resolved,
+            exercise_names,
+            progression_models,
+        )
 
     @staticmethod
     def _catalog(source: AnalysisSourceRows) -> AnalysisCatalog:
@@ -115,6 +127,7 @@ def build_plan_ai_export(
     draft: PlanDraftArtifact,
     resolved: ResolvedPlan,
     exercise_names: dict[str, str],
+    progression_models: dict[str, dict[str, Any]],
 ) -> PlanAIExportResult:
     days: list[PlanAIExportDay] = []
     for day in resolved.days:
@@ -124,6 +137,16 @@ def build_plan_ai_export(
                 selected = slot.selected_exercise
                 if selected is None or not selected.sets:
                     continue
+                progression_model = None
+                if selected.progression_model_slug is not None:
+                    progression_row = progression_models[selected.progression_model_slug]
+                    progression_model = PlanAIProgressionModel(
+                        slug=cast(str, progression_row["slug"]),
+                        name=cast(str, progression_row["name"]),
+                        name_full=cast(str, progression_row["name_full"]),
+                        when_to_use=cast(str, progression_row["when_to_use"]),
+                        how_to_apply=cast(str, progression_row["how_to_apply"]),
+                    )
                 exercises.append(
                     PlanAIExportExercise(
                         name=exercise_names.get(
@@ -131,6 +154,7 @@ def build_plan_ai_export(
                             selected.exercise_slug.replace("_", " ").title(),
                         ),
                         slug=selected.exercise_slug,
+                        progression_model=progression_model,
                         sets=[
                             PlanAIExportSet(
                                 reps={"min": item.rep_min, "max": item.rep_max},

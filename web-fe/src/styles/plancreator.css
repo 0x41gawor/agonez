@@ -1076,6 +1076,25 @@
 .slot-loading-badge i.loading-moderate_load { background: var(--loadModerate); }
 .slot-loading-badge i.loading-low_load { background: var(--loadLow); }
 
+.slot-progression-badge {
+  display: inline-flex;
+  max-width: 190px;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 4px 4px;
+  padding: 2px 6px;
+  overflow: hidden;
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text3);
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .slot-summary-main strong {
   overflow: hidden;
   font-size: 13px;

@@ -1,13 +1,17 @@
 import type {
-  PlanAIExportDay,
-  PlanAIExportExercise,
-  PlanAIExportResult,
+  PlanAIImportDay,
+  PlanAIImportDocument,
+  PlanAIImportExercise,
+  PlanAIImportProgressionModel,
   PlanAIExportSet,
 } from '@/api/plan-export-types'
 import type { PlanResolutionContext } from '@/api/plan-analysis-types'
 
-export const PLAN_IMPORT_FORMAT = 'agonez-plan-sanity-v1'
+export const PLAN_IMPORT_FORMAT = 'agonez-plan-sanity-v2'
+export const PLAN_IMPORT_LEGACY_FORMAT = 'agonez-plan-sanity-v1'
 export const PLAN_IMPORT_MAX_BYTES = 1024 * 1024
+
+type PlanImportFormat = PlanAIImportDocument['format']
 
 const WEEKDAYS = new Set([
   'Monday',
@@ -149,24 +153,94 @@ function parseSet(value: unknown, path: string, issues: string[]): PlanAIExportS
   }
 }
 
-function parseExercise(value: unknown, path: string, issues: string[]): PlanAIExportExercise {
+function nullableOptionalString(
+  source: Record<string, unknown>,
+  key: string,
+  path: string,
+  issues: string[],
+): string | null | undefined {
+  if (!(key in source)) return undefined
+  if (source[key] === null) return null
+  return stringValue(source[key], `${path}.${key}`, issues, 10_000)
+}
+
+function parseProgressionModel(
+  value: unknown,
+  path: string,
+  issues: string[],
+): PlanAIImportProgressionModel | null {
+  if (value === null) return null
   const source = objectValue(value, path, issues)
-  if (!source) return { name: '', slug: '', sets: [] }
-  rejectUnknownKeys(source, ['name', 'slug', 'sets'], path, issues)
+  if (!source) return null
+  rejectUnknownKeys(
+    source,
+    ['slug', 'name', 'name_full', 'when_to_use', 'how_to_apply'],
+    path,
+    issues,
+  )
   const slug = stringValue(source.slug, `${path}.slug`, issues, 200)
   if (slug && !/^[a-z0-9_]+$/.test(slug)) {
     issues.push(`${path}.slug must use lowercase letters, numbers, and underscores only.`)
   }
-  return {
+  const result: PlanAIImportProgressionModel = { slug }
+  const name = nullableOptionalString(source, 'name', path, issues)
+  const nameFull = nullableOptionalString(source, 'name_full', path, issues)
+  const whenToUse = nullableOptionalString(source, 'when_to_use', path, issues)
+  const howToApply = nullableOptionalString(source, 'how_to_apply', path, issues)
+  if (name !== undefined) result.name = name
+  if (nameFull !== undefined) result.name_full = nameFull
+  if (whenToUse !== undefined) result.when_to_use = whenToUse
+  if (howToApply !== undefined) result.how_to_apply = howToApply
+  return result
+}
+
+function parseExercise(
+  value: unknown,
+  path: string,
+  issues: string[],
+  format: PlanImportFormat,
+): PlanAIImportExercise {
+  const source = objectValue(value, path, issues)
+  if (!source) return { name: '', slug: '', sets: [] }
+  const hasProgressionModel = Object.prototype.hasOwnProperty.call(source, 'progression_model')
+  rejectUnknownKeys(
+    source,
+    format === PLAN_IMPORT_FORMAT
+      ? ['name', 'slug', 'progression_model', 'sets']
+      : ['name', 'slug', 'sets'],
+    path,
+    issues,
+  )
+  if (format === PLAN_IMPORT_FORMAT && !hasProgressionModel) {
+    issues.push(`${path}.progression_model is required in ${PLAN_IMPORT_FORMAT}; use null for none.`)
+  }
+  const slug = stringValue(source.slug, `${path}.slug`, issues, 200)
+  if (slug && !/^[a-z0-9_]+$/.test(slug)) {
+    issues.push(`${path}.slug must use lowercase letters, numbers, and underscores only.`)
+  }
+  const exercise: PlanAIImportExercise = {
     name: stringValue(source.name, `${path}.name`, issues, 200),
     slug,
     sets: arrayValue(source.sets, `${path}.sets`, issues, 100).map((item, index) =>
       parseSet(item, `${path}.sets[${index}]`, issues),
     ),
   }
+  if (format === PLAN_IMPORT_FORMAT) {
+    exercise.progression_model = parseProgressionModel(
+      source.progression_model,
+      `${path}.progression_model`,
+      issues,
+    )
+  }
+  return exercise
 }
 
-function parseDay(value: unknown, index: number, issues: string[]): PlanAIExportDay {
+function parseDay(
+  value: unknown,
+  index: number,
+  issues: string[],
+  format: PlanImportFormat,
+): PlanAIImportDay {
   const path = `$.days[${index}]`
   const source = objectValue(value, path, issues)
   if (!source) return { day: index + 1, name: '', weekday: null, rest: true, exercises: [] }
@@ -185,7 +259,12 @@ function parseDay(value: unknown, index: number, issues: string[]): PlanAIExport
   const rest = typeof source.rest === 'boolean' ? source.rest : false
   if (typeof source.rest !== 'boolean') issues.push(`${path}.rest must be true or false.`)
   const exercises = arrayValue(source.exercises, `${path}.exercises`, issues, 100).map(
-    (item, exerciseIndex) => parseExercise(item, `${path}.exercises[${exerciseIndex}]`, issues),
+    (item, exerciseIndex) => parseExercise(
+      item,
+      `${path}.exercises[${exerciseIndex}]`,
+      issues,
+      format,
+    ),
   )
   if (rest && exercises.length) issues.push(`${path}.exercises must be empty when rest is true.`)
 
@@ -198,7 +277,7 @@ function parseDay(value: unknown, index: number, issues: string[]): PlanAIExport
   }
 }
 
-export function parsePlanImportJson(json: string): PlanAIExportResult {
+export function parsePlanImportJson(json: string): PlanAIImportDocument {
   let value: unknown
   try {
     value = JSON.parse(json) as unknown
@@ -211,15 +290,19 @@ export function parsePlanImportJson(json: string): PlanAIExportResult {
   if (!source) throw new PlanImportValidationError(issues)
   rejectUnknownKeys(source, ['format', 'plan_name', 'resolution_context', 'days'], '$', issues)
 
-  if (source.format !== PLAN_IMPORT_FORMAT) {
-    issues.push(`$.format must be "${PLAN_IMPORT_FORMAT}".`)
+  const format = source.format
+  if (format !== PLAN_IMPORT_FORMAT && format !== PLAN_IMPORT_LEGACY_FORMAT) {
+    issues.push(`$.format must be "${PLAN_IMPORT_FORMAT}" or "${PLAN_IMPORT_LEGACY_FORMAT}".`)
   }
-  const result: PlanAIExportResult = {
-    format: PLAN_IMPORT_FORMAT,
+  const parsedFormat: PlanImportFormat = format === PLAN_IMPORT_LEGACY_FORMAT
+    ? PLAN_IMPORT_LEGACY_FORMAT
+    : PLAN_IMPORT_FORMAT
+  const result: PlanAIImportDocument = {
+    format: parsedFormat,
     plan_name: stringValue(source.plan_name, '$.plan_name', issues, 200),
     resolution_context: parseResolutionContext(source.resolution_context, issues),
     days: arrayValue(source.days, '$.days', issues, 365).map((day, index) =>
-      parseDay(day, index, issues),
+      parseDay(day, index, issues, parsedFormat),
     ),
   }
   if (issues.length) throw new PlanImportValidationError(issues)

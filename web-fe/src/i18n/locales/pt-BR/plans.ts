@@ -83,6 +83,12 @@ export default {
     },
     roles: { PRIMARY_PROGRESSIVE: 'Progressão principal', SECONDARY_PROGRESSIVE: 'Progressão secundária', VOLUME_ACCUMULATION: 'Acúmulo de volume', ACCESSORY: 'Acessório' },
     loadingModes: { high_load: 'Carga alta', moderate_load: 'Carga moderada', low_load: 'Carga baixa' },
+    progression: {
+      label: 'Modelo de progressão', none: 'Nenhum', noneHelp: 'Nenhuma estratégia de progressão atribuída', choose: 'Escolher modelo de progressão', search: 'Buscar um modelo…',
+      noMatches: 'Nenhum modelo de progressão corresponde à busca.', info: 'Sobre este modelo de progressão',
+      whenToUse: 'Quando usar', howToApply: 'Como aplicar',
+      metadataOnly: 'Apenas metadados do plano — escolher um modelo não altera a prescrição das séries.',
+    },
     loadingCycle: {
       cycle: 'Ciclo', add: 'Adicionar ciclo', useStatic: 'Usar fixo', useStaticTitle: 'Usar carga fixa',
       microcycleMode: 'Modo de carga do microciclo {number}', removeStep: 'Remover microciclo {number}', addStep: '+ Etapa',

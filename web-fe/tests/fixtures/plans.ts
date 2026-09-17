@@ -83,6 +83,7 @@ export function planArtifact(lockVersion = 4): PlanDraftArtifact {
                   ordinal: 0,
                   variant_type: 'DEFAULT',
                   exercise_slug: exercise.slug,
+                  progression_model_slug: null,
                   sets: [
                     {
                       id: 71,

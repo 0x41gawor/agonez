@@ -316,7 +316,8 @@ def test_recovery_conversion_linear_decay_rest_and_before_after_snapshots() -> N
 
 
 def test_periodic_simulation_carries_sunday_debt_into_monday() -> None:
-    high_active_catalog = _catalog(active={"chest": 30.0})
+    # Keep the fixture above the carry-over threshold after recovery calibration.
+    high_active_catalog = _catalog(active={"chest": 60.0})
     draft = _draft(
         [
             [_slot(1, [_set(1, 0, 2)])],

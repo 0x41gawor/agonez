@@ -69,6 +69,26 @@ def test_nested_draft_schema_accepts_the_plan_artifact() -> None:
     assert slot.variants[0].sets[0].loading_mode is None
 
 
+def test_progression_model_is_variant_level_metadata() -> None:
+    payload = draft_payload()
+    variant = payload["days"][0]["workout_unit"]["exercise_slots"][0]["variants"][0]  # type: ignore[index]
+    variant["progression_model_slug"] = "double_progression"
+
+    draft = PlanDraftUpdate.model_validate(payload)
+
+    parsed = draft.days[0].workout_unit.exercise_slots[0].variants[0]  # type: ignore[union-attr]
+    assert parsed.progression_model_slug == "double_progression"
+
+
+def test_progression_model_slug_rejects_non_catalog_shape() -> None:
+    payload = draft_payload()
+    variant = payload["days"][0]["workout_unit"]["exercise_slots"][0]["variants"][0]  # type: ignore[index]
+    variant["progression_model_slug"] = "Double progression"
+
+    with pytest.raises(ValidationError, match="progression_model_slug"):
+        PlanDraftUpdate.model_validate(payload)
+
+
 def test_loading_mode_inheritance_and_cycles_are_accepted() -> None:
     payload = draft_payload()
     slot = payload["days"][0]["workout_unit"]["exercise_slots"][0]  # type: ignore[index]

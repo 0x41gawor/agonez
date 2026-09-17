@@ -19,6 +19,15 @@ import {
 } from '@/features/plans/editor'
 import { exercise, fallbackExercise, muscle, planArtifact } from './fixtures/plans'
 
+const progressionModel = {
+  slug: 'double_progression',
+  display_order: 10,
+  name: 'Double progression',
+  name_full: 'Double progression by repetitions and load',
+  when_to_use: 'Use when the repetition range is stable.',
+  how_to_apply: 'Add repetitions, then increase load.',
+}
+
 describe('PlanEditor', () => {
   it('treats null profile ranges as unsupported and safely seeds an editable set', () => {
     const profile = {
@@ -171,6 +180,7 @@ describe('PlanEditor', () => {
     const editor = toPlanEditorState(planArtifact())
     const slots = editor.days[0]!.workout_unit!.exercise_slots
     const source = slots[0]!
+    source.variants[0]!.progression_model_slug = progressionModel.slug
     source.loading_cycle = ['high_load', 'low_load']
     source.variants[0]!.sets[0]!.loading_cycle = ['moderate_load', 'low_load']
     source.variants.push(createVariant('FALLBACK', 1, fallbackExercise.slug))
@@ -207,6 +217,7 @@ describe('PlanEditor', () => {
     expect(duplicate.loading_cycle).toEqual(source.loading_cycle)
     expect(duplicate.loading_cycle).not.toBe(source.loading_cycle)
     expect(duplicate.variants).toHaveLength(2)
+    expect(duplicate.variants[0]?.progression_model_slug).toBe(progressionModel.slug)
     duplicate.variants.forEach((variant, index) => {
       expect(variant.id).toBeNull()
       expect(variant.clientKey).not.toBe(source.variants[index]!.clientKey)
@@ -363,6 +374,59 @@ describe('PlanEditor', () => {
     expect(slot.variants.map((variant) => variant.variant_type)).toEqual(['DEFAULT', 'FALLBACK'])
     await wrapper.get('.variant-editor.fallback .danger-action').trigger('click')
     expect(slot.variants.map((variant) => variant.variant_type)).toEqual(['DEFAULT'])
+  })
+
+  it('keeps progression guidance compact and lets a new fallback inherit it once', async () => {
+    const slot = createSlot(0)
+    slot.variants.push(createVariant(
+      'DEFAULT',
+      0,
+      exercise.slug,
+      progressionModel.slug,
+    ))
+    const wrapper = mount(ExerciseSlotEditor, {
+      props: {
+        modelValue: slot,
+        index: 0,
+        count: 1,
+        exercises: [exercise, fallbackExercise],
+        muscles: [muscle],
+        progressionModels: [progressionModel],
+        path: `days/day-new.slots.${slot.clientKey}`,
+        issues: [],
+      },
+    })
+
+    expect(wrapper.get('.slot-progression-badge').text()).toContain('Double progression')
+    expect(wrapper.get('.variant-editor.default .progression-model-trigger').text()).toContain(
+      'Double progression',
+    )
+    await wrapper.get('.variant-editor.default .progression-info-button').trigger('click')
+    expect(wrapper.get('.progression-model-info').text()).toContain(
+      'Add repetitions, then increase load.',
+    )
+    await wrapper.get('.progression-model-info header button').trigger('click')
+
+    await wrapper.get('.variant-editor.default .progression-model-trigger').trigger('click')
+    expect(wrapper.find('input[type="search"]').exists()).toBe(false)
+    await wrapper.get('.variant-editor.default .progression-option-info').trigger('click')
+    expect(wrapper.get('.progression-model-menu .progression-model-info').text()).toContain(
+      'Use when the repetition range is stable.',
+    )
+    expect(slot.variants[0]?.progression_model_slug).toBe(progressionModel.slug)
+    await wrapper.get('.variant-editor.default .progression-model-trigger').trigger('click')
+
+    await wrapper.get('.slot-disclosure').trigger('click')
+    await wrapper.findAll('button').find((button) => button.text().includes('Add fallback'))?.trigger('click')
+    expect(slot.variants[1]?.progression_model_slug).toBe(progressionModel.slug)
+    expect(wrapper.get('.variant-editor.fallback .progression-model-trigger').text()).toContain(
+      'Double progression',
+    )
+
+    await wrapper.get('.variant-editor.fallback .progression-model-trigger').trigger('click')
+    await wrapper.get('.variant-editor.fallback .progression-option.none').trigger('click')
+    expect(slot.variants[1]?.progression_model_slug).toBeNull()
+    expect(slot.variants[0]?.progression_model_slug).toBe(progressionModel.slug)
   })
 
   it('adds, edits, duplicates, reorders, and removes set prescriptions', async () => {

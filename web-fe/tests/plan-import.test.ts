@@ -42,6 +42,27 @@ describe('Plan JSON import', () => {
     expect(parsePlanImportJson(JSON.stringify(source))).toEqual(source)
   })
 
+  it('keeps accepting legacy V1 documents without progression metadata', () => {
+    const source = planExportResult() as unknown as Record<string, unknown>
+    source.format = 'agonez-plan-sanity-v1'
+    const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
+    for (const day of days) {
+      for (const exercise of day.exercises) delete exercise.progression_model
+    }
+
+    expect(parsePlanImportJson(JSON.stringify(source))).toEqual(source)
+  })
+
+  it('requires an explicit progression model or null in V2', () => {
+    const source = planExportResult() as unknown as Record<string, unknown>
+    const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
+    delete days[0]!.exercises[0]!.progression_model
+
+    expect(() => parsePlanImportJson(JSON.stringify(source))).toThrow(
+      /progression_model is required/,
+    )
+  })
+
   it('reports precise paths for structural and semantic errors', () => {
     const source = planExportResult() as unknown as Record<string, unknown>
     const days = source.days as Array<Record<string, unknown>>

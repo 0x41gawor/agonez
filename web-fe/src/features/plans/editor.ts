@@ -144,8 +144,9 @@ export function toPlanDraftUpdate(editor: PlanEditorState): PlanDraftUpdate {
               variants: slot.variants.map((variant, variantIndex) => ({
                 id: variant.id,
                 ordinal: variantIndex,
-                variant_type: variant.variant_type,
-                exercise_slug: variant.exercise_slug,
+              variant_type: variant.variant_type,
+              exercise_slug: variant.exercise_slug,
+              progression_model_slug: variant.progression_model_slug,
                 sets: variant.sets.map((item, setIndex) => ({
                   id: item.id,
                   ordinal: setIndex,
@@ -208,6 +209,7 @@ export function createVariant(
   variantType: ExerciseVariantType,
   ordinal: number,
   exerciseSlug = '',
+  progressionModelSlug: string | null = null,
 ): EditorVariant {
   return {
     id: null,
@@ -215,6 +217,7 @@ export function createVariant(
     ordinal,
     variant_type: variantType,
     exercise_slug: exerciseSlug,
+    progression_model_slug: progressionModelSlug,
     sets: [],
   }
 }

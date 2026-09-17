@@ -27,7 +27,22 @@ export interface ExerciseVariantDraft {
   ordinal: number
   variant_type: ExerciseVariantType
   exercise_slug: string
+  progression_model_slug: string | null
   sets: SetInfraDraft[]
+}
+
+export interface ProgressionModelCatalogItem {
+  slug: string
+  display_order: number
+  name: string
+  name_full: string
+  when_to_use: string
+  how_to_apply: string
+}
+
+export interface ProgressionModelCatalogResponse {
+  items: ProgressionModelCatalogItem[]
+  total: number
 }
 
 export interface ExerciseSlotDraft {

@@ -71,6 +71,12 @@ class ExerciseVariantDraft(APIModel):
     ordinal: int = Field(ge=0)
     variant_type: ExerciseVariantType
     exercise_slug: str = Field(min_length=1, max_length=200, pattern=r"^[a-z0-9_]+$")
+    progression_model_slug: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=200,
+        pattern=r"^[a-z0-9_]+$",
+    )
     sets: list[SetInfraDraft] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -180,6 +186,7 @@ class ExerciseVariantArtifact(APIModel):
     ordinal: int
     variant_type: ExerciseVariantType
     exercise_slug: str
+    progression_model_slug: str | None = None
     sets: list[SetInfraArtifact]
 
 
@@ -247,6 +254,20 @@ class PlanSummary(APIModel):
 
 class PlanListResponse(APIModel):
     items: list[PlanSummary]
+
+
+class ProgressionModelCatalogItem(APIModel):
+    slug: str
+    display_order: int = Field(ge=1)
+    name: str
+    name_full: str
+    when_to_use: str
+    how_to_apply: str
+
+
+class ProgressionModelCatalogResponse(APIModel):
+    items: list[ProgressionModelCatalogItem]
+    total: int
 
 
 class RevisionSummary(APIModel):

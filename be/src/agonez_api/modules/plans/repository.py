@@ -75,6 +75,15 @@ class PlanRepository:
                     },
                     entity_label="exercise",
                 )
+                await self._validate_progression_model_slugs(
+                    connection,
+                    {
+                        exercise.progression_model.slug
+                        for day in payload.days
+                        for exercise in day.exercises
+                        if exercise.progression_model is not None
+                    },
+                )
                 plan = await self._fetch_one(
                     connection,
                     """
@@ -159,11 +168,20 @@ class PlanRepository:
                             connection,
                             """
                             INSERT INTO plans.exercise_variants
-                                (slot_id, ordinal, variant_type, exercise_id)
-                            VALUES (%s, 0, 'DEFAULT', %s)
+                                (
+                                    slot_id, ordinal, variant_type, exercise_id,
+                                    progression_model_slug
+                                )
+                            VALUES (%s, 0, 'DEFAULT', %s, %s)
                             RETURNING id
                             """,
-                            (slot["id"], exercise_ids[exercise.slug]),
+                            (
+                                slot["id"],
+                                exercise_ids[exercise.slug],
+                                exercise.progression_model.slug
+                                if exercise.progression_model is not None
+                                else None,
+                            ),
                         )
                         for set_index, set_prescription in enumerate(exercise.sets):
                             await self._fetch_one(
@@ -343,8 +361,11 @@ class PlanRepository:
                 connection,
                 """
                 INSERT INTO plans.exercise_variants
-                    (slot_id, ordinal, variant_type, exercise_id)
-                VALUES (%s, %s, %s, %s)
+                    (
+                        slot_id, ordinal, variant_type, exercise_id,
+                        progression_model_slug
+                    )
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 (
@@ -352,6 +373,7 @@ class PlanRepository:
                     variant["ordinal"],
                     variant["variant_type"],
                     variant["exercise_id"],
+                    variant.get("progression_model_slug"),
                 ),
             )
             variant_ids[cast(int, variant["id"])] = cast(int, copied["id"])
@@ -398,6 +420,27 @@ class PlanRepository:
                     ON draft.plan_id = p.id AND draft.status = 'DRAFT'
                 ORDER BY p.updated_at DESC, p.id DESC
                 """,
+            )
+
+    async def list_progression_models(self, *, locale: str = "en") -> list[Row]:
+        async with self._pool.connection() as connection:
+            return await self._fetch_all(
+                connection,
+                """
+                SELECT
+                    model.slug,
+                    model.display_order,
+                    COALESCE(translation.name, model.name) AS name,
+                    COALESCE(translation.name_full, model.name_full) AS name_full,
+                    COALESCE(translation.when_to_use, model.when_to_use) AS when_to_use,
+                    COALESCE(translation.how_to_apply, model.how_to_apply) AS how_to_apply
+                FROM core.progression_models AS model
+                LEFT JOIN core.progression_model_translations AS translation
+                    ON translation.progression_model_slug = model.slug
+                    AND translation.locale = %s
+                ORDER BY model.display_order, model.slug
+                """,
+                (locale,),
             )
 
     async def get_plan(self, plan_id: int) -> tuple[Row, list[Row]]:
@@ -569,6 +612,17 @@ class PlanRepository:
                     },
                     entity_label="muscle",
                 )
+                await self._validate_progression_model_slugs(
+                    connection,
+                    {
+                        variant.progression_model_slug
+                        for day in payload.days
+                        if day.workout_unit is not None
+                        for slot in day.workout_unit.exercise_slots
+                        for variant in slot.variants
+                        if variant.progression_model_slug is not None
+                    },
+                )
 
                 await self._execute(
                     connection,
@@ -724,6 +778,26 @@ class PlanRepository:
             )
         return resolved
 
+    async def _validate_progression_model_slugs(
+        self,
+        connection: Any,
+        slugs: set[str],
+    ) -> None:
+        if not slugs:
+            return
+        rows = await self._fetch_all(
+            connection,
+            "SELECT slug FROM core.progression_models WHERE slug = ANY(%s)",
+            (list(slugs),),
+        )
+        resolved = {cast(str, row["slug"]) for row in rows}
+        missing = sorted(slugs - resolved)
+        if missing:
+            raise PlanDomainValidationError(
+                f"Unknown progression model slug{'s' if len(missing) > 1 else ''}: "
+                + ", ".join(missing)
+            )
+
     async def _delete_omitted(
         self,
         connection: Any,
@@ -875,14 +949,23 @@ class PlanRepository:
         exercise_id: int,
         variant: Any,
     ) -> int:
-        values = (slot_id, variant.ordinal, variant.variant_type.value, exercise_id)
+        values = (
+            slot_id,
+            variant.ordinal,
+            variant.variant_type.value,
+            exercise_id,
+            variant.progression_model_slug,
+        )
         if variant.id is None:
             row = await self._fetch_one(
                 connection,
                 """
                 INSERT INTO plans.exercise_variants
-                    (slot_id, ordinal, variant_type, exercise_id)
-                VALUES (%s, %s, %s, %s)
+                    (
+                        slot_id, ordinal, variant_type, exercise_id,
+                        progression_model_slug
+                    )
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 values,
@@ -892,7 +975,8 @@ class PlanRepository:
             connection,
             """
             UPDATE plans.exercise_variants
-            SET slot_id = %s, ordinal = %s, variant_type = %s, exercise_id = %s
+            SET slot_id = %s, ordinal = %s, variant_type = %s, exercise_id = %s,
+                progression_model_slug = %s
             WHERE id = %s
             """,
             (*values, variant.id),
@@ -1017,7 +1101,8 @@ class PlanRepository:
             """
             SELECT variant.id, variant.slot_id, variant.ordinal,
                    variant.variant_type::text AS variant_type,
-                   variant.exercise_id, exercise.slug AS exercise_slug
+                   variant.exercise_id, exercise.slug AS exercise_slug,
+                   variant.progression_model_slug
             FROM plans.exercise_variants AS variant
             JOIN core.exercises AS exercise ON exercise.id = variant.exercise_id
             JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id

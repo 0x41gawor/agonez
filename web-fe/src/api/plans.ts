@@ -5,6 +5,7 @@ import type {
   PlanDraftArtifact,
   PlanDraftUpdate,
   PlanListResponse,
+  ProgressionModelCatalogResponse,
 } from './plan-types'
 import type { PlanAnalysisRequest, PlanAnalysisResult } from './plan-analysis-types'
 import type {
@@ -15,6 +16,12 @@ import type {
 
 export const plansApi = {
   list: (signal?: AbortSignal) => getJson<PlanListResponse>('/api/plans', undefined, signal),
+  progressionModels: (signal?: AbortSignal) =>
+    getJson<ProgressionModelCatalogResponse>(
+      '/api/plans/catalog/progression-models',
+      undefined,
+      signal,
+    ),
   create: (payload: PlanCreate, signal?: AbortSignal) =>
     postJson<PlanDraftArtifact>('/api/plans', payload, signal),
   importPlan: (payload: PlanAIImportDocument, signal?: AbortSignal) =>

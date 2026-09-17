@@ -65,7 +65,8 @@ Modulation resolver.
 
 ## Compact JSON interchange
 
-`agonez-plan-sanity-v1` remains a resolved, concrete sanity-check format and therefore
-exports reps/RIR only. Importing that format creates moderate-load slots whose sets
-inherit. A future interchange version can carry unresolved loading patterns without
-changing V1 semantics.
+`agonez-plan-sanity-v2` remains a resolved, concrete sanity-check format for loading and
+therefore exports concrete reps/RIR rather than loading modes or cycles. It also carries
+the progression model selected on each default exercise as metadata. Importing it creates
+moderate-load slots whose sets inherit. Legacy V1 documents remain importable and imply
+no selected progression model.

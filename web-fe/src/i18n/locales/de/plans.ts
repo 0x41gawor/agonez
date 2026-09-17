@@ -73,6 +73,12 @@ export default {
     },
     roles: { PRIMARY_PROGRESSIVE: 'Primär progressiv', SECONDARY_PROGRESSIVE: 'Sekundär progressiv', VOLUME_ACCUMULATION: 'Volumenaufbau', ACCESSORY: 'Zubehör' },
     loadingModes: { high_load: 'Hohe Last', moderate_load: 'Mittlere Last', low_load: 'Niedrige Last' },
+    progression: {
+      label: 'Progressionsmodell', none: 'Keines', noneHelp: 'Keine Progressionsstrategie zugewiesen', choose: 'Progressionsmodell auswählen', search: 'Modell suchen…',
+      noMatches: 'Kein Progressionsmodell entspricht der Suche.', info: 'Über dieses Progressionsmodell',
+      whenToUse: 'Wann verwenden', howToApply: 'So wird es angewendet',
+      metadataOnly: 'Nur Planmetadaten — die Auswahl ändert die Satzvorgabe nicht.',
+    },
     loadingCycle: {
       cycle: 'Zyklus', add: 'Zyklus hinzufügen', useStatic: 'Statisch verwenden', useStaticTitle: 'Statische Belastung verwenden',
       microcycleMode: 'Belastungsmodus für Mikrozyklus {number}', removeStep: 'Mikrozyklus {number} entfernen', addStep: '+ Schritt',

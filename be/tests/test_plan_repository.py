@@ -156,6 +156,7 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
                 "variant_type": "DEFAULT",
                 "exercise_id": 60,
                 "exercise_slug": "barbell_bench_press",
+                "progression_model_slug": "double_progression",
             }
         ],
         sets=[
@@ -211,7 +212,7 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
             "moderate_load",
             None,
         ),
-        (103, 0, "DEFAULT", 60),
+        (103, 0, "DEFAULT", 60, "double_progression"),
         (104, 0, 5, 7, 2, 0, None, None),
     ]
     assert len(statements) == 1

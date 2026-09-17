@@ -8,7 +8,8 @@ Implement the structural PlanCreator editor against the live relational draft AP
 
 The first delivery contains the PLAN tab only. ANALYSIS and MODULATION remain visible,
 disabled future tabs. It does not calculate biomechanics, volume, recovery, fatigue, or
-progression.
+execute progression. The PLAN editor can attach localized progression-model metadata to
+each default and fallback exercise; the longer guidance stays behind an info disclosure.
 
 ## Existing-system decisions
 

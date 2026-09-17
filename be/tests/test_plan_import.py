@@ -59,6 +59,40 @@ def test_import_schema_accepts_the_export_interchange_format() -> None:
     assert document.days[1].rest is True
 
 
+def test_import_schema_accepts_v2_progression_metadata() -> None:
+    payload = import_payload()
+    payload["format"] = "agonez-plan-sanity-v2"
+    exercises = payload["days"][0]["exercises"]  # type: ignore[index]
+    for index, exercise in enumerate(exercises):
+        exercise["progression_model"] = (  # type: ignore[index]
+            {
+                "slug": "double_progression",
+                "name": "Double progression",
+                "when_to_use": "Use for stable ranges.",
+            }
+            if index == 0
+            else None
+        )
+
+    document = PlanAIImportDocument.model_validate(payload)
+
+    assert document.days[0].exercises[0].progression_model is not None
+    assert document.days[0].exercises[0].progression_model.slug == "double_progression"
+    assert document.days[0].exercises[1].progression_model is None
+
+
+def test_v2_requires_progression_field_and_v1_rejects_it() -> None:
+    v2 = import_payload()
+    v2["format"] = "agonez-plan-sanity-v2"
+    with pytest.raises(ValidationError, match="must contain progression_model"):
+        PlanAIImportDocument.model_validate(v2)
+
+    v1 = import_payload()
+    v1["days"][0]["exercises"][0]["progression_model"] = None  # type: ignore[index]
+    with pytest.raises(ValidationError, match="must not contain progression_model"):
+        PlanAIImportDocument.model_validate(v1)
+
+
 def test_import_schema_rejects_non_consecutive_days_and_populated_rest_days() -> None:
     payload = import_payload()
     payload["days"][0]["day"] = 2  # type: ignore[index]
@@ -142,7 +176,15 @@ async def test_import_persists_a_complete_tree_in_one_transaction_with_derived_r
         assert plan_id == 101
         return assembled
 
+    async def validate_progression_model_slugs(
+        connection: Any,
+        slugs: set[str],
+    ) -> None:
+        del connection
+        events.append(("validate:progression-models", tuple(sorted(slugs))))
+
     repository._resolve_catalog_slugs = resolve_catalog_slugs  # type: ignore[method-assign]
+    repository._validate_progression_model_slugs = validate_progression_model_slugs  # type: ignore[method-assign]
     repository._fetch_one = fetch_one  # type: ignore[method-assign]
     repository._load_draft_rows = load_rows  # type: ignore[method-assign]
 
@@ -150,6 +192,7 @@ async def test_import_persists_a_complete_tree_in_one_transaction_with_derived_r
 
     assert result is assembled
     assert events[0][0] == "resolve:core.exercises:exercise"
+    assert events[1] == ("validate:progression-models", ())
     slot_parameters = [
         params
         for query, params in events

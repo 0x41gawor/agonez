@@ -83,6 +83,12 @@ export default {
     },
     roles: { PRIMARY_PROGRESSIVE: 'Primaire progressie', SECONDARY_PROGRESSIVE: 'Secundaire progressie', VOLUME_ACCUMULATION: 'Volumeopbouw', ACCESSORY: 'Accessoire' },
     loadingModes: { high_load: 'Hoge belasting', moderate_load: 'Matige belasting', low_load: 'Lage belasting' },
+    progression: {
+      label: 'Progressiemodel', none: 'Geen', noneHelp: 'Geen progressiestrategie toegewezen', choose: 'Progressiemodel kiezen', search: 'Zoek een model…',
+      noMatches: 'Geen progressiemodellen komen overeen met je zoekopdracht.', info: 'Over dit progressiemodel',
+      whenToUse: 'Wanneer gebruiken', howToApply: 'Hoe toepassen',
+      metadataOnly: 'Alleen planmetadata — de keuze wijzigt het setvoorschrift niet.',
+    },
     loadingCycle: {
       cycle: 'Cyclus', add: 'Cyclus toevoegen', useStatic: 'Vast gebruiken', useStaticTitle: 'Vaste belasting gebruiken',
       microcycleMode: 'Belastingsmodus voor microcyclus {number}', removeStep: 'Microcyclus {number} verwijderen', addStep: '+ Stap',

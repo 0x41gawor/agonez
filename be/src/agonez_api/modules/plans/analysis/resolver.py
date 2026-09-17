@@ -94,6 +94,7 @@ def resolve_plan(
                     selected_exercise = ResolvedExercise(
                         variant_id=default_variant.id,
                         exercise_slug=default_variant.exercise_slug,
+                        progression_model_slug=default_variant.progression_model_slug,
                         sets=tuple(
                             ResolvedSet(
                                 id=item.id,

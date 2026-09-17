@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import type { ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import WorkoutUnitEditor from '@/components/plans/WorkoutUnitEditor.vue'
 import {
@@ -12,14 +13,17 @@ import {
 
 const model = defineModel<EditorDay>({ required: true })
 const { t } = useI18n()
-defineProps<{
+withDefaults(defineProps<{
   index: number
   count: number
   exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
+  progressionModels?: ProgressionModelCatalogItem[]
   path: string
   issues: PlanValidationIssue[]
-}>()
+}>(), {
+  progressionModels: () => [],
+})
 defineEmits<{
   move: [direction: -1 | 1]
   duplicate: []
@@ -103,6 +107,7 @@ function handleShortcut(event: KeyboardEvent): void {
         v-model="model.workout_unit"
         :exercises="exercises"
         :muscles="muscles"
+        :progression-models="progressionModels"
         :path="`${path}.workout`"
         :issues="issues"
         @remove="model.workout_unit = null"

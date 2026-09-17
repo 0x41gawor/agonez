@@ -34,9 +34,18 @@ class PlanAIExportSet(APIModel):
     rir: int = Field(ge=0, le=4)
 
 
+class PlanAIProgressionModel(APIModel):
+    slug: str = Field(min_length=1, max_length=200, pattern=r"^[a-z0-9_]+$")
+    name: str = Field(min_length=1)
+    name_full: str = Field(min_length=1)
+    when_to_use: str = Field(min_length=1)
+    how_to_apply: str = Field(min_length=1)
+
+
 class PlanAIExportExercise(APIModel):
     name: str
     slug: str
+    progression_model: PlanAIProgressionModel | None
     sets: list[PlanAIExportSet]
 
 
@@ -49,7 +58,7 @@ class PlanAIExportDay(APIModel):
 
 
 class PlanAIExportResult(APIModel):
-    format: Literal["agonez-plan-sanity-v1"] = "agonez-plan-sanity-v1"
+    format: Literal["agonez-plan-sanity-v2"] = "agonez-plan-sanity-v2"
     plan_name: str
     resolution_context: PlanResolutionContext
     days: list[PlanAIExportDay]
@@ -71,9 +80,18 @@ class PlanAIImportSet(APIModel):
     rir: int = Field(ge=0, le=4)
 
 
+class PlanAIImportProgressionModel(APIModel):
+    slug: str = Field(min_length=1, max_length=200, pattern=r"^[a-z0-9_]+$")
+    name: str | None = Field(default=None, min_length=1)
+    name_full: str | None = Field(default=None, min_length=1)
+    when_to_use: str | None = Field(default=None, min_length=1)
+    how_to_apply: str | None = Field(default=None, min_length=1)
+
+
 class PlanAIImportExercise(APIModel):
     name: str = Field(min_length=1, max_length=200)
     slug: str = Field(min_length=1, max_length=200, pattern=r"^[a-z0-9_]+$")
+    progression_model: PlanAIImportProgressionModel | None = None
     sets: list[PlanAIImportSet] = Field(max_length=100)
 
     @field_validator("name")
@@ -106,7 +124,7 @@ class PlanAIImportDay(APIModel):
 
 
 class PlanAIImportDocument(APIModel):
-    format: Literal["agonez-plan-sanity-v1"]
+    format: Literal["agonez-plan-sanity-v1", "agonez-plan-sanity-v2"]
     plan_name: str = Field(min_length=1, max_length=200)
     resolution_context: PlanResolutionContext
     days: list[PlanAIImportDay] = Field(max_length=365)
@@ -136,6 +154,12 @@ class PlanAIImportDocument(APIModel):
         actual = [day.day for day in self.days]
         if actual != expected:
             raise ValueError("Day numbers must be consecutive, ordered, and start at 1")
+        exercises = [exercise for day in self.days for exercise in day.exercises]
+        if self.format == "agonez-plan-sanity-v1":
+            if any("progression_model" in exercise.model_fields_set for exercise in exercises):
+                raise ValueError("V1 exercise objects must not contain progression_model")
+        elif any("progression_model" not in exercise.model_fields_set for exercise in exercises):
+            raise ValueError("V2 exercise objects must contain progression_model, including null")
         return self
 
 

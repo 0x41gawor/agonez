@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { LoadingMode } from '@/api/plan-types'
+import type { LoadingMode, ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import BodyViewer from '@/components/anatomy/BodyViewer.vue'
 import MediaImage from '@/components/common/MediaImage.vue'
@@ -24,14 +24,17 @@ import {
 
 const model = defineModel<EditorSlot>({ required: true })
 const { t } = useI18n()
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   index: number
   count: number
   exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
+  progressionModels?: ProgressionModelCatalogItem[]
   path: string
   issues: PlanValidationIssue[]
-}>()
+}>(), {
+  progressionModels: () => [],
+})
 defineEmits<{
   move: [direction: -1 | 1]
   duplicate: []
@@ -57,6 +60,10 @@ const pendingExercise = computed(() =>
   props.exercises.find((exercise) => exercise.slug === pendingExerciseSlug.value),
 )
 const displayedExercise = computed(() => defaultExercise.value ?? pendingExercise.value)
+const defaultProgressionModel = computed(() => {
+  const slug = model.value.variants[defaultIndex.value]?.progression_model_slug
+  return props.progressionModels.find((item) => item.slug === slug)
+})
 const setCount = computed(() =>
   model.value.variants.reduce((total, variant) => total + variant.sets.length, 0),
 )
@@ -123,7 +130,13 @@ function completeInitialSetup(mode: LoadingMode): void {
 }
 
 function addFallback(): void {
-  model.value.variants.push(createVariant('FALLBACK', model.value.variants.length))
+  const inheritedProgression = model.value.variants[defaultIndex.value]?.progression_model_slug ?? null
+  model.value.variants.push(createVariant(
+    'FALLBACK',
+    model.value.variants.length,
+    '',
+    inheritedProgression,
+  ))
 }
 
 function removeVariant(index: number): void {
@@ -169,6 +182,9 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
             <i v-for="(mode, patternIndex) in slotLoadingPattern" :key="patternIndex" :class="`loading-${mode}`" aria-hidden="true" />
             {{ slotLoadingPattern.length === 1 ? loadingModeLabel(slotLoadingPattern[0]!) : slotLoadingPattern.map(loadingModeShortLabel).join('·') }}
           </span>
+          <span v-if="defaultProgressionModel" class="slot-progression-badge">
+            <span aria-hidden="true">↗</span>{{ defaultProgressionModel.name }}
+          </span>
           <strong>{{ model.name?.trim() || $t('plans.slot.untitled') }}</strong>
           <small>{{ displayedExercise?.name_full || displayedExercise?.name || $t('plans.slot.chooseDefault') }}</small>
         </span>
@@ -187,10 +203,12 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
         <ExerciseVariantEditor
           v-model="model.variants[defaultIndex]!"
           :exercises="exercises"
+          :progression-models="progressionModels"
           :path="`${path}.variants.${model.variants[defaultIndex]!.clientKey}`"
           :issues="issues"
           :slot-loading-mode="model.loading_mode"
           :slot-loading-cycle="model.loading_cycle"
+          @progression-open="expanded = true"
         />
       </template>
       <div v-else class="empty-default initial-slot-setup">
@@ -304,12 +322,14 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           :key="model.variants[arrayIndex]!.clientKey"
           v-model="model.variants[arrayIndex]!"
           :exercises="exercises"
+          :progression-models="progressionModels"
           :path="`${path}.variants.${model.variants[arrayIndex]!.clientKey}`"
           :issues="issues"
           :fallback-index="fallbackIndex"
           :fallback-count="fallbackIndices.length"
           :slot-loading-mode="model.loading_mode"
           :slot-loading-cycle="model.loading_cycle"
+          @progression-open="expanded = true"
           @remove="removeVariant(arrayIndex)"
           @move="moveFallback(fallbackIndex, $event)"
         />

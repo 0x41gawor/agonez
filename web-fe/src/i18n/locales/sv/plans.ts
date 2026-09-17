@@ -83,6 +83,12 @@ export default {
     },
     roles: { PRIMARY_PROGRESSIVE: 'Primär progression', SECONDARY_PROGRESSIVE: 'Sekundär progression', VOLUME_ACCUMULATION: 'Volymackumulering', ACCESSORY: 'Kompletterande' },
     loadingModes: { high_load: 'Hög belastning', moderate_load: 'Måttlig belastning', low_load: 'Låg belastning' },
+    progression: {
+      label: 'Progressionsmodell', none: 'Inget', noneHelp: 'Ingen progressionsstrategi tilldelad', choose: 'Välj progressionsmodell', search: 'Hitta en modell…',
+      noMatches: 'Inga progressionsmodeller matchar sökningen.', info: 'Om denna progressionsmodell',
+      whenToUse: 'När den passar', howToApply: 'Hur den används',
+      metadataOnly: 'Endast planmetadata — valet ändrar inte setupplägget.',
+    },
     loadingCycle: {
       cycle: 'Cykel', add: 'Lägg till cykel', useStatic: 'Använd fast', useStaticTitle: 'Använd fast belastning',
       microcycleMode: 'Belastningsläge för mikrocykel {number}', removeStep: 'Ta bort mikrocykel {number}', addStep: '+ Steg',
