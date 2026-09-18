@@ -24,6 +24,13 @@ function messageLeaves(value: unknown, prefix = ''): string[] {
   return [prefix]
 }
 
+function messageAt(value: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((current, key) => {
+    if (!current || typeof current !== 'object') return undefined
+    return (current as Record<string, unknown>)[key]
+  }, value)
+}
+
 describe('frontend locale runtime', () => {
   it('normalizes every supported regional tag and rejects unsupported languages', () => {
     expect(normalizeLocale('pl-PL')).toBe('pl')
@@ -55,13 +62,55 @@ describe('frontend locale runtime', () => {
 
   it('localizes the Home entry point in every locale and uses the configured English fallback', async () => {
     await Promise.all(SUPPORTED_LOCALES.map((locale) => loadLocale(locale)))
-    type HomeEntryMessages = { home: { hero: { title: string } } }
-    const englishTitle = (i18n.global.getLocaleMessage('en') as HomeEntryMessages).home.hero.title
+    type HomeEntryMessages = {
+      home: {
+        hero: { title: string; proof: string[] }
+        coaches: { adaptation: { title: string; body: string } }
+      }
+    }
+    const englishHome = (i18n.global.getLocaleMessage('en') as HomeEntryMessages).home
+    const revisedCopyPaths = [
+      'home.hero.eyebrow',
+      'home.hero.lead',
+      'home.audiences.beginner.body',
+      'home.audiences.advanced.body',
+      'home.audiences.coach.body',
+      'home.loop.s2.body',
+      'home.loop.s3.body',
+      'home.planAnalysis.body',
+      'home.planAnalysis.recovery.title',
+      'home.planAnalysis.ranking.title',
+      'home.planAnalysis.debts.body',
+      'home.muscleAtlas.body',
+      'home.features.io.body',
+      'home.features.mobile.body',
+      'home.features.knowledge.body',
+      'home.model.etu.body',
+      'home.model.recovery.body',
+      'home.model.reference.caveat',
+      'home.coaches.title',
+      'home.coaches.audit.body',
+      'home.coaches.argument.body',
+      'home.roadmap.title',
+      'home.cta.body',
+    ]
+    const englishMessages = i18n.global.getLocaleMessage('en')
 
     for (const locale of SUPPORTED_LOCALES.filter((value) => value !== 'en')) {
-      const messages = i18n.global.getLocaleMessage(locale) as HomeEntryMessages
+      const localeMessages = i18n.global.getLocaleMessage(locale)
+      const messages = localeMessages as HomeEntryMessages
       expect(messages.home.hero.title, locale).toBeTypeOf('string')
-      expect(messages.home.hero.title, locale).not.toBe(englishTitle)
+      expect(messages.home.hero.title, locale).not.toBe(englishHome.hero.title)
+      expect(messages.home.hero.proof, locale).toHaveLength(englishHome.hero.proof.length)
+      expect(messages.home.hero.proof, locale).not.toEqual(englishHome.hero.proof)
+      expect(messages.home.coaches.adaptation.title, locale).toBeTypeOf('string')
+      expect(messages.home.coaches.adaptation.body, locale).toBeTypeOf('string')
+      expect(messages.home.coaches.adaptation.title, locale).not.toBe(englishHome.coaches.adaptation.title)
+
+      for (const path of revisedCopyPaths) {
+        expect(messageAt(localeMessages, path), `${locale}: ${path}`).toBeTypeOf('string')
+        expect(messageAt(localeMessages, path), `${locale}: ${path}`).not.toBe(messageAt(englishMessages, path))
+      }
     }
 
     await setActiveLocale('fr', { persist: false })

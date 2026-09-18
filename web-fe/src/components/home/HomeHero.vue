@@ -42,15 +42,6 @@ const proof = computed(() => tm('home.hero.proof') as string[])
             eager
           />
         </div>
-        <div class="home-mini-frame">
-          <HomeImage
-            path="hero/hero-microcycle-strip.png"
-            :alt="$t('home.images.heroMicrocycle')"
-            :width="566"
-            :height="136"
-            eager
-          />
-        </div>
       </div>
     </div>
   </section>

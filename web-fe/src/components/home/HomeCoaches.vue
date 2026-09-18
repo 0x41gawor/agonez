@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { tm } = useI18n()
-const coachCards = ['reuse', 'swap', 'audit', 'argument'] as const
+const coachCards = ['reuse', 'swap', 'audit', 'argument', 'adaptation'] as const
 const athleteFlow = computed(() => tm('home.roadmap.athlete.flow') as string[])
 const mobileFlow = computed(() => tm('home.roadmap.mobile.flow') as string[])
 </script>

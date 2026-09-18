@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
+import HomeCoaches from '@/components/home/HomeCoaches.vue'
 import HomeImage from '@/components/home/HomeImage.vue'
 import { useTheme } from '@/composables/useTheme'
 import { setActiveLocale } from '@/i18n'
@@ -33,5 +34,19 @@ describe('Home page integration', () => {
     expect(image.attributes('src')).toBe('/img/home/en-light/hero/hero-stimulus-anatomy.png')
     await image.trigger('error')
     expect(image.attributes('src')).toBe('/img/home/en-light/hero/hero-stimulus-anatomy.png')
+  })
+
+  it('renders the athlete adaptation coaching tile', async () => {
+    await setActiveLocale('en', { persist: false })
+    const wrapper = mount(HomeCoaches, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+        },
+      },
+    })
+
+    expect(wrapper.findAll('.home-coach-grid article')).toHaveLength(5)
+    expect(wrapper.get('.home-coach-grid').text()).toContain('Every athlete is different')
   })
 })
