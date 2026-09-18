@@ -44,15 +44,17 @@ const features = [
         <HomeImage class="home-product-image" path="atlas-exercises/atlas-grid.png" :alt="$t('home.images.atlasGrid')" :width="1590" :height="1218" />
       </div>
 
-      <article class="home-media-panel home-wide-panel">
-        <header class="home-panel-heading home-panel-heading-inline">
-          <strong>{{ $t('home.exerciseAtlas.etuRows.title') }}</strong>
-          <span>{{ $t('home.exerciseAtlas.etuRows.body') }}</span>
-        </header>
-        <HomeImage path="atlas-exercises/etu-rows.png" :alt="$t('home.images.etuRows')" :width="1088" :height="212" />
-      </article>
-
       <div class="home-detail-grid">
+        <div class="home-media-panel home-exercise-identity">
+          <HomeImage path="atlas-exercises/exercise-name.png" :alt="$t('home.images.exerciseName')" :width="475" :height="171" />
+        </div>
+        <article class="home-media-panel home-exercise-etu">
+          <header class="home-panel-heading home-panel-heading-inline">
+            <strong>{{ $t('home.exerciseAtlas.etuRows.title') }}</strong>
+            <span>{{ $t('home.exerciseAtlas.etuRows.body') }}</span>
+          </header>
+          <HomeImage path="atlas-exercises/etu-rows.png" :alt="$t('home.images.etuRows')" :width="709" :height="225" />
+        </article>
         <article class="home-media-panel">
           <header class="home-panel-heading">
             <strong>{{ $t('home.exerciseAtlas.etuAnatomy.title') }}</strong>

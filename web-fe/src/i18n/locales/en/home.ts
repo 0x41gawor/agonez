@@ -182,6 +182,7 @@ export default {
       heroAnatomy: 'Stimulus anatomy showing the weekly modelled distribution across the body',
       heroMicrocycle: 'Microcycle with training and rest days',
       atlasGrid: 'Exercise Atlas card grid with filters and a persistent anatomy view',
+      exerciseName: 'Seated abdominal crunch exercise identity with a machine demonstration',
       etuRows: 'Table of modelled muscle exposure values',
       etuAnatomy: 'Modelled ETU heatmap on front and rear anatomy',
       technique: 'Short setup and execution technique guide',

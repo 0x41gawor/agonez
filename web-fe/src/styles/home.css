@@ -527,13 +527,14 @@
   background: var(--home-panel);
 }
 
+.home-exercise-identity {
+  display: grid;
+  align-content: center;
+}
+
 .home-media-panel {
   min-width: 0;
   border-radius: 14px;
-}
-
-.home-wide-panel {
-  margin-top: 18px;
 }
 
 .home-panel-heading {
