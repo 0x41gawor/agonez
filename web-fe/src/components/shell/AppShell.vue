@@ -16,7 +16,7 @@ const plansActive = computed(() => route.path.startsWith('/plans'))
 <template>
   <div class="app-shell">
     <header class="app-bar">
-      <RouterLink class="brand" to="/atlas/exercises" :aria-label="$t('app.home')">
+      <RouterLink class="brand" to="/home" :aria-label="$t('app.home')">
         <img src="/logo-mark.png" alt="" />
         <span>AGONEZ</span>
       </RouterLink>

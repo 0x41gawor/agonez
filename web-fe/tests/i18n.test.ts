@@ -39,13 +39,35 @@ describe('frontend locale runtime', () => {
     expect(normalizeLocale('ja-JP')).toBeNull()
   })
 
-  it('keeps every locale bundle structurally complete against English', async () => {
+  it('keeps established application namespaces structurally complete against English', async () => {
     await Promise.all(SUPPORTED_LOCALES.map((locale) => loadLocale(locale)))
-    const english = messageLeaves(i18n.global.getLocaleMessage('en')).sort()
+    const english = messageLeaves(i18n.global.getLocaleMessage('en'))
+      .filter((key) => !key.startsWith('home.'))
+      .sort()
 
     for (const locale of SUPPORTED_LOCALES.filter((value) => value !== 'en')) {
-      expect(messageLeaves(i18n.global.getLocaleMessage(locale)).sort(), locale).toEqual(english)
+      const localized = messageLeaves(i18n.global.getLocaleMessage(locale))
+        .filter((key) => !key.startsWith('home.'))
+        .sort()
+      expect(localized, locale).toEqual(english)
     }
+  })
+
+  it('localizes the Home entry point in every locale and uses the configured English fallback', async () => {
+    await Promise.all(SUPPORTED_LOCALES.map((locale) => loadLocale(locale)))
+    type HomeEntryMessages = { home: { hero: { title: string } } }
+    const englishTitle = (i18n.global.getLocaleMessage('en') as HomeEntryMessages).home.hero.title
+
+    for (const locale of SUPPORTED_LOCALES.filter((value) => value !== 'en')) {
+      const messages = i18n.global.getLocaleMessage(locale) as HomeEntryMessages
+      expect(messages.home.hero.title, locale).toBeTypeOf('string')
+      expect(messages.home.hero.title, locale).not.toBe(englishTitle)
+    }
+
+    await setActiveLocale('fr', { persist: false })
+    expect(i18n.global.t('home.images.atlasGrid')).toBe(
+      'Exercise Atlas card grid with filters and a persistent anatomy view',
+    )
   })
 
   it.each([

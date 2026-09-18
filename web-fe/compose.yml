@@ -12,3 +12,10 @@ services:
       MAMMOONE: "${MAMMOONE:?MAMMOONE must contain the backend host port}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - reverse-proxy-global-network
+
+networks:
+  reverse-proxy-global-network:
+    external: true

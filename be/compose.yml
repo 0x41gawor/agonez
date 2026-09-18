@@ -28,3 +28,10 @@ services:
       - "${MEDIA_HOST_PATH:-../media}:/app/media:ro"
     restart: unless-stopped
     init: true
+    networks:
+      - default
+      - reverse-proxy-global-network
+
+networks:
+  reverse-proxy-global-network:
+    external: true
