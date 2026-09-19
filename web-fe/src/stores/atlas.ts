@@ -3,14 +3,17 @@ import { defineStore } from 'pinia'
 
 import { atlasApi } from '@/api/atlas'
 import type { AtlasMeta, ExerciseSort, MuscleListItem } from '@/api/types'
+import { activeLocale, type SupportedLocale } from '@/i18n'
 
 let metaRequest: Promise<AtlasMeta> | null = null
 let capacityRequest: Promise<MuscleListItem[]> | null = null
+let capacityRequestLocale: SupportedLocale | null = null
 
 export const useAtlasStore = defineStore('atlas', () => {
   const meta = ref<AtlasMeta | null>(null)
   const metaError = ref<Error | null>(null)
   const capacityMuscles = ref<MuscleListItem[]>([])
+  const capacityLocale = ref<SupportedLocale | null>(null)
   const hoverExercise = ref<string | null>(null)
   const hoverMuscle = ref<string | null>(null)
   const exerciseBrowse = reactive({
@@ -47,13 +50,31 @@ export const useAtlasStore = defineStore('atlas', () => {
   }
 
   async function loadCapacities(): Promise<void> {
-    if (capacityMuscles.value.length) return
-    capacityRequest ??= atlasApi.muscles({ sort: 'name', order: 'asc', page: 1, per_page: 100 }).then((result) => result.items)
+    const requestedLocale = activeLocale()
+    if (capacityMuscles.value.length && capacityLocale.value === requestedLocale) return
+
+    const request = capacityRequest && capacityRequestLocale === requestedLocale
+      ? capacityRequest
+      : atlasApi.muscles({ sort: 'name', order: 'asc', page: 1, per_page: 100 }).then((result) => result.items)
+    capacityRequest = request
+    capacityRequestLocale = requestedLocale
     try {
-      capacityMuscles.value = await capacityRequest
+      const muscles = await request
+      if (activeLocale() === requestedLocale) {
+        capacityMuscles.value = muscles
+        capacityLocale.value = requestedLocale
+      }
     } catch (error) {
-      capacityRequest = null
+      if (capacityRequest === request) {
+        capacityRequest = null
+        capacityRequestLocale = null
+      }
       throw error
+    } finally {
+      if (capacityRequest === request) {
+        capacityRequest = null
+        capacityRequestLocale = null
+      }
     }
   }
 
@@ -66,6 +87,7 @@ export const useAtlasStore = defineStore('atlas', () => {
     meta,
     metaError,
     capacityMuscles,
+    capacityLocale,
     capacities,
     hoverExercise,
     hoverMuscle,

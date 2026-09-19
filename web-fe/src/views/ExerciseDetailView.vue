@@ -13,6 +13,7 @@ import DetailHero from '@/components/detail/DetailHero.vue'
 import DetailLoading from '@/components/detail/DetailLoading.vue'
 import ObjectDataCard from '@/components/detail/ObjectDataCard.vue'
 import TechniqueGuide from '@/components/detail/TechniqueGuide.vue'
+import { jointLabel, muscleLabel } from '@/features/plans/analysis'
 import { useAtlasStore } from '@/stores/atlas'
 import { useLocaleStore } from '@/stores/locale'
 import { domainLabel, formatNumber, prettyToken } from '@/utils/format'
@@ -70,13 +71,23 @@ const hasEtu = computed(() => Boolean(exercise.value?.engine?.etu_vector))
 const hasRecovery = computed(() => Boolean(exercise.value?.engine?.active_tension_exposure_vector && exercise.value?.engine?.muscle_recovery_cost_modifier_vector))
 const vectorRows = computed(() => Object.entries(rawVector.value ?? {}).sort((a, b) => b[1] - a[1]).map(([slug, raw]) => {
   const capacity = atlas.capacities[slug]
-  return { slug, raw, capacityRatio: capacity && capacity > 0 ? raw / capacity : null, intensity: normalizedVector.value?.[slug] ?? 0 }
+  return {
+    slug,
+    label: muscleLabel(slug, atlas.capacityMuscles),
+    raw,
+    capacityRatio: capacity && capacity > 0 ? raw / capacity : null,
+    intensity: normalizedVector.value?.[slug] ?? 0,
+  }
 }))
 const videos = computed(() => (exercise.value?.video_links ?? []).map((link) => ({
   link,
   embedUrl: youtubeEmbedUrl(link),
 })))
 const jointRows = computed(() => Object.entries(jointVector.value ?? {}).sort((a, b) => b[1] - a[1]))
+const anatomyLabels = computed(() => ({
+  ...Object.fromEntries(atlas.capacityMuscles.map((muscle) => [muscle.slug, muscle.display_name || muscle.name])),
+  ...Object.fromEntries(jointRows.value.map(([slug]) => [slug, jointLabel(slug)])),
+}))
 const totalEtu = computed(() => Object.values(exercise.value?.engine?.etu_vector ?? {}).reduce((sum, value) => sum + value, 0))
 const peakJoint = computed(() => jointRows.value[0]?.[0] ?? '—')
 const vectorTitle = computed(() => t(mode.value === 'recovery' ? 'atlas.detail.muscleRecoveryExposure' : mode.value === 'propulsive' ? 'atlas.detail.propulsiveFcsa' : 'atlas.detail.muscleEtu'))
@@ -168,7 +179,7 @@ async function saveVideo(): Promise<void> {
         :stats="[
           { label: $t('atlas.loadCapacity'), value: formatNumber(exercise.load_capacity, 0), unit: 'kg' },
           { label: $t('atlas.detail.systemicFcsa'), value: formatNumber(exercise.systemic_propulsive_fcsa_demand), unit: 'cm²' },
-          ...(hasEtu ? [{ label: $t('atlas.detail.totalEtu'), value: formatNumber(totalEtu), unit: 'cm²' }, { label: $t('atlas.detail.peakJoint'), value: prettyToken(peakJoint) }] : []),
+          ...(hasEtu ? [{ label: $t('atlas.detail.totalEtu'), value: formatNumber(totalEtu), unit: 'cm²' }, { label: $t('atlas.detail.peakJoint'), value: peakJoint === '—' ? peakJoint : jointLabel(peakJoint) }] : []),
         ]"
       />
 
@@ -188,6 +199,7 @@ async function saveVideo(): Promise<void> {
               :vector="normalizedVector"
               :mode="mode"
               :joints="jointVector"
+              :labels="anatomyLabels"
               :show-joints="showJoints"
               @hover="hoverSlug = $event"
               @select="selectMuscle"
@@ -220,14 +232,14 @@ async function saveVideo(): Promise<void> {
               @blur="hoverSlug = null"
               @click="selectMuscle(row.slug)"
             >
-              <span>{{ prettyToken(row.slug) }}</span><span class="mono">{{ formatNumber(row.raw) }}</span><span class="mono">{{ row.capacityRatio == null ? '—' : `${(row.capacityRatio * 100).toFixed(1)}%` }}</span>
+              <span>{{ row.label }}</span><span class="mono">{{ formatNumber(row.raw) }}</span><span class="mono">{{ row.capacityRatio == null ? '—' : `${(row.capacityRatio * 100).toFixed(1)}%` }}</span>
               <i><b :style="{ width: `${row.intensity * 100}%`, background: vectorColor }" /></i>
             </button>
           </section>
 
           <section v-if="showJoints && jointRows.length" class="joint-panel panel">
             <header><h2>{{ $t('atlas.detail.jointLoadExposure') }}</h2><span class="mono">{{ $t('atlas.detail.jointDisclaimer') }}</span></header>
-            <div v-for="[joint, value] in jointRows" :key="joint" class="joint-row"><span>{{ prettyToken(joint) }}</span><span class="mono">{{ value.toFixed(2) }}</span><i><b :style="{ width: `${Math.min(100, value * 100)}%` }" /></i></div>
+            <div v-for="[joint, value] in jointRows" :key="joint" class="joint-row"><span>{{ jointLabel(joint) }}</span><span class="mono">{{ value.toFixed(2) }}</span><i><b :style="{ width: `${Math.min(100, value * 100)}%` }" /></i></div>
           </section>
 
           <div class="data-groups exercise-groups"><DataGroup v-for="group in groups" :key="group.title" :title="group.title" :rows="group.rows" /></div>

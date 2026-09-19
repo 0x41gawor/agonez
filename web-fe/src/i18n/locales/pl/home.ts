@@ -13,9 +13,9 @@ export default {
     audiences: {
       eyebrow: '01 · DLA KOGO',
       title: 'A Ty — na którym etapie jesteś?',
-      beginner: { tag: 'DOPIERO ZACZYNAM', title: 'Zaczynasz ćwiczyć i wszystko wydaje się niepotrzebnie skomplikowane?', body: 'Sprawdź, które mięśnie pracują w danym ćwiczeniu, zobacz technikę krok po kroku. Pobaw się kreatorem planu.', link: 'Otwórz Atlas ćwiczeń' },
+      beginner: { tag: 'DOPIERO ZACZYNAM', title: 'Zaczynasz ćwiczyć i wszystko wydaje się super skomplikowane?', body: 'Sprawdź, które mięśnie pracują w danym ćwiczeniu, zobacz technikę krok po kroku. Pobaw się kreatorem planu.', link: 'Otwórz Atlas ćwiczeń' },
       advanced: { tag: 'CHCĘ WEJŚĆ GŁĘBIEJ', title: 'Trenujesz już jakiś czas i chcesz naprawdę zrozumieć swój plan?', body: 'Porównuj warianty ćwiczeń, analizuj rozkład bodźca, obciążenie stawów i modelowany dług regeneracyjny. Sprawdź, czy Twój plan jest optymalny.', link: 'Zobacz, jak działa Analiza' },
-      coach: { tag: 'UKŁADAM PLANY INNYM', title: 'Prowadzisz zawodników? Chcesz mieć profesjonalne narzędzie?', body: 'Buduj mikrocykle z jasno zdefiniowanymi rolami ćwiczeń, zamiennikami, celami, RIR i modelami progresji. Potem monitoruj progres zawodników.', link: 'Zobacz sekcję dla trenerów' },
+      coach: { tag: 'UKŁADAM PLANY INNYM', title: 'Prowadzisz zawodników i chcesz mieć profesjonalne narzędzie?', body: 'Buduj mikrocykle z jasno zdefiniowanymi rolami ćwiczeń, zamiennikami, celami, RIR i modelami progresji. Potem monitoruj progres zawodników.', link: 'Zobacz sekcję dla trenerów' },
     },
     loop: {
       s1: { title: 'Poznaj ćwiczenia', body: 'Technika, mięśnie, zalecane zakresy powtórzeń.' },
@@ -55,7 +55,7 @@ export default {
       eyebrow: '06 · POZOSTAŁE MOŻLIWOŚCI', title: 'Reszta systemu, krótko',
       technique: { title: 'Biblioteka techniki', body: 'Ustawienie, ruch, ROM, wskazówki, upadek techniczny, RIR i częste błędy.' },
       io: { title: 'Import / eksport planu', body: 'Plan można łatwo pobrać lub wgrać jako tekst. Z pomocą AI łatwo wgrasz swoje plany.' },
-      mobile: { title: 'Tryb treningowy na telefonie', body: 'Odpalasz apkę podczas treningu, która prowadzi Cię przez sesję.' },
+      mobile: { title: 'Trening na telefonie', body: 'Odpalasz apkę podczas treningu, która prowadzi Cię przez sesję.' },
       progress: { title: 'Monitorowanie progresu', body: 'Historia wykonania, trend siły i zautomatyzowane modele progresji — także w prowadzeniu zawodnika.' },
       knowledge: { title: 'Baza wiedzy', body: 'Baza wiedzy w postaci bloga "Science-Based". Atlas obejmie również ruchy i stawy.' },
     },
@@ -74,7 +74,7 @@ export default {
     roadmap: {
       eyebrow: '09 · KIERUNEK ROZWOJU', title: 'Dziś projektowanie i analiza. Jutro wykonanie i prowadzenie w czasie.',
       athlete: { title: 'Prowadzenie zawodnika', body: 'Kolejny etap połączy plan z historią wykonania: ciężarami, powtórzeniami, RIR, zmianami ćwiczeń, deloadami i trendami e1RM.', flow: ['Plan', 'Recepta', 'Wykonanie', 'Historia'] },
-      mobile: { title: 'Mobilny tryb treningowy', body: 'Podczas treningu liczy się następna seria. Planowany tryb mobilny pokaże dzisiejszy trening i da szybki dostęp do techniki bez opuszczania sesji.', flow: ['Dzisiejszy trening', 'Zapis wykonania', 'Technika'] },
+      mobile: { title: 'Trening na telefonie', body: 'Podczas treningu liczy się następna seria. Planowany tryb mobilny pokaże dzisiejszy trening i da szybki dostęp do techniki bez opuszczania sesji.', flow: ['Dzisiejszy trening', 'Zapis wykonania', 'Technika'] },
     },
     cta: { title: 'Zacznij od jednego ćwiczenia. Zobacz, jak głęboko możesz zejść.', body: 'Od anatomii ruchu, aż do decyzji w planie — proste odpowiedzi na powierzchni, jawne modele pod spodem.', primary: 'Otwórz Atlas ćwiczeń', secondary: 'Zbuduj szkic planu' },
     footer: { navigation: 'Nawigacja strony głównej', links: { exerciseAtlas: 'Atlas ćwiczeń', muscleAtlas: 'Atlas mięśni', planBuilder: 'Kreator planu', analysis: 'Analiza', model: 'Model' }, disclaimer: 'Wartości Agonez są modelowanymi estymatami opartymi na jawnych założeniach. Nie są pomiarem organizmu ani poradą medyczną.' },

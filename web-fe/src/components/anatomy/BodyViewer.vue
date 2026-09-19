@@ -12,6 +12,7 @@ const props = withDefaults(
     vector?: Record<string, number> | null
     mode?: VisualizationMode
     joints?: Record<string, number> | null
+    labels?: Record<string, string>
     tooltipValues?: Record<string, number> | null
     tooltipValueLabel?: string
     tooltipValueUnit?: string
@@ -24,6 +25,7 @@ const props = withDefaults(
     vector: null,
     mode: 'etu',
     joints: null,
+    labels: () => ({}),
     tooltipValues: null,
     tooltipValueLabel: '',
     tooltipValueUnit: '',
@@ -64,6 +66,10 @@ const heatColor = computed(() => {
   return 'var(--etu)'
 })
 
+function anatomyLabel(slug: string): string {
+  return props.labels[slug] || prettyToken(slug)
+}
+
 function cleanClone(view: 'front' | 'rear'): SVGSVGElement {
   if (!svgSource) throw new Error('Anatomy SVG unavailable')
   const clone = svgSource.cloneNode(true) as SVGSVGElement
@@ -86,7 +92,7 @@ function cleanClone(view: 'front' | 'rear'): SVGSVGElement {
       group.setAttribute('tabindex', props.interactive ? '0' : '-1')
       group.setAttribute('role', props.interactive ? 'button' : 'img')
       const slug = SVG_TO_DB[group.id] ?? group.id
-      group.setAttribute('aria-label', prettyToken(slug))
+      group.setAttribute('aria-label', anatomyLabel(slug))
     }
   })
   clone.classList.add('agz-body')
@@ -152,6 +158,7 @@ function paint(): void {
     svg.classList.toggle('agz-joints-on', props.showJoints)
     svg.querySelectorAll<SVGGElement>('g[data-type="muscle"]').forEach((group) => {
       const slug = SVG_TO_DB[group.id] ?? group.id
+      group.setAttribute('aria-label', anatomyLabel(slug))
       const selected = props.selectedSlug === slug
       const intensity = props.vector?.[slug] ?? 0
       const regions = group.querySelectorAll<SVGElement>('.region')
@@ -166,6 +173,7 @@ function paint(): void {
       group.classList.toggle('is-selected', selected)
     })
     svg.querySelectorAll<SVGGElement>('g[data-type="joint"]').forEach((group) => {
+      group.setAttribute('aria-label', anatomyLabel(group.id))
       const value = props.joints?.[group.id] ?? 0
       const style = jointStyle(value)
       group.querySelectorAll<SVGElement>('.joint-region,.spine-region').forEach((region) => {
@@ -199,7 +207,7 @@ function showTooltip(group: SVGGElement, event?: MouseEvent): void {
     visible: true,
     x: event ? Math.min(event.clientX + 14, window.innerWidth - 248) : 24,
     y: event ? Math.min(event.clientY + 14, window.innerHeight - 84) : 70,
-    title: prettyToken(slug),
+    title: anatomyLabel(slug),
     detail,
   }
   if (type === 'muscle') emit('hover', slug)
@@ -255,7 +263,7 @@ onMounted(async () => {
 })
 
 watch(
-  () => [props.selectedSlug, props.vector, props.mode, props.joints, props.showJoints] as const,
+  () => [props.selectedSlug, props.vector, props.mode, props.joints, props.labels, props.showJoints] as const,
   () => paint(),
   { deep: true },
 )

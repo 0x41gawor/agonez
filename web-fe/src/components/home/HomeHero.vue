@@ -10,7 +10,7 @@ const proof = computed(() => tm('home.hero.proof') as string[])
 
 <template>
   <section id="hero" class="home-section home-hero">
-    <img class="home-watermark home-hero-mark" src="/img/home/brand/agonez-mark.png" alt="" aria-hidden="true" />
+    <img class="home-watermark home-hero-mark" src="/img/home/brand/agonez-mark-hero.png" alt="" aria-hidden="true" />
     <div class="home-glow" aria-hidden="true" />
     <div class="home-container home-hero-grid">
       <div class="home-hero-copy">

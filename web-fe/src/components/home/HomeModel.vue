@@ -44,7 +44,7 @@ const modelItems = ['etu', 'fcsa', 'recovery'] as const
 
         <details class="home-model-detail is-reference">
           <summary>
-            <img src="/img/home/brand/agonez-mark.png" alt="" aria-hidden="true" />
+            <img src="/img/home/brand/agonez-mark-athlete.png" alt="" aria-hidden="true" />
             <strong>{{ $t('home.model.reference.title') }}</strong>
             <span class="home-detail-summary">{{ $t('home.model.reference.summary') }}</span>
             <span class="home-detail-toggle" aria-hidden="true">+</span>

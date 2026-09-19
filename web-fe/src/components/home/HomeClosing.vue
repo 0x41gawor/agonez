@@ -1,6 +1,6 @@
 <template>
   <section class="home-section home-final-cta">
-    <img class="home-watermark home-final-mark" src="/img/home/brand/agonez-mark.png" alt="" aria-hidden="true" />
+    <img class="home-watermark home-final-mark" src="/img/home/brand/agonez-mark-final.png" alt="" aria-hidden="true" />
     <div class="home-glow" aria-hidden="true" />
     <div class="home-final-content">
       <h2>{{ $t('home.cta.title') }}</h2>

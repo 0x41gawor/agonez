@@ -2,7 +2,10 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import HomeCoaches from '@/components/home/HomeCoaches.vue'
+import HomeClosing from '@/components/home/HomeClosing.vue'
+import HomeHero from '@/components/home/HomeHero.vue'
 import HomeImage from '@/components/home/HomeImage.vue'
+import HomeModel from '@/components/home/HomeModel.vue'
 import HomeShowcases from '@/components/home/HomeShowcases.vue'
 import { useTheme } from '@/composables/useTheme'
 import { setActiveLocale } from '@/i18n'
@@ -49,6 +52,23 @@ describe('Home page integration', () => {
 
     expect(wrapper.findAll('.home-coach-grid article')).toHaveLength(5)
     expect(wrapper.get('.home-coach-grid').text()).toContain('Every athlete is different')
+  })
+
+  it('uses distinct Agonez poses while keeping the primary logo in the footer', async () => {
+    await setActiveLocale('en', { persist: false })
+    const global = {
+      stubs: {
+        RouterLink: { template: '<a><slot /></a>' },
+      },
+    }
+    const hero = mount(HomeHero, { global })
+    const model = mount(HomeModel)
+    const closing = mount(HomeClosing, { global })
+
+    expect(hero.get('.home-hero-mark').attributes('src')).toBe('/img/home/brand/agonez-mark-hero.png')
+    expect(model.get('.home-model-detail.is-reference img').attributes('src')).toBe('/img/home/brand/agonez-mark-athlete.png')
+    expect(closing.get('.home-final-mark').attributes('src')).toBe('/img/home/brand/agonez-mark-final.png')
+    expect(closing.get('.home-footer-brand img').attributes('src')).toBe('/img/home/brand/agonez-mark.png')
   })
 
   it('renders the localized exercise identity inside the detail grid', async () => {
