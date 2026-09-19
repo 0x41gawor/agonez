@@ -193,6 +193,8 @@ export default {
       recoveryAnatomy: 'Modelled local muscle recovery state after training',
       ranking: 'Muscle ranking by modelled weekly stimulus',
       debts: 'List of the strongest modelled recovery debts',
+      incidentalSets: 'Set-level breakdown of targeted and incidental muscle stimulus',
+      stimulusOrigin: 'Contribution provenance tracing a modelled stimulus total to its plan day, exercise and set',
       muscleCards: 'Muscle Atlas cards with anatomy, mass and estimated FCSA',
       mark: 'Agonez',
     },

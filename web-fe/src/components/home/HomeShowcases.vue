@@ -153,8 +153,14 @@ const features = [
           <header class="home-panel-heading"><strong>{{ $t('home.planAnalysis.debts.title') }}</strong><span>{{ $t('home.planAnalysis.debts.body') }}</span></header>
           <HomeImage path="plan-analysis/recovery-debts.png" :alt="$t('home.images.debts')" :width="408" :height="372" />
         </article>
-        <article class="home-copy-card is-etu"><h3>{{ $t('home.planAnalysis.targeted.title') }}</h3><p>{{ $t('home.planAnalysis.targeted.body') }}</p></article>
-        <article class="home-copy-card"><h3>{{ $t('home.planAnalysis.provenance.title') }}</h3><p>{{ $t('home.planAnalysis.provenance.body') }}</p></article>
+        <article class="home-copy-card home-copy-card-media is-etu">
+          <div class="home-copy-card-content"><h3>{{ $t('home.planAnalysis.targeted.title') }}</h3><p>{{ $t('home.planAnalysis.targeted.body') }}</p></div>
+          <HomeImage path="plan-analysis/incidental-sets.png" :alt="$t('home.images.incidentalSets')" :width="390" :height="467" />
+        </article>
+        <article class="home-copy-card home-copy-card-media">
+          <div class="home-copy-card-content"><h3>{{ $t('home.planAnalysis.provenance.title') }}</h3><p>{{ $t('home.planAnalysis.provenance.body') }}</p></div>
+          <HomeImage path="plan-analysis/stimulus-origin.png" :alt="$t('home.images.stimulusOrigin')" :width="430" :height="479" />
+        </article>
       </div>
       <p class="home-disclaimer">{{ $t('home.planAnalysis.disclaimer') }}</p>
     </div>

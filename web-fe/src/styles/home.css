@@ -711,6 +711,23 @@
   background: var(--home-panel);
 }
 
+.home-copy-card-media {
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  padding: 0;
+}
+
+.home-copy-card-content {
+  padding: 22px;
+}
+
+.home-copy-card-media > img {
+  width: 100%;
+  margin-top: auto;
+  border-top: 1px solid var(--home-border);
+}
+
 .home-copy-card.is-etu {
   border-color: color-mix(in srgb, var(--etu) 28%, transparent);
   background: color-mix(in srgb, var(--etu) 7%, transparent);
@@ -1066,8 +1083,10 @@
 }
 
 @container (min-width: 820px) {
-  .home-coach-grid article:last-child {
-    grid-column: span 2;
+  .home-coach-grid::after {
+    min-width: 0;
+    background: var(--home-panel);
+    content: '';
   }
 }
 

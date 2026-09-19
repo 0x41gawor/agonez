@@ -69,5 +69,7 @@ describe('Home page integration', () => {
     expect(wrapper.get('.home-exercise-etu').element.parentElement).toBe(grid.element)
     expect(image.attributes('src')).toBe('/img/home/pl-dark/atlas-exercises/exercise-name.png')
     expect(image.attributes('alt')).toContain('brzuszki na maszynie siedząc')
+    expect(wrapper.get('.home-copy-card.is-etu img').attributes('src')).toBe('/img/home/pl-dark/plan-analysis/incidental-sets.png')
+    expect(wrapper.get('.home-copy-card:not(.is-etu) img').attributes('src')).toBe('/img/home/pl-dark/plan-analysis/stimulus-origin.png')
   })
 })
