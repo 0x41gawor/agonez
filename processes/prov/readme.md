@@ -1,6 +1,4 @@
 
-
-
 input.txt jest z poprzedniej ewaluacji, podmień go
 
 

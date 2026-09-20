@@ -131,8 +131,8 @@ def main():
                 logger.debug("Oczekiwanie na odpowiedź LLM (streaming, do 32k tokenów)...")
                 
                 stream = client.messages.create(
-                    model="claude-sonnet-5",
-                    max_tokens=65536,
+                    model="claude-haiku-4-5-20251001",
+                    max_tokens=6000,
                     system=system_prompt,
                     messages=[
                         {"role": "user", "content": user_prompt}
