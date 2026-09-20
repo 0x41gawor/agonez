@@ -54,7 +54,7 @@ describe('Home page integration', () => {
     expect(wrapper.get('.home-coach-grid').text()).toContain('Every athlete is different')
   })
 
-  it('uses distinct Agonez poses while keeping the primary logo in the footer', async () => {
+  it('uses the cinematic hero artwork and distinct Agonez poses while keeping the primary logo in the footer', async () => {
     await setActiveLocale('en', { persist: false })
     const global = {
       stubs: {
@@ -66,6 +66,9 @@ describe('Home page integration', () => {
     const closing = mount(HomeClosing, { global })
 
     expect(hero.get('.home-hero-mark').attributes('src')).toBe('/img/home/brand/agonez-mark-hero.png')
+    expect(hero.get('.home-hero-art source').attributes('srcset')).toBe('/img/home/hero-image.webp')
+    expect(hero.get('.home-hero-art img').attributes('src')).toBe('/media/hero-image.png')
+    expect(hero.find('.home-browser').exists()).toBe(false)
     expect(model.get('.home-model-detail.is-reference img').attributes('src')).toBe('/img/home/brand/agonez-mark-athlete.png')
     expect(closing.get('.home-final-mark').attributes('src')).toBe('/img/home/brand/agonez-mark-final.png')
     expect(closing.get('.home-footer-brand img').attributes('src')).toBe('/img/home/brand/agonez-mark.png')

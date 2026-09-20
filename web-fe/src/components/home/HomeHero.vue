@@ -2,10 +2,10 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import HomeImage from '@/components/home/HomeImage.vue'
-
 const { tm } = useI18n()
 const proof = computed(() => tm('home.hero.proof') as string[])
+const heroImageWebpUrl = '/img/home/hero-image.webp'
+const heroImageFallbackUrl = '/media/hero-image.png'
 </script>
 
 <template>
@@ -25,24 +25,19 @@ const proof = computed(() => tm('home.hero.proof') as string[])
           <li v-for="item in proof" :key="item">{{ item }}</li>
         </ul>
       </div>
-      <div class="home-hero-visual">
-        <div class="home-browser home-browser-elevated">
-          <div class="home-browser-bar">
-            <span class="home-window-dot home-window-dot-red" />
-            <span class="home-window-dot home-window-dot-amber" />
-            <span class="home-window-dot home-window-dot-green" />
-            <span class="home-browser-label">{{ $t('home.hero.frameLabel') }}</span>
-          </div>
-          <HomeImage
-            class="home-product-image"
-            path="hero/hero-stimulus-anatomy.png"
-            :alt="$t('home.images.heroAnatomy')"
-            :width="592"
-            :height="575"
-            eager
+      <figure class="home-hero-art" aria-hidden="true">
+        <picture>
+          <source :srcset="heroImageWebpUrl" type="image/webp" />
+          <img
+            :src="heroImageFallbackUrl"
+            alt=""
+            width="1536"
+            height="1024"
+            fetchpriority="high"
+            decoding="async"
           />
-        </div>
-      </div>
+        </picture>
+      </figure>
     </div>
   </section>
 </template>
