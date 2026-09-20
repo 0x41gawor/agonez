@@ -6,6 +6,8 @@ import { createMailto } from '@/utils/contact'
 
 const { t, tm } = useI18n()
 const proof = computed(() => tm('home.hero.proof') as string[])
+const heroImageWideWebpUrl = '/img/home/hero-image-wide.webp'
+const heroImageWideFallbackUrl = '/media/hero-image-wide.png'
 const heroImageWebpUrl = '/img/home/hero-image.webp'
 const heroImageFallbackUrl = '/media/hero-image.png'
 const waitlistEmail = ref('')
@@ -61,6 +63,20 @@ function openWaitlistEmail() {
       </div>
       <figure class="home-hero-art" aria-hidden="true">
         <picture>
+          <source
+            media="(min-width: 861px)"
+            :srcset="heroImageWideWebpUrl"
+            type="image/webp"
+            width="2560"
+            height="1080"
+          />
+          <source
+            media="(min-width: 861px)"
+            :srcset="heroImageWideFallbackUrl"
+            type="image/png"
+            width="2560"
+            height="1080"
+          />
           <source :srcset="heroImageWebpUrl" type="image/webp" />
           <img
             :src="heroImageFallbackUrl"

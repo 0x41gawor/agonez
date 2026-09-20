@@ -66,7 +66,12 @@ describe('Home page integration', () => {
     const closing = mount(HomeClosing, { global })
 
     expect(hero.get('.home-hero-mark').attributes('src')).toBe('/img/home/brand/agonez-mark-hero.png')
-    expect(hero.get('.home-hero-art source').attributes('srcset')).toBe('/img/home/hero-image.webp')
+    expect(hero.findAll('.home-hero-art source').map((source) => source.attributes('srcset'))).toEqual([
+      '/img/home/hero-image-wide.webp',
+      '/media/hero-image-wide.png',
+      '/img/home/hero-image.webp',
+    ])
+    expect(hero.get('.home-hero-art source').attributes('media')).toBe('(min-width: 861px)')
     expect(hero.get('.home-hero-art img').attributes('src')).toBe('/media/hero-image.png')
     expect(hero.find('.home-browser').exists()).toBe(false)
     expect(model.get('.home-model-detail.is-reference img').attributes('src')).toBe('/img/home/brand/agonez-mark-athlete.png')
