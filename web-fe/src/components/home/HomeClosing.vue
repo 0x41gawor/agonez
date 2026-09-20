@@ -21,7 +21,7 @@ const contactHref = computed(() => createMailto(t('home.cta.emailSubject'), t('h
       <ul class="home-collaboration-roles" :aria-label="$t('home.cta.rolesLabel')">
         <li v-for="role in roles" :key="role">{{ role }}</li>
       </ul>
-      <a class="home-button home-button-secondary home-collaboration-action" :href="contactHref">
+      <a class="home-button home-collaboration-action" :href="contactHref">
         {{ $t('home.cta.action') }} <span aria-hidden="true">→</span>
       </a>
     </div>
