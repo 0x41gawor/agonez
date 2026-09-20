@@ -2,6 +2,8 @@ export default {
   home: {
     brand: { name: 'AGONEZ' },
     hero: {
+      betaBadge: 'BÊTA PRIVÉE · AUTOMNE 2026',
+      waitlist: { label: 'Adresse e-mail', placeholder: "vous{'@'}exemple.fr", button: 'Rejoindre la liste', note: 'Aucun spam. Un seul e-mail lorsque votre invitation sera prête.', emailSubject: 'Bêta privée Agonez — demande d’inscription', emailBody: 'Bonjour,\n\nje souhaite rejoindre la liste d’attente de la bêta privée d’Agonez.\n\nMon e-mail : {email}\n\nJe souhaite utiliser Agonez pour :\n' },
       eyebrow: 'ATLAS D’EXERCICES · CRÉATEUR DE PROGRAMMES · SUIVI DE LA PROGRESSION',
       title: 'Comprenez votre entraînement et construisez un programme cohérent.',
       lead: 'Voyez quels muscles votre exercice cible réellement. Organisez ces exercices en programme hebdomadaire et observez ce que ce programme fait à votre corps.',
@@ -63,7 +65,7 @@ export default {
       athlete: { title: 'Accompagnement des athlètes', body: 'La prochaine étape reliera le programme à l’historique d’exécution : charges, répétitions, RIR, changements d’exercices, deloads et tendances e1RM.', flow: ['Programme', 'Prescription', 'Exécution', 'Historique'] },
       mobile: { title: 'Entraînement mobile', body: 'Pendant une séance, la prochaine série compte. Le mode prévu affichera la séance du jour et donnera un accès rapide à la technique.', flow: ['Séance du jour', 'Saisir l’exécution', 'Technique'] },
     },
-    cta: { title: 'Commencez par un exercice. Voyez jusqu’où vous pouvez aller.', body: 'De l’anatomie du mouvement jusqu’aux décisions du programme — des réponses simples en surface, des modèles explicites dessous.', primary: 'Ouvrir l’Atlas des exercices', secondary: 'Construire un brouillon' },
+    cta: { eyebrow: 'UNE INVITATION OUVERTE', title: 'Aidez l’humanité à atteindre l’excellence dans l’entraînement.', body: 'Agonez en est à ses débuts. Nous le construisons au croisement de l’entraînement, de la science, de l’ingénierie et du produit.', bodySecondary: 'Si vous travaillez dans l’un de ces domaines et souhaitez co-créer un outil fondé sur des problèmes réels, une expertise métier et des retours critiques, nous vous recherchons.', rolesLabel: 'Personnes et perspectives que nous souhaitons rencontrer', roles: ['Coachs personnels', 'Athlètes', 'Biomécaniciens', 'Sciences du sport', 'Produit et ingénierie', 'UX / recherche', 'Marketing', 'Premiers partenaires et early adopters'], action: 'Échangeons', note: 'Nous sommes ouverts aux échanges ciblés et aux collaborations bien définies. Ouvre votre application e-mail.', emailSubject: 'Construisons Agonez ensemble', emailBody: 'Bonjour,\n\nje souhaite échanger au sujet d’une contribution à Agonez.\n\nMon expérience ou mon idée :\n' },
     footer: { navigation: 'Navigation de la page d’accueil', links: { exerciseAtlas: 'Atlas des exercices', muscleAtlas: 'Atlas des muscles', planBuilder: 'Créateur de programmes', analysis: 'Analyse', model: 'Modèle' }, disclaimer: 'Les valeurs Agonez sont des estimations modélisées fondées sur des hypothèses explicites. Elles ne mesurent pas votre organisme et ne constituent pas un avis médical.' },
     badges: { comingSoon: 'BIENTÔT', experimental: 'MODÈLE EXPÉRIMENTAL' },
   },

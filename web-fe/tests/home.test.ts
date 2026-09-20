@@ -74,6 +74,34 @@ describe('Home page integration', () => {
     expect(closing.get('.home-footer-brand img').attributes('src')).toBe('/img/home/brand/agonez-mark.png')
   })
 
+  it('presents honest frontend-only beta and collaboration invitations', async () => {
+    await setActiveLocale('en', { persist: false })
+    const global = {
+      stubs: {
+        RouterLink: { template: '<a><slot /></a>' },
+      },
+    }
+    const hero = mount(HomeHero, { global })
+    const closing = mount(HomeClosing, { global })
+
+    expect(hero.get('.home-beta-badge').text()).toBe('PRIVATE BETA · FALL 2026')
+    expect(hero.get('input[type="email"]').attributes()).toMatchObject({
+      autocomplete: 'email',
+      placeholder: 'you@example.com',
+      required: '',
+    })
+    expect(hero.get('.home-waitlist-note').text()).toBe('No spam. Just one email when your invitation is ready.')
+    expect(closing.get('.home-final-content h2').text()).toBe('Help the humanity to obtain excellence in training')
+    expect(closing.findAll('.home-collaboration-body')).toHaveLength(2)
+    expect(closing.findAll('.home-collaboration-roles li')).toHaveLength(8)
+    expect(closing.get('.home-collaboration-roles').text()).toContain('Marketing')
+    expect(closing.find('.home-collaboration-note').exists()).toBe(false)
+    expect(closing.get('.home-collaboration-action').attributes('href')).toMatch(/^mailto:/)
+
+    await setActiveLocale('pl', { persist: false })
+    expect(hero.get('.home-waitlist-row button').text()).toBe('Zapisz się')
+  })
+
   it('renders the localized exercise identity inside the detail grid', async () => {
     await setActiveLocale('pl', { persist: false })
     useTheme().setTheme('dark')

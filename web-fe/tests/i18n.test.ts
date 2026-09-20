@@ -64,14 +64,22 @@ describe('frontend locale runtime', () => {
     await Promise.all(SUPPORTED_LOCALES.map((locale) => loadLocale(locale)))
     type HomeEntryMessages = {
       home: {
-        hero: { title: string; proof: string[] }
+        hero: { title: string; proof: string[]; betaBadge: string; waitlist: { button: string } }
         coaches: { adaptation: { title: string; body: string } }
+        cta: { roles: string[] }
       }
     }
     const englishHome = (i18n.global.getLocaleMessage('en') as HomeEntryMessages).home
     const revisedCopyPaths = [
       'home.hero.eyebrow',
       'home.hero.lead',
+      'home.hero.betaBadge',
+      'home.hero.waitlist.label',
+      'home.hero.waitlist.placeholder',
+      'home.hero.waitlist.button',
+      'home.hero.waitlist.note',
+      'home.hero.waitlist.emailSubject',
+      'home.hero.waitlist.emailBody',
       'home.audiences.beginner.body',
       'home.audiences.advanced.body',
       'home.audiences.coach.body',
@@ -92,7 +100,15 @@ describe('frontend locale runtime', () => {
       'home.coaches.audit.body',
       'home.coaches.argument.body',
       'home.roadmap.title',
+      'home.cta.eyebrow',
+      'home.cta.title',
       'home.cta.body',
+      'home.cta.bodySecondary',
+      'home.cta.rolesLabel',
+      'home.cta.action',
+      'home.cta.note',
+      'home.cta.emailSubject',
+      'home.cta.emailBody',
     ]
     const englishMessages = i18n.global.getLocaleMessage('en')
 
@@ -106,6 +122,8 @@ describe('frontend locale runtime', () => {
       expect(messages.home.coaches.adaptation.title, locale).toBeTypeOf('string')
       expect(messages.home.coaches.adaptation.body, locale).toBeTypeOf('string')
       expect(messages.home.coaches.adaptation.title, locale).not.toBe(englishHome.coaches.adaptation.title)
+      expect(messages.home.cta.roles, locale).toHaveLength(englishHome.cta.roles.length)
+      expect(messages.home.cta.roles, locale).not.toEqual(englishHome.cta.roles)
 
       for (const path of revisedCopyPaths) {
         expect(messageAt(localeMessages, path), `${locale}: ${path}`).toBeTypeOf('string')

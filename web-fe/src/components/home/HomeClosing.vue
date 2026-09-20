@@ -1,14 +1,29 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+import { createMailto } from '@/utils/contact'
+
+const { t, tm } = useI18n()
+const roles = computed(() => tm('home.cta.roles') as string[])
+const contactHref = computed(() => createMailto(t('home.cta.emailSubject'), t('home.cta.emailBody')))
+</script>
+
 <template>
-  <section class="home-section home-final-cta">
+  <section id="collaborate" class="home-section home-final-cta">
     <img class="home-watermark home-final-mark" src="/img/home/brand/agonez-mark-final.png" alt="" aria-hidden="true" />
     <div class="home-glow" aria-hidden="true" />
     <div class="home-final-content">
+      <p class="home-eyebrow">{{ $t('home.cta.eyebrow') }}</p>
       <h2>{{ $t('home.cta.title') }}</h2>
-      <p>{{ $t('home.cta.body') }}</p>
-      <div class="home-actions home-centered-actions">
-        <RouterLink class="home-button home-button-primary" to="/atlas/exercises">{{ $t('home.cta.primary') }}</RouterLink>
-        <RouterLink class="home-button home-button-secondary" to="/plans">{{ $t('home.cta.secondary') }}</RouterLink>
-      </div>
+      <p class="home-collaboration-body">{{ $t('home.cta.body') }}</p>
+      <p class="home-collaboration-body">{{ $t('home.cta.bodySecondary') }}</p>
+      <ul class="home-collaboration-roles" :aria-label="$t('home.cta.rolesLabel')">
+        <li v-for="role in roles" :key="role">{{ role }}</li>
+      </ul>
+      <a class="home-button home-button-secondary home-collaboration-action" :href="contactHref">
+        {{ $t('home.cta.action') }} <span aria-hidden="true">→</span>
+      </a>
     </div>
   </section>
 

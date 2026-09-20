@@ -2,9 +2,14 @@ export default {
   home: {
     brand: { name: 'AGONEZ' },
     hero: {
+      betaBadge: 'PRYWATNA BETA · JESIEŃ 2026',
       eyebrow: 'ATLAS ĆWICZEŃ · KREATOR PLANÓW · PROWADZENIE PROGRESJI',
       title: 'Zrozum trening i zbuduj plan, który ma sens.',
       lead: 'Sprawdź, na co naprawdę działa Twoje ćwiczenie. Ułóż z nich tygodniowy plan i zobacz, co ten plan robi z Twoim ciałem.',
+      waitlist: {
+        label: 'Adres e-mail', placeholder: "ty{'@'}przyklad.pl", button: 'Zapisz się', note: 'Bez spamu. Tylko jedna wiadomość, gdy Twoje zaproszenie będzie gotowe.',
+        emailSubject: 'Prywatna beta Agonez — zgłoszenie', emailBody: 'Cześć,\n\nchcę dołączyć do listy oczekujących na prywatną betę Agonez.\n\nMój e-mail: {email}\n\nDo czego chcę używać Agonez:\n',
+      },
       ctaPrimary: 'Otwórz Atlas',
       ctaSecondary: 'Zobacz Analizę planu',
       proof: ['ponad 150 ćwiczeń', 'interaktywna anatomia', 'plan od powtórzenia do mikrocyklu'],
@@ -76,7 +81,12 @@ export default {
       athlete: { title: 'Prowadzenie zawodnika', body: 'Kolejny etap połączy plan z historią wykonania: ciężarami, powtórzeniami, RIR, zmianami ćwiczeń, deloadami i trendami e1RM.', flow: ['Plan', 'Recepta', 'Wykonanie', 'Historia'] },
       mobile: { title: 'Trening na telefonie', body: 'Podczas treningu liczy się następna seria. Planowany tryb mobilny pokaże dzisiejszy trening i da szybki dostęp do techniki bez opuszczania sesji.', flow: ['Dzisiejszy trening', 'Zapis wykonania', 'Technika'] },
     },
-    cta: { title: 'Zacznij od jednego ćwiczenia. Zobacz, jak głęboko możesz zejść.', body: 'Od anatomii ruchu, aż do decyzji w planie — proste odpowiedzi na powierzchni, jawne modele pod spodem.', primary: 'Otwórz Atlas ćwiczeń', secondary: 'Zbuduj szkic planu' },
+    cta: {
+      eyebrow: 'OTWARTE ZAPROSZENIE', title: 'Pomóż ludzkości osiągnąć doskonałość w treningu.', body: 'Agonez jest na wczesnym etapie. Budujemy go na styku treningu, nauki, inżynierii i produktu.', bodySecondary: 'Jeśli działasz w którymś z tych obszarów i chcesz współtworzyć narzędzie oparte na rzeczywistych problemach, wiedzy domenowej i krytycznym feedbacku, szukamy właśnie Ciebie.',
+      rolesLabel: 'Osoby i perspektywy, które chcemy poznać', roles: ['trenerzy personalni', 'zawodnicy', 'biomechanicy', 'sports science', 'produkt i inżynieria', 'UX / research', 'marketing', 'pierwsi partnerzy i early adopters'],
+      action: 'Porozmawiajmy', note: 'Jesteśmy otwarci na konkretną rozmowę i współpracę o jasnym zakresie. Przycisk otworzy Twoją pocztę.',
+      emailSubject: 'Zbudujmy Agonez razem', emailBody: 'Cześć,\n\nchcę porozmawiać o współtworzeniu Agonez.\n\nMoje doświadczenie lub pomysł:\n',
+    },
     footer: { navigation: 'Nawigacja strony głównej', links: { exerciseAtlas: 'Atlas ćwiczeń', muscleAtlas: 'Atlas mięśni', planBuilder: 'Kreator planu', analysis: 'Analiza', model: 'Model' }, disclaimer: 'Wartości Agonez są modelowanymi estymatami opartymi na jawnych założeniach. Nie są pomiarem organizmu ani poradą medyczną.' },
     badges: { comingSoon: 'COMING SOON', experimental: 'MODEL EKSPERYMENTALNY' },
     images: {
