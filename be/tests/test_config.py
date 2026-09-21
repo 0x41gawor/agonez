@@ -19,6 +19,7 @@ def test_settings_use_required_named_credentials(tmp_path: Path) -> None:
     assert settings.agandskode.get_secret_value() == "a password with spaces"
     assert settings.db_port == 33327
     assert settings.db_name == "agonez_db"
+    assert settings.waitlist_path == Path("runtime/waitlist.jsonl")
     assert settings.cors_origins == ["http://localhost:5173", "https://atlas.example"]
     assert "password='a password with spaces'" in settings.database_dsn
     assert "statement_timeout=10000" in settings.database_dsn
@@ -46,3 +47,16 @@ def test_settings_accept_legacy_db_port_fallback(tmp_path: Path) -> None:
     )
 
     assert settings.db_port == 35432
+
+
+def test_settings_accept_waitlist_path_override(tmp_path: Path) -> None:
+    waitlist_path = tmp_path / "private" / "waitlist.jsonl"
+    settings = Settings(
+        NOME="atlas_user",
+        AGANDSKODE="secret",
+        MINA=33327,
+        MEDIA_ROOT=tmp_path,
+        WAITLIST_PATH=waitlist_path,
+    )
+
+    assert settings.waitlist_path == waitlist_path

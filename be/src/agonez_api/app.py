@@ -32,6 +32,8 @@ from agonez_api.modules.plans.exceptions import (
 from agonez_api.modules.plans.repository import PlanRepository
 from agonez_api.modules.plans.router import router as plans_router
 from agonez_api.modules.plans.service import PlanService
+from agonez_api.modules.waitlist.router import router as waitlist_router
+from agonez_api.modules.waitlist.store import WaitlistStore
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,7 @@ def create_app(
     service = AtlasService(repository, media)
     plan_service = PlanService(plan_repository)
     plan_analysis_service = PlanAnalysisService(plan_repository)
+    waitlist_store = WaitlistStore(settings.waitlist_path)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -86,6 +89,7 @@ def create_app(
     app.state.plan_repository = plan_repository
     app.state.plan_service = plan_service
     app.state.plan_analysis_service = plan_analysis_service
+    app.state.waitlist_store = waitlist_store
 
     app.add_middleware(
         CORSMiddleware,
@@ -192,6 +196,7 @@ def create_app(
 
     app.include_router(atlas_router)
     app.include_router(plans_router)
+    app.include_router(waitlist_router)
     app.mount(
         settings.media_url_prefix,
         StaticFiles(directory=settings.media_root, check_dir=False),

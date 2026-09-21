@@ -31,6 +31,23 @@ function messageAt(value: unknown, path: string): unknown {
   }, value)
 }
 
+function stringMessages(value: unknown, prefix = ''): Array<[string, string]> {
+  if (typeof value === 'string') return [[prefix, value]]
+  if (Array.isArray(value)) {
+    return value.flatMap((child, index) => stringMessages(child, `${prefix}.${index}`))
+  }
+  if (value && typeof value === 'object') {
+    return Object.entries(value).flatMap(([key, child]) =>
+      stringMessages(child, prefix ? `${prefix}.${key}` : key),
+    )
+  }
+  return []
+}
+
+function interpolationTokens(value: string): string[] {
+  return [...value.matchAll(/\{[A-Za-z_][A-Za-z0-9_]*\}/g)].map((match) => match[0]).sort()
+}
+
 describe('frontend locale runtime', () => {
   it('normalizes every supported regional tag and rejects unsupported languages', () => {
     expect(normalizeLocale('pl-PL')).toBe('pl')
@@ -43,6 +60,7 @@ describe('frontend locale runtime', () => {
     expect(normalizeLocale('sv-SE')).toBe('sv')
     expect(normalizeLocale('nl-BE')).toBe('nl')
     expect(normalizeLocale('uk-UA')).toBe('uk')
+    expect(normalizeLocale('tr-TR')).toBe('tr')
     expect(normalizeLocale('ja-JP')).toBeNull()
   })
 
@@ -57,6 +75,16 @@ describe('frontend locale runtime', () => {
         .filter((key) => !key.startsWith('home.'))
         .sort()
       expect(localized, locale).toEqual(english)
+    }
+  })
+
+  it('keeps every Turkish interpolation placeholder aligned with English', async () => {
+    await Promise.all([loadLocale('en'), loadLocale('tr')])
+    const english = new Map(stringMessages(i18n.global.getLocaleMessage('en')))
+    const turkish = new Map(stringMessages(i18n.global.getLocaleMessage('tr')))
+
+    for (const [path, englishMessage] of english) {
+      expect(interpolationTokens(turkish.get(path) ?? ''), path).toEqual(interpolationTokens(englishMessage))
     }
   })
 
@@ -78,6 +106,10 @@ describe('frontend locale runtime', () => {
       'home.hero.waitlist.placeholder',
       'home.hero.waitlist.button',
       'home.hero.waitlist.note',
+      'home.hero.waitlist.submitting',
+      'home.hero.waitlist.joined',
+      'home.hero.waitlist.success',
+      'home.hero.waitlist.error',
       'home.hero.waitlist.emailSubject',
       'home.hero.waitlist.emailBody',
       'home.audiences.beginner.body',
@@ -146,6 +178,7 @@ describe('frontend locale runtime', () => {
     ['sv', 'sv-SE'],
     ['nl', 'nl-NL'],
     ['uk', 'uk-UA'],
+    ['tr', 'tr-TR'],
   ] as const)('activates %s with its regional formatting locale', async (locale, expectedIntl) => {
     await setActiveLocale(locale, { persist: false })
 
@@ -167,7 +200,7 @@ describe('frontend locale runtime', () => {
   })
 
   it('sends the selected language with API requests', async () => {
-    await setActiveLocale('pl', { persist: false })
+    await setActiveLocale('tr', { persist: false })
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
@@ -179,7 +212,7 @@ describe('frontend locale runtime', () => {
     await getJson('/api/example')
 
     const request = fetchMock.mock.calls[0]?.[1] as RequestInit
-    expect(new Headers(request.headers).get('Accept-Language')).toBe('pl')
+    expect(new Headers(request.headers).get('Accept-Language')).toBe('tr')
     vi.unstubAllGlobals()
   })
 })

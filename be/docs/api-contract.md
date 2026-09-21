@@ -4,9 +4,10 @@ Derived from the UI as built. All list endpoints support the browsing controls t
 
 ## Localization
 
-Atlas GET endpoints accept `Accept-Language`. Supported base locales are `en`, `pl`,
-`fr`, `es`, and `de`; regional tags and weighted language lists are negotiated to the
-best supported locale. Exercise `name`, `name_full`, `technique`, and `comments` are
+Atlas GET endpoints accept `Accept-Language`. Supported locales are `en`, `pl`, `fr`,
+`es`, `de`, `it`, `nl`, `sv`, `pt-BR`, `uk`, and `tr`; regional tags and weighted
+language lists are negotiated to the best supported locale. Exercise `name`,
+`name_full`, `technique`, and `comments` are
 resolved from a published `core.exercise_translations` row. Muscle `display_name` and
 `bible_markdown` are resolved from `core.muscle_translations`.
 
@@ -17,6 +18,29 @@ slugs, enum values, metrics, media URLs, and relationship keys are never transla
 Localized names are used by name sorting and free-text search; canonical names and
 slugs remain searchable. Responses declare `Content-Language` and
 `Vary: Accept-Language`.
+
+---
+
+## Private-beta waitlist
+
+### POST /api/waitlist
+
+Accepts the address entered in the Home hero without opening an email client:
+
+```json
+{"email": "athlete@example.com", "website": ""}
+```
+
+The `website` field is an invisible honeypot and should stay empty. Successful,
+duplicate, and honeypot submissions all return `202` with the same body:
+
+```json
+{"accepted": true}
+```
+
+Valid, unique addresses are normalized to lowercase and appended to the configured
+JSON Lines file with the negotiated locale and a UTC timestamp. The API deliberately
+does not expose a read endpoint for this personal data.
 
 ---
 

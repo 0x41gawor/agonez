@@ -1,5 +1,5 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import HomeCoaches from '@/components/home/HomeCoaches.vue'
 import HomeClosing from '@/components/home/HomeClosing.vue'
@@ -10,6 +10,10 @@ import HomeShowcases from '@/components/home/HomeShowcases.vue'
 import { useTheme } from '@/composables/useTheme'
 import { setActiveLocale } from '@/i18n'
 import router from '@/router'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('Home page integration', () => {
   it('registers /home and deliberately redirects / to it', () => {
@@ -79,7 +83,7 @@ describe('Home page integration', () => {
     expect(closing.get('.home-footer-brand img').attributes('src')).toBe('/img/home/brand/agonez-mark.png')
   })
 
-  it('presents honest frontend-only beta and collaboration invitations', async () => {
+  it('presents the beta waitlist and collaboration invitations', async () => {
     await setActiveLocale('en', { persist: false })
     const global = {
       stubs: {
@@ -105,6 +109,62 @@ describe('Home page integration', () => {
 
     await setActiveLocale('pl', { persist: false })
     expect(hero.get('.home-waitlist-row button').text()).toBe('Zapisz się')
+  })
+
+  it('submits a waitlist address directly and presents a localized confirmation', async () => {
+    await setActiveLocale('pl', { persist: false })
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ accepted: true }), {
+        status: 202,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const wrapper = mount(HomeHero, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+        },
+      },
+    })
+
+    await wrapper.get('input[type="email"]').setValue('athlete@example.com')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    const [path, request] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(path).toBe('/api/waitlist')
+    expect(request.method).toBe('POST')
+    expect(new Headers(request.headers).get('Accept-Language')).toBe('pl')
+    expect(JSON.parse(String(request.body))).toEqual({
+      email: 'athlete@example.com',
+      website: '',
+    })
+    expect(wrapper.get('.home-waitlist-row button').text()).toBe('Zapisano')
+    expect(wrapper.get('.home-waitlist-note').text()).toContain('Jesteś na liście')
+    expect(wrapper.get('.home-waitlist-note').classes()).toContain('is-success')
+    expect(wrapper.get('input[type="email"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('uses percent-encoded Polish collaboration copy only for Polish', async () => {
+    const global = {
+      stubs: {
+        RouterLink: { template: '<a><slot /></a>' },
+      },
+    }
+    await setActiveLocale('pl', { persist: false })
+    const closing = mount(HomeClosing, { global })
+    const polishHref = closing.get('.home-collaboration-action').attributes('href') ?? ''
+
+    expect(polishHref).not.toContain('+')
+    expect(new URL(polishHref).searchParams.get('body')).toContain('Cześć')
+
+    await setActiveLocale('tr', { persist: false })
+    const englishHref = closing.get('.home-collaboration-action').attributes('href') ?? ''
+    expect(englishHref).not.toContain('+')
+    expect(new URL(englishHref).searchParams.get('subject')).toBe('Building Agonez together')
+    expect(new URL(englishHref).searchParams.get('body')).toContain('Hi,')
   })
 
   it('renders the localized exercise identity inside the detail grid', async () => {

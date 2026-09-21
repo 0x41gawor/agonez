@@ -2,7 +2,7 @@
 import { computed, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { createMailto } from '@/utils/contact'
+import { joinWaitlist } from '@/api/waitlist'
 
 const { t, tm } = useI18n()
 const proof = computed(() => tm('home.hero.proof') as string[])
@@ -11,15 +11,32 @@ const heroImageWideFallbackUrl = '/media/hero-image-wide.png'
 const heroImageWebpUrl = '/img/home/hero-image.webp'
 const heroImageFallbackUrl = '/media/hero-image.png'
 const waitlistEmail = ref('')
+const waitlistWebsite = ref('')
+const waitlistState = ref<'idle' | 'submitting' | 'success' | 'error'>('idle')
 const waitlistInput = useTemplateRef<HTMLInputElement>('waitlistInput')
+const waitlistMessage = computed(() => {
+  if (waitlistState.value === 'success') return t('home.hero.waitlist.success')
+  if (waitlistState.value === 'error') return t('home.hero.waitlist.error')
+  return t('home.hero.waitlist.note')
+})
+const waitlistButton = computed(() => {
+  if (waitlistState.value === 'submitting') return t('home.hero.waitlist.submitting')
+  if (waitlistState.value === 'success') return t('home.hero.waitlist.joined')
+  return t('home.hero.waitlist.button')
+})
 
-function openWaitlistEmail() {
+async function submitWaitlist() {
+  if (waitlistState.value === 'submitting' || waitlistState.value === 'success') return
   if (!waitlistInput.value?.reportValidity()) return
 
-  window.location.href = createMailto(
-    t('home.hero.waitlist.emailSubject'),
-    t('home.hero.waitlist.emailBody', { email: waitlistEmail.value }),
-  )
+  waitlistState.value = 'submitting'
+  try {
+    await joinWaitlist(waitlistEmail.value, waitlistWebsite.value)
+    waitlistState.value = 'success'
+    waitlistEmail.value = ''
+  } catch {
+    waitlistState.value = 'error'
+  }
 }
 </script>
 
@@ -33,7 +50,7 @@ function openWaitlistEmail() {
         <p class="home-hero-eyebrow">{{ $t('home.hero.eyebrow') }}</p>
         <h1>{{ $t('home.hero.title') }}</h1>
         <p class="home-lead">{{ $t('home.hero.lead') }}</p>
-        <form class="home-waitlist" @submit.prevent="openWaitlistEmail">
+        <form class="home-waitlist" @submit.prevent="submitWaitlist">
           <label class="sr-only" for="home-waitlist-email">{{ $t('home.hero.waitlist.label') }}</label>
           <div class="home-waitlist-row">
             <input
@@ -44,14 +61,37 @@ function openWaitlistEmail() {
               type="email"
               autocomplete="email"
               required
+              :disabled="waitlistState === 'submitting' || waitlistState === 'success'"
               :placeholder="$t('home.hero.waitlist.placeholder')"
               aria-describedby="home-waitlist-note"
             />
-            <button class="home-button home-button-primary" type="submit">
-              {{ $t('home.hero.waitlist.button') }}
+            <div class="home-waitlist-trap" aria-hidden="true">
+              <label for="home-waitlist-website">Website</label>
+              <input
+                id="home-waitlist-website"
+                v-model="waitlistWebsite"
+                name="website"
+                type="text"
+                autocomplete="off"
+                tabindex="-1"
+              />
+            </div>
+            <button
+              class="home-button home-button-primary"
+              type="submit"
+              :disabled="waitlistState === 'submitting' || waitlistState === 'success'"
+            >
+              {{ waitlistButton }}
             </button>
           </div>
-          <p id="home-waitlist-note" class="home-waitlist-note">{{ $t('home.hero.waitlist.note') }}</p>
+          <p
+            id="home-waitlist-note"
+            class="home-waitlist-note"
+            :class="{ 'is-success': waitlistState === 'success', 'is-error': waitlistState === 'error' }"
+            aria-live="polite"
+          >
+            {{ waitlistMessage }}
+          </p>
         </form>
         <div class="home-actions">
           <RouterLink class="home-button home-button-secondary" to="/atlas/exercises">{{ $t('home.hero.ctaPrimary') }}</RouterLink>

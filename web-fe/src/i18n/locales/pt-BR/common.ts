@@ -23,6 +23,7 @@ export default {
     swedish: 'Svenska',
     dutch: 'Nederlands',
     ukrainian: 'Українська',
+    turkish: 'Türkçe',
   },
   theme: {
     dark: 'Escuro',

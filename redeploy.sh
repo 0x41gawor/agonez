@@ -5,6 +5,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="${SCRIPT_DIR}/be"
 FRONTEND_DIR="${SCRIPT_DIR}/web-fe"
+WAITLIST_DIR="${SCRIPT_DIR}/runtime/waitlist"
 MODE="${1:-all}"
 
 usage() {
@@ -92,6 +93,16 @@ show_frontend_diagnostics() {
 }
 
 deploy_backend() {
+  mkdir -p "${WAITLIST_DIR}"
+  if [[ "$(id -u)" -eq 0 ]]; then
+    chown 10001:10001 "${WAITLIST_DIR}"
+    chmod 700 "${WAITLIST_DIR}"
+  elif [[ ! -w "${WAITLIST_DIR}" ]]; then
+    echo "Waitlist directory is not writable: ${WAITLIST_DIR}" >&2
+    echo "Give UID 10001 write access before deploying the backend." >&2
+    return 1
+  fi
+
   echo "Rebuilding FastAPI backend..."
   docker compose --project-directory "${BACKEND_DIR}" \
     --file "${BACKEND_DIR}/compose.yml" up --detach --build atlas-api

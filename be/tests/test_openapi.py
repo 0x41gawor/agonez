@@ -24,6 +24,7 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     assert "/api/atlas/muscles/{slug}/exercises" in paths
     assert "/api/atlas/meta" in paths
     assert "/assets/anatomy.svg" in paths
+    assert "post" in paths["/api/waitlist"]
     assert "post" in paths["/api/plans"]
     assert "get" in paths["/api/plans"]
     assert "get" in paths["/api/plans/catalog/progression-models"]

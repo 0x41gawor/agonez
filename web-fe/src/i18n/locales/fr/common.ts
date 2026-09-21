@@ -7,7 +7,7 @@ export default {
   locale: {
     label: 'Langue', changeTo: 'Passer la langue à {language}', english: 'English', polish: 'Polski',
     french: 'Français', spanish: 'Español', german: 'Deutsch',
-    italian: 'Italiano', portugueseBrazil: 'Português (Brasil)', swedish: 'Svenska', dutch: 'Nederlands', ukrainian: 'Українська',
+    italian: 'Italiano', portugueseBrazil: 'Português (Brasil)', swedish: 'Svenska', dutch: 'Nederlands', ukrainian: 'Українська', turkish: 'Türkçe',
   },
   theme: { dark: 'Sombre', light: 'Clair', switchTo: 'Passer au thème {theme}' },
   common: {

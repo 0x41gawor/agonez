@@ -434,6 +434,20 @@
   background: var(--home-panel);
 }
 
+.home-waitlist-row input:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.home-waitlist-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .home-waitlist-row .home-button {
   min-height: 48px;
   flex: none;
@@ -444,6 +458,20 @@
   color: var(--home-dim);
   font-size: 11.5px;
   line-height: 1.5;
+}
+
+.home-waitlist-note.is-success {
+  color: var(--etu);
+}
+
+.home-waitlist-note.is-error {
+  color: var(--rec);
+}
+
+.home-waitlist-row .home-button:disabled {
+  cursor: default;
+  opacity: 0.74;
+  transform: none;
 }
 
 .home-hero .home-actions {

@@ -3,7 +3,7 @@ export default {
     brand: { name: 'AGONEZ' },
     hero: {
       betaBadge: 'BETA PRIVADA · OTOÑO DE 2026',
-      waitlist: { label: 'Correo electrónico', placeholder: "tu{'@'}ejemplo.com", button: 'Unirme a la lista', note: 'Sin spam. Solo un correo cuando tu invitación esté lista.', emailSubject: 'Beta privada de Agonez — solicitud de acceso', emailBody: 'Hola:\n\nQuiero unirme a la lista de espera de la beta privada de Agonez.\n\nMi correo: {email}\n\nQuiero usar Agonez para:\n' },
+      waitlist: { label: 'Correo electrónico', placeholder: "tu{'@'}ejemplo.com", button: 'Unirme a la lista', note: 'Sin spam. Solo un correo cuando tu invitación esté lista.', submitting: 'Registrando…', joined: 'Registrado', success: 'Ya estás en la lista. Te escribiremos cuando tu invitación esté lista.', error: 'No pudimos guardar tu dirección. Inténtalo de nuevo.', emailSubject: 'Beta privada de Agonez — solicitud de acceso', emailBody: 'Hola:\n\nQuiero unirme a la lista de espera de la beta privada de Agonez.\n\nMi correo: {email}\n\nQuiero usar Agonez para:\n' },
       eyebrow: 'ATLAS DE EJERCICIOS · CREADOR DE PLANES · SEGUIMIENTO DE LA PROGRESIÓN',
       title: 'Comprende tu entrenamiento y crea un plan con sentido.',
       lead: 'Descubre qué músculos trabaja realmente tu ejercicio. Organiza esos ejercicios en un plan semanal y observa lo que ese plan hace en tu cuerpo.',

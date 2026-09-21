@@ -17,6 +17,7 @@ services:
       MEDIA_ROOT: /app/media
       MEDIA_URL_PREFIX: "${MEDIA_URL_PREFIX:-/media}"
       PUBLIC_MEDIA_BASE_URL: "${PUBLIC_MEDIA_BASE_URL:-}"
+      WAITLIST_PATH: /app/runtime/waitlist/waitlist.jsonl
       CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}"
       LOG_LEVEL: "${LOG_LEVEL:-INFO}"
       WEB_CONCURRENCY: "${WEB_CONCURRENCY:-1}"
@@ -26,6 +27,7 @@ services:
       - "${MAMMOONE:?MAMMOONE must be exported in the shell environment}:8000"
     volumes:
       - "${MEDIA_HOST_PATH:-../media}:/app/media:ro"
+      - "../runtime/waitlist:/app/runtime/waitlist"
     restart: unless-stopped
     init: true
     networks:

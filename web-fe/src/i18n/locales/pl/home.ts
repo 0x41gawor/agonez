@@ -7,7 +7,7 @@ export default {
       title: 'Zrozum trening i zbuduj plan, który ma sens.',
       lead: 'Sprawdź, na co naprawdę działa Twoje ćwiczenie. Ułóż z nich tygodniowy plan i zobacz, co ten plan robi z Twoim ciałem.',
       waitlist: {
-        label: 'Adres e-mail', placeholder: "ty{'@'}przyklad.pl", button: 'Zapisz się', note: 'Bez spamu. Tylko jedna wiadomość, gdy Twoje zaproszenie będzie gotowe.',
+        label: 'Adres e-mail', placeholder: "ty{'@'}przyklad.pl", button: 'Zapisz się', note: 'Bez spamu. Tylko jedna wiadomość, gdy Twoje zaproszenie będzie gotowe.', submitting: 'Zapisuję…', joined: 'Zapisano', success: 'Jesteś na liście. Napiszemy, gdy Twoje zaproszenie będzie gotowe.', error: 'Nie udało się zapisać adresu. Spróbuj ponownie.',
         emailSubject: 'Prywatna beta Agonez — zgłoszenie', emailBody: 'Cześć,\n\nchcę dołączyć do listy oczekujących na prywatną betę Agonez.\n\nMój e-mail: {email}\n\nDo czego chcę używać Agonez:\n',
       },
       ctaPrimary: 'Otwórz Atlas',

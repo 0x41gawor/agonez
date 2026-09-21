@@ -15,6 +15,7 @@ export DB_STARTUP_WAIT_SECONDS=10
 export LOG_LEVEL="INFO"
 export CORS_ORIGINS="http://localhost:5173,http://127.0.0.1:5173"
 export MEDIA_URL_PREFIX="/media"
+export WAITLIST_PATH="runtime/waitlist.jsonl"
 export WEB_CONCURRENCY=1
 
 # Host directory mounted read-only into the API container.

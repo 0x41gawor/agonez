@@ -49,6 +49,10 @@ class Settings(BaseSettings):
         default=None,
         alias="PUBLIC_MEDIA_BASE_URL",
     )
+    waitlist_path: Path = Field(
+        default=Path("runtime/waitlist.jsonl"),
+        alias="WAITLIST_PATH",
+    )
     cors_origins_csv: str = Field(
         default="http://localhost:5173,http://127.0.0.1:5173",
         alias="CORS_ORIGINS",

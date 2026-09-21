@@ -3,7 +3,7 @@ export default {
     brand: { name: 'AGONEZ' },
     hero: {
       betaBadge: 'BÊTA PRIVÉE · AUTOMNE 2026',
-      waitlist: { label: 'Adresse e-mail', placeholder: "vous{'@'}exemple.fr", button: 'Rejoindre la liste', note: 'Aucun spam. Un seul e-mail lorsque votre invitation sera prête.', emailSubject: 'Bêta privée Agonez — demande d’inscription', emailBody: 'Bonjour,\n\nje souhaite rejoindre la liste d’attente de la bêta privée d’Agonez.\n\nMon e-mail : {email}\n\nJe souhaite utiliser Agonez pour :\n' },
+      waitlist: { label: 'Adresse e-mail', placeholder: "vous{'@'}exemple.fr", button: 'Rejoindre la liste', note: 'Aucun spam. Un seul e-mail lorsque votre invitation sera prête.', submitting: 'Inscription…', joined: 'Inscrit', success: 'Vous êtes sur la liste. Nous vous écrirons lorsque votre invitation sera prête.', error: 'Impossible d’enregistrer votre adresse. Veuillez réessayer.', emailSubject: 'Bêta privée Agonez — demande d’inscription', emailBody: 'Bonjour,\n\nje souhaite rejoindre la liste d’attente de la bêta privée d’Agonez.\n\nMon e-mail : {email}\n\nJe souhaite utiliser Agonez pour :\n' },
       eyebrow: 'ATLAS D’EXERCICES · CRÉATEUR DE PROGRAMMES · SUIVI DE LA PROGRESSION',
       title: 'Comprenez votre entraînement et construisez un programme cohérent.',
       lead: 'Voyez quels muscles votre exercice cible réellement. Organisez ces exercices en programme hebdomadaire et observez ce que ce programme fait à votre corps.',

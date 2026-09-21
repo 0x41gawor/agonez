@@ -1,7 +1,19 @@
 from typing import Final
 
 DEFAULT_CONTENT_LOCALE: Final = "en"
-SUPPORTED_CONTENT_LOCALES: Final = ("en", "pl", "fr", "es", "de", "it", "nl", "sv", "pt-BR", "uk")
+SUPPORTED_CONTENT_LOCALES: Final = (
+    "en",
+    "pl",
+    "fr",
+    "es",
+    "de",
+    "it",
+    "nl",
+    "sv",
+    "pt-BR",
+    "uk",
+    "tr",
+)
 
 # "pt-br" -> "pt-BR", "en" -> "en", ...
 _LOCALE_BY_TAG: Final = {locale.lower(): locale for locale in SUPPORTED_CONTENT_LOCALES}

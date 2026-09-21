@@ -4,9 +4,15 @@ import { useI18n } from 'vue-i18n'
 
 import { createMailto } from '@/utils/contact'
 
-const { t, tm } = useI18n()
+const { locale, t, tm } = useI18n()
 const roles = computed(() => tm('home.cta.roles') as string[])
-const contactHref = computed(() => createMailto(t('home.cta.emailSubject'), t('home.cta.emailBody')))
+const emailLocale = computed(() => (locale.value === 'pl' ? 'pl' : 'en'))
+const contactHref = computed(() =>
+  createMailto(
+    t('home.cta.emailSubject', {}, { locale: emailLocale.value }),
+    t('home.cta.emailBody', {}, { locale: emailLocale.value }),
+  ),
+)
 </script>
 
 <template>

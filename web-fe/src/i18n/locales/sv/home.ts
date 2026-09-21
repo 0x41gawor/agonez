@@ -3,7 +3,7 @@ export default {
     brand: { name: 'AGONEZ' },
     hero: {
       betaBadge: 'PRIVAT BETA · HÖSTEN 2026',
-      waitlist: { label: 'E-postadress', placeholder: "du{'@'}exempel.se", button: 'Gå med i kön', note: 'Ingen spam. Bara ett mejl när din inbjudan är klar.', emailSubject: 'Agonez privata beta — intresseanmälan', emailBody: 'Hej,\n\njag vill stå på väntelistan för Agonez privata beta.\n\nMin e-postadress: {email}\n\nJag vill använda Agonez till:\n' },
+      waitlist: { label: 'E-postadress', placeholder: "du{'@'}exempel.se", button: 'Gå med i kön', note: 'Ingen spam. Bara ett mejl när din inbjudan är klar.', submitting: 'Registrerar…', joined: 'Registrerad', success: 'Du står på listan. Vi mejlar dig när din inbjudan är klar.', error: 'Vi kunde inte spara din adress. Försök igen.', emailSubject: 'Agonez privata beta — intresseanmälan', emailBody: 'Hej,\n\njag vill stå på väntelistan för Agonez privata beta.\n\nMin e-postadress: {email}\n\nJag vill använda Agonez till:\n' },
       eyebrow: 'ÖVNINGSATLAS · PROGRAMBYGGARE · PROGRESSIONSCOACHING', title: 'Förstå din träning och bygg ett program som hänger ihop.', lead: 'Se vilka muskler din övning faktiskt riktar sig mot. Bygg ett veckoprogram av övningarna och se vad programmet gör med din kropp.', ctaPrimary: 'Öppna Atlasen', ctaSecondary: 'Se programanalysen', proof: ['över 150 övningar', 'interaktiv anatomi', 'från en repetition till en mikrocykel'], frameLabel: 'agonez · /plans/4x-week-lu-pp · ANALYS',
     },
     audiences: {

@@ -16,13 +16,14 @@ describe('LocaleSwitcher', () => {
     const options = wrapper.findAll('[role="menuitemradio"]')
 
     expect(trigger.attributes('aria-expanded')).toBe('true')
-    expect(options).toHaveLength(10)
+    expect(options).toHaveLength(11)
     expect(options.map((option) => option.text())).toEqual(
       expect.arrayContaining([
         expect.stringContaining('English'),
         expect.stringContaining('Italiano'),
         expect.stringContaining('Português (Brasil)'),
         expect.stringContaining('Українська'),
+        expect.stringContaining('Türkçe'),
       ]),
     )
     expect(options[0]?.attributes('aria-checked')).toBe('true')

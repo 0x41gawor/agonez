@@ -3,7 +3,7 @@ export default {
     brand: { name: 'AGONEZ' },
     hero: {
       betaBadge: 'BESLOTEN BÈTA · NAJAAR 2026',
-      waitlist: { label: 'E-mailadres', placeholder: "jij{'@'}voorbeeld.nl", button: 'Op de wachtlijst', note: 'Geen spam. Eén e-mail zodra je uitnodiging klaarstaat.', emailSubject: 'Besloten bèta van Agonez — wachtlijstverzoek', emailBody: 'Hallo,\n\nik wil graag op de wachtlijst voor de besloten bèta van Agonez.\n\nMijn e-mailadres: {email}\n\nHiervoor wil ik Agonez gebruiken:\n' },
+      waitlist: { label: 'E-mailadres', placeholder: "jij{'@'}voorbeeld.nl", button: 'Op de wachtlijst', note: 'Geen spam. Eén e-mail zodra je uitnodiging klaarstaat.', submitting: 'Bezig met aanmelden…', joined: 'Aangemeld', success: 'Je staat op de lijst. We mailen je zodra je uitnodiging klaarstaat.', error: 'We konden je adres niet opslaan. Probeer het opnieuw.', emailSubject: 'Besloten bèta van Agonez — wachtlijstverzoek', emailBody: 'Hallo,\n\nik wil graag op de wachtlijst voor de besloten bèta van Agonez.\n\nMijn e-mailadres: {email}\n\nHiervoor wil ik Agonez gebruiken:\n' },
       eyebrow: 'OEFENINGENATLAS · PROGRAMMABOUWER · PROGRESSIEBEGELEIDING', title: 'Begrijp je training en bouw een programma dat klopt.', lead: 'Zie welke spieren je oefening werkelijk aanspreekt. Bouw met die oefeningen een weekprogramma en zie wat dat programma met je lichaam doet.', ctaPrimary: 'Open de Atlas', ctaSecondary: 'Bekijk de programmaanalyse', proof: ['meer dan 150 oefeningen', 'interactieve anatomie', 'van één herhaling tot een microcyclus'], frameLabel: 'agonez · /plans/4x-week-lu-pp · ANALYSE',
     },
     audiences: {

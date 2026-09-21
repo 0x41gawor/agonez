@@ -3,7 +3,7 @@ export default {
     brand: { name: 'AGONEZ' },
     hero: {
       betaBadge: 'PRIVATE BETA · HERBST 2026',
-      waitlist: { label: 'E-Mail-Adresse', placeholder: "du{'@'}beispiel.de", button: 'Zur Warteliste', note: 'Kein Spam. Nur eine E-Mail, sobald deine Einladung bereit ist.', emailSubject: 'Private Beta von Agonez — Wartelistenanfrage', emailBody: 'Hallo,\n\nich möchte auf die Warteliste für die private Beta von Agonez.\n\nMeine E-Mail-Adresse: {email}\n\nDafür möchte ich Agonez nutzen:\n' },
+      waitlist: { label: 'E-Mail-Adresse', placeholder: "du{'@'}beispiel.de", button: 'Zur Warteliste', note: 'Kein Spam. Nur eine E-Mail, sobald deine Einladung bereit ist.', submitting: 'Wird eingetragen…', joined: 'Eingetragen', success: 'Du stehst auf der Liste. Wir schreiben dir, sobald deine Einladung bereit ist.', error: 'Deine Adresse konnte nicht gespeichert werden. Bitte versuche es erneut.', emailSubject: 'Private Beta von Agonez — Wartelistenanfrage', emailBody: 'Hallo,\n\nich möchte auf die Warteliste für die private Beta von Agonez.\n\nMeine E-Mail-Adresse: {email}\n\nDafür möchte ich Agonez nutzen:\n' },
       eyebrow: 'ÜBUNGSATLAS · PLANERSTELLUNG · PROGRESSIONSBEGLEITUNG', title: 'Verstehe dein Training und baue einen Plan, der Sinn ergibt.', lead: 'Sieh, welche Muskeln deine Übung wirklich anspricht. Baue daraus einen Wochenplan und sieh, was dieser Plan mit deinem Körper macht.', ctaPrimary: 'Atlas öffnen', ctaSecondary: 'Plananalyse ansehen', proof: ['über 150 Übungen', 'interaktive Anatomie', 'von einer Wiederholung zum Mikrozyklus'], frameLabel: 'agonez · /plans/4x-week-lu-pp · ANALYSE',
     },
     audiences: {

@@ -25,6 +25,7 @@ const nativeNameKeys: Record<SupportedLocale, string> = {
   sv: 'locale.swedish',
   nl: 'locale.dutch',
   uk: 'locale.ukrainian',
+  tr: 'locale.turkish',
 }
 
 function localeCode(value: SupportedLocale): string {

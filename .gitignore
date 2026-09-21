@@ -24,6 +24,7 @@ env/
 # Local database / Postgres
 # =========================
 pgdata/
+runtime/
 *.pid
 *.log
 

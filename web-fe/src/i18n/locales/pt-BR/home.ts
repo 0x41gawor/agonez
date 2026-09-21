@@ -3,7 +3,7 @@ export default {
     brand: { name: 'AGONEZ' },
     hero: {
       betaBadge: 'BETA PRIVADO · OUTONO DE 2026',
-      waitlist: { label: 'Endereço de e-mail', placeholder: "voce{'@'}exemplo.com", button: 'Entrar na lista', note: 'Sem spam. Apenas um e-mail quando seu convite estiver pronto.', emailSubject: 'Beta privado do Agonez — pedido de acesso', emailBody: 'Olá,\n\nquero entrar na lista de espera do beta privado do Agonez.\n\nMeu e-mail: {email}\n\nQuero usar o Agonez para:\n' },
+      waitlist: { label: 'Endereço de e-mail', placeholder: "voce{'@'}exemplo.com", button: 'Entrar na lista', note: 'Sem spam. Apenas um e-mail quando seu convite estiver pronto.', submitting: 'Entrando…', joined: 'Inscrito', success: 'Você está na lista. Enviaremos um e-mail quando seu convite estiver pronto.', error: 'Não foi possível salvar seu endereço. Tente novamente.', emailSubject: 'Beta privado do Agonez — pedido de acesso', emailBody: 'Olá,\n\nquero entrar na lista de espera do beta privado do Agonez.\n\nMeu e-mail: {email}\n\nQuero usar o Agonez para:\n' },
       eyebrow: 'ATLAS DE EXERCÍCIOS · CRIADOR DE PLANOS · ACOMPANHAMENTO DA PROGRESSÃO', title: 'Entenda seu treino e monte um plano que faça sentido.', lead: 'Veja quais músculos seu exercício realmente trabalha. Organize esses exercícios em um plano semanal e veja o que esse plano faz com seu corpo.', ctaPrimary: 'Abrir o Atlas', ctaSecondary: 'Ver a análise do plano', proof: ['mais de 150 exercícios', 'anatomia interativa', 'de uma repetição ao microciclo'], frameLabel: 'agonez · /plans/4x-week-lu-pp · ANÁLISE',
     },
     audiences: {

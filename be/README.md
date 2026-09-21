@@ -29,6 +29,7 @@ frontend materials are preserved in `docs/api-contract.md` and
 - `PUT /api/plans/{plan_id}/draft`
 - `POST /api/plans/{plan_id}/draft/analysis`
 - `POST /api/plans/{plan_id}/draft/export`
+- `POST /api/waitlist` — append a private-beta email to persistent JSONL storage
 - `GET /assets/anatomy.svg`
 - `GET /health/live` and `GET /health/ready`
 - Interactive OpenAPI: `GET /docs`
@@ -42,8 +43,9 @@ Repeat a filter key to select several values, for example:
 Pagination defaults to `page=1&per_page=50` and permits at most 100 rows per page.
 
 Atlas read endpoints negotiate localized exercise and muscle content from the
-`Accept-Language` header. Supported base locales are `en`, `pl`, `fr`, `es`, and
-`de`; regional tags such as `fr-CA` are reduced to their supported base locale.
+`Accept-Language` header. Supported locales are `en`, `pl`, `fr`, `es`, `de`,
+`it`, `nl`, `sv`, `pt-BR`, `uk`, and `tr`; regional tags such as `fr-CA` and
+`tr-TR` are reduced to their supported locale.
 Localized fields fall back independently to their canonical `core.exercises` or
 `core.muscles` value. Exercise translations must have `status = 'published'` to be
 served. Responses include `Content-Language` and `Vary: Accept-Language`.
@@ -60,6 +62,7 @@ The Atlas connection enforces a 10-second statement timeout. The configured data
 role needs `SELECT` access plus `UPDATE (video_links)` on `core.exercises` for the video
 link feature. PlanCreator startup migrations require schema/table creation rights for
 the initial deployment, and normal operation requires CRUD access to the `plans` schema.
+`WAITLIST_PATH` selects the append-only waitlist file for direct deployments.
 
 The `.bashrc` assignments must use `export`, then be loaded in the current shell:
 
@@ -109,6 +112,9 @@ curl "http://127.0.0.1:${MAMMOONE}/health/ready"
 Compose maps `host.docker.internal` to the Linux host gateway and explicitly passes the
 exported variables into the container. It mounts `${MEDIA_HOST_PATH:-../media}` read-only at
 `/app/media`; the current default therefore serves `/home/agonez/media/exercises`.
+It also bind-mounts `runtime/waitlist` read-write. `redeploy.sh` prepares that private,
+gitignored directory for the API's non-root UID, so waitlist entries survive image and
+container replacement at `runtime/waitlist/waitlist.jsonl`.
 Production runtime dependencies are pinned in `requirements.lock`.
 The container applies pending checksum-tracked migrations under a PostgreSQL advisory
 lock before starting Uvicorn. Repeated starts are safe; changing an already-applied SQL

@@ -12,6 +12,7 @@ export const SUPPORTED_LOCALES = [
   'sv',
   'nl',
   'uk',
+  'tr',
 ] as const
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
@@ -29,6 +30,7 @@ const loaders: Record<SupportedLocale, () => Promise<{ default: Record<string, u
   sv: () => import('./locales/sv'),
   nl: () => import('./locales/nl'),
   uk: () => import('./locales/uk'),
+  tr: () => import('./locales/tr'),
 }
 const loaded = new Set<SupportedLocale>()
 
@@ -78,6 +80,7 @@ export function intlLocale(locale: SupportedLocale = activeLocale()): string {
     sv: 'sv-SE',
     nl: 'nl-NL',
     uk: 'uk-UA',
+    tr: 'tr-TR',
   }[locale]
 }
 

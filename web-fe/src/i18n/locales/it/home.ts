@@ -3,7 +3,7 @@ export default {
     brand: { name: 'AGONEZ' },
     hero: {
       betaBadge: 'BETA PRIVATA · AUTUNNO 2026',
-      waitlist: { label: 'Indirizzo e-mail', placeholder: "tu{'@'}esempio.it", button: 'Entra nella lista', note: 'Niente spam. Una sola e-mail quando il tuo invito sarà pronto.', emailSubject: 'Beta privata di Agonez — richiesta di accesso', emailBody: 'Ciao,\n\nvorrei entrare nella lista d’attesa per la beta privata di Agonez.\n\nLa mia e-mail: {email}\n\nVorrei usare Agonez per:\n' },
+      waitlist: { label: 'Indirizzo e-mail', placeholder: "tu{'@'}esempio.it", button: 'Entra nella lista', note: 'Niente spam. Una sola e-mail quando il tuo invito sarà pronto.', submitting: 'Iscrizione…', joined: 'Iscritto', success: 'Sei nella lista. Ti scriveremo quando il tuo invito sarà pronto.', error: 'Non siamo riusciti a salvare il tuo indirizzo. Riprova.', emailSubject: 'Beta privata di Agonez — richiesta di accesso', emailBody: 'Ciao,\n\nvorrei entrare nella lista d’attesa per la beta privata di Agonez.\n\nLa mia e-mail: {email}\n\nVorrei usare Agonez per:\n' },
       eyebrow: 'ATLANTE DEGLI ESERCIZI · CREAZIONE PROGRAMMI · GESTIONE DELLA PROGRESSIONE', title: 'Comprendi il tuo allenamento e costruisci un programma sensato.', lead: 'Scopri quali muscoli coinvolge davvero il tuo esercizio. Organizza questi esercizi in un programma settimanale e osserva cosa quel programma fa al tuo corpo.', ctaPrimary: 'Apri l’Atlante', ctaSecondary: 'Vedi l’analisi del programma', proof: ['oltre 150 esercizi', 'anatomia interattiva', 'da una ripetizione al microciclo'], frameLabel: 'agonez · /plans/4x-week-lu-pp · ANALISI',
     },
     audiences: {
