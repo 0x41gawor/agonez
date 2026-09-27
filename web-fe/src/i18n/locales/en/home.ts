@@ -118,14 +118,14 @@ export default {
       etu: {
         title: 'ETU',
         summary: 'How much tension stimulus from one effective repetition reaches a given muscle.',
-        body: 'An exercise does not simply “train chest”. It has a profile: some tension goes to prime movers and some to stabilisers. ETU (Effective Tension Unit) estimates that distribution for one effective repetition so two variants of the same movement can be compared numerically.',
+        body: 'An exercise does not simply “train chest”. It has a profile: some tension goes to prime movers and some to stabilisers. ETU (Effective Tension Unit) estimates that distribution for one effective repetition so two exercises can be compared numerically.',
         formula: 'ETU_m = active tension_m × tension quality_m',
         caveat: 'This is not EMG, activation percentage or a measure of hypertrophy.',
       },
       fcsa: {
         title: 'FCSA',
         summary: 'A common denominator for comparing a large and a small muscle on one scale.',
-        body: 'Twenty stimulus units mean something different for a quadriceps and a rear deltoid. FCSA — estimated force-transmitting area — provides a capacity reference, so ETU can be expressed per cm². The same logic, summed across the body, gives the plan’s systemic demand.',
+        body: 'Twenty stimulus units mean something different for a quadriceps and a rear deltoid. FCSA — (Functional Cross-Sectional Area) estimated force-transmitting area  — provides a capacity reference, so ETU can be expressed per cm². ',
         formula: 'systemic demand ≈ Σ propulsive contribution  [cm²]',
         caveat: 'This is mechanical demand, not fatigue and not a fibre count.',
       },
@@ -147,19 +147,7 @@ export default {
         ],
         caveat: 'Your baseline may differ substantially, while the relative relationships should differ only marginally.',
       },
-      limits: {
-        title: 'Model limits',
-        summary: 'What the model does not see — written out, not hidden.',
-        items: [
-          'Effective reps currently come from a fixed RIR multiplier, not from the rep range.',
-          'A single global muscle recovery velocity is used, not per-muscle velocities.',
-          'There is no model of neural, systemic, metabolic or connective-tissue fatigue.',
-          'Joint exposure is mainly comparable within the same joint.',
-          'There is no data on your sleep, stress, nutrition or training history.',
-          'Missing data produces diagnostics, not invented confidence.',
-        ],
-        note: 'model version, assumptions and diagnostics stay visible in the app',
-      },
+            limits: { title: 'Model limits', summary: 'What the model does not see — stated openly, not hidden away.', items: ['Effective reps come from a fixed RIR conversion, capped at 5 per set (at RIR 0).', 'A single global muscle recovery velocity per cm² is used, so the model accounts for muscle size but not architecture.', 'Neural, metabolic, and connective-tissue fatigue are not modeled.', 'Joint exposure is comparable within the same joint only. The unit is not absolute.', 'No data on sleep, stress, nutrition, or your training history. Recovery velocity has to be tuned empirically, case by case.'], note: 'The model version, assumptions, and diagnostics stay visible in the app.' },
     },
     coaches: {
       eyebrow: '08 · FOR COACHES',
