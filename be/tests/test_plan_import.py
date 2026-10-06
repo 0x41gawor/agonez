@@ -81,16 +81,52 @@ def test_import_schema_accepts_v2_progression_metadata() -> None:
     assert document.days[0].exercises[1].progression_model is None
 
 
-def test_v2_requires_progression_field_and_v1_rejects_it() -> None:
+def test_import_schema_accepts_v3_compact_progression_slug() -> None:
+    payload = import_payload()
+    payload["format"] = "agonez-plan-sanity-v3"
+    exercises = payload["days"][0]["exercises"]  # type: ignore[index]
+    for index, exercise in enumerate(exercises):
+        exercise["progression_model"] = (  # type: ignore[index]
+            "double_progression" if index == 0 else None
+        )
+
+    document = PlanAIImportDocument.model_validate(payload)
+
+    assert document.days[0].exercises[0].progression_model == "double_progression"
+    assert document.days[0].exercises[1].progression_model is None
+
+
+def test_v2_and_v3_require_progression_field_and_v1_rejects_it() -> None:
     v2 = import_payload()
     v2["format"] = "agonez-plan-sanity-v2"
     with pytest.raises(ValidationError, match="must contain progression_model"):
         PlanAIImportDocument.model_validate(v2)
 
+    v3 = import_payload()
+    v3["format"] = "agonez-plan-sanity-v3"
+    with pytest.raises(ValidationError, match="must contain progression_model"):
+        PlanAIImportDocument.model_validate(v3)
+
     v1 = import_payload()
     v1["days"][0]["exercises"][0]["progression_model"] = None  # type: ignore[index]
     with pytest.raises(ValidationError, match="must not contain progression_model"):
         PlanAIImportDocument.model_validate(v1)
+
+
+def test_v2_and_v3_reject_each_others_progression_shape() -> None:
+    v2 = import_payload()
+    v2["format"] = "agonez-plan-sanity-v2"
+    for exercise in v2["days"][0]["exercises"]:  # type: ignore[index]
+        exercise["progression_model"] = "double_progression"  # type: ignore[index]
+    with pytest.raises(ValidationError, match="V2 progression_model"):
+        PlanAIImportDocument.model_validate(v2)
+
+    v3 = import_payload()
+    v3["format"] = "agonez-plan-sanity-v3"
+    for exercise in v3["days"][0]["exercises"]:  # type: ignore[index]
+        exercise["progression_model"] = {"slug": "double_progression"}  # type: ignore[index]
+    with pytest.raises(ValidationError, match="V3 progression_model"):
+        PlanAIImportDocument.model_validate(v3)
 
 
 def test_import_schema_rejects_non_consecutive_days_and_populated_rest_days() -> None:

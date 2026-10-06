@@ -408,6 +408,7 @@ describe('PlanEditor', () => {
     await wrapper.get('.progression-model-info header button').trigger('click')
 
     await wrapper.get('.variant-editor.default .progression-model-trigger').trigger('click')
+    expect(wrapper.find('.slot-details').exists()).toBe(true)
     expect(wrapper.find('input[type="search"]').exists()).toBe(false)
     await wrapper.get('.variant-editor.default .progression-option-info').trigger('click')
     expect(wrapper.get('.progression-model-menu .progression-model-info').text()).toContain(
@@ -416,7 +417,6 @@ describe('PlanEditor', () => {
     expect(slot.variants[0]?.progression_model_slug).toBe(progressionModel.slug)
     await wrapper.get('.variant-editor.default .progression-model-trigger').trigger('click')
 
-    await wrapper.get('.slot-disclosure').trigger('click')
     await wrapper.findAll('button').find((button) => button.text().includes('Add fallback'))?.trigger('click')
     expect(slot.variants[1]?.progression_model_slug).toBe(progressionModel.slug)
     expect(wrapper.get('.variant-editor.fallback .progression-model-trigger').text()).toContain(

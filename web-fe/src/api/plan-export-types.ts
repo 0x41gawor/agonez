@@ -9,18 +9,10 @@ export interface PlanAIExportSet {
   rir: number
 }
 
-export interface PlanAIProgressionModel {
-  slug: string
-  name: string
-  name_full: string
-  when_to_use: string
-  how_to_apply: string
-}
-
 export interface PlanAIExportExercise {
   name: string
   slug: string
-  progression_model: PlanAIProgressionModel | null
+  progression_model: string | null
   sets: PlanAIExportSet[]
 }
 
@@ -33,7 +25,7 @@ export interface PlanAIExportDay {
 }
 
 export interface PlanAIExportResult {
-  format: 'agonez-plan-sanity-v2'
+  format: 'agonez-plan-sanity-v3'
   plan_name: string
   resolution_context: PlanResolutionContext
   days: PlanAIExportDay[]
@@ -50,7 +42,7 @@ export interface PlanAIImportProgressionModel {
 export interface PlanAIImportExercise {
   name: string
   slug: string
-  progression_model?: PlanAIImportProgressionModel | null
+  progression_model?: PlanAIImportProgressionModel | string | null
   sets: PlanAIExportSet[]
 }
 
@@ -63,7 +55,7 @@ export interface PlanAIImportDay {
 }
 
 export interface PlanAIImportDocument {
-  format: 'agonez-plan-sanity-v1' | 'agonez-plan-sanity-v2'
+  format: 'agonez-plan-sanity-v1' | 'agonez-plan-sanity-v2' | 'agonez-plan-sanity-v3'
   plan_name: string
   resolution_context: PlanResolutionContext
   days: PlanAIImportDay[]

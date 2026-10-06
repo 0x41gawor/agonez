@@ -53,13 +53,36 @@ describe('Plan JSON import', () => {
     expect(parsePlanImportJson(JSON.stringify(source))).toEqual(source)
   })
 
-  it('requires an explicit progression model or null in V2', () => {
+  it('requires an explicit progression model or null in V3', () => {
     const source = planExportResult() as unknown as Record<string, unknown>
     const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
     delete days[0]!.exercises[0]!.progression_model
 
     expect(() => parsePlanImportJson(JSON.stringify(source))).toThrow(
       /progression_model is required/,
+    )
+  })
+
+  it('keeps accepting V2 documents with rich progression metadata', () => {
+    const source = planExportResult() as unknown as Record<string, unknown>
+    source.format = 'agonez-plan-sanity-v2'
+    const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
+    days[0]!.exercises[0]!.progression_model = {
+      slug: 'double_progression',
+      name: 'Double progression',
+      when_to_use: 'Use for stable ranges.',
+    }
+
+    expect(parsePlanImportJson(JSON.stringify(source))).toEqual(source)
+  })
+
+  it('does not accept rich progression metadata in compact V3', () => {
+    const source = planExportResult() as unknown as Record<string, unknown>
+    const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
+    days[0]!.exercises[0]!.progression_model = { slug: 'double_progression' }
+
+    expect(() => parsePlanImportJson(JSON.stringify(source))).toThrow(
+      /progression_model must be a non-empty string/,
     )
   })
 

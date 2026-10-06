@@ -140,6 +140,5 @@ async def export_draft(
     plan_id: PlanId,
     payload: Annotated[PlanExportRequest, Body()],
     service: Annotated[PlanAnalysisService, Depends(get_plan_analysis_service)],
-    locale: ContentLocaleDependency,
 ) -> PlanAIExportResult:
-    return await service.export_draft(plan_id, payload, locale=locale)
+    return await service.export_draft(plan_id, payload)

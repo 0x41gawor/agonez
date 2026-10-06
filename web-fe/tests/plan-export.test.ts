@@ -14,8 +14,9 @@ describe('Plan AI export', () => {
     })
     const json = wrapper.get('.plan-export-preview').text()
 
-    expect(json).toContain('"format": "agonez-plan-sanity-v2"')
-    expect(json).toContain('"progression_model"')
+    expect(json).toContain('"format": "agonez-plan-sanity-v3"')
+    expect(json).toContain('"progression_model": "double_progression"')
+    expect(json).not.toContain('when_to_use')
     expect(json).toContain('"reps"')
     expect(json).toContain('"rir": 2')
     expect(json).not.toContain('slot')

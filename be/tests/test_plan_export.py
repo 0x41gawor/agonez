@@ -97,19 +97,10 @@ def test_ai_export_is_small_and_uses_the_resolved_basic_plan() -> None:
         draft,
         resolved,
         {"barbell_bench_press": "Barbell Bench Press"},
-        {
-            "double_progression": {
-                "slug": "double_progression",
-                "name": "Double progression",
-                "name_full": "Double progression by repetitions and load",
-                "when_to_use": "Use for stable rep ranges.",
-                "how_to_apply": "Add repetitions, then load.",
-            }
-        },
     ).model_dump(mode="json")
 
     assert result == {
-        "format": "agonez-plan-sanity-v2",
+        "format": "agonez-plan-sanity-v3",
         "plan_name": "Push and rest",
         "resolution_context": {
             "global_volume_level": 0,
@@ -126,13 +117,7 @@ def test_ai_export_is_small_and_uses_the_resolved_basic_plan() -> None:
                     {
                         "name": "Barbell Bench Press",
                         "slug": "barbell_bench_press",
-                        "progression_model": {
-                            "slug": "double_progression",
-                            "name": "Double progression",
-                            "name_full": "Double progression by repetitions and load",
-                            "when_to_use": "Use for stable rep ranges.",
-                            "how_to_apply": "Add repetitions, then load.",
-                        },
+                        "progression_model": "double_progression",
                         "sets": [{"reps": {"min": 5, "max": 7}, "rir": 2}],
                     }
                 ],

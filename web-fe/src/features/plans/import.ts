@@ -7,7 +7,8 @@ import type {
 } from '@/api/plan-export-types'
 import type { PlanResolutionContext } from '@/api/plan-analysis-types'
 
-export const PLAN_IMPORT_FORMAT = 'agonez-plan-sanity-v2'
+export const PLAN_IMPORT_FORMAT = 'agonez-plan-sanity-v3'
+export const PLAN_IMPORT_V2_FORMAT = 'agonez-plan-sanity-v2'
 export const PLAN_IMPORT_LEGACY_FORMAT = 'agonez-plan-sanity-v1'
 export const PLAN_IMPORT_MAX_BYTES = 1024 * 1024
 
@@ -194,6 +195,19 @@ function parseProgressionModel(
   return result
 }
 
+function parseProgressionModelSlug(
+  value: unknown,
+  path: string,
+  issues: string[],
+): string | null {
+  if (value === null) return null
+  const slug = stringValue(value, path, issues, 200)
+  if (slug && !/^[a-z0-9_]+$/.test(slug)) {
+    issues.push(`${path} must use lowercase letters, numbers, and underscores only.`)
+  }
+  return slug
+}
+
 function parseExercise(
   value: unknown,
   path: string,
@@ -205,14 +219,14 @@ function parseExercise(
   const hasProgressionModel = Object.prototype.hasOwnProperty.call(source, 'progression_model')
   rejectUnknownKeys(
     source,
-    format === PLAN_IMPORT_FORMAT
+    format !== PLAN_IMPORT_LEGACY_FORMAT
       ? ['name', 'slug', 'progression_model', 'sets']
       : ['name', 'slug', 'sets'],
     path,
     issues,
   )
-  if (format === PLAN_IMPORT_FORMAT && !hasProgressionModel) {
-    issues.push(`${path}.progression_model is required in ${PLAN_IMPORT_FORMAT}; use null for none.`)
+  if (format !== PLAN_IMPORT_LEGACY_FORMAT && !hasProgressionModel) {
+    issues.push(`${path}.progression_model is required in ${format}; use null for none.`)
   }
   const slug = stringValue(source.slug, `${path}.slug`, issues, 200)
   if (slug && !/^[a-z0-9_]+$/.test(slug)) {
@@ -225,12 +239,10 @@ function parseExercise(
       parseSet(item, `${path}.sets[${index}]`, issues),
     ),
   }
-  if (format === PLAN_IMPORT_FORMAT) {
-    exercise.progression_model = parseProgressionModel(
-      source.progression_model,
-      `${path}.progression_model`,
-      issues,
-    )
+  if (format === PLAN_IMPORT_V2_FORMAT) {
+    exercise.progression_model = parseProgressionModel(source.progression_model, `${path}.progression_model`, issues)
+  } else if (format === PLAN_IMPORT_FORMAT) {
+    exercise.progression_model = parseProgressionModelSlug(source.progression_model, `${path}.progression_model`, issues)
   }
   return exercise
 }
@@ -291,12 +303,18 @@ export function parsePlanImportJson(json: string): PlanAIImportDocument {
   rejectUnknownKeys(source, ['format', 'plan_name', 'resolution_context', 'days'], '$', issues)
 
   const format = source.format
-  if (format !== PLAN_IMPORT_FORMAT && format !== PLAN_IMPORT_LEGACY_FORMAT) {
-    issues.push(`$.format must be "${PLAN_IMPORT_FORMAT}" or "${PLAN_IMPORT_LEGACY_FORMAT}".`)
+  if (
+    format !== PLAN_IMPORT_FORMAT
+    && format !== PLAN_IMPORT_V2_FORMAT
+    && format !== PLAN_IMPORT_LEGACY_FORMAT
+  ) {
+    issues.push(
+      `$.format must be "${PLAN_IMPORT_FORMAT}", "${PLAN_IMPORT_V2_FORMAT}", or "${PLAN_IMPORT_LEGACY_FORMAT}".`,
+    )
   }
-  const parsedFormat: PlanImportFormat = format === PLAN_IMPORT_LEGACY_FORMAT
-    ? PLAN_IMPORT_LEGACY_FORMAT
-    : PLAN_IMPORT_FORMAT
+  const parsedFormat: PlanImportFormat = (
+    format === PLAN_IMPORT_LEGACY_FORMAT || format === PLAN_IMPORT_V2_FORMAT
+  ) ? format : PLAN_IMPORT_FORMAT
   const result: PlanAIImportDocument = {
     format: parsedFormat,
     plan_name: stringValue(source.plan_name, '$.plan_name', issues, 200),

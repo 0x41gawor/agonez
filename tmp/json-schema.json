@@ -1,0 +1,806 @@
+{
+  "format": "agonez-plan-sanity-v2",
+  "plan_name": "4x week LU-PP, Volume REDU (BEZ CORE TERAZ)",
+  "resolution_context": {
+    "global_volume_level": 0,
+    "focus_area": null,
+    "axis_overrides": {}
+  },
+  "days": [
+    {
+      "day": 1,
+      "name": "Legs",
+      "weekday": "Monday",
+      "rest": false,
+      "exercises": [
+        {
+          "name": "Plate-Loaded 45-Degree Sled Leg Press",
+          "slug": "plate_loaded_45_degree_leg_press",
+          "progression_model": {
+            "slug": "single_progression_with_2_for_2",
+            "name": "Progresja pojedyncza z 2-for-2 / AMRAP",
+            "name_full": "Progresja pojedyncza sterowana wynikiem z serią AMRAP",
+            "when_to_use": "Stosuj, gdy chcesz zachować stałą liczbę powtórzeń w podstawowej recepcie, ale zwiększać obciążenie dopiero po wykazaniu dodatkowego zapasu wydolnościowego, a nie wyłącznie po wykonaniu nominalnego celu.",
+            "how_to_apply": "Utrzymuj standardowe serie robocze bez zmian, a ostatnią serię traktuj jako serię AMRAP lub serię oceny wydolności. Porównaj uzyskaną liczbę powtórzeń z progiem progresji. Zwiększ wspólne obciążenie dopiero po spełnieniu wymaganego kryterium ponad cel, na przykład reguły 2-for-2."
+          },
+          "sets": [
+            {
+              "reps": {
+                "min": 6,
+                "max": 10
+              },
+              "rir": 1
+            },
+            {
+              "reps": {
+                "min": 6,
+                "max": 10
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Selectorized Seated Leg Curl",
+          "slug": "selectorized_seated_leg_curl",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 12
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 12
+              },
+              "rir": 1
+            }
+          ]
+        },
+        {
+          "name": "Selectorized Seated Leg Extension",
+          "slug": "selectorized_leg_extension",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 6,
+                "max": 8
+              },
+              "rir": 0
+            },
+            {
+              "reps": {
+                "min": 6,
+                "max": 8
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Selectorized Machine Hip Thrust",
+          "slug": "selectorized_hip_thrust",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 2
+            }
+          ]
+        },
+        {
+          "name": "Selectorized Seated Hip Adduction Machine",
+          "slug": "selectorized_hip_adduction",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 1
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Plate-Loaded Seated Calf Raise",
+          "slug": "plate_loaded_seated_calf_raise",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 1
+            },
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 1
+            }
+          ]
+        },
+        {
+          "name": "Plate-Loaded Seated Calf Raise",
+          "slug": "plate_loaded_seated_calf_raise",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 2
+            }
+          ]
+        },
+        {
+          "name": "Roman Chair Back Extension Isometric Hold",
+          "slug": "roman_chair_back_extension_isometric_hold",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 4
+            },
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "name": "Upper&Core + LISS",
+      "weekday": "Tuesday",
+      "rest": false,
+      "exercises": [
+        {
+          "name": "Weighted Neutral-Grip Pull-Up",
+          "slug": "weighted_neutral_grip_pull_up",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 5,
+                "max": 10
+              },
+              "rir": 1
+            },
+            {
+              "reps": {
+                "min": 5,
+                "max": 10
+              },
+              "rir": 1
+            }
+          ]
+        },
+        {
+          "name": "Incline Bench Smith Machine Press",
+          "slug": "smith_machine_incline_bench_press",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 1
+            },
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Incline Bench Chest-Supported Dumbbell Row",
+          "slug": "chest_supported_dumbbell_row",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 2
+            }
+          ]
+        },
+        {
+          "name": "Selectorized High-to-Low Pec Deck Fly",
+          "slug": "high_to_low_pec_deck_fly",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Single-Arm Kneeling Wide-Elbow Cable Row",
+          "slug": "single_arm_kneeling_wide_cable_row",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Single-Arm Side-Facing Reverse Pec Deck Fly",
+          "slug": "side_facing_reverse_pec_deck",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Single-Arm Cable Lateral Raise",
+          "slug": "single_arm_cable_lateral_raise",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 0
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Standing Dumbbell Shrug",
+          "slug": "standing_dumbbell_shrug",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 8,
+                "max": 15
+              },
+              "rir": 0
+            },
+            {
+              "reps": {
+                "min": 8,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Standing Cable Overhead Rope Triceps Extension",
+          "slug": "overhead_rope_triceps_extension",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 0
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Single-Arm Bayesian Cable Curl",
+          "slug": "single_arm_bayesian_cable_curl",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 0
+            },
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Standing Single-Arm Low-Cable Side Bend",
+          "slug": "standing_single_arm_low_cable_side_bend",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 1
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Kneeling Bodyweight Ab Wheel Rollout",
+          "slug": "kneeling_ab_wheel_rollout",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 1
+            },
+            {
+              "reps": {
+                "min": 8,
+                "max": 12
+              },
+              "rir": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "name": "Rest",
+      "weekday": "Wednesday",
+      "rest": true,
+      "exercises": []
+    },
+    {
+      "day": 4,
+      "name": "Push + HIIT",
+      "weekday": "Thursday",
+      "rest": false,
+      "exercises": [
+        {
+          "name": "Flat Bench Barbell Press",
+          "slug": "barbell_bench_press",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 6,
+                "max": 8
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 6,
+                "max": 8
+              },
+              "rir": 1
+            },
+            {
+              "reps": {
+                "min": 6,
+                "max": 8
+              },
+              "rir": 1
+            }
+          ]
+        },
+        {
+          "name": "Seated Dumbbell Overhead Press",
+          "slug": "seated_dumbbell_overhead_press",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 5,
+                "max": 8
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 5,
+                "max": 8
+              },
+              "rir": 2
+            }
+          ]
+        },
+        {
+          "name": "Plate-Loaded Converging Incline Chest Press",
+          "slug": "plate_loaded_converging_incline_chest_press",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 7,
+                "max": 9
+              },
+              "rir": 1
+            },
+            {
+              "reps": {
+                "min": 7,
+                "max": 9
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Single-Arm Low-to-High Cable Fly",
+          "slug": "single_arm_low_to_high_cable_fly",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Single-Arm Cable Lateral Raise",
+          "slug": "single_arm_cable_lateral_raise",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 0
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Standing Cable Straight-Bar Triceps Pushdown",
+          "slug": "straight_bar_triceps_pushdown",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "name": "Pull&Core",
+      "weekday": "Friday",
+      "rest": false,
+      "exercises": [
+        {
+          "name": "Barbell Bent-Over Row",
+          "slug": "barbell_bent_over_row",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 6,
+                "max": 8
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 6,
+                "max": 8
+              },
+              "rir": 1
+            }
+          ]
+        },
+        {
+          "name": "Wide Pronated-Grip Pull-Up",
+          "slug": "wide_pronated_grip_pull_up",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 5,
+                "max": 8
+              },
+              "rir": 0
+            },
+            {
+              "reps": {
+                "min": 5,
+                "max": 8
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Wide-Grip Seated Cable Row",
+          "slug": "wide_grip_seated_cable_row",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 7,
+                "max": 9
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 7,
+                "max": 9
+              },
+              "rir": 2
+            }
+          ]
+        },
+        {
+          "name": "Standing Straight-Arm Cable Pulldown",
+          "slug": "straight_arm_cable_pulldown",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 12
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Standing Dumbbell Hammer Curl",
+          "slug": "standing_dumbbell_hammer_curl",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Standing Cable Lengthened Half-Drag Curl",
+          "slug": "cable_half_drag_curl",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Single-Arm Cross-Body Cable Rear-Delt Fly",
+          "slug": "single_arm_cable_rear_delt_fly",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 12,
+                "max": 15
+              },
+              "rir": 0
+            }
+          ]
+        },
+        {
+          "name": "Kneeling Rope Cable Crunch",
+          "slug": "kneeling_cable_crunch",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 2
+            }
+          ]
+        },
+        {
+          "name": "Standing Horizontal Cable Woodchopper",
+          "slug": "standing_horizontal_cable_woodchopper",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 10,
+                "max": 15
+              },
+              "rir": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "day": 6,
+      "name": "Rest ",
+      "weekday": "Saturday",
+      "rest": true,
+      "exercises": []
+    },
+    {
+      "day": 7,
+      "name": "Rest + LISS&Core",
+      "weekday": "Sunday",
+      "rest": false,
+      "exercises": [
+        {
+          "name": "Single-Arm Dumbbell Suitcase Carry",
+          "slug": "single_arm_dumbbell_suitcase_carry",
+          "progression_model": null,
+          "sets": [
+            {
+              "reps": {
+                "min": 20,
+                "max": 40
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 20,
+                "max": 40
+              },
+              "rir": 2
+            },
+            {
+              "reps": {
+                "min": 20,
+                "max": 40
+              },
+              "rir": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

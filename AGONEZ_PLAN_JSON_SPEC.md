@@ -1,6 +1,6 @@
 # Agonez Plan JSON specification
 
-Version: `agonez-plan-sanity-v2`
+Version: `agonez-plan-sanity-v3`
 Purpose: create a new Agonez PlanCreator draft from an AI-friendly, resolved training plan.  
 Media type: `application/json`  
 Text encoding: UTF-8
@@ -9,10 +9,10 @@ This is an interchange format, not a database backup. It deliberately describes 
 exercises, and concrete set prescriptions without exposing PlanCreator IDs, revisions,
 exercise-slot IDs, fallbacks, or other persistence details.
 
-Loading modes and loading cycles are intentionally not part of V2. Exported repetition
+Loading modes and loading cycles are intentionally not part of V3. Exported repetition
 ranges are already concrete. Import creates `moderate_load` slots and leaves each set in
-inherit mode. V2 adds the progression model selected for each default exercise; this is
-planning metadata and does not change the concrete set prescription.
+inherit mode. V3 carries only the progression-model slug selected for each default
+exercise; this compact planning metadata does not change the concrete set prescription.
 
 The same format is produced by PlanCreator's **Export JSON** action and accepted by the
 **Import JSON** action on the **My Plans** page.
@@ -21,7 +21,7 @@ The same format is produced by PlanCreator's **Export JSON** action and accepted
 
 ```json
 {
-  "format": "agonez-plan-sanity-v2",
+  "format": "agonez-plan-sanity-v3",
   "plan_name": "Three-day full body strength",
   "resolution_context": {
     "global_volume_level": 0,
@@ -38,13 +38,7 @@ The same format is produced by PlanCreator's **Export JSON** action and accepted
         {
           "name": "High-Bar Barbell Back Squat",
           "slug": "high_bar_back_squat",
-          "progression_model": {
-            "slug": "double_progression",
-            "name": "Double progression",
-            "name_full": "Double progression by repetitions and load",
-            "when_to_use": "Use when a stable repetition range can guide load increases.",
-            "how_to_apply": "Add repetitions inside the range, then increase load after reaching its top."
-          },
+          "progression_model": "double_progression",
           "sets": [
             { "reps": { "min": 5, "max": 7 }, "rir": 2 },
             { "reps": { "min": 5, "max": 7 }, "rir": 2 },
@@ -109,7 +103,7 @@ valid JSON and must not be emitted. The browser accepts files up to 1 MiB.
 
 | Field | JSON type | Constraints | Meaning |
 |---|---|---|---|
-| `format` | string | Exactly `agonez-plan-sanity-v2` | Selects this contract and prevents accidental import of unrelated JSON. |
+| `format` | string | Exactly `agonez-plan-sanity-v3` | Selects this contract and prevents accidental import of unrelated JSON. |
 | `plan_name` | string | Non-blank; maximum 200 characters | Name of the new independent PlanCreator plan. Duplicate names are allowed. |
 | `resolution_context` | object | See below | Records which volume/focus context produced the concrete set list. |
 | `days` | array | 0–365 day objects | The complete microcycle in chronological order. A microcycle may exceed seven days. |
@@ -151,7 +145,7 @@ microcycle longer than seven days. The order of the `days` array is always autho
 |---|---|---|---|
 | `name` | string | Non-blank; maximum 200 characters | Human-readable label used as the imported exercise-slot name. |
 | `slug` | string | 1–200 characters; regex `^[a-z0-9_]+$` | Authoritative Atlas exercise identity. It must already exist in `core.exercises`. |
-| `progression_model` | object or `null` | See below; the field itself is required | Progression strategy attached to this default exercise. Use `null` when no model is selected. |
+| `progression_model` | string or `null` | 1–200 characters; regex `^[a-z0-9_]+$`; required | Authoritative progression-model slug attached to this default exercise. Use `null` when no model is selected. |
 | `sets` | array | 0–100 set objects | Concrete ordered work sets for this exercise. |
 
 The `slug`, not `name`, selects the exercise. A correct display name does not compensate
@@ -160,21 +154,16 @@ in the live Atlas catalog. Repeating a slug is allowed and creates separate exer
 
 ### `progression_model`
 
-The field is always present in V2. Use `null` to make the absence of a progression model
-explicit. Otherwise provide an object with the following fields:
+The field is always present in V3. Use `null` to make the absence of a progression model
+explicit. Otherwise use the model's slug from `core.progression_models`, for example
+`"single_progression_with_2_for_2"`. Import is rejected atomically if the slug is unknown.
 
-| Field | JSON type | Constraints | Meaning |
-|---|---|---|---|
-| `slug` | string | Required; 1–200 characters; regex `^[a-z0-9_]+$` | Authoritative identity from `core.progression_models`. It must already exist in the target Agonez instance. |
-| `name` | string or `null` | Optional on import; non-blank when provided | Localized short label for human/LLM readability. Export always includes it. It does not select the model. |
-| `name_full` | string or `null` | Optional on import; non-blank when provided | Localized expanded label. Export always includes it. |
-| `when_to_use` | string or `null` | Optional on import; non-blank when provided | Localized guidance explaining suitable use cases. Export always includes it. |
-| `how_to_apply` | string or `null` | Optional on import; non-blank when provided | Localized application guidance. Export always includes it. |
-
-Only `slug` is authoritative. The descriptive fields are a portable explanation for an
-external reviewer; import does not write them back to the catalog. Import is rejected
-atomically if the progression-model slug is unknown. Model selection is variant-level
-metadata: it does not alter repetitions, RIR, loading mode, or loading cycle.
+Names, expanded descriptions, `when_to_use`, and `how_to_apply` are deliberately omitted.
+They are catalog content, not a property of every exercise occurrence, and repeating them
+would make the plan needlessly large. A future format may add one optional top-level
+glossary that describes only terms used by the document; such a glossary is not part of V3.
+Model selection remains variant-level metadata and does not alter repetitions, RIR,
+loading mode, or loading cycle.
 
 ### Set object
 
@@ -234,14 +223,17 @@ unknown fields, non-consecutive day numbers, a populated rest day, invalid RIR, 
 rep ranges, and unknown exercise slugs.
 
 Unknown progression-model slugs also reject the entire import. A missing
-`progression_model` field is invalid in V2; use `null` when no model should be assigned.
+`progression_model` field is invalid in V3; use `null` when no model should be assigned.
 
-## V1 backward compatibility
+## Backward compatibility
 
 The importer continues to accept `agonez-plan-sanity-v1` documents created before
 progression models were added. V1 exercise objects must not contain a
-`progression_model` field and import them with no selected model. New exports always use
-V2. Do not generate new V1 documents.
+`progression_model` field and import them with no selected model.
+
+The importer also accepts `agonez-plan-sanity-v2`, where `progression_model` is either
+`null` or the former object containing `slug` and optional descriptive fields. New exports
+always use compact V3. Do not generate new V1 or V2 documents.
 
 ## LLM authoring rules
 

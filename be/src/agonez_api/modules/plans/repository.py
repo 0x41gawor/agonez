@@ -3,7 +3,10 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 from agonez_api.core.database import DatabasePool
-from agonez_api.modules.plans.analysis.schemas import PlanAIImportDocument
+from agonez_api.modules.plans.analysis.schemas import (
+    PlanAIImportDocument,
+    PlanAIImportProgressionModel,
+)
 from agonez_api.modules.plans.exceptions import (
     PlanConflictError,
     PlanDomainValidationError,
@@ -13,6 +16,13 @@ from agonez_api.modules.plans.exceptions import (
 from agonez_api.modules.plans.schemas import PlanCreate, PlanDraftUpdate
 
 Row = dict[str, Any]
+
+
+def _import_progression_model_slug(
+    value: PlanAIImportProgressionModel | str,
+) -> str:
+    """Normalize legacy V2 objects and compact V3 slug references."""
+    return value if isinstance(value, str) else value.slug
 
 
 @dataclass(frozen=True)
@@ -78,7 +88,7 @@ class PlanRepository:
                 await self._validate_progression_model_slugs(
                     connection,
                     {
-                        exercise.progression_model.slug
+                        _import_progression_model_slug(exercise.progression_model)
                         for day in payload.days
                         for exercise in day.exercises
                         if exercise.progression_model is not None
@@ -178,7 +188,7 @@ class PlanRepository:
                             (
                                 slot["id"],
                                 exercise_ids[exercise.slug],
-                                exercise.progression_model.slug
+                                _import_progression_model_slug(exercise.progression_model)
                                 if exercise.progression_model is not None
                                 else None,
                             ),
