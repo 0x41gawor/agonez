@@ -1,8 +1,16 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
+from uuid import UUID
 
-from agonez_api.modules.plans.schemas import ExerciseSlotRole
+from agonez_api.modules.plans.schemas import (
+    ActiveWorkingSets,
+    ExerciseSlotRole,
+    LoadSpec,
+    RepRangeSemantics,
+    RIRPrescription,
+    SetRole,
+)
 
 
 @dataclass(frozen=True)
@@ -18,7 +26,10 @@ class ResolvedSet:
     ordinal: int
     rep_min: int
     rep_max: int
-    rir: int
+    rep_range_semantics: RepRangeSemantics
+    rir: RIRPrescription
+    role: SetRole
+    load_spec: LoadSpec
     min_volume_level: int
 
 
@@ -27,6 +38,8 @@ class ResolvedExercise:
     variant_id: int
     exercise_slug: str
     progression_model_slug: str | None
+    progression_id: UUID
+    active_working_sets: ActiveWorkingSets | None
     sets: tuple[ResolvedSet, ...]
 
 

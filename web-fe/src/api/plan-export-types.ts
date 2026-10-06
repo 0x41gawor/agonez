@@ -1,18 +1,23 @@
 import type { PlanResolutionContext } from './plan-analysis-types'
+import type { LoadSpec, RIRPrescription, RepRangeSemantics, SetRole } from './plan-types'
 
 export interface PlanExportRequest {
   resolution_context: PlanResolutionContext
 }
 
 export interface PlanAIExportSet {
-  reps: { min: number; max: number }
-  rir: number
+  reps: { min: number; max: number; semantics: RepRangeSemantics }
+  rir: RIRPrescription
+  role: SetRole
+  load_spec: LoadSpec
 }
 
 export interface PlanAIExportExercise {
   name: string
   slug: string
   progression_model: string | null
+  progression_id: string
+  active_working_sets: { min: number; max: number } | null
   sets: PlanAIExportSet[]
 }
 
@@ -25,7 +30,7 @@ export interface PlanAIExportDay {
 }
 
 export interface PlanAIExportResult {
-  format: 'agonez-plan-sanity-v3'
+  format: 'agonez-plan-sanity-v4'
   plan_name: string
   resolution_context: PlanResolutionContext
   days: PlanAIExportDay[]
@@ -43,6 +48,8 @@ export interface PlanAIImportExercise {
   name: string
   slug: string
   progression_model?: PlanAIImportProgressionModel | string | null
+  progression_id?: string
+  active_working_sets?: { min: number; max: number } | null
   sets: PlanAIExportSet[]
 }
 
@@ -55,7 +62,7 @@ export interface PlanAIImportDay {
 }
 
 export interface PlanAIImportDocument {
-  format: 'agonez-plan-sanity-v1' | 'agonez-plan-sanity-v2' | 'agonez-plan-sanity-v3'
+  format: 'agonez-plan-sanity-v1' | 'agonez-plan-sanity-v2' | 'agonez-plan-sanity-v3' | 'agonez-plan-sanity-v4'
   plan_name: string
   resolution_context: PlanResolutionContext
   days: PlanAIImportDay[]

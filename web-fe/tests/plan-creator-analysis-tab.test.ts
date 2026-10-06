@@ -130,6 +130,6 @@ describe('PlanCreator Analysis tab integration', () => {
     })
     expect(wrapper.get('.plan-export-dialog').text()).toContain('Export plan for AI')
     expect(wrapper.get('.plan-export-preview').text()).toContain('Barbell Bench Press')
-    expect(wrapper.get('.plan-export-preview').text()).toContain('"rir": 2')
+    expect(wrapper.get('.plan-export-preview').text()).toContain('"rir": "RIR2"')
   })
 })

@@ -4,14 +4,17 @@ import { computed } from 'vue'
 import type { LoadingMode, ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem } from '@/api/types'
 import ExerciseSelector from '@/components/plans/ExerciseSelector.vue'
+import ExerciseUnitMetadataEditor from '@/components/plans/ExerciseUnitMetadataEditor.vue'
 import ProgressionModelControl from '@/components/plans/ProgressionModelControl.vue'
 import SetPrescriptionEditor from '@/components/plans/SetPrescriptionEditor.vue'
 import {
   createSet,
+  duplicateSetPrescription,
   effectiveLoadingPattern,
-  moveOrdered,
-  removeOrdered,
+  moveSetPrescription,
+  removeSetPrescription,
   type EditorVariant,
+  type ExerciseUnitOption,
   type PlanValidationIssue,
 } from '@/features/plans/editor'
 
@@ -25,10 +28,12 @@ const props = withDefaults(defineProps<{
   fallbackCount?: number
   slotLoadingMode?: LoadingMode
   slotLoadingCycle?: LoadingMode[] | null
+  exerciseUnits?: ExerciseUnitOption[]
 }>(), {
   slotLoadingMode: 'moderate_load',
   slotLoadingCycle: null,
   progressionModels: () => [],
+  exerciseUnits: () => [],
 })
 defineEmits<{
   remove: []
@@ -50,12 +55,7 @@ const selectedExercise = computed(() =>
 )
 
 function duplicateSet(index: number): void {
-  const source = model.value.sets[index]
-  if (!source) return
-  model.value.sets.splice(index + 1, 0, createSet(index + 1, source))
-  model.value.sets.forEach((item, ordinal) => {
-    item.ordinal = ordinal
-  })
+  duplicateSetPrescription(model.value.sets, index)
 }
 </script>
 
@@ -87,6 +87,8 @@ function duplicateSet(index: number): void {
       @opened="$emit('progressionOpen')"
     />
 
+    <ExerciseUnitMetadataEditor v-model="model" :exercise-units="exerciseUnits" />
+
     <div class="sets-heading">
       <span class="section-label">{{ $t('plans.variant.prescription') }}</span>
       <span class="mono set-summary">
@@ -104,8 +106,8 @@ function duplicateSet(index: number): void {
         :issues="issues"
         :slot-loading-mode="slotLoadingMode"
         :slot-loading-cycle="slotLoadingCycle"
-        @move="moveOrdered(model.sets, index, $event)"
-        @remove="removeOrdered(model.sets, index)"
+        @move="moveSetPrescription(model.sets, index, $event)"
+        @remove="removeSetPrescription(model.sets, index)"
         @duplicate="duplicateSet(index)"
       />
     </div>

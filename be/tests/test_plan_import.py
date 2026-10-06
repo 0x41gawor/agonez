@@ -55,7 +55,7 @@ def test_import_schema_accepts_the_export_interchange_format() -> None:
     document = PlanAIImportDocument.model_validate(import_payload())
 
     assert document.plan_name == "Imported strength plan"
-    assert document.days[0].exercises[0].sets[0].rir == 2
+    assert document.days[0].exercises[0].sets[0].rir.value == "RIR2"
     assert document.days[1].rest is True
 
 
@@ -94,6 +94,43 @@ def test_import_schema_accepts_v3_compact_progression_slug() -> None:
 
     assert document.days[0].exercises[0].progression_model == "double_progression"
     assert document.days[0].exercises[1].progression_model is None
+
+
+def test_import_schema_accepts_v4_prescription_metadata_and_shared_progression() -> None:
+    payload = import_payload()
+    payload["format"] = "agonez-plan-sanity-v4"
+    exercises = payload["days"][0]["exercises"]  # type: ignore[index]
+    shared_id = "11111111-1111-4111-8111-111111111111"
+    for exercise in exercises:
+        exercise["progression_model"] = None  # type: ignore[index]
+        exercise["progression_id"] = shared_id  # type: ignore[index]
+        exercise["active_working_sets"] = None  # type: ignore[index]
+        for item in exercise["sets"]:  # type: ignore[index]
+            item["rir"] = "RIR2"
+            item["role"] = "working"
+            item["load_spec"] = {"kind": "absolute"}
+            item["reps"]["semantics"] = "estimate"
+    first = exercises[0]  # type: ignore[index]
+    first["sets"].insert(  # type: ignore[index]
+        0,
+        {
+            "reps": {"min": 5, "max": 5, "semantics": "undefined"},
+            "rir": "NOT_APPLICABLE",
+            "role": "rampup",
+            "load_spec": {"kind": "relative_to_set", "ref_set_idx": 1, "pct": 50},
+        },
+    )
+    first["active_working_sets"] = {"min": 1, "max": 1}  # type: ignore[index]
+
+    document = PlanAIImportDocument.model_validate(payload)
+
+    assert str(document.days[0].exercises[0].progression_id) == shared_id
+    assert (
+        document.days[0].exercises[1].progression_id
+        == document.days[0].exercises[0].progression_id
+    )
+    assert document.days[0].exercises[0].sets[0].role.value == "rampup"
+    assert document.days[0].exercises[0].sets[0].load_spec.kind == "relative_to_set"
 
 
 def test_v2_and_v3_require_progression_field_and_v1_rejects_it() -> None:

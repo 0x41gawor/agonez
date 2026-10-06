@@ -6,8 +6,10 @@ import type {
   PlanAIExportSet,
 } from '@/api/plan-export-types'
 import type { PlanResolutionContext } from '@/api/plan-analysis-types'
+import type { LoadSpec, RIRPrescription, RepRangeSemantics, SetRole } from '@/api/plan-types'
 
-export const PLAN_IMPORT_FORMAT = 'agonez-plan-sanity-v3'
+export const PLAN_IMPORT_FORMAT = 'agonez-plan-sanity-v4'
+export const PLAN_IMPORT_V3_FORMAT = 'agonez-plan-sanity-v3'
 export const PLAN_IMPORT_V2_FORMAT = 'agonez-plan-sanity-v2'
 export const PLAN_IMPORT_LEGACY_FORMAT = 'agonez-plan-sanity-v1'
 export const PLAN_IMPORT_MAX_BYTES = 1024 * 1024
@@ -139,18 +141,90 @@ function parseResolutionContext(value: unknown, issues: string[]): PlanResolutio
   }
 }
 
-function parseSet(value: unknown, path: string, issues: string[]): PlanAIExportSet {
+function parseLoadSpec(value: unknown, path: string, issues: string[]): LoadSpec {
   const source = objectValue(value, path, issues)
-  if (!source) return { reps: { min: 1, max: 1 }, rir: 0 }
-  rejectUnknownKeys(source, ['reps', 'rir'], path, issues)
+  if (!source) return { kind: 'absolute' }
+  const kind = source.kind
+  const reference = () => integerValue(source.ref_set_idx, `${path}.ref_set_idx`, issues, 0, 32767)
+  const percentage = () => {
+    if (typeof source.pct !== 'number' || !Number.isFinite(source.pct) || source.pct <= 0) {
+      issues.push(`${path}.pct must be a positive number.`)
+      return 100
+    }
+    return source.pct
+  }
+  switch (kind) {
+    case 'absolute':
+    case 'athlete_selected':
+      rejectUnknownKeys(source, ['kind'], path, issues)
+      return { kind }
+    case 'relative_to_set':
+      rejectUnknownKeys(source, ['kind', 'ref_set_idx', 'pct'], path, issues)
+      return { kind, ref_set_idx: reference(), pct: percentage() }
+    case 'relative_to_working':
+      rejectUnknownKeys(source, ['kind', 'pct'], path, issues)
+      return { kind, pct: percentage() }
+    case 'table_derived':
+      rejectUnknownKeys(source, ['kind', 'ref_set_idx', 'table'], path, issues)
+      return {
+        kind,
+        ref_set_idx: reference(),
+        table: stringValue(source.table, `${path}.table`, issues, 100),
+      }
+    case 'ordinal_variant':
+      rejectUnknownKeys(source, ['kind', 'level'], path, issues)
+      return { kind, level: integerValue(source.level, `${path}.level`, issues, 1, 32767) }
+    default:
+      issues.push(`${path}.kind is not a supported load specification.`)
+      return { kind: 'absolute' }
+  }
+}
+
+function parseSet(
+  value: unknown,
+  path: string,
+  issues: string[],
+  format: PlanImportFormat,
+): PlanAIExportSet {
+  const source = objectValue(value, path, issues)
+  if (!source) return {
+    reps: { min: 1, max: 1, semantics: 'undefined' },
+    rir: 'RIR0',
+    role: 'working',
+    load_spec: { kind: 'absolute' },
+  }
+  const isV4 = format === PLAN_IMPORT_FORMAT
+  rejectUnknownKeys(source, isV4 ? ['reps', 'rir', 'role', 'load_spec'] : ['reps', 'rir'], path, issues)
   const reps = objectValue(source.reps, `${path}.reps`, issues)
-  if (reps) rejectUnknownKeys(reps, ['min', 'max'], `${path}.reps`, issues)
+  if (reps) rejectUnknownKeys(reps, isV4 ? ['min', 'max', 'semantics'] : ['min', 'max'], `${path}.reps`, issues)
   const minimum = integerValue(reps?.min, `${path}.reps.min`, issues, 1, 32767)
   const maximum = integerValue(reps?.max, `${path}.reps.max`, issues, 1, 32767)
   if (maximum < minimum) issues.push(`${path}.reps.max must be greater than or equal to reps.min.`)
+  const semantics = reps?.semantics ?? 'undefined'
+  if (!['gating', 'estimate', 'undefined'].includes(semantics as string)) {
+    issues.push(`${path}.reps.semantics must be gating, estimate, or undefined.`)
+  }
+  const role = source.role ?? 'working'
+  if (!['rampup', 'working', 'working_topset', 'working_backoff', 'working_amrap'].includes(role as string)) {
+    issues.push(`${path}.role is not a supported set role.`)
+  }
+  let rir: RIRPrescription
+  if (isV4) {
+    const candidate = source.rir
+    if (!['RIR0', 'RIR1', 'RIR2', 'RIR3', 'RIR4', 'NOT_APPLICABLE', 'UNDEFINED'].includes(candidate as string)) {
+      issues.push(`${path}.rir is not a supported RIR prescription.`)
+    }
+    rir = (candidate as RIRPrescription) || 'UNDEFINED'
+  } else {
+    rir = `RIR${integerValue(source.rir, `${path}.rir`, issues, 0, 4)}` as RIRPrescription
+  }
   return {
-    reps: { min: minimum, max: maximum },
-    rir: integerValue(source.rir, `${path}.rir`, issues, 0, 4),
+    reps: { min: minimum, max: maximum, semantics: semantics as RepRangeSemantics },
+    rir,
+    role: role as SetRole,
+    load_spec: isV4
+      ? parseLoadSpec(source.load_spec ?? { kind: 'absolute' }, `${path}.load_spec`, issues)
+      : { kind: 'absolute' },
   }
 }
 
@@ -216,10 +290,13 @@ function parseExercise(
 ): PlanAIImportExercise {
   const source = objectValue(value, path, issues)
   if (!source) return { name: '', slug: '', sets: [] }
+  const isV4 = format === PLAN_IMPORT_FORMAT
   const hasProgressionModel = Object.prototype.hasOwnProperty.call(source, 'progression_model')
   rejectUnknownKeys(
     source,
-    format !== PLAN_IMPORT_LEGACY_FORMAT
+    isV4
+      ? ['name', 'slug', 'progression_model', 'progression_id', 'active_working_sets', 'sets']
+      : format !== PLAN_IMPORT_LEGACY_FORMAT
       ? ['name', 'slug', 'progression_model', 'sets']
       : ['name', 'slug', 'sets'],
     path,
@@ -232,17 +309,48 @@ function parseExercise(
   if (slug && !/^[a-z0-9_]+$/.test(slug)) {
     issues.push(`${path}.slug must use lowercase letters, numbers, and underscores only.`)
   }
+  const sets = arrayValue(source.sets, `${path}.sets`, issues, 100).map((item, index) =>
+    parseSet(item, `${path}.sets[${index}]`, issues, format),
+  )
   const exercise: PlanAIImportExercise = {
     name: stringValue(source.name, `${path}.name`, issues, 200),
     slug,
-    sets: arrayValue(source.sets, `${path}.sets`, issues, 100).map((item, index) =>
-      parseSet(item, `${path}.sets[${index}]`, issues),
-    ),
+    sets,
   }
   if (format === PLAN_IMPORT_V2_FORMAT) {
     exercise.progression_model = parseProgressionModel(source.progression_model, `${path}.progression_model`, issues)
-  } else if (format === PLAN_IMPORT_FORMAT) {
+  } else if (format === PLAN_IMPORT_V3_FORMAT || format === PLAN_IMPORT_FORMAT) {
     exercise.progression_model = parseProgressionModelSlug(source.progression_model, `${path}.progression_model`, issues)
+  }
+  if (isV4) {
+    const progressionId = source.progression_id ?? globalThis.crypto.randomUUID()
+    if (typeof progressionId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(progressionId)) {
+      issues.push(`${path}.progression_id must be a UUID string.`)
+    }
+    exercise.progression_id = typeof progressionId === 'string' ? progressionId : globalThis.crypto.randomUUID()
+
+    if (source.active_working_sets === null || source.active_working_sets === undefined) {
+      exercise.active_working_sets = null
+    } else {
+      const active = objectValue(source.active_working_sets, `${path}.active_working_sets`, issues)
+      if (active) rejectUnknownKeys(active, ['min', 'max'], `${path}.active_working_sets`, issues)
+      const minimum = integerValue(active?.min, `${path}.active_working_sets.min`, issues, 0, 32767)
+      const maximum = integerValue(active?.max, `${path}.active_working_sets.max`, issues, 0, 32767)
+      const workingCount = sets.filter((item) => item.role !== 'rampup').length
+      if (maximum < minimum) issues.push(`${path}.active_working_sets.max must be at least min.`)
+      if (maximum > workingCount) issues.push(`${path}.active_working_sets.max must not exceed ${workingCount} working sets.`)
+      exercise.active_working_sets = { min: minimum, max: maximum }
+    }
+
+    sets.forEach((item, index) => {
+      if (item.load_spec.kind !== 'relative_to_set' && item.load_spec.kind !== 'table_derived') return
+      if (item.load_spec.ref_set_idx >= sets.length) {
+        issues.push(`${path}.sets[${index}].load_spec.ref_set_idx must reference this exercise's sets.`)
+      }
+      if (item.load_spec.kind === 'relative_to_set' && item.load_spec.ref_set_idx === index) {
+        issues.push(`${path}.sets[${index}].load_spec must not reference itself.`)
+      }
+    })
   }
   return exercise
 }
@@ -305,15 +413,16 @@ export function parsePlanImportJson(json: string): PlanAIImportDocument {
   const format = source.format
   if (
     format !== PLAN_IMPORT_FORMAT
+    && format !== PLAN_IMPORT_V3_FORMAT
     && format !== PLAN_IMPORT_V2_FORMAT
     && format !== PLAN_IMPORT_LEGACY_FORMAT
   ) {
     issues.push(
-      `$.format must be "${PLAN_IMPORT_FORMAT}", "${PLAN_IMPORT_V2_FORMAT}", or "${PLAN_IMPORT_LEGACY_FORMAT}".`,
+      `$.format must be "${PLAN_IMPORT_FORMAT}", "${PLAN_IMPORT_V3_FORMAT}", "${PLAN_IMPORT_V2_FORMAT}", or "${PLAN_IMPORT_LEGACY_FORMAT}".`,
     )
   }
   const parsedFormat: PlanImportFormat = (
-    format === PLAN_IMPORT_LEGACY_FORMAT || format === PLAN_IMPORT_V2_FORMAT
+    format === PLAN_IMPORT_LEGACY_FORMAT || format === PLAN_IMPORT_V2_FORMAT || format === PLAN_IMPORT_V3_FORMAT
   ) ? format : PLAN_IMPORT_FORMAT
   const result: PlanAIImportDocument = {
     format: parsedFormat,

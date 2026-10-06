@@ -1,6 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { getJson } from '@/api/client'
+import dePlans from '@/i18n/locales/de/plans'
+import enPlans from '@/i18n/locales/en/plans'
+import esPlans from '@/i18n/locales/es/plans'
+import frPlans from '@/i18n/locales/fr/plans'
+import itPlans from '@/i18n/locales/it/plans'
+import nlPlans from '@/i18n/locales/nl/plans'
+import plPlans from '@/i18n/locales/pl/plans'
+import ptBRPlans from '@/i18n/locales/pt-BR/plans'
+import svPlans from '@/i18n/locales/sv/plans'
+import trPlans from '@/i18n/locales/tr/plans'
+import ukPlans from '@/i18n/locales/uk/plans'
 import {
   activeLocale,
   detectInitialLocale,
@@ -49,6 +60,44 @@ function interpolationTokens(value: string): string[] {
 }
 
 describe('frontend locale runtime', () => {
+  it('defines native PlanCreator prescription-metadata copy in every locale pack', () => {
+    const rawPlans = {
+      en: enPlans, pl: plPlans, fr: frPlans, es: esPlans, de: dePlans, it: itPlans,
+      'pt-BR': ptBRPlans, sv: svPlans, nl: nlPlans, uk: ukPlans, tr: trPlans,
+    }
+    const featurePaths = [
+      'plans.editor.validation.activeWorkingSets',
+      'plans.editor.validation.setReference',
+      'plans.setEditor.role',
+      'plans.setEditor.metadataHelp',
+      'plans.setRoles.rampup',
+      'plans.rir.undefined',
+      'plans.repSemantics.gating',
+      'plans.loadSpecs.athlete_selected',
+      'plans.exerciseMetadata.title',
+      'plans.exerciseMetadata.progressionLoopHelp',
+      'plans.exerciseMetadata.workingAvailable',
+    ]
+    const distinctFromEnglish = [
+      'plans.editor.validation.setReference',
+      'plans.setEditor.metadataHelp',
+      'plans.loadSpecs.athlete_selected',
+      'plans.exerciseMetadata.title',
+      'plans.exerciseMetadata.progressionLoopHelp',
+    ]
+
+    for (const locale of SUPPORTED_LOCALES.filter((value) => value !== 'en')) {
+      for (const path of featurePaths) {
+        const localized = messageAt(rawPlans[locale], path)
+        expect(localized, `${locale}: ${path}`).toBeTypeOf('string')
+      }
+      for (const path of distinctFromEnglish) {
+        const localized = messageAt(rawPlans[locale], path)
+        expect(localized, `${locale}: ${path}`).not.toBe(messageAt(rawPlans.en, path))
+      }
+    }
+  })
+
   it('normalizes every supported regional tag and rejects unsupported languages', () => {
     expect(normalizeLocale('pl-PL')).toBe('pl')
     expect(normalizeLocale('EN-us')).toBe('en')

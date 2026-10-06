@@ -1,6 +1,9 @@
 import re
 from dataclasses import dataclass
 from typing import Any, cast
+from uuid import uuid4
+
+from psycopg.types.json import Jsonb
 
 from agonez_api.core.database import DatabasePool
 from agonez_api.modules.plans.analysis.schemas import (
@@ -180,9 +183,10 @@ class PlanRepository:
                             INSERT INTO plans.exercise_variants
                                 (
                                     slot_id, ordinal, variant_type, exercise_id,
-                                    progression_model_slug
+                                    progression_model_slug, progression_id,
+                                    active_working_set_min, active_working_set_max
                                 )
-                            VALUES (%s, 0, 'DEFAULT', %s, %s)
+                            VALUES (%s, 0, 'DEFAULT', %s, %s, %s, %s, %s)
                             RETURNING id
                             """,
                             (
@@ -190,6 +194,13 @@ class PlanRepository:
                                 exercise_ids[exercise.slug],
                                 _import_progression_model_slug(exercise.progression_model)
                                 if exercise.progression_model is not None
+                                else None,
+                                exercise.progression_id,
+                                exercise.active_working_sets.min
+                                if exercise.active_working_sets is not None
+                                else None,
+                                exercise.active_working_sets.max
+                                if exercise.active_working_sets is not None
                                 else None,
                             ),
                         )
@@ -200,9 +211,10 @@ class PlanRepository:
                                 INSERT INTO plans.set_infra_prescriptions
                                     (
                                         exercise_variant_id, ordinal, rep_min,
-                                        rep_max, rir, min_volume_level
+                                        rep_max, rep_range_semantics, rir, role,
+                                        load_spec, min_volume_level
                                     )
-                                VALUES (%s, %s, %s, %s, %s, 0)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 0)
                                 RETURNING id
                                 """,
                                 (
@@ -210,7 +222,10 @@ class PlanRepository:
                                     set_index,
                                     set_prescription.reps.min,
                                     set_prescription.reps.max,
-                                    set_prescription.rir,
+                                    set_prescription.reps.semantics.value,
+                                    set_prescription.rir.value,
+                                    set_prescription.role.value,
+                                    Jsonb(set_prescription.load_spec.model_dump(mode="json")),
                                 ),
                             )
 
@@ -366,16 +381,23 @@ class PlanRepository:
             )
 
         variant_ids: dict[int, int] = {}
+        progression_ids: dict[str, str] = {}
         for variant in source.variants:
+            source_progression_id = str(variant.get("progression_id", uuid4()))
+            copied_progression_id = progression_ids.setdefault(
+                source_progression_id,
+                str(uuid4()),
+            )
             copied = await self._fetch_one(
                 connection,
                 """
                 INSERT INTO plans.exercise_variants
                     (
                         slot_id, ordinal, variant_type, exercise_id,
-                        progression_model_slug
+                        progression_model_slug, progression_id,
+                        active_working_set_min, active_working_set_max
                     )
-                VALUES (%s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 (
@@ -384,6 +406,9 @@ class PlanRepository:
                     variant["variant_type"],
                     variant["exercise_id"],
                     variant.get("progression_model_slug"),
+                    copied_progression_id,
+                    variant.get("active_working_set_min"),
+                    variant.get("active_working_set_max"),
                 ),
             )
             variant_ids[cast(int, variant["id"])] = cast(int, copied["id"])
@@ -394,10 +419,11 @@ class PlanRepository:
                 """
                 INSERT INTO plans.set_infra_prescriptions
                     (
-                        exercise_variant_id, ordinal, rep_min, rep_max, rir, min_volume_level,
+                        exercise_variant_id, ordinal, rep_min, rep_max,
+                        rep_range_semantics, rir, role, load_spec, min_volume_level,
                         loading_mode, loading_cycle
                     )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
                 RETURNING id
                 """,
                 (
@@ -405,7 +431,10 @@ class PlanRepository:
                     item["ordinal"],
                     item["rep_min"],
                     item["rep_max"],
+                    item.get("rep_range_semantics", "undefined"),
                     item["rir"],
+                    item.get("role", "working"),
+                    Jsonb(item.get("load_spec", {"kind": "absolute"})),
                     item["min_volume_level"],
                     item.get("loading_mode"),
                     item.get("loading_cycle"),
@@ -965,6 +994,9 @@ class PlanRepository:
             variant.variant_type.value,
             exercise_id,
             variant.progression_model_slug,
+            variant.progression_id,
+            variant.active_working_sets.min if variant.active_working_sets else None,
+            variant.active_working_sets.max if variant.active_working_sets else None,
         )
         if variant.id is None:
             row = await self._fetch_one(
@@ -973,9 +1005,10 @@ class PlanRepository:
                 INSERT INTO plans.exercise_variants
                     (
                         slot_id, ordinal, variant_type, exercise_id,
-                        progression_model_slug
+                        progression_model_slug, progression_id,
+                        active_working_set_min, active_working_set_max
                     )
-                VALUES (%s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 values,
@@ -986,7 +1019,8 @@ class PlanRepository:
             """
             UPDATE plans.exercise_variants
             SET slot_id = %s, ordinal = %s, variant_type = %s, exercise_id = %s,
-                progression_model_slug = %s
+                progression_model_slug = %s, progression_id = %s,
+                active_working_set_min = %s, active_working_set_max = %s
             WHERE id = %s
             """,
             (*values, variant.id),
@@ -999,7 +1033,10 @@ class PlanRepository:
             item.ordinal,
             item.reps.min,
             item.reps.max,
-            item.rir,
+            item.reps.semantics.value,
+            item.rir.value,
+            item.role.value,
+            Jsonb(item.load_spec.model_dump(mode="json")),
             item.min_volume_level,
             item.loading_mode.value if item.loading_mode else None,
             [mode.value for mode in item.loading_cycle] if item.loading_cycle else None,
@@ -1010,10 +1047,11 @@ class PlanRepository:
                 """
                 INSERT INTO plans.set_infra_prescriptions
                     (
-                        exercise_variant_id, ordinal, rep_min, rep_max, rir, min_volume_level,
+                        exercise_variant_id, ordinal, rep_min, rep_max,
+                        rep_range_semantics, rir, role, load_spec, min_volume_level,
                         loading_mode, loading_cycle
                     )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
                 RETURNING id
                 """,
                 values,
@@ -1024,7 +1062,8 @@ class PlanRepository:
             """
             UPDATE plans.set_infra_prescriptions
             SET exercise_variant_id = %s, ordinal = %s, rep_min = %s, rep_max = %s,
-                rir = %s, min_volume_level = %s, loading_mode = %s,
+                rep_range_semantics = %s, rir = %s, role = %s, load_spec = %s,
+                min_volume_level = %s, loading_mode = %s,
                 loading_cycle = %s::plans.loading_mode[]
             WHERE id = %s
             """,
@@ -1112,7 +1151,8 @@ class PlanRepository:
             SELECT variant.id, variant.slot_id, variant.ordinal,
                    variant.variant_type::text AS variant_type,
                    variant.exercise_id, exercise.slug AS exercise_slug,
-                   variant.progression_model_slug
+                   variant.progression_model_slug, variant.progression_id,
+                   variant.active_working_set_min, variant.active_working_set_max
             FROM plans.exercise_variants AS variant
             JOIN core.exercises AS exercise ON exercise.id = variant.exercise_id
             JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id
@@ -1127,7 +1167,10 @@ class PlanRepository:
             connection,
             """
             SELECT item.id, item.exercise_variant_id, item.ordinal,
-                   item.rep_min, item.rep_max, item.rir, item.min_volume_level,
+                   item.rep_min, item.rep_max,
+                   item.rep_range_semantics::text AS rep_range_semantics,
+                   item.rir::text AS rir, item.role::text AS role, item.load_spec,
+                   item.min_volume_level,
                    item.loading_mode::text AS loading_mode,
                    CASE WHEN item.loading_cycle IS NULL THEN NULL ELSE ARRAY(
                        SELECT mode::text FROM unnest(item.loading_cycle) AS mode

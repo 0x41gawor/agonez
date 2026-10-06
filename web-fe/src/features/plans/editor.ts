@@ -5,6 +5,7 @@ import type {
   ExerciseVariantDraft,
   ExerciseVariantType,
   LoadingMode,
+  LoadSpec,
   PlanDraftArtifact,
   PlanDraftUpdate,
   SetInfraDraft,
@@ -47,6 +48,12 @@ export interface PlanValidationIssue {
   message: string
 }
 
+export interface ExerciseUnitOption {
+  clientKey: string
+  progressionId: string
+  label: string
+}
+
 let clientKeyCounter = 0
 
 function clientKey(kind: string, id: number | null): string {
@@ -54,10 +61,24 @@ function clientKey(kind: string, id: number | null): string {
   return id == null ? `${kind}-new-${clientKeyCounter}` : `${kind}-${id}`
 }
 
+export function newProgressionId(): string {
+  return globalThis.crypto.randomUUID()
+}
+
+function remapProgressionId(source: string, mapping: Map<string, string>): string {
+  const existing = mapping.get(source)
+  if (existing) return existing
+  const created = newProgressionId()
+  mapping.set(source, created)
+  return created
+}
+
 function editorSet(item: SetInfraDraft): EditorSet {
   return {
     ...item,
     reps: { ...item.reps },
+    role: item.role ?? 'working',
+    load_spec: item.load_spec ? { ...item.load_spec } : { kind: 'absolute' },
     loading_cycle: item.loading_cycle ? [...item.loading_cycle] : null,
     clientKey: clientKey('set', item.id),
   }
@@ -67,6 +88,8 @@ function editorVariant(item: ExerciseVariantDraft): EditorVariant {
   return {
     ...item,
     clientKey: clientKey('variant', item.id),
+    progression_id: item.progression_id || newProgressionId(),
+    active_working_sets: item.active_working_sets ? { ...item.active_working_sets } : null,
     sets: item.sets.map(editorSet),
   }
 }
@@ -144,14 +167,20 @@ export function toPlanDraftUpdate(editor: PlanEditorState): PlanDraftUpdate {
               variants: slot.variants.map((variant, variantIndex) => ({
                 id: variant.id,
                 ordinal: variantIndex,
-              variant_type: variant.variant_type,
-              exercise_slug: variant.exercise_slug,
-              progression_model_slug: variant.progression_model_slug,
+                variant_type: variant.variant_type,
+                exercise_slug: variant.exercise_slug,
+                progression_model_slug: variant.progression_model_slug,
+                progression_id: variant.progression_id,
+                active_working_sets: variant.active_working_sets
+                  ? { ...variant.active_working_sets }
+                  : null,
                 sets: variant.sets.map((item, setIndex) => ({
                   id: item.id,
                   ordinal: setIndex,
                   reps: { ...item.reps },
                   rir: item.rir,
+                  role: item.role,
+                  load_spec: { ...item.load_spec },
                   min_volume_level: item.min_volume_level,
                   loading_mode: item.loading_mode,
                   loading_cycle: item.loading_cycle ? [...item.loading_cycle] : null,
@@ -218,6 +247,8 @@ export function createVariant(
     variant_type: variantType,
     exercise_slug: exerciseSlug,
     progression_model_slug: progressionModelSlug,
+    progression_id: newProgressionId(),
+    active_working_sets: null,
     sets: [],
   }
 }
@@ -271,8 +302,11 @@ function fallbackRepRange(mode: LoadingMode): { min: number; max: number } {
 export function initialRepRange(
   profile: RecommendedRepProfile | null | undefined,
   mode: LoadingMode,
-): { min: number; max: number } {
-  return recommendedRepRange(profile, mode) ?? fallbackRepRange(mode)
+): { min: number; max: number; semantics: 'undefined' } {
+  return {
+    ...(recommendedRepRange(profile, mode) ?? fallbackRepRange(mode)),
+    semantics: 'undefined',
+  }
 }
 
 export function createSet(
@@ -285,10 +319,10 @@ export function createSet(
     id: null,
     clientKey: clientKey('set', null),
     ordinal,
-    reps: source
-      ? { ...source.reps }
-      : initialRepRange(recommendedProfile, loadingMode),
-    rir: source?.rir ?? 2,
+    reps: source ? { ...source.reps } : initialRepRange(recommendedProfile, loadingMode),
+    rir: source?.rir ?? 'RIR2',
+    role: source?.role ?? 'working',
+    load_spec: source?.load_spec ? { ...source.load_spec } : { kind: 'absolute' },
     min_volume_level: source?.min_volume_level ?? 0,
     loading_mode: source ? source.loading_mode : loadingMode,
     loading_cycle: source?.loading_cycle ? [...source.loading_cycle] : null,
@@ -332,6 +366,7 @@ function duplicateSlotTree(
   source: EditorSlot,
   ordinal: number,
   name: string | null = source.name,
+  progressionIds: Map<string, string> = new Map(),
 ): EditorSlot {
   return {
     ...source,
@@ -346,12 +381,17 @@ function duplicateSlotTree(
       id: null,
       clientKey: clientKey('variant', null),
       ordinal: variantIndex,
+      progression_id: remapProgressionId(variant.progression_id, progressionIds),
+      active_working_sets: variant.active_working_sets
+        ? { ...variant.active_working_sets }
+        : null,
       sets: variant.sets.map((item, setIndex) => ({
         ...item,
         id: null,
         clientKey: clientKey('set', null),
         ordinal: setIndex,
         reps: { ...item.reps },
+        load_spec: { ...item.load_spec },
         loading_cycle: item.loading_cycle ? [...item.loading_cycle] : null,
       })),
     })),
@@ -359,13 +399,14 @@ function duplicateSlotTree(
 }
 
 function duplicateWorkout(source: EditorWorkoutUnit, dayName: string, copyName: string): EditorWorkoutUnit {
+  const progressionIds = new Map<string, string>()
   return {
     ...source,
     id: null,
     clientKey: clientKey('workout', null),
     name: source.name.trim() === dayName.trim() ? copyName : source.name,
     exercise_slots: source.exercise_slots.map((slot, slotIndex) =>
-      duplicateSlotTree(slot, slotIndex),
+      duplicateSlotTree(slot, slotIndex, slot.name, progressionIds),
     ),
   }
 }
@@ -424,6 +465,65 @@ export function removeOrdered<T extends { ordinal: number }>(items: T[], index: 
   })
 }
 
+function referencesSet(spec: LoadSpec): spec is Extract<LoadSpec, { ref_set_idx: number }> {
+  return spec.kind === 'relative_to_set' || spec.kind === 'table_derived'
+}
+
+function setReferenceTargets(sets: EditorSet[]): Map<string, string> {
+  const targets = new Map<string, string>()
+  for (const item of sets) {
+    if (!referencesSet(item.load_spec)) continue
+    const target = sets[item.load_spec.ref_set_idx]
+    if (target) targets.set(item.clientKey, target.clientKey)
+  }
+  return targets
+}
+
+function restoreSetReferences(sets: EditorSet[], targets: Map<string, string>): void {
+  sets.forEach((item, ordinal) => {
+    item.ordinal = ordinal
+    if (!referencesSet(item.load_spec)) return
+    const targetKey = targets.get(item.clientKey)
+    const targetIndex = sets.findIndex((candidate) => candidate.clientKey === targetKey)
+    if (targetIndex < 0 || targetIndex === ordinal) {
+      item.load_spec = { kind: 'absolute' }
+    } else {
+      item.load_spec.ref_set_idx = targetIndex
+    }
+  })
+}
+
+export function moveSetPrescription(
+  sets: EditorSet[],
+  index: number,
+  direction: -1 | 1,
+): void {
+  const destination = index + direction
+  if (destination < 0 || destination >= sets.length) return
+  const targets = setReferenceTargets(sets)
+  const [item] = sets.splice(index, 1)
+  if (!item) return
+  sets.splice(destination, 0, item)
+  restoreSetReferences(sets, targets)
+}
+
+export function removeSetPrescription(sets: EditorSet[], index: number): void {
+  const targets = setReferenceTargets(sets)
+  sets.splice(index, 1)
+  restoreSetReferences(sets, targets)
+}
+
+export function duplicateSetPrescription(sets: EditorSet[], index: number): void {
+  const source = sets[index]
+  if (!source) return
+  const targets = setReferenceTargets(sets)
+  const duplicate = createSet(index + 1, source)
+  const sourceTarget = targets.get(source.clientKey)
+  if (sourceTarget) targets.set(duplicate.clientKey, sourceTarget)
+  sets.splice(index + 1, 0, duplicate)
+  restoreSetReferences(sets, targets)
+}
+
 export function roleLabel(role: ExerciseSlotRole): string {
   return i18n.global.t(`plans.roles.${role}`)
 }
@@ -453,7 +553,21 @@ export function validatePlanEditor(editor: PlanEditorState): PlanValidationIssue
         if (!variant.exercise_slug) {
           issues.push({ path: variantPath, message: i18n.global.t('plans.editor.validation.chooseExercise') })
         }
-        variant.sets.forEach((item) => {
+        const workingCount = variant.sets.filter((item) => item.role !== 'rampup').length
+        if (
+          variant.active_working_sets
+          && (
+            variant.active_working_sets.min < 0
+            || variant.active_working_sets.max < variant.active_working_sets.min
+            || variant.active_working_sets.max > workingCount
+          )
+        ) {
+          issues.push({
+            path: variantPath,
+            message: i18n.global.t('plans.editor.validation.activeWorkingSets'),
+          })
+        }
+        variant.sets.forEach((item, setIndex) => {
           const setPath = `${variantPath}.sets.${item.clientKey}`
           if (!Number.isInteger(item.reps.min) || item.reps.min <= 0) {
             issues.push({ path: setPath, message: i18n.global.t('plans.editor.validation.minReps') })
@@ -461,8 +575,17 @@ export function validatePlanEditor(editor: PlanEditorState): PlanValidationIssue
           if (!Number.isInteger(item.reps.max) || item.reps.max < item.reps.min) {
             issues.push({ path: setPath, message: i18n.global.t('plans.editor.validation.maxReps') })
           }
-          if (!Number.isInteger(item.rir) || item.rir < 0 || item.rir > 4) {
+          if (!['RIR0', 'RIR1', 'RIR2', 'RIR3', 'RIR4', 'NOT_APPLICABLE', 'UNDEFINED'].includes(item.rir)) {
             issues.push({ path: setPath, message: i18n.global.t('plans.editor.validation.rir') })
+          }
+          if (referencesSet(item.load_spec)) {
+            if (
+              item.load_spec.ref_set_idx < 0
+              || item.load_spec.ref_set_idx >= variant.sets.length
+              || (item.load_spec.kind === 'relative_to_set' && item.load_spec.ref_set_idx === setIndex)
+            ) {
+              issues.push({ path: setPath, message: i18n.global.t('plans.editor.validation.setReference') })
+            }
           }
         })
       })

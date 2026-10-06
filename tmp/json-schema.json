@@ -1,5 +1,5 @@
 {
-  "format": "agonez-plan-sanity-v2",
+  "format": "agonez-plan-sanity-v3",
   "plan_name": "4x week LU-PP, Volume REDU (BEZ CORE TERAZ)",
   "resolution_context": {
     "global_volume_level": 0,
@@ -16,13 +16,7 @@
         {
           "name": "Plate-Loaded 45-Degree Sled Leg Press",
           "slug": "plate_loaded_45_degree_leg_press",
-          "progression_model": {
-            "slug": "single_progression_with_2_for_2",
-            "name": "Progresja pojedyncza z 2-for-2 / AMRAP",
-            "name_full": "Progresja pojedyncza sterowana wynikiem z serią AMRAP",
-            "when_to_use": "Stosuj, gdy chcesz zachować stałą liczbę powtórzeń w podstawowej recepcie, ale zwiększać obciążenie dopiero po wykazaniu dodatkowego zapasu wydolnościowego, a nie wyłącznie po wykonaniu nominalnego celu.",
-            "how_to_apply": "Utrzymuj standardowe serie robocze bez zmian, a ostatnią serię traktuj jako serię AMRAP lub serię oceny wydolności. Porównaj uzyskaną liczbę powtórzeń z progiem progresji. Zwiększ wspólne obciążenie dopiero po spełnieniu wymaganego kryterium ponad cel, na przykład reguły 2-for-2."
-          },
+          "progression_model": "single_progression_with_2_for_2",
           "sets": [
             {
               "reps": {

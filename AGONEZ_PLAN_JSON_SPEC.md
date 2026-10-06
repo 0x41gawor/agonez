@@ -1,28 +1,27 @@
 # Agonez Plan JSON specification
 
-Version: `agonez-plan-sanity-v3`
-Purpose: create a new Agonez PlanCreator draft from an AI-friendly, resolved training plan.  
-Media type: `application/json`  
-Text encoding: UTF-8
+Version: `agonez-plan-sanity-v4`
 
-This is an interchange format, not a database backup. It deliberately describes days,
-exercises, and concrete set prescriptions without exposing PlanCreator IDs, revisions,
-exercise-slot IDs, fallbacks, or other persistence details.
+Purpose: exchange a compact, AI-friendly PlanCreator prescription.
 
-Loading modes and loading cycles are intentionally not part of V3. Exported repetition
-ranges are already concrete. Import creates `moderate_load` slots and leaves each set in
-inherit mode. V3 carries only the progression-model slug selected for each default
-exercise; this compact planning metadata does not change the concrete set prescription.
+Media type: `application/json`
 
-The same format is produced by PlanCreator's **Export JSON** action and accepted by the
-**Import JSON** action on the **My Plans** page.
+Encoding: UTF-8
+
+This is an interchange format, not a database backup and not a Plan-Execution payload.
+It describes the resolved day/exercise/set skeleton plus metadata that a future execution
+module can use. It never contains an athlete's actual load, progression state, workout
+history, or performed sets.
+
+The same contract is produced by **Export JSON** and accepted by **Import JSON**. New
+documents should use V4. V1–V3 remain importable as described below.
 
 ## Canonical example
 
 ```json
 {
-  "format": "agonez-plan-sanity-v3",
-  "plan_name": "Three-day full body strength",
+  "format": "agonez-plan-sanity-v4",
+  "plan_name": "Three-day strength plan",
   "resolution_context": {
     "global_volume_level": 0,
     "focus_area": null,
@@ -36,31 +35,42 @@ The same format is produced by PlanCreator's **Export JSON** action and accepted
       "rest": false,
       "exercises": [
         {
-          "name": "High-Bar Barbell Back Squat",
-          "slug": "high_bar_back_squat",
-          "progression_model": "double_progression",
+          "name": "Smith Machine Incline Bench Press",
+          "slug": "smith_machine_incline_bench_press",
+          "progression_model": "e1rm_top_set_backoffs",
+          "progression_id": "e3aee2b7-a8c9-4b4c-9fd9-7f919c3c3668",
+          "active_working_sets": { "min": 3, "max": 3 },
           "sets": [
-            { "reps": { "min": 5, "max": 7 }, "rir": 2 },
-            { "reps": { "min": 5, "max": 7 }, "rir": 2 },
-            { "reps": { "min": 5, "max": 7 }, "rir": 1 }
-          ]
-        },
-        {
-          "name": "Barbell Bench Press",
-          "slug": "barbell_bench_press",
-          "progression_model": null,
-          "sets": [
-            { "reps": { "min": 6, "max": 8 }, "rir": 2 },
-            { "reps": { "min": 6, "max": 8 }, "rir": 1 }
-          ]
-        },
-        {
-          "name": "Pendlay Row",
-          "slug": "pendlay_row",
-          "progression_model": null,
-          "sets": [
-            { "reps": { "min": 6, "max": 10 }, "rir": 2 },
-            { "reps": { "min": 6, "max": 10 }, "rir": 1 }
+            {
+              "reps": { "min": 6, "max": 8, "semantics": "undefined" },
+              "rir": "NOT_APPLICABLE",
+              "role": "rampup",
+              "load_spec": { "kind": "relative_to_set", "ref_set_idx": 2, "pct": 50 }
+            },
+            {
+              "reps": { "min": 6, "max": 8, "semantics": "undefined" },
+              "rir": "NOT_APPLICABLE",
+              "role": "rampup",
+              "load_spec": { "kind": "relative_to_set", "ref_set_idx": 2, "pct": 80 }
+            },
+            {
+              "reps": { "min": 6, "max": 8, "semantics": "estimate" },
+              "rir": "RIR2",
+              "role": "working_topset",
+              "load_spec": { "kind": "athlete_selected" }
+            },
+            {
+              "reps": { "min": 6, "max": 8, "semantics": "estimate" },
+              "rir": "UNDEFINED",
+              "role": "working_backoff",
+              "load_spec": { "kind": "relative_to_set", "ref_set_idx": 2, "pct": 92 }
+            },
+            {
+              "reps": { "min": 5, "max": 5, "semantics": "gating" },
+              "rir": "UNDEFINED",
+              "role": "working_amrap",
+              "load_spec": { "kind": "relative_to_set", "ref_set_idx": 2, "pct": 92 }
+            }
           ]
         }
       ]
@@ -71,190 +81,201 @@ The same format is produced by PlanCreator's **Export JSON** action and accepted
       "weekday": "Tuesday",
       "rest": true,
       "exercises": []
-    },
-    {
-      "day": 3,
-      "name": "Full Body B",
-      "weekday": "Wednesday",
-      "rest": false,
-      "exercises": [
-        {
-          "name": "Pendlay Row",
-          "slug": "pendlay_row",
-          "progression_model": null,
-          "sets": [
-            { "reps": { "min": 5, "max": 8 }, "rir": 2 },
-            { "reps": { "min": 5, "max": 8 }, "rir": 1 }
-          ]
-        }
-      ]
     }
   ]
 }
 ```
 
-## Structural contract
+## General rules
 
-All fields shown below are required. Objects are strict: fields not listed in this
-specification are rejected. JSON comments, trailing commas, `NaN`, and `Infinity` are not
-valid JSON and must not be emitted. The browser accepts files up to 1 MiB.
+- JSON must be strict: no comments, trailing commas, `NaN`, or `Infinity`.
+- Unknown object fields are rejected.
+- Strings described as non-blank are trimmed during import.
+- The browser accepts a maximum file size of 1 MiB.
+- Arrays are ordered. Do not encode ordering in names or slugs.
+- Set indices used by `load_spec` are zero-based positions in that exercise's `sets`
+  array. `ref_set_idx: 2` points to the third set.
 
-### Root document
+## Root document
 
-| Field | JSON type | Constraints | Meaning |
-|---|---|---|---|
-| `format` | string | Exactly `agonez-plan-sanity-v3` | Selects this contract and prevents accidental import of unrelated JSON. |
-| `plan_name` | string | Non-blank; maximum 200 characters | Name of the new independent PlanCreator plan. Duplicate names are allowed. |
-| `resolution_context` | object | See below | Records which volume/focus context produced the concrete set list. |
-| `days` | array | 0–365 day objects | The complete microcycle in chronological order. A microcycle may exceed seven days. |
+| Field | Type | Constraints and meaning |
+|---|---|---|
+| `format` | string | Exactly `agonez-plan-sanity-v4`. |
+| `plan_name` | string | Non-blank, at most 200 characters. The new plan's name. |
+| `resolution_context` | object | Provenance for the resolved set list; it does not create Modulation configuration. |
+| `days` | array | 0–365 chronological day objects. A microcycle may be longer than seven days. |
 
 ### `resolution_context`
 
-| Field | JSON type | Constraints | Meaning |
-|---|---|---|---|
-| `global_volume_level` | integer | 0–32767 | Volume level used when resolving the source plan. Use `0` for a basic/default plan. |
-| `focus_area` | string or `null` | Maximum 100 characters | Focus-area variant used by the source resolver. Use `null` when none was applied. |
-| `axis_overrides` | object | Keys: 1–100 characters; values: integers 0–32767 | Per-axis volume-level overrides used by the source resolver. Use `{}` when none were applied. |
+| Field | Type | Constraints and meaning |
+|---|---|---|
+| `global_volume_level` | integer | 0–32767. Use `0` for the basic/default artifact. |
+| `focus_area` | string or `null` | At most 100 characters. Use `null` when no focus was resolved. |
+| `axis_overrides` | object | Keys are 1–100 characters; values are integers 0–32767. Use `{}` when absent. |
 
-The import treats the listed sets as the final, concrete prescription. The resolution
-context is provenance; it does not create Modulation configuration. Every imported set is
-stored at PlanCreator's basic volume level (`min_volume_level = 0`).
+Imported sets are concrete prescriptions stored at basic volume level. The context is
+retained only as provenance.
 
-### Day object
+## Day object
 
-| Field | JSON type | Constraints | Meaning |
-|---|---|---|---|
-| `day` | integer | 1–365; must equal its one-based array position | Stable human-readable day number. `days[0].day` is `1`, `days[1].day` is `2`, and so on. |
-| `name` | string | Non-blank; maximum 200 characters | Session or rest-day name shown in PlanCreator. |
-| `weekday` | string or `null` | Full English weekday name; see allowed values below | Optional calendar label. It does not control array order. |
-| `rest` | boolean | `true` or `false` | When `true`, PlanCreator creates an explicit rest day with no workout unit. |
-| `exercises` | array | 0–100 exercise objects | Ordered exercises for this day. Must be empty when `rest` is `true`. |
+| Field | Type | Constraints and meaning |
+|---|---|---|
+| `day` | integer | 1–365 and equal to the one-based array position. |
+| `name` | string | Non-blank, at most 200 characters. |
+| `weekday` | string or `null` | `Monday` through `Sunday`, or `null`. It is display metadata, not ordering. |
+| `rest` | boolean | An explicit rest day when `true`. |
+| `exercises` | array | 0–100 exercise objects; must be empty for a rest day. |
 
-Allowed weekday strings are exactly:
+Repeated weekday names are valid in microcycles longer than one week. `rest: false` with
+an empty exercise list creates an empty workout day.
 
-`Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Friday`, `Saturday`, `Sunday`.
+## Exercise object
 
-Use `null` when the microcycle is not tied to weekdays. Weekday names may repeat in a
-microcycle longer than seven days. The order of the `days` array is always authoritative.
+An exercise object is the compact representation of one concrete default exercise unit.
+PlanCreator creates the surrounding slot and generates its stable database identity.
 
-`rest: false` with an empty `exercises` array is valid and creates an empty workout day.
+| Field | Type | Constraints and meaning |
+|---|---|---|
+| `name` | string | Non-blank, at most 200 characters. Human-readable slot label. |
+| `slug` | string | 1–200 characters; `^[a-z0-9_]+$`. Authoritative Atlas exercise identity. |
+| `progression_model` | string or `null` | Known `core.progression_models.slug`, or `null`. Descriptions are deliberately not repeated. |
+| `progression_id` | UUID string | Progression-loop identity. Reuse the exact UUID on multiple exercise units to couple their loop. |
+| `active_working_sets` | object or `null` | Optional future-execution range `{ "min": int, "max": int }`. `null` means fixed prescribed count. |
+| `sets` | array | 0–100 ordered set prescriptions. |
 
-### Exercise object
+`slug`, not `name`, selects the Atlas exercise. Unknown exercise and progression-model
+slugs reject the entire import.
 
-| Field | JSON type | Constraints | Meaning |
-|---|---|---|---|
-| `name` | string | Non-blank; maximum 200 characters | Human-readable label used as the imported exercise-slot name. |
-| `slug` | string | 1–200 characters; regex `^[a-z0-9_]+$` | Authoritative Atlas exercise identity. It must already exist in `core.exercises`. |
-| `progression_model` | string or `null` | 1–200 characters; regex `^[a-z0-9_]+$`; required | Authoritative progression-model slug attached to this default exercise. Use `null` when no model is selected. |
-| `sets` | array | 0–100 set objects | Concrete ordered work sets for this exercise. |
+`progression_id` is not the exercise-unit identity. Each stored variant already receives
+its own stable backend ID. `progression_id` identifies only a progression loop:
 
-The `slug`, not `name`, selects the exercise. A correct display name does not compensate
-for an unknown or misspelled slug. Import is rejected atomically if any slug does not exist
-in the live Atlas catalog. Repeating a slug is allowed and creates separate exercise slots.
+- give each exercise unit a different UUID for independent loops;
+- give two or more units the same UUID to share one loop;
+- when omitted on import, Agonez generates a new independent UUID.
 
-### `progression_model`
+For `active_working_sets`, both bounds are integers from 0–32767, `max >= min`, and `max`
+must not exceed the number of prescribed working-role sets. Ramp-up sets do not count.
+Omission or `null` preserves fixed-set-count behavior. Canonical exports emit either the
+object or `null`.
 
-The field is always present in V3. Use `null` to make the absence of a progression model
-explicit. Otherwise use the model's slug from `core.progression_models`, for example
-`"single_progression_with_2_for_2"`. Import is rejected atomically if the slug is unknown.
+## Set object
 
-Names, expanded descriptions, `when_to_use`, and `how_to_apply` are deliberately omitted.
-They are catalog content, not a property of every exercise occurrence, and repeating them
-would make the plan needlessly large. A future format may add one optional top-level
-glossary that describes only terms used by the document; such a glossary is not part of V3.
-Model selection remains variant-level metadata and does not alter repetitions, RIR,
-loading mode, or loading cycle.
+| Field | Type | Constraints and meaning |
+|---|---|---|
+| `reps` | object | Inclusive range with `min`, `max`, and `semantics`. |
+| `rir` | string | `RIR0`–`RIR4`, `NOT_APPLICABLE`, or `UNDEFINED`. |
+| `role` | string | One of the set roles below. Defaults to `working` if omitted. |
+| `load_spec` | object | Tagged unresolved load metadata. Defaults to `{ "kind": "absolute" }` if omitted. |
 
-### Set object
+`reps.min` and `reps.max` are integers from 1–32767, and `max >= min`.
+`reps.semantics` is one of:
 
-| Field | JSON type | Constraints | Meaning |
-|---|---|---|---|
-| `reps` | object | Contains exactly `min` and `max` | Inclusive prescribed repetition range. |
-| `reps.min` | integer | 1–32767 | Lowest acceptable repetitions for the set. |
-| `reps.max` | integer | 1–32767 and greater than or equal to `reps.min` | Highest acceptable repetitions for the set. |
-| `rir` | integer | 0–4 | Repetitions in reserve at the end of the set. `0` means no reps left; `4` means about four reps left. |
+- `gating`: reaching a position in the range may affect a later progression decision;
+- `estimate`: expected performance, but not itself a progression gate;
+- `undefined`: the creator intentionally leaves the interpretation unspecified.
 
-Every set is an individual array item. To prescribe three identical sets, emit three set
-objects; do not use a `count`, `sets`, or `rounds` shortcut.
+Semantics defaults to `undefined` if omitted. Canonical V4 exports always include it.
 
-## How import maps to PlanCreator
+RIR meanings:
 
-The import endpoint creates a complete new draft in one database transaction:
+- `RIR0`–`RIR4`: numerical repetitions in reserve;
+- `NOT_APPLICABLE`: the set is not subject to RIR, typically a ramp-up;
+- `UNDEFINED`: intensity will be known only after performance.
 
-| JSON concept | Created PlanCreator concept |
+Analysis V1 excludes ramp-up sets and cannot calculate stimulus for a working set whose
+RIR is nonnumeric. It does not invent an RIR value.
+
+Set roles are:
+
+- `rampup` — preparatory; excluded from the working-set count;
+- `working` — ordinary working set;
+- `working_topset` — primary/top working set;
+- `working_backoff` — working set derived after a top set;
+- `working_amrap` — working AMRAP/evaluation set.
+
+Emit each set separately. There is no `count`, `rounds`, or implicit repetition shortcut.
+
+## `load_spec` tagged union
+
+`load_spec` records author intent only. PlanCreator stores and validates it but does not
+resolve an athlete's actual load.
+
+| `kind` | Required fields | Meaning |
+|---|---|---|
+| `absolute` | none | Execution will later supply a concrete absolute load. Default. |
+| `athlete_selected` | none | Athlete selects the load at execution time. |
+| `relative_to_set` | `ref_set_idx`, `pct` | Percentage of another set's load in the same exercise. |
+| `relative_to_working` | `pct` | Percentage of the future resolved working load. |
+| `table_derived` | `ref_set_idx`, `table` | A named table such as `apre10` derives the load from a referenced set. |
+| `ordinal_variant` | `level` | Ordinal exercise/load variant, such as a bodyweight progression level. |
+
+Constraints:
+
+- `pct` is a positive finite number and represents percent, so `92` means 92%;
+- `ref_set_idx` is an integer 0–32767 and must point inside the same exercise's set list;
+- `relative_to_set` cannot reference its own set;
+- `table` is 1–100 lowercase letters, digits, or underscores;
+- `level` is an integer 1–32767;
+- reference chains are stored but deliberately not evaluated in PlanCreator.
+
+## Mapping to PlanCreator
+
+Import creates the full draft atomically:
+
+| JSON | PlanCreator entity |
 |---|---|
-| Root document | New workout plan and draft revision |
-| Day with `rest: true` | Day prescription without a workout unit |
-| Day with `rest: false` | Day prescription plus a workout unit named after the day |
+| Root | New workout plan and draft revision |
+| Rest day | Day prescription without a workout unit |
+| Training day | Day plus workout unit |
 | Exercise | Exercise slot with one `DEFAULT` exercise variant |
-| Exercise `progression_model` | Progression-model reference on that `DEFAULT` variant |
+| `progression_model` | Progression-model slug on that variant |
+| `progression_id` | Shareable progression-loop UUID on that variant |
 | Set | Basic-level set-infrastructure prescription |
 
-Internal IDs, ordinals, revision numbers, and lock versions are generated by Agonez and
-must never be supplied in JSON.
+Database IDs, revision numbers, lock versions, ordinals, and fallback variants are never
+supplied by this interchange format.
 
-Because this compact format intentionally has no exercise-slot role field, roles are
-derived from exercise order independently for each non-rest day:
+Because the compact format has no exercise-slot role field, roles are inferred per day:
 
-1. First exercise → `PRIMARY_PROGRESSIVE`
-2. Second exercise → `SECONDARY_PROGRESSIVE`
-3. Third and later exercises → `ACCESSORY`
+1. first exercise → `PRIMARY_PROGRESSIVE`;
+2. second exercise → `SECONDARY_PROGRESSIVE`;
+3. later exercises → `ACCESSORY`.
 
-`VOLUME_ACCUMULATION` is not inferred. Adjust roles in the PLAN editor after import when a
-different classification is intended.
-
-The compact format also does not carry fallback exercises, intentional target-muscle
-slugs, slot goals/descriptions, plan/day descriptions, warm-up notes, stretch notes, or
-volume axes. These begin empty and can be added in the editor. Consequently, imported
-analysis may initially classify contributions as unclassified until intentional target
-muscles are set.
+`VOLUME_ACCUMULATION` is not inferred. Slot goals/descriptions, fallback exercises,
+intentional target muscles, warm-up/stretch notes, and volume axes begin empty and remain
+editable in PlanCreator.
 
 ## Validation and atomicity
 
-Validation occurs twice:
-
-1. The web application validates JSON syntax, all fields, types, ranges, array limits,
-   day numbering, weekday spelling, and rest-day consistency before showing a review.
-2. The backend repeats structural validation and resolves every exercise slug against the
-   current Atlas and progression-model catalogs inside the import transaction.
-
-If validation fails, no plan is created. Typical errors include an unsupported `format`,
-unknown fields, non-consecutive day numbers, a populated rest day, invalid RIR, reversed
-rep ranges, and unknown exercise slugs.
-
-Unknown progression-model slugs also reject the entire import. A missing
-`progression_model` field is invalid in V3; use `null` when no model should be assigned.
+The browser validates syntax, strict fields, types, bounds, day numbering, rest-day
+consistency, load references, and active working-set bounds before review. The backend
+repeats domain validation and verifies catalog slugs inside the import transaction. Any
+failure prevents creation of the plan.
 
 ## Backward compatibility
 
-The importer continues to accept `agonez-plan-sanity-v1` documents created before
-progression models were added. V1 exercise objects must not contain a
-`progression_model` field and import them with no selected model.
+- V1 has no `progression_model` and numeric RIR 0–4.
+- V2 carries `progression_model` as a rich object or `null` and numeric RIR.
+- V3 carries only a progression-model slug or `null` and numeric RIR.
+- V4 adds progression-loop, active-set, set-role, load-spec, rep-semantics, and extended
+  RIR metadata.
 
-The importer also accepts `agonez-plan-sanity-v2`, where `progression_model` is either
-`null` or the former object containing `slug` and optional descriptive fields. New exports
-always use compact V3. Do not generate new V1 or V2 documents.
+V1–V3 imports receive V4-compatible defaults: independent generated progression IDs,
+fixed-set-count behavior, `working`, `absolute`, and `undefined` semantics. New exports
+always use V4. Do not generate new legacy documents.
 
-## LLM authoring rules
+## LLM authoring checklist
 
-When generating this format:
-
-1. Output one JSON object only—no Markdown fences or prose in the file.
-2. Use only exercise slugs known to the target Agonez Atlas instance. Never invent slugs.
-3. Preserve intended chronological order in the `days` array and use consecutive `day`
-   values beginning at `1`.
-4. Represent rest days explicitly with `rest: true` and `exercises: []`.
-5. Emit each concrete set separately and keep `rir` within `0`–`4`.
-6. Put the main progressive exercise first and the secondary progressive exercise second
-   when the default role inference is desired.
-7. Include `progression_model` on every exercise. Use `null` unless a known catalog model
-   is intentionally selected; never invent a progression-model slug.
-8. Treat progression as metadata. Do not silently modify the set list to imitate the
-   selected model.
-9. Use `resolution_context.global_volume_level: 0`, `focus_area: null`, and
-   `axis_overrides: {}` unless another resolved context is explicitly known.
-10. Do not include IDs, roles, target muscles, comments, units, load values, tempos, rest
-   times, or any other fields not defined by this version.
-
-Before returning the document, verify that it parses as strict JSON and that every object
-contains exactly the keys shown in this specification.
+1. Return one strict JSON object with no Markdown wrapper or explanatory prose.
+2. Use only Atlas exercise slugs and progression-model slugs known to the target instance.
+3. Start day numbering at 1 and keep it consecutive in chronological order.
+4. Model rest days explicitly with `rest: true` and `exercises: []`.
+5. Emit every concrete set separately and choose its role intentionally.
+6. Use `NOT_APPLICABLE` for ramp-up sets unless RIR truly applies; use `UNDEFINED` when
+   execution determines RIR later.
+7. Keep every load reference inside the same exercise and use zero-based indices.
+8. Never infer actual kilograms, execution history, or progression state.
+9. Reuse a `progression_id` only when units intentionally share one progression loop.
+10. Verify active-set bounds against only the four working roles.
+11. Use the default resolution context unless another resolved context is explicitly known.
+12. Validate the final result as strict JSON before returning it.

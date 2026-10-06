@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Annotated, Any, Literal
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -33,6 +34,78 @@ class LoadingMode(str, Enum):
     LOW_LOAD = "low_load"
 
 
+class SetRole(str, Enum):
+    RAMPUP = "rampup"
+    WORKING = "working"
+    WORKING_TOPSET = "working_topset"
+    WORKING_BACKOFF = "working_backoff"
+    WORKING_AMRAP = "working_amrap"
+
+
+WORKING_SET_ROLES = frozenset(SetRole) - {SetRole.RAMPUP}
+
+
+class RepRangeSemantics(str, Enum):
+    GATING = "gating"
+    ESTIMATE = "estimate"
+    UNDEFINED = "undefined"
+
+
+class RIRPrescription(str, Enum):
+    RIR0 = "RIR0"
+    RIR1 = "RIR1"
+    RIR2 = "RIR2"
+    RIR3 = "RIR3"
+    RIR4 = "RIR4"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+    UNDEFINED = "UNDEFINED"
+
+    @property
+    def numeric_value(self) -> int | None:
+        return int(self.value[-1]) if self.value.startswith("RIR") else None
+
+
+class AbsoluteLoadSpec(APIModel):
+    kind: Literal["absolute"] = "absolute"
+
+
+class AthleteSelectedLoadSpec(APIModel):
+    kind: Literal["athlete_selected"]
+
+
+class RelativeToSetLoadSpec(APIModel):
+    kind: Literal["relative_to_set"]
+    ref_set_idx: int = Field(ge=0, le=32767)
+    pct: float = Field(gt=0)
+
+
+class RelativeToWorkingLoadSpec(APIModel):
+    kind: Literal["relative_to_working"]
+    pct: float = Field(gt=0)
+
+
+class TableDerivedLoadSpec(APIModel):
+    kind: Literal["table_derived"]
+    ref_set_idx: int = Field(ge=0, le=32767)
+    table: str = Field(min_length=1, max_length=100, pattern=r"^[a-z0-9_]+$")
+
+
+class OrdinalVariantLoadSpec(APIModel):
+    kind: Literal["ordinal_variant"]
+    level: int = Field(ge=1, le=32767)
+
+
+LoadSpec = Annotated[
+    AbsoluteLoadSpec
+    | AthleteSelectedLoadSpec
+    | RelativeToSetLoadSpec
+    | RelativeToWorkingLoadSpec
+    | TableDerivedLoadSpec
+    | OrdinalVariantLoadSpec,
+    Field(discriminator="kind"),
+]
+
+
 def _require_deterministic_ordinals(items: list[Any], label: str) -> None:
     ordinals = [item.ordinal for item in items]
     if ordinals != list(range(len(items))):
@@ -48,6 +121,7 @@ def _require_non_blank(value: str) -> str:
 class RepRange(APIModel):
     min: int = Field(ge=1, le=32767)
     max: int = Field(ge=1, le=32767)
+    semantics: RepRangeSemantics = RepRangeSemantics.UNDEFINED
 
     @model_validator(mode="after")
     def validate_range(self) -> "RepRange":
@@ -60,10 +134,30 @@ class SetInfraDraft(APIModel):
     id: int | None = Field(default=None, ge=1)
     ordinal: int = Field(ge=0)
     reps: RepRange
-    rir: int = Field(ge=0, le=4)
+    rir: RIRPrescription = RIRPrescription.RIR2
+    role: SetRole = SetRole.WORKING
+    load_spec: LoadSpec = Field(default_factory=AbsoluteLoadSpec)
     min_volume_level: int = Field(default=0, ge=0, le=32767)
     loading_mode: LoadingMode | None = None
     loading_cycle: list[LoadingMode] | None = Field(default=None, min_length=2, max_length=52)
+
+    @field_validator("rir", mode="before")
+    @classmethod
+    def normalize_legacy_rir(cls, value: Any) -> Any:
+        if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 4:
+            return f"RIR{value}"
+        return value
+
+
+class ActiveWorkingSets(APIModel):
+    min: int = Field(ge=0, le=32767)
+    max: int = Field(ge=0, le=32767)
+
+    @model_validator(mode="after")
+    def validate_range(self) -> "ActiveWorkingSets":
+        if self.max < self.min:
+            raise ValueError("active_working_sets.max must be at least min")
+        return self
 
 
 class ExerciseVariantDraft(APIModel):
@@ -77,11 +171,32 @@ class ExerciseVariantDraft(APIModel):
         max_length=200,
         pattern=r"^[a-z0-9_]+$",
     )
+    progression_id: UUID = Field(default_factory=uuid4)
+    active_working_sets: ActiveWorkingSets | None = None
     sets: list[SetInfraDraft] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_set_ordinals(self) -> "ExerciseVariantDraft":
         _require_deterministic_ordinals(self.sets, "Set")
+        ordinals = {item.ordinal for item in self.sets}
+        for item in self.sets:
+            load_spec = item.load_spec
+            if isinstance(load_spec, (RelativeToSetLoadSpec, TableDerivedLoadSpec)):
+                if load_spec.ref_set_idx not in ordinals:
+                    raise ValueError(
+                        f"Set {item.ordinal} references missing set {load_spec.ref_set_idx}"
+                    )
+            if (
+                isinstance(load_spec, RelativeToSetLoadSpec)
+                and load_spec.ref_set_idx == item.ordinal
+            ):
+                raise ValueError("A set must not reference itself")
+        if self.active_working_sets is not None:
+            working_count = sum(item.role in WORKING_SET_ROLES for item in self.sets)
+            if self.active_working_sets.max > working_count:
+                raise ValueError(
+                    "active_working_sets.max must not exceed prescribed working sets"
+                )
         return self
 
 
@@ -175,10 +290,19 @@ class SetInfraArtifact(APIModel):
     id: int
     ordinal: int
     reps: RepRange
-    rir: int
+    rir: RIRPrescription
+    role: SetRole = SetRole.WORKING
+    load_spec: LoadSpec = Field(default_factory=AbsoluteLoadSpec)
     min_volume_level: int
     loading_mode: LoadingMode | None = None
     loading_cycle: list[LoadingMode] | None = Field(default=None, min_length=2, max_length=52)
+
+    @field_validator("rir", mode="before")
+    @classmethod
+    def normalize_legacy_rir(cls, value: Any) -> Any:
+        if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 4:
+            return f"RIR{value}"
+        return value
 
 
 class ExerciseVariantArtifact(APIModel):
@@ -187,6 +311,8 @@ class ExerciseVariantArtifact(APIModel):
     variant_type: ExerciseVariantType
     exercise_slug: str
     progression_model_slug: str | None = None
+    progression_id: UUID = Field(default_factory=uuid4)
+    active_working_sets: ActiveWorkingSets | None = None
     sets: list[SetInfraArtifact]
 
 

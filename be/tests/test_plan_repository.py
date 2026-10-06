@@ -157,6 +157,9 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
                 "exercise_id": 60,
                 "exercise_slug": "barbell_bench_press",
                 "progression_model_slug": "double_progression",
+                "progression_id": "11111111-1111-4111-8111-111111111111",
+                "active_working_set_min": 1,
+                "active_working_set_max": 1,
             }
         ],
         sets=[
@@ -166,7 +169,10 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
                 "ordinal": 0,
                 "rep_min": 5,
                 "rep_max": 7,
-                "rir": 2,
+                "rep_range_semantics": "estimate",
+                "rir": "RIR2",
+                "role": "working_topset",
+                "load_spec": {"kind": "athlete_selected"},
                 "min_volume_level": 0,
             }
         ],
@@ -198,7 +204,8 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
 
     await repository._copy_draft_tree(object(), source, new_revision_id=99)
 
-    assert [params for _, params in inserts] == [
+    inserted_parameters = [params for _, params in inserts]
+    assert inserted_parameters[:3] == [
         (99, 0, 1, "Push A", "Primary session"),
         (101, "Push A", None, "Warm up", None),
         (
@@ -212,9 +219,17 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
             "moderate_load",
             None,
         ),
-        (103, 0, "DEFAULT", 60, "double_progression"),
-        (104, 0, 5, 7, 2, 0, None, None),
     ]
+    variant_params = inserted_parameters[3]
+    assert variant_params is not None
+    assert variant_params[:5] == (103, 0, "DEFAULT", 60, "double_progression")
+    assert variant_params[5] != "11111111-1111-4111-8111-111111111111"
+    assert variant_params[6:] == (1, 1)
+    set_params = inserted_parameters[4]
+    assert set_params is not None
+    assert set_params[:7] == (104, 0, 5, 7, "estimate", "RIR2", "working_topset")
+    assert getattr(set_params[7], "obj", None) == {"kind": "athlete_selected"}
+    assert set_params[8:] == (0, None, None)
     assert len(statements) == 1
     assert "INSERT INTO plans.exercise_slot_target_muscles" in statements[0][0]
     assert statements[0][1] == (103, 40)

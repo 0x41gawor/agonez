@@ -218,6 +218,20 @@ def test_resolver_uses_default_variant_volume_gate_and_preserves_rest_days() -> 
     assert [item.id for item in selected_override.sets] == [1, 2]
 
 
+def test_analysis_excludes_rampups_and_non_numeric_rir_prescriptions() -> None:
+    rampup = _set(1, 0, 2)
+    rampup.update({"role": "rampup", "rir": "NOT_APPLICABLE"})
+    unresolved = _set(2, 1, 2)
+    unresolved.update({"role": "working", "rir": "UNDEFINED"})
+
+    _, result = _analyze(_draft([[_slot(1, [rampup, unresolved])]]), _catalog())
+
+    assert result.contributions == []
+    diagnostics = [item for item in result.diagnostics if item.code == "NON_EVALUABLE_SET_RIR"]
+    assert len(diagnostics) == 1
+    assert "set 2" in diagnostics[0].message
+
+
 def test_etu_mru_jru_formulas_effective_reps_and_provenance() -> None:
     draft = _draft([[_slot(1, [_set(1, 0, 0), _set(2, 1, 4)], targets=["chest"])]])
     _, result = _analyze(draft, _catalog())

@@ -1,9 +1,19 @@
 from enum import Enum
 from typing import Annotated, Literal
+from uuid import UUID, uuid4
 
 from pydantic import Field, field_validator, model_validator
 
-from agonez_api.modules.plans.schemas import APIModel, ExerciseSlotRole, RepRange
+from agonez_api.modules.plans.schemas import (
+    AbsoluteLoadSpec,
+    ActiveWorkingSets,
+    APIModel,
+    ExerciseSlotRole,
+    LoadSpec,
+    RepRange,
+    RIRPrescription,
+    SetRole,
+)
 
 
 class PlanResolutionContext(APIModel):
@@ -31,7 +41,9 @@ class PlanExportRequest(APIModel):
 
 class PlanAIExportSet(APIModel):
     reps: RepRange
-    rir: int = Field(ge=0, le=4)
+    rir: RIRPrescription
+    role: SetRole
+    load_spec: LoadSpec
 
 
 ProgressionModelSlug = Annotated[
@@ -44,6 +56,8 @@ class PlanAIExportExercise(APIModel):
     name: str
     slug: str
     progression_model: ProgressionModelSlug | None
+    progression_id: UUID
+    active_working_sets: ActiveWorkingSets | None
     sets: list[PlanAIExportSet]
 
 
@@ -56,7 +70,7 @@ class PlanAIExportDay(APIModel):
 
 
 class PlanAIExportResult(APIModel):
-    format: Literal["agonez-plan-sanity-v3"] = "agonez-plan-sanity-v3"
+    format: Literal["agonez-plan-sanity-v4"] = "agonez-plan-sanity-v4"
     plan_name: str
     resolution_context: PlanResolutionContext
     days: list[PlanAIExportDay]
@@ -75,7 +89,16 @@ WeekdayName = Literal[
 
 class PlanAIImportSet(APIModel):
     reps: RepRange
-    rir: int = Field(ge=0, le=4)
+    rir: RIRPrescription
+    role: SetRole = SetRole.WORKING
+    load_spec: LoadSpec = Field(default_factory=AbsoluteLoadSpec)
+
+    @field_validator("rir", mode="before")
+    @classmethod
+    def normalize_legacy_rir(cls, value: object) -> object:
+        if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 4:
+            return f"RIR{value}"
+        return value
 
 
 class PlanAIImportProgressionModel(APIModel):
@@ -90,6 +113,8 @@ class PlanAIImportExercise(APIModel):
     name: str = Field(min_length=1, max_length=200)
     slug: str = Field(min_length=1, max_length=200, pattern=r"^[a-z0-9_]+$")
     progression_model: PlanAIImportProgressionModel | ProgressionModelSlug | None = None
+    progression_id: UUID = Field(default_factory=uuid4)
+    active_working_sets: ActiveWorkingSets | None = None
     sets: list[PlanAIImportSet] = Field(max_length=100)
 
     @field_validator("name")
@@ -98,6 +123,25 @@ class PlanAIImportExercise(APIModel):
         if not value.strip():
             raise ValueError("Exercise name must not be blank")
         return value.strip()
+
+    @model_validator(mode="after")
+    def validate_prescription_metadata(self) -> "PlanAIImportExercise":
+        working_count = sum(item.role != SetRole.RAMPUP for item in self.sets)
+        if (
+            self.active_working_sets is not None
+            and self.active_working_sets.max > working_count
+        ):
+            raise ValueError(
+                "active_working_sets.max must not exceed prescribed working sets"
+            )
+        ordinals = set(range(len(self.sets)))
+        for index, item in enumerate(self.sets):
+            ref_set_idx = getattr(item.load_spec, "ref_set_idx", None)
+            if ref_set_idx is not None and ref_set_idx not in ordinals:
+                raise ValueError(f"Set {index} references missing set {ref_set_idx}")
+            if item.load_spec.kind == "relative_to_set" and ref_set_idx == index:
+                raise ValueError("A set must not reference itself")
+        return self
 
 
 class PlanAIImportDay(APIModel):
@@ -126,6 +170,7 @@ class PlanAIImportDocument(APIModel):
         "agonez-plan-sanity-v1",
         "agonez-plan-sanity-v2",
         "agonez-plan-sanity-v3",
+        "agonez-plan-sanity-v4",
     ]
     plan_name: str = Field(min_length=1, max_length=200)
     resolution_context: PlanResolutionContext
@@ -161,9 +206,9 @@ class PlanAIImportDocument(APIModel):
             if any("progression_model" in exercise.model_fields_set for exercise in exercises):
                 raise ValueError("V1 exercise objects must not contain progression_model")
         elif any("progression_model" not in exercise.model_fields_set for exercise in exercises):
-            version = "V2" if self.format == "agonez-plan-sanity-v2" else "V3"
+            version = self.format.rsplit("v", 1)[-1]
             raise ValueError(
-                f"{version} exercise objects must contain progression_model, including null"
+                f"V{version} exercise objects must contain progression_model, including null"
             )
         elif self.format == "agonez-plan-sanity-v2" and any(
             isinstance(exercise.progression_model, str) for exercise in exercises
@@ -175,6 +220,12 @@ class PlanAIImportDocument(APIModel):
             for exercise in exercises
         ):
             raise ValueError("V3 progression_model must be a slug string or null")
+        elif self.format == "agonez-plan-sanity-v4" and any(
+            exercise.progression_model is not None
+            and not isinstance(exercise.progression_model, str)
+            for exercise in exercises
+        ):
+            raise ValueError("V4 progression_model must be a slug string or null")
         return self
 
 

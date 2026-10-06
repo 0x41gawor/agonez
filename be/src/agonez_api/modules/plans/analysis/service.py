@@ -136,10 +136,18 @@ def build_plan_ai_export(
                         ),
                         slug=selected.exercise_slug,
                         progression_model=selected.progression_model_slug,
+                        progression_id=selected.progression_id,
+                        active_working_sets=selected.active_working_sets,
                         sets=[
                             PlanAIExportSet(
-                                reps={"min": item.rep_min, "max": item.rep_max},
+                                reps={
+                                    "min": item.rep_min,
+                                    "max": item.rep_max,
+                                    "semantics": item.rep_range_semantics,
+                                },
                                 rir=item.rir,
+                                role=item.role,
+                                load_spec=item.load_spec,
                             )
                             for item in selected.sets
                         ],

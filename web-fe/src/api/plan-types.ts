@@ -6,17 +6,31 @@ export type ExerciseSlotRole =
   | 'ACCESSORY'
 export type ExerciseVariantType = 'DEFAULT' | 'FALLBACK'
 export type LoadingMode = 'high_load' | 'moderate_load' | 'low_load'
+export type SetRole = 'rampup' | 'working' | 'working_topset' | 'working_backoff' | 'working_amrap'
+export type RepRangeSemantics = 'gating' | 'estimate' | 'undefined'
+export type RIRPrescription = 'RIR0' | 'RIR1' | 'RIR2' | 'RIR3' | 'RIR4' | 'NOT_APPLICABLE' | 'UNDEFINED'
+
+export type LoadSpec =
+  | { kind: 'absolute' }
+  | { kind: 'athlete_selected' }
+  | { kind: 'relative_to_set'; ref_set_idx: number; pct: number }
+  | { kind: 'relative_to_working'; pct: number }
+  | { kind: 'table_derived'; ref_set_idx: number; table: string }
+  | { kind: 'ordinal_variant'; level: number }
 
 export interface RepRange {
   min: number
   max: number
+  semantics: RepRangeSemantics
 }
 
 export interface SetInfraDraft {
   id: number | null
   ordinal: number
   reps: RepRange
-  rir: number
+  rir: RIRPrescription
+  role: SetRole
+  load_spec: LoadSpec
   min_volume_level: number
   loading_mode: LoadingMode | null
   loading_cycle: LoadingMode[] | null
@@ -28,6 +42,8 @@ export interface ExerciseVariantDraft {
   variant_type: ExerciseVariantType
   exercise_slug: string
   progression_model_slug: string | null
+  progression_id: string
+  active_working_sets: { min: number; max: number } | null
   sets: SetInfraDraft[]
 }
 

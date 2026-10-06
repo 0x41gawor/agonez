@@ -75,8 +75,14 @@ class PlanService:
                 SetInfraArtifact(
                     id=item["id"],
                     ordinal=item["ordinal"],
-                    reps={"min": item["rep_min"], "max": item["rep_max"]},
+                    reps={
+                        "min": item["rep_min"],
+                        "max": item["rep_max"],
+                        "semantics": item.get("rep_range_semantics", "undefined"),
+                    },
                     rir=item["rir"],
+                    role=item.get("role", "working"),
+                    load_spec=item.get("load_spec", {"kind": "absolute"}),
                     min_volume_level=item["min_volume_level"],
                     loading_mode=item.get("loading_mode"),
                     loading_cycle=item.get("loading_cycle"),
@@ -94,6 +100,15 @@ class PlanService:
                     variant_type=variant["variant_type"],
                     exercise_slug=variant["exercise_slug"],
                     progression_model_slug=variant.get("progression_model_slug"),
+                    progression_id=variant["progression_id"],
+                    active_working_sets=(
+                        {
+                            "min": variant["active_working_set_min"],
+                            "max": variant["active_working_set_max"],
+                        }
+                        if variant.get("active_working_set_min") is not None
+                        else None
+                    ),
                     sets=sets_by_variant.get(variant_id, []),
                 )
             )

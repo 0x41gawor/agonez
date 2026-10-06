@@ -84,12 +84,16 @@ export function planArtifact(lockVersion = 4): PlanDraftArtifact {
                   variant_type: 'DEFAULT',
                   exercise_slug: exercise.slug,
                   progression_model_slug: null,
+                  progression_id: '11111111-1111-4111-8111-111111111111',
+                  active_working_sets: null,
                   sets: [
                     {
                       id: 71,
                       ordinal: 0,
-                      reps: { min: 5, max: 7 },
-                      rir: 2,
+                      reps: { min: 5, max: 7, semantics: 'undefined' },
+                      rir: 'RIR2',
+                      role: 'working',
+                      load_spec: { kind: 'absolute' },
                       min_volume_level: 0,
                       loading_mode: null,
                       loading_cycle: null,

@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import ExerciseSlotEditor from '@/components/plans/ExerciseSlotEditor.vue'
+import ExerciseUnitMetadataEditor from '@/components/plans/ExerciseUnitMetadataEditor.vue'
 import ExerciseVariantEditor from '@/components/plans/ExerciseVariantEditor.vue'
 import PlanEditor from '@/components/plans/PlanEditor.vue'
 import {
@@ -9,10 +10,13 @@ import {
   createSlot,
   createVariant,
   duplicateDay,
+  duplicateSetPrescription,
   duplicateSlot,
   moveOrdered,
+  moveSetPrescription,
   recommendedRepRange,
   removeOrdered,
+  removeSetPrescription,
   toPlanDraftUpdate,
   toPlanEditorState,
   validatePlanEditor,
@@ -38,7 +42,11 @@ describe('PlanEditor', () => {
 
     expect(recommendedRepRange(profile, 'high_load')).toBeNull()
     expect(recommendedRepRange(profile, 'moderate_load')).toEqual({ min: 8, max: 12 })
-    expect(createSet(0, undefined, 'high_load', profile).reps).toEqual({ min: 5, max: 8 })
+    expect(createSet(0, undefined, 'high_load', profile).reps).toEqual({
+      min: 5,
+      max: 8,
+      semantics: 'undefined',
+    })
   })
 
   it('starts with all loaded days collapsed, then renders the slot-first hierarchy', async () => {
@@ -125,6 +133,23 @@ describe('PlanEditor', () => {
     expect(editor.days.map((day) => day.ordinal)).toEqual([0, 1, 2])
   })
 
+  it('remaps copied progression loops while preserving sharing inside the copied day', () => {
+    const editor = toPlanEditorState(planArtifact())
+    const slots = editor.days[0]!.workout_unit!.exercise_slots
+    const sharedProgressionId = slots[0]!.variants[0]!.progression_id
+    const second = createSlot(1)
+    const secondVariant = createVariant('DEFAULT', 0, fallbackExercise.slug)
+    secondVariant.progression_id = sharedProgressionId
+    second.variants.push(secondVariant)
+    slots.push(second)
+
+    const duplicate = duplicateDay(editor.days, 0)!
+    const copiedVariants = duplicate.workout_unit!.exercise_slots.map((slot) => slot.variants[0]!)
+
+    expect(copiedVariants[0]!.progression_id).toBe(copiedVariants[1]!.progression_id)
+    expect(copiedVariants[0]!.progression_id).not.toBe(sharedProgressionId)
+  })
+
   it('adds exercise slots from the bottom control and the focused-day shortcut', async () => {
     const editor = toPlanEditorState(planArtifact())
     const wrapper = mount(PlanEditor, {
@@ -188,8 +213,10 @@ describe('PlanEditor', () => {
       id: 72,
       clientKey: 'set-72',
       ordinal: 0,
-      reps: { min: 8, max: 10 },
-      rir: 2,
+      reps: { min: 8, max: 10, semantics: 'undefined' },
+      rir: 'RIR2',
+      role: 'working',
+      load_spec: { kind: 'absolute' },
       min_volume_level: 0,
       loading_mode: null,
       loading_cycle: null,
@@ -285,9 +312,9 @@ describe('PlanEditor', () => {
     expect(slot.loading_mode).toBe('high_load')
     expect(slot.variants[0]?.sets).toHaveLength(3)
     expect(slot.variants[0]?.sets.map((set) => set.reps)).toEqual([
-      { min: 4, max: 6 },
-      { min: 4, max: 6 },
-      { min: 4, max: 6 },
+      { min: 4, max: 6, semantics: 'undefined' },
+      { min: 4, max: 6, semantics: 'undefined' },
+      { min: 4, max: 6, semantics: 'undefined' },
     ])
     expect(slot.variants[0]?.sets.map((set) => set.loading_mode)).toEqual([
       'high_load',
@@ -442,7 +469,7 @@ describe('PlanEditor', () => {
 
     await wrapper.get('.add-set').trigger('click')
     expect(variant.sets).toHaveLength(1)
-    expect(variant.sets[0]?.reps).toEqual({ min: 7, max: 11 })
+    expect(variant.sets[0]?.reps).toEqual({ min: 7, max: 11, semantics: 'undefined' })
     expect(variant.sets[0]?.loading_mode).toBe('moderate_load')
     await wrapper.get('input[type="number"]').setValue('6')
     expect(variant.sets[0]?.reps.min).toBe(6)
@@ -453,6 +480,75 @@ describe('PlanEditor', () => {
     expect(variant.sets.map((item) => item.ordinal)).toEqual([0, 1])
     await wrapper.findAll('button[title="Remove set"]')[0]?.trigger('click')
     expect(variant.sets).toHaveLength(1)
+  })
+
+  it('edits advanced set metadata without exposing it in the default flow', async () => {
+    const variant = createVariant('DEFAULT', 0, exercise.slug)
+    variant.sets.push(createSet(0))
+    const wrapper = mount(ExerciseVariantEditor, {
+      props: {
+        modelValue: variant,
+        exercises: [exercise],
+        path: `variant.${variant.clientKey}`,
+        issues: [],
+      },
+    })
+
+    expect(wrapper.find('.set-metadata-drawer').exists()).toBe(false)
+    await wrapper.get('.set-role-control select').setValue('rampup')
+    expect(variant.sets[0]!.rir).toBe('NOT_APPLICABLE')
+
+    await wrapper.get('button[title="Set metadata"]').trigger('click')
+    await wrapper.get('.load-spec-kind select').setValue('relative_to_working')
+    await wrapper.get('.set-metadata-drawer input[type="number"]').setValue('50')
+    expect(variant.sets[0]!.load_spec).toEqual({ kind: 'relative_to_working', pct: 50 })
+
+    await wrapper.get('.set-role-control select').setValue('working')
+    expect(variant.sets[0]!.rir).toBe('UNDEFINED')
+  })
+
+  it('keeps set references attached to logical sets during duplicate, move, and remove', () => {
+    const sets = [createSet(0), createSet(1), createSet(2)]
+    sets[2]!.load_spec = { kind: 'relative_to_set', ref_set_idx: 0, pct: 92 }
+
+    moveSetPrescription(sets, 0, 1)
+    expect(sets[2]!.load_spec).toEqual({ kind: 'relative_to_set', ref_set_idx: 1, pct: 92 })
+
+    duplicateSetPrescription(sets, 2)
+    expect(sets[3]!.load_spec).toEqual({ kind: 'relative_to_set', ref_set_idx: 1, pct: 92 })
+
+    removeSetPrescription(sets, 1)
+    expect(sets[1]!.load_spec).toEqual({ kind: 'absolute' })
+    expect(sets[2]!.load_spec).toEqual({ kind: 'absolute' })
+  })
+
+  it('shares a progression loop and configures variable active working sets progressively', async () => {
+    const variant = createVariant('DEFAULT', 0, exercise.slug)
+    variant.sets.push(createSet(0), createSet(1))
+    const otherProgressionId = '22222222-2222-4222-8222-222222222222'
+    const wrapper = mount(ExerciseUnitMetadataEditor, {
+      props: {
+        modelValue: variant,
+        exerciseUnits: [
+          { clientKey: variant.clientKey, progressionId: variant.progression_id, label: 'Push / Press / Bench' },
+          { clientKey: 'other-unit', progressionId: otherProgressionId, label: 'Upper / Press / Dumbbell' },
+        ],
+      },
+    })
+
+    expect(wrapper.find('.exercise-unit-metadata-body').exists()).toBe(false)
+    await wrapper.get('.exercise-unit-metadata-toggle').trigger('click')
+    await wrapper.findAll('.metadata-mode-switch button')[1]!.trigger('click')
+    expect(variant.progression_id).toBe(otherProgressionId)
+    expect(wrapper.get('.metadata-field select').text()).toContain('Upper / Press / Dumbbell')
+
+    await wrapper.get('.metadata-checkbox input').setValue(true)
+    expect(variant.active_working_sets).toEqual({ min: 2, max: 2 })
+    await wrapper.get('.active-set-range input').setValue('1')
+    expect(variant.active_working_sets?.min).toBe(1)
+
+    await wrapper.findAll('.metadata-mode-switch button')[0]!.trigger('click')
+    expect(variant.progression_id).not.toBe(otherProgressionId)
   })
 
   it('starts from slot loading, supports compact set overrides and repeating patterns', async () => {
@@ -473,7 +569,7 @@ describe('PlanEditor', () => {
 
     expect(wrapper.get('.slot-loading-badge').text()).toContain('High load')
     await wrapper.get('.add-set').trigger('click')
-    expect(slot.variants[0]?.sets[0]?.reps).toEqual({ min: 4, max: 6 })
+    expect(slot.variants[0]?.sets[0]?.reps).toEqual({ min: 4, max: 6, semantics: 'undefined' })
 
     await wrapper.get('.set-loading-control button[aria-label="Low load"]').trigger('click')
     expect(slot.variants[0]?.sets[0]?.loading_mode).toBe('low_load')
@@ -542,7 +638,7 @@ describe('PlanEditor', () => {
   it('preserves server IDs through edits and round-trip conversion', () => {
     const editor = toPlanEditorState(planArtifact())
     const set = editor.days[0]!.workout_unit!.exercise_slots[0]!.variants[0]!.sets[0]!
-    set.reps = { min: 6, max: 8 }
+    set.reps = { min: 6, max: 8, semantics: 'undefined' }
     const payload = toPlanDraftUpdate(editor)
 
     expect(payload.days[0]?.id).toBe(31)
@@ -550,7 +646,7 @@ describe('PlanEditor', () => {
     expect(payload.days[0]?.workout_unit?.exercise_slots[0]?.id).toBe(51)
     expect(payload.days[0]?.workout_unit?.exercise_slots[0]?.variants[0]?.id).toBe(61)
     expect(payload.days[0]?.workout_unit?.exercise_slots[0]?.variants[0]?.sets[0]?.id).toBe(71)
-    expect(payload.days[0]?.workout_unit?.exercise_slots[0]?.variants[0]?.sets[0]?.reps).toEqual({ min: 6, max: 8 })
+    expect(payload.days[0]?.workout_unit?.exercise_slots[0]?.variants[0]?.sets[0]?.reps).toEqual({ min: 6, max: 8, semantics: 'undefined' })
 
     const roundTripped = toPlanDraftUpdate(toPlanEditorState(payload))
     expect(roundTripped).toEqual(payload)
@@ -560,7 +656,7 @@ describe('PlanEditor', () => {
     const editor = toPlanEditorState(planArtifact())
     const variant = editor.days[0]!.workout_unit!.exercise_slots[0]!.variants[0]!
     variant.exercise_slug = ''
-    variant.sets[0]!.reps = { min: 10, max: 8 }
+    variant.sets[0]!.reps = { min: 10, max: 8, semantics: 'undefined' }
     const messages = validatePlanEditor(editor).map((issue) => issue.message)
 
     expect(messages).toContain('Choose an exercise before saving.')

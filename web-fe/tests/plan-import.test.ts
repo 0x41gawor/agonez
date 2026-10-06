@@ -31,6 +31,29 @@ function testRouter() {
   })
 }
 
+function convertToLegacy(
+  source: Record<string, unknown>,
+  format: 'agonez-plan-sanity-v1' | 'agonez-plan-sanity-v2' | 'agonez-plan-sanity-v3',
+): void {
+  source.format = format
+  const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
+  for (const day of days) {
+    for (const exercise of day.exercises) {
+      delete exercise.progression_id
+      delete exercise.active_working_sets
+      if (format === 'agonez-plan-sanity-v1') delete exercise.progression_model
+      const sets = exercise.sets as Array<Record<string, unknown>>
+      for (const set of sets) {
+        const reps = set.reps as Record<string, unknown>
+        delete reps.semantics
+        set.rir = Number(String(set.rir).replace('RIR', ''))
+        delete set.role
+        delete set.load_spec
+      }
+    }
+  }
+}
+
 describe('Plan JSON import', () => {
   beforeEach(() => {
     vi.resetAllMocks()
@@ -44,17 +67,22 @@ describe('Plan JSON import', () => {
 
   it('keeps accepting legacy V1 documents without progression metadata', () => {
     const source = planExportResult() as unknown as Record<string, unknown>
-    source.format = 'agonez-plan-sanity-v1'
-    const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
-    for (const day of days) {
-      for (const exercise of day.exercises) delete exercise.progression_model
-    }
+    convertToLegacy(source, 'agonez-plan-sanity-v1')
 
-    expect(parsePlanImportJson(JSON.stringify(source))).toEqual(source)
+    const parsed = parsePlanImportJson(JSON.stringify(source))
+    expect(parsed.format).toBe('agonez-plan-sanity-v1')
+    expect(parsed.days[0]?.exercises[0]?.progression_model).toBeUndefined()
+    expect(parsed.days[0]?.exercises[0]?.sets[0]).toMatchObject({
+      reps: { min: 5, max: 7, semantics: 'undefined' },
+      rir: 'RIR2',
+      role: 'working',
+      load_spec: { kind: 'absolute' },
+    })
   })
 
   it('requires an explicit progression model or null in V3', () => {
     const source = planExportResult() as unknown as Record<string, unknown>
+    convertToLegacy(source, 'agonez-plan-sanity-v3')
     const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
     delete days[0]!.exercises[0]!.progression_model
 
@@ -65,7 +93,7 @@ describe('Plan JSON import', () => {
 
   it('keeps accepting V2 documents with rich progression metadata', () => {
     const source = planExportResult() as unknown as Record<string, unknown>
-    source.format = 'agonez-plan-sanity-v2'
+    convertToLegacy(source, 'agonez-plan-sanity-v2')
     const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
     days[0]!.exercises[0]!.progression_model = {
       slug: 'double_progression',
@@ -73,17 +101,41 @@ describe('Plan JSON import', () => {
       when_to_use: 'Use for stable ranges.',
     }
 
-    expect(parsePlanImportJson(JSON.stringify(source))).toEqual(source)
+    const parsed = parsePlanImportJson(JSON.stringify(source))
+    expect(parsed.days[0]?.exercises[0]?.progression_model).toEqual(
+      days[0]!.exercises[0]!.progression_model,
+    )
+    expect(parsed.days[0]?.exercises[0]?.sets[0]?.rir).toBe('RIR2')
   })
 
   it('does not accept rich progression metadata in compact V3', () => {
     const source = planExportResult() as unknown as Record<string, unknown>
+    convertToLegacy(source, 'agonez-plan-sanity-v3')
     const days = source.days as Array<{ exercises: Array<Record<string, unknown>> }>
     days[0]!.exercises[0]!.progression_model = { slug: 'double_progression' }
 
     expect(() => parsePlanImportJson(JSON.stringify(source))).toThrow(
       /progression_model must be a non-empty string/,
     )
+  })
+
+  it('rejects invalid V4 set references and active working-set bounds', () => {
+    const source = planExportResult() as unknown as Record<string, unknown>
+    const exercises = (source.days as Array<{ exercises: Array<Record<string, unknown>> }>)[0]!.exercises
+    const exercise = exercises[0]!
+    exercise.active_working_sets = { min: 1, max: 2 }
+    const sets = exercise.sets as Array<Record<string, unknown>>
+    sets[0]!.load_spec = { kind: 'relative_to_set', ref_set_idx: 0, pct: 92 }
+
+    try {
+      parsePlanImportJson(JSON.stringify(source))
+      throw new Error('Expected V4 metadata validation to fail')
+    } catch (caught) {
+      expect(caught).toBeInstanceOf(PlanImportValidationError)
+      const issues = (caught as PlanImportValidationError).issues.join(' ')
+      expect(issues).toContain('active_working_sets.max must not exceed 1 working sets')
+      expect(issues).toContain('must not reference itself')
+    }
   })
 
   it('reports precise paths for structural and semantic errors', () => {

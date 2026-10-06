@@ -34,6 +34,28 @@ const loaders: Record<SupportedLocale, () => Promise<{ default: Record<string, u
 }
 const loaded = new Set<SupportedLocale>()
 
+function mergeLocaleFallback(
+  fallback: Record<string, unknown>,
+  localized: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...fallback }
+  for (const [key, value] of Object.entries(localized)) {
+    const fallbackValue = fallback[key]
+    if (
+      value && typeof value === 'object' && !Array.isArray(value)
+      && fallbackValue && typeof fallbackValue === 'object' && !Array.isArray(fallbackValue)
+    ) {
+      merged[key] = mergeLocaleFallback(
+        fallbackValue as Record<string, unknown>,
+        value as Record<string, unknown>,
+      )
+    } else {
+      merged[key] = value
+    }
+  }
+  return merged
+}
+
 export const i18n = createI18n({
   legacy: false,
   locale: DEFAULT_LOCALE,
@@ -86,8 +108,17 @@ export function intlLocale(locale: SupportedLocale = activeLocale()): string {
 
 export async function loadLocale(locale: SupportedLocale): Promise<void> {
   if (loaded.has(locale)) return
+  if (locale !== DEFAULT_LOCALE && !loaded.has(DEFAULT_LOCALE)) {
+    await loadLocale(DEFAULT_LOCALE)
+  }
   const messages = await loaders[locale]()
-  i18n.global.setLocaleMessage(locale, messages.default)
+  const effectiveMessages = locale === DEFAULT_LOCALE
+    ? messages.default
+    : mergeLocaleFallback(
+      i18n.global.getLocaleMessage(DEFAULT_LOCALE) as Record<string, unknown>,
+      messages.default,
+    )
+  i18n.global.setLocaleMessage(locale, effectiveMessages)
   loaded.add(locale)
 }
 

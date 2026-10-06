@@ -8,6 +8,7 @@ import WorkoutUnitEditor from '@/components/plans/WorkoutUnitEditor.vue'
 import {
   createWorkout,
   type EditorDay,
+  type ExerciseUnitOption,
   type PlanValidationIssue,
 } from '@/features/plans/editor'
 
@@ -19,10 +20,12 @@ withDefaults(defineProps<{
   exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
   progressionModels?: ProgressionModelCatalogItem[]
+  exerciseUnits?: ExerciseUnitOption[]
   path: string
   issues: PlanValidationIssue[]
 }>(), {
   progressionModels: () => [],
+  exerciseUnits: () => [],
 })
 defineEmits<{
   move: [direction: -1 | 1]
@@ -108,6 +111,7 @@ function handleShortcut(event: KeyboardEvent): void {
         :exercises="exercises"
         :muscles="muscles"
         :progression-models="progressionModels"
+        :exercise-units="exerciseUnits"
         :path="`${path}.workout`"
         :issues="issues"
         @remove="model.workout_unit = null"

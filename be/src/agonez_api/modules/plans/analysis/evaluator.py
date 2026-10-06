@@ -45,6 +45,7 @@ from agonez_api.modules.plans.analysis.schemas import (
     TimingAssumption,
     WorkoutStimulus,
 )
+from agonez_api.modules.plans.schemas import SetRole
 
 
 @dataclass
@@ -148,8 +149,26 @@ def evaluate_plan(
             if engine is None:
                 continue
             for item in selected.sets:
-                effective_reps = EFFECTIVE_REPS_BY_RIR[item.rir]
-                rir_multiplier = RIR_RECOVERY_MULTIPLIER[item.rir]
+                numeric_rir = item.rir.numeric_value
+                if item.role == SetRole.RAMPUP:
+                    continue
+                if numeric_rir is None:
+                    _add_diagnostic(
+                        diagnostics,
+                        diagnostic_keys,
+                        AnalysisDiagnostic(
+                            code="NON_EVALUABLE_SET_RIR",
+                            severity=DiagnosticSeverity.INFO,
+                            message=(
+                                f"Exercise '{selected.exercise_slug}' set {item.ordinal + 1} "
+                                f"uses {item.rir.value} and was excluded from Analysis V1."
+                            ),
+                            exercise_slug=selected.exercise_slug,
+                        ),
+                    )
+                    continue
+                effective_reps = EFFECTIVE_REPS_BY_RIR[numeric_rir]
+                rir_multiplier = RIR_RECOVERY_MULTIPLIER[numeric_rir]
                 muscle_keys: set[str] = set()
                 for vector in (
                     engine.etu,

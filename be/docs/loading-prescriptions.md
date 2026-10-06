@@ -1,8 +1,9 @@
 # Loading prescriptions
 
-PlanCreator stores loading intent separately from the concrete repetition range. This
-keeps the current workout executable while preserving the intended loading strategy for
-future modulation.
+PlanCreator stores two distinct kinds of loading metadata separately from the concrete
+repetition range. Existing slot/set `loading_mode` and `loading_cycle` describe rep-range
+authoring. A set's V4 `load_spec` describes how a future execution module should obtain
+that set's load. Neither mechanism resolves actual kilograms in PlanCreator.
 
 ## Catalog recommendation
 
@@ -65,8 +66,12 @@ Modulation resolver.
 
 ## Compact JSON interchange
 
-`agonez-plan-sanity-v3` remains a resolved, concrete sanity-check format for loading and
-therefore exports concrete reps/RIR rather than loading modes or cycles. It carries only
-the selected progression-model slug on each default exercise. Importing it creates
-moderate-load slots whose sets inherit. Legacy V1 and rich-progression V2 documents remain
-importable.
+`agonez-plan-sanity-v4` exports concrete reps together with set role, rep-range semantics,
+extended RIR, and unresolved `load_spec`. It still omits PlanCreator's loading modes and
+cycles: imported slots use `moderate_load` and their sets inherit it. The selected
+progression model remains a compact slug, while `progression_id` can couple multiple
+exercise units to one future progression loop. Legacy V1–V3 documents remain importable
+and receive the documented V4 defaults.
+
+The complete tagged-union contract and cross-set validation rules are documented in
+`/home/agonez/AGONEZ_PLAN_JSON_SPEC.md`.

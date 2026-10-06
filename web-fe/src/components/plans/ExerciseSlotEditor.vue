@@ -19,6 +19,7 @@ import {
   loadingModeShortLabel,
   LOADING_MODES,
   type EditorSlot,
+  type ExerciseUnitOption,
   type PlanValidationIssue,
 } from '@/features/plans/editor'
 
@@ -30,10 +31,12 @@ const props = withDefaults(defineProps<{
   exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
   progressionModels?: ProgressionModelCatalogItem[]
+  exerciseUnits?: ExerciseUnitOption[]
   path: string
   issues: PlanValidationIssue[]
 }>(), {
   progressionModels: () => [],
+  exerciseUnits: () => [],
 })
 defineEmits<{
   move: [direction: -1 | 1]
@@ -204,6 +207,7 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           v-model="model.variants[defaultIndex]!"
           :exercises="exercises"
           :progression-models="progressionModels"
+          :exercise-units="exerciseUnits"
           :path="`${path}.variants.${model.variants[defaultIndex]!.clientKey}`"
           :issues="issues"
           :slot-loading-mode="model.loading_mode"
@@ -323,6 +327,7 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
           v-model="model.variants[arrayIndex]!"
           :exercises="exercises"
           :progression-models="progressionModels"
+          :exercise-units="exerciseUnits"
           :path="`${path}.variants.${model.variants[arrayIndex]!.clientKey}`"
           :issues="issues"
           :fallback-index="fallbackIndex"

@@ -220,7 +220,7 @@ export function largeMuscleProvenance(count = 2000): AnalysisContribution[] {
 
 export function planExportResult(): PlanAIExportResult {
   return {
-    format: 'agonez-plan-sanity-v3',
+    format: 'agonez-plan-sanity-v4',
     plan_name: 'PPLPP',
     resolution_context: {
       global_volume_level: 0,
@@ -238,7 +238,14 @@ export function planExportResult(): PlanAIExportResult {
             name: 'Barbell Bench Press',
             slug: 'barbell_bench_press',
             progression_model: 'double_progression',
-            sets: [{ reps: { min: 5, max: 7 }, rir: 2 }],
+            progression_id: '11111111-1111-4111-8111-111111111111',
+            active_working_sets: null,
+            sets: [{
+              reps: { min: 5, max: 7, semantics: 'undefined' },
+              rir: 'RIR2',
+              role: 'working',
+              load_spec: { kind: 'absolute' },
+            }],
           },
         ],
       },

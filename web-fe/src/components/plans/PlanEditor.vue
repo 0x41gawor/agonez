@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import DayEditor from '@/components/plans/DayEditor.vue'
@@ -9,10 +11,12 @@ import {
   removeOrdered,
   type PlanEditorState,
   type PlanValidationIssue,
+  type ExerciseUnitOption,
 } from '@/features/plans/editor'
 
 const model = defineModel<PlanEditorState>({ required: true })
-withDefaults(defineProps<{
+const { t } = useI18n()
+const props = withDefaults(defineProps<{
   exercises: ExerciseCatalogItem[]
   muscles: MuscleListItem[]
   progressionModels?: ProgressionModelCatalogItem[]
@@ -24,6 +28,19 @@ withDefaults(defineProps<{
 function addDay(): void {
   model.value.days.push(createDay(model.value.days.length))
 }
+
+const exerciseUnits = computed<ExerciseUnitOption[]>(() => model.value.days.flatMap((day) =>
+  (day.workout_unit?.exercise_slots ?? []).flatMap((slot) =>
+    slot.variants.map((variant) => {
+      const exercise = props.exercises.find((item) => item.slug === variant.exercise_slug)
+      return {
+        clientKey: variant.clientKey,
+        progressionId: variant.progression_id,
+        label: `${day.name} / ${slot.name?.trim() || t('plans.slot.untitled')} / ${exercise?.name || variant.exercise_slug || t('plans.slot.noExercise')}`,
+      }
+    }),
+  ),
+))
 </script>
 
 <template>
@@ -71,6 +88,7 @@ function addDay(): void {
           :exercises="exercises"
           :muscles="muscles"
           :progression-models="progressionModels"
+          :exercise-units="exerciseUnits"
           :path="`days.${day.clientKey}`"
           :issues="issues"
           @duplicate="duplicateDay(model.days, index)"

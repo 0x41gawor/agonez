@@ -95,13 +95,18 @@ def resolve_plan(
                         variant_id=default_variant.id,
                         exercise_slug=default_variant.exercise_slug,
                         progression_model_slug=default_variant.progression_model_slug,
+                        progression_id=default_variant.progression_id,
+                        active_working_sets=default_variant.active_working_sets,
                         sets=tuple(
                             ResolvedSet(
                                 id=item.id,
                                 ordinal=item.ordinal,
                                 rep_min=item.reps.min,
                                 rep_max=item.reps.max,
+                                rep_range_semantics=item.reps.semantics,
                                 rir=item.rir,
+                                role=item.role,
+                                load_spec=item.load_spec,
                                 min_volume_level=item.min_volume_level,
                             )
                             for item in default_variant.sets
