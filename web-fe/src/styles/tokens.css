@@ -49,6 +49,15 @@
   --loadHigh: #f07855;
   --loadModerate: #5a9fe8;
   --loadLow: #a77ce8;
+  --execPrescription: #8fa9c4;
+  --execNegative: #e8b06a;
+  --execPositive: #86d1a9;
+  --execCompleted: #4e9c79;
+  --execMissed: #d9614a;
+  --execDeload: #9db8da;
+  --execReload: #86d1c4;
+  --execRevision: #b48bd6;
+  --execRevisionDim: rgba(180, 139, 214, 0.08);
 }
 
 :root[data-theme='light'] {
@@ -85,4 +94,13 @@
   --loadHigh: #c54d30;
   --loadModerate: #2f72b7;
   --loadLow: #7447b5;
+  --execPrescription: #476b8c;
+  --execNegative: #995b13;
+  --execPositive: #176f48;
+  --execCompleted: #277457;
+  --execMissed: #b23c29;
+  --execDeload: #426b9f;
+  --execReload: #28796d;
+  --execRevision: #77509a;
+  --execRevisionDim: rgba(119, 80, 154, 0.09);
 }

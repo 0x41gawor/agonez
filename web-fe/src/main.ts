@@ -12,6 +12,7 @@ import './styles/atlas.css'
 import './styles/detail.css'
 import './styles/plancreator.css'
 import './styles/analysis.css'
+import './styles/execution.css'
 
 const i18n = await initializeI18n()
 createApp(App).use(createPinia()).use(i18n).use(router).mount('#app')

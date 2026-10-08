@@ -4,6 +4,7 @@ export default {
     primaryNavigation: 'Primary navigation',
     atlas: 'Atlas',
     myPlans: 'My Plans',
+    execution: 'Execution',
     dashboard: 'Dashboard',
     plannedModule: 'Planned module',
     exercisesCount: '{count} exercises',
