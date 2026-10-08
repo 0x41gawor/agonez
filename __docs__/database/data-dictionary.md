@@ -1,6 +1,9 @@
 # Data dictionary
 
-This dictionary describes the 2026-09-17 physical snapshot. Fields added by unapplied-in-snapshot migrations are marked **Projected**.
+This dictionary describes the pre-Execution physical snapshot. Migration `0005` supersedes the
+older `plans.exercise_variants` and `plans.set_infra_prescriptions` shapes documented here.
+Migration `0006` is documented separately in the
+[Execution table catalogue](../execution/table-catalogue.md).
 
 ## Unit conventions
 

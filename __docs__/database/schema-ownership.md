@@ -8,12 +8,15 @@ flowchart LR
     CORE["core\ncanonical catalog + localized authored content"]
     ENGINE["engine\ncalculated exercise enrichment"]
     PLANS["plans\neditable prescription aggregates"]
+    EXEC["exec\ncalendar execution + historical field data"]
     LEDGER["public\nmigration ledger"]
 
     API -->|Atlas reads; video-link write| CORE
     API -->|Atlas + analysis reads| ENGINE
     API -->|plan CRUD/import/duplicate| PLANS
     PLANS -->|FK exercise/muscle/progression refs| CORE
+    EXEC -->|historical lineage FKs| PLANS
+    EXEC -->|prescribed/actual exercise FKs| CORE
     ENGINE -. "logical slug and JSON-key references" .-> CORE
     API -->|migration runner| LEDGER
 ```
@@ -38,6 +41,17 @@ Owns aggregate roots, revisions, ordered microcycle days, optional workouts, sta
 
 The schema intentionally references canonical `core` IDs rather than duplicating exercise/muscle attributes. It does not own calculated engine data or performed workout data.
 
+## `exec`: calendar execution and historical field data
+
+Owns concrete plan runs, materialized microcycles, calendar workout sessions, stable run-scoped
+workout/exercise traces, immutable prescription snapshots, draft/finalized performance artifacts,
+actual set values, and a lightweight event journal.
+
+`exec` references revision-local `plans` rows for provenance but snapshots the training meaning
+needed for history. It references `core.exercises` for prescribed and actual exercise identity.
+Optional ETU JSON is copied as version-labelled analytical provenance; `engine` remains the
+upstream owner of current engine values. See [Execution table catalogue](../execution/table-catalogue.md).
+
 ## `public`: migration bookkeeping only
 
 `public.agonez_schema_migrations` is created/read by the migration runner. Application business queries do not use `public`.
@@ -48,7 +62,9 @@ The schema intentionally references canonical `core` IDs rather than duplicating
 | --- | --- | --- | --- |
 | `plans.exercise_variants.exercise_id` | `core.exercises.id` | Physical FK, restrict delete | Clear catalog dependency |
 | `plans.exercise_slot_target_muscles.muscle_id` | `core.muscles.id` | Physical FK, restrict delete | Clear catalog dependency |
-| projected `plans.exercise_variants.progression_model_slug` | `core.progression_models.slug` | Migration `0003` FK | Required by current code but absent from latest dump |
+| `plans.exercise_variants.progression_model_slug` | `core.progression_models.slug` | Migration `0003` FK | Descriptive progression intent |
+| `exec` source lineage columns | `plans` revision/day/unit/slot/variant/set rows | Physical FKs, restrict delete | Protects historical attribution |
+| `exec` prescribed/actual exercise columns | `core.exercises.id` | Physical FKs, restrict delete | Reuses canonical exercise identity |
 | `engine.exercises.slug` | `core.exercises.slug` | Naming/join convention only | Questionable: orphan/drift possible |
 | engine muscle-vector keys | `core.muscles.slug` | JSON keys only | Questionable: not DB enforced |
 | engine joint-vector keys | no canonical table | JSON keys only | Ungoverned identifier vocabulary |

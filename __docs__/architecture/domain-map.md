@@ -108,4 +108,4 @@ Recovery is modeled as `hours_to_fresh` debt. A workout adds calculated hours; e
 
 ## Explicitly absent concepts
 
-The repository does not currently implement an athlete/user, plan assignment, scheduled calendar session, executed workout, performed set, actual load/reps/RIR, e1RM history, progression state machine, or persisted analysis result. The separate `json-scheme.json` sketches richer plan/prescription/execution structures, but no current runtime module imports it.
+The repository still does not implement an athlete/user, authentication/ownership, an Execution API/UI, automatic progression state machine, e1RM subsystem, or persisted derived analysis result. Migration `0006` now provides database persistence for plan runs, calendar sessions, prescriptions, draft/finalized performances, and actual per-set load/reps/RIR. See [Execution domain](../execution/README.md).

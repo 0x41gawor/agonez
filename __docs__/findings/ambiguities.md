@@ -2,15 +2,15 @@
 
 ## High-impact findings
 
-### Physical dump is behind current application SQL
+### Physical dump is behind current packaged migrations
 
-**Confirmed:** `agonez_db_backup_2026-09-17.sql` records only migrations `0001` and `0002`.
+**Confirmed:** `agonez_db_backup_2026-09-23.sql` records migrations through `0004`.
 
-**Confirmed:** current repository SQL reads/writes `plans.exercise_variants.progression_model_slug` and orders by `core.progression_models.display_order`.
+**Confirmed:** current repository SQL additionally depends on the `0005` progression/set metadata.
 
-**Confirmed:** those columns are absent from the dump and are introduced by packaged migrations `0003` and `0004`.
+**Confirmed:** the `0005` columns and database-only `0006` Execution schema are absent from the dump.
 
-**Impact:** the progression catalog and multiple plan operations fail until startup migrations run. The normal backend Docker command does run them, but restores or direct Python deployments must do so explicitly.
+**Impact:** plan operations using the new metadata fail until `0005` runs, and Execution tables/views do not exist until `0006` runs. The normal backend Docker command applies pending migrations, but restores or direct deployments must do so explicitly.
 
 ### Progression catalog creation is outside packaged migrations
 

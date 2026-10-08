@@ -212,3 +212,32 @@ The progress in the gym can be measured only with the one metric.
 
 "Under the same tranining program (number of sets, rep range, RIR intensity), am I able to perform exercises under more resistance over the course of weeks or not?".
 
+The marker:
+- should be referenced to the first microcycle of the plan_run
+- should be comparable only within the scope of plan_run, not something absolute
+- should be resilient to the athlete workout-unit skips or fallbacks, it should mesasure strength/muscle-mass, not gym appearance
+- should be one number so it is easily compared
+- should be the same formula that calculates it either for workout-unit trace or microcycle trace
+
+The Plan Analysis module feature, already counts (via the engine) something like "Total ETU". In here, we can use the same metric but the weighted sum version.
+
+"TOTAL ETU" measures the stimulus. In here, we need to measure the progress. We take into the account these two facts:
+- Each exercise has an ETU evaluation for one effective rep
+- The marker can show growth in percentage with the reference to the first week
+
+So the formula can be as follow
+
+$$
+\sum_{i=0}^{N}{ETU_i} \cdot ER_i \cdot \frac{load_{i,k}}{load_{i,0}}
+
+\newline \newline
+where:
+N - \text{number of the exercises in the scope}\newline
+ETU_i - \text{ETU of the exercise}\newline
+ER - \text{number of effective reps in the exercise-unit (RIR0 -> 5, RIR4 -> 1)}\newline
+load_{i,k} - \text{load performed in the week k}\newline
+$$
+
+Agonez needs to take care of saving the reference week 0 loads for the future calculations. Which load to take? The sets labeled as (with the desceding order) 'topset' -> 'working'. and if exercise-unit contains several different load values, take the highest.
+
+> What if the given exercise did not existed on the week 0? How to normalize results when the number of exercises changes?

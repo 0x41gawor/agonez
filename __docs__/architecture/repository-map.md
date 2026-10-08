@@ -32,13 +32,15 @@ flowchart TB
 | `src/agonez_api/modules/atlas/` | Atlas router, response schemas, assembly service, SQL repository, YouTube URL normalization. |
 | `src/agonez_api/modules/plans/` | Plan router, nested draft schemas, service assembly, transactional repository, plan exceptions. |
 | `src/agonez_api/modules/plans/analysis/` | Immutable resolved domain, resolver, equations, recovery simulator, analysis/import/export DTOs, orchestration. |
-| `src/agonez_api/migrations/` | Advisory-lock/checksum migration runner and four SQL migrations. |
+| `src/agonez_api/modules/execution/` | Desktop Execution router, explicit DTOs/errors, shared derived rules, service aggregation, and transactional SQL repository. |
+| `src/agonez_api/migrations/` | Advisory-lock/checksum runner, seven schema migrations, and opt-in Execution seed/query SQL. |
 | `scripts/calibrate_plan_analysis.py` | Read-only calibration/report utility for analysis parameters. Its historical output no longer exactly matches current constants. |
 | `tests/` | Unit/contract tests, mocked repository behavior, schema validation, and optional live API scenarios. |
 | `docs/` | Feature-specific implementation handoffs; useful evidence, but some claims are stale against current code. |
 | `Dockerfile`, `compose.yml` | Backend packaging and deployment. |
 
-The backend intentionally uses no ORM. SQL text in `AtlasRepository` and `PlanRepository` is the code-to-database mapping layer.
+The backend intentionally uses no ORM. SQL text in `AtlasRepository`, `PlanRepository`, and
+`ExecutionRepository` is the code-to-database mapping layer.
 
 ## Frontend: `web-fe/`
 

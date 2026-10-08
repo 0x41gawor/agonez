@@ -10,7 +10,7 @@ flowchart LR
     SPA["Vue 3 SPA\nAtlas + PlanCreator"]
     NGINX["nginx\nSPA + reverse proxy"]
     API["FastAPI\nAgonez API"]
-    DB[("PostgreSQL 15\ncore + engine + plans")]
+    DB[("PostgreSQL 15\ncore + engine + plans + exec")]
     MEDIA[("Mounted media\nimages + anatomy SVG")]
 
     USER --> SPA

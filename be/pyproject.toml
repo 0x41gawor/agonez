@@ -31,7 +31,7 @@ where = ["src"]
 include = ["agonez_api*"]
 
 [tool.setuptools.package-data]
-"agonez_api.migrations" = ["versions/*.sql"]
+"agonez_api.migrations" = ["versions/*.sql", "seeds/*.sql", "queries/*.sql"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

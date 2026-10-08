@@ -1,7 +1,9 @@
 openapi: 3.1.0
 info:
   title: Agonez Atlas API
-  description: REST API for the Agonez exercise and muscle Atlas and the relational PlanCreator draft editor. Authentication and ownership are intentionally deferred in this first PlanCreator iteration.
+  description: REST API for the Agonez exercise and muscle Atlas and the relational
+    PlanCreator draft editor and the desktop Execution workflow API. Authentication
+    and ownership are intentionally deferred.
   version: 0.1.0
 paths:
   /assets/anatomy.svg:
@@ -711,14 +713,6 @@ paths:
           type: integer
           minimum: 1
           title: Plan Id
-      - name: Accept-Language
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Accept-Language
       requestBody:
         required: true
         content:
@@ -738,8 +732,1189 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/exec/plan-runs:
+    get:
+      tags:
+      - Execution
+      summary: List Plan Runs
+      operationId: list_plan_runs_api_v1_exec_plan_runs_get
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/PlanRunStatus'
+          - type: 'null'
+          title: Status
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanRunListResponse'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      tags:
+      - Execution
+      summary: Create Plan Run
+      operationId: create_plan_run_api_v1_exec_plan_runs_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanRunCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanRunOverview'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/preview:
+    get:
+      tags:
+      - Execution
+      summary: Preview Plan Run
+      operationId: preview_plan_run_api_v1_exec_plan_runs_preview_get
+      parameters:
+      - name: plan_revision_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Revision Id
+      - name: starts_on
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: Starts On
+      - name: microcycle_count
+        in: query
+        required: true
+        schema:
+          type: integer
+          title: Microcycle Count
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanRunPreview'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/overview:
+    get:
+      tags:
+      - Execution
+      summary: Get Plan Run Overview
+      operationId: get_plan_run_overview_api_v1_exec_plan_runs__plan_run_id__overview_get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanRunOverview'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}:
+    patch:
+      tags:
+      - Execution
+      summary: Update Plan Run
+      operationId: update_plan_run_api_v1_exec_plan_runs__plan_run_id__patch
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanRunPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanRunOverview'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/analysis/queue:
+    get:
+      tags:
+      - Execution
+      summary: Get Analysis Queue
+      operationId: get_analysis_queue_api_v1_exec_plan_runs__plan_run_id__analysis_queue_get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: target_microcycle
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 1
+          - type: 'null'
+          title: Target Microcycle
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisQueue'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/exercise-traces/{exercise_trace_id}:
+    get:
+      tags:
+      - Execution
+      summary: Get Exercise Trace
+      operationId: get_exercise_trace_api_v1_exec_plan_runs__plan_run_id__exercise_traces__exercise_trace_id__get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: exercise_trace_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Exercise Trace Id
+      - name: include_next
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+          title: Include Next
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseTraceResponse'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/exercise-traces/{exercise_trace_id}/next:
+    get:
+      tags:
+      - Execution
+      summary: Get Next Prescription
+      operationId: get_next_prescription_api_v1_exec_plan_runs__plan_run_id__exercise_traces__exercise_trace_id__next_get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: exercise_trace_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Exercise Trace Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NextPrescription'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/sessions/{session_id}/exercise-prescriptions/{exercise_trace_id}:
+    put:
+      tags:
+      - Execution
+      summary: Save Exercise Prescription
+      operationId: save_exercise_prescription_api_v1_exec_plan_runs__plan_run_id__sessions__session_id__exercise_prescriptions__exercise_trace_id__put
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Session Id
+      - name: exercise_trace_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Exercise Trace Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExercisePrescriptionPut'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrescriptionWriteResponse'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      tags:
+      - Execution
+      summary: Delete Exercise Prescription
+      operationId: delete_exercise_prescription_api_v1_exec_plan_runs__plan_run_id__sessions__session_id__exercise_prescriptions__exercise_trace_id__delete
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Session Id
+      - name: exercise_trace_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Exercise Trace Id
+      responses:
+        '204':
+          description: Successful Response
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/sessions/{session_id}/prescription:
+    patch:
+      tags:
+      - Execution
+      summary: Update Workout Prescription
+      operationId: update_workout_prescription_api_v1_exec_plan_runs__plan_run_id__sessions__session_id__prescription_patch
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutPrescriptionPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutPrescriptionResponse'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/workout-traces:
+    get:
+      tags:
+      - Execution
+      summary: List Workout Traces
+      operationId: list_workout_traces_api_v1_exec_plan_runs__plan_run_id__workout_traces_get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutTraceList'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/workout-traces/{workout_trace_id}:
+    get:
+      tags:
+      - Execution
+      summary: Get Workout Trace
+      operationId: get_workout_trace_api_v1_exec_plan_runs__plan_run_id__workout_traces__workout_trace_id__get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: workout_trace_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Workout Trace Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutTraceResponse'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/microcycles:
+    get:
+      tags:
+      - Execution
+      summary: Get Microcycles
+      operationId: get_microcycles_api_v1_exec_plan_runs__plan_run_id__microcycles_get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MicrocycleTimeline'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/microcycles/{ordinal}:
+    patch:
+      tags:
+      - Execution
+      summary: Update Microcycle
+      operationId: update_microcycle_api_v1_exec_plan_runs__plan_run_id__microcycles__ordinal__patch
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: ordinal
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Ordinal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MicrocyclePatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelineMicrocycle'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/calendar:
+    get:
+      tags:
+      - Execution
+      summary: Get Calendar
+      operationId: get_calendar_api_v1_exec_plan_runs__plan_run_id__calendar_get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: From
+      - name: to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: To
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarResponse'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/sessions/{session_id}:
+    patch:
+      tags:
+      - Execution
+      summary: Update Session Status
+      operationId: update_session_status_api_v1_exec_plan_runs__plan_run_id__sessions__session_id__patch
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionStatusResponse'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/events:
+    get:
+      tags:
+      - Execution
+      summary: List Events
+      operationId: list_events_api_v1_exec_plan_runs__plan_run_id__events_get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          title: Type
+      - name: microcycle
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 1
+          - type: 'null'
+          title: Microcycle
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cursor
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      tags:
+      - Execution
+      summary: Create Event
+      operationId: create_event_api_v1_exec_plan_runs__plan_run_id__events_post
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDTO'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/events/{event_id}:
+    patch:
+      tags:
+      - Execution
+      summary: Update Event
+      operationId: update_event_api_v1_exec_plan_runs__plan_run_id__events__event_id__patch
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Event Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDTO'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      tags:
+      - Execution
+      summary: Delete Event
+      operationId: delete_event_api_v1_exec_plan_runs__plan_run_id__events__event_id__delete
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Event Id
+      responses:
+        '204':
+          description: Successful Response
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/load-series:
+    get:
+      tags:
+      - Execution
+      summary: Get Load Series
+      operationId: get_load_series_api_v1_exec_plan_runs__plan_run_id__load_series_get
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: metric
+        in: query
+        required: false
+        schema:
+          enum:
+          - top_set_load
+          - mean_set_load
+          - volume_load
+          type: string
+          default: top_set_load
+          title: Metric
+      - name: normalize
+        in: query
+        required: false
+        schema:
+          enum:
+          - none
+          - first_exposure
+          type: string
+          default: none
+          title: Normalize
+      - name: workout_trace_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: integer
+          - type: 'null'
+          title: Workout Trace Id
+      - name: exercise_trace_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: integer
+          - type: 'null'
+          title: Exercise Trace Id
+      - name: include_draft
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Include Draft
+      - name: x
+        in: query
+        required: false
+        schema:
+          enum:
+          - microcycle
+          - date
+          type: string
+          default: microcycle
+          title: X
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadSeriesResponse'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/waitlist:
+    post:
+      tags:
+      - Waitlist
+      summary: Join Waitlist
+      operationId: join_waitlist_api_waitlist_post
+      parameters:
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WaitlistSubmission'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WaitlistSubmissionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    AbsoluteLoadSpec:
+      properties:
+        kind:
+          type: string
+          const: absolute
+          title: Kind
+          default: absolute
+      additionalProperties: false
+      type: object
+      title: AbsoluteLoadSpec
+    ActiveWorkingSets:
+      properties:
+        min:
+          type: integer
+          maximum: 32767.0
+          minimum: 0.0
+          title: Min
+        max:
+          type: integer
+          maximum: 32767.0
+          minimum: 0.0
+          title: Max
+      additionalProperties: false
+      type: object
+      required:
+      - min
+      - max
+      title: ActiveWorkingSets
     AnalysisDiagnostic:
       properties:
         code:
@@ -838,6 +2013,83 @@ components:
       - muscle_recovery_velocity_v1
       - joint_recovery_velocity_v1
       title: AnalysisModelParameters
+    AnalysisQueue:
+      properties:
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        target_microcycle:
+          anyOf:
+          - $ref: '#/components/schemas/MicrocycleRef'
+          - type: 'null'
+        workouts:
+          items:
+            $ref: '#/components/schemas/QueueWorkout'
+          type: array
+          title: Workouts
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - target_microcycle
+      - workouts
+      title: AnalysisQueue
+    AnalysisReadiness:
+      properties:
+        target_microcycle_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Target Microcycle Ordinal
+        workouts:
+          items:
+            $ref: '#/components/schemas/AnalysisReadinessItem'
+          type: array
+          title: Workouts
+      additionalProperties: false
+      type: object
+      required:
+      - target_microcycle_ordinal
+      - workouts
+      title: AnalysisReadiness
+    AnalysisReadinessItem:
+      properties:
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+        state:
+          $ref: '#/components/schemas/NextPrescriptionState'
+        blocked_reason:
+          anyOf:
+          - $ref: '#/components/schemas/BlockedReason'
+          - type: 'null'
+        basis_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Basis Date
+        exercises_total:
+          type: integer
+          title: Exercises Total
+        exercises_prescribed:
+          type: integer
+          title: Exercises Prescribed
+      additionalProperties: false
+      type: object
+      required:
+      - workout_trace_id
+      - workout_name
+      - state
+      - blocked_reason
+      - basis_date
+      - exercises_total
+      - exercises_prescribed
+      title: AnalysisReadinessItem
     AnalysisTimelineDay:
       properties:
         day_id:
@@ -899,6 +2151,17 @@ components:
       - joint_recovery_before
       - joint_recovery_after
       title: AnalysisTimelineDay
+    AthleteSelectedLoadSpec:
+      properties:
+        kind:
+          type: string
+          const: athlete_selected
+          title: Kind
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      title: AthleteSelectedLoadSpec
     AtlasCounts:
       properties:
         exercises:
@@ -952,6 +2215,315 @@ components:
       - muscle_complex
       - counts
       title: AtlasMeta
+    Attendance:
+      properties:
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+        due:
+          type: integer
+          title: Due
+        completed:
+          type: integer
+          title: Completed
+        missed:
+          type: integer
+          title: Missed
+        cancelled:
+          type: integer
+          title: Cancelled
+        in_progress:
+          type: integer
+          title: In Progress
+        ratio:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Ratio
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle_ordinal
+      - due
+      - completed
+      - missed
+      - cancelled
+      - in_progress
+      - ratio
+      title: Attendance
+    BasisSession:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - scheduled_date
+      - microcycle_ordinal
+      title: BasisSession
+    BlockedDetail:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        synced_exercise_count:
+          type: integer
+          title: Synced Exercise Count
+        exercise_count:
+          type: integer
+          title: Exercise Count
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - scheduled_date
+      - started_at
+      - synced_exercise_count
+      - exercise_count
+      title: BlockedDetail
+    BlockedReason:
+      type: string
+      enum:
+      - previous_exposure_in_progress
+      - previous_exposure_not_performed
+      - session_started
+      - no_future_session
+      - run_not_active
+      title: BlockedReason
+    CalendarResponse:
+      properties:
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        sessions:
+          items:
+            $ref: '#/components/schemas/CalendarSession'
+          type: array
+          title: Sessions
+        microcycle_bounds:
+          items:
+            $ref: '#/components/schemas/MicrocycleBound'
+          type: array
+          title: Microcycle Bounds
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - sessions
+      - microcycle_bounds
+      title: CalendarResponse
+    CalendarSession:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+        status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+        completion_mode:
+          anyOf:
+          - $ref: '#/components/schemas/CompletionMode'
+          - type: 'null'
+        prescription_completeness:
+          $ref: '#/components/schemas/PrescriptionCompleteness'
+        performance_status:
+          anyOf:
+          - $ref: '#/components/schemas/PerformanceStatus'
+          - type: 'null'
+        fallback_workout_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Fallback Workout Name
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - scheduled_date
+      - microcycle_ordinal
+      - day_ordinal
+      - workout_trace_id
+      - workout_name
+      - status
+      - completion_mode
+      - prescription_completeness
+      - performance_status
+      - fallback_workout_name
+      title: CalendarSession
+    CompletionMode:
+      type: string
+      enum:
+      - as_prescribed
+      - fallback
+      title: CompletionMode
+    Continuity:
+      properties:
+        first_microcycle_ordinal:
+          type: integer
+          title: First Microcycle Ordinal
+        revisions_spanned:
+          items:
+            type: integer
+          type: array
+          title: Revisions Spanned
+        continues_from:
+          anyOf:
+          - $ref: '#/components/schemas/ContinuityLink'
+          - type: 'null'
+        continued_by:
+          anyOf:
+          - $ref: '#/components/schemas/ContinuityLink'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - first_microcycle_ordinal
+      - revisions_spanned
+      - continues_from
+      - continued_by
+      title: Continuity
+    ContinuityLink:
+      properties:
+        exercise_trace_id:
+          type: integer
+          title: Exercise Trace Id
+        display_name:
+          type: string
+          title: Display Name
+        from_microcycle_ordinal:
+          type: integer
+          title: From Microcycle Ordinal
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_trace_id
+      - display_name
+      - from_microcycle_ordinal
+      title: ContinuityLink
+    CurrentMicrocycleSession:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        workout_name:
+          type: string
+          title: Workout Name
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        prescription_completeness:
+          $ref: '#/components/schemas/PrescriptionCompleteness'
+        exercise_count:
+          type: integer
+          title: Exercise Count
+        performance:
+          anyOf:
+          - $ref: '#/components/schemas/PerformanceBrief'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - workout_name
+      - scheduled_date
+      - status
+      - started_at
+      - completed_at
+      - prescription_completeness
+      - exercise_count
+      - performance
+      title: CurrentMicrocycleSession
+    CurrentPlan:
+      properties:
+        plan_revision_no:
+          type: integer
+          title: Plan Revision No
+        slot_role:
+          type: string
+          title: Slot Role
+        exercise:
+          $ref: '#/components/schemas/ExerciseRef'
+        sets:
+          items:
+            $ref: '#/components/schemas/SetPlan'
+          type: array
+          title: Sets
+        plan_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plan Comment
+        progression_model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Progression Model
+        load_step_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Step Kg
+      additionalProperties: false
+      type: object
+      required:
+      - plan_revision_no
+      - slot_role
+      - exercise
+      - sets
+      - plan_comment
+      - progression_model
+      - load_step_kg
+      title: CurrentPlan
     DayArtifact:
       properties:
         id:
@@ -987,6 +2559,28 @@ components:
       - description
       - workout_unit
       title: DayArtifact
+    DayColumn:
+      properties:
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        workout_trace_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Workout Trace Id
+        workout_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Workout Name
+      additionalProperties: false
+      type: object
+      required:
+      - day_ordinal
+      - workout_trace_id
+      - workout_name
+      title: DayColumn
     DayDraft:
       properties:
         id:
@@ -1033,6 +2627,271 @@ components:
       - WARNING
       - ERROR
       title: DiagnosticSeverity
+    Divergence:
+      properties:
+        load:
+          anyOf:
+          - $ref: '#/components/schemas/LoadDivergence'
+          - type: 'null'
+        reps:
+          anyOf:
+          - $ref: '#/components/schemas/RepsPosition'
+          - type: 'null'
+        rir:
+          anyOf:
+          - $ref: '#/components/schemas/RIRDivergence'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - load
+      - reps
+      - rir
+      title: Divergence
+    ErrorBody:
+      properties:
+        code:
+          type: string
+          title: Code
+        message:
+          type: string
+          title: Message
+        details:
+          additionalProperties: true
+          type: object
+          title: Details
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - message
+      - details
+      title: ErrorBody
+    ErrorEnvelope:
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+      additionalProperties: false
+      type: object
+      required:
+      - error
+      title: ErrorEnvelope
+    EventBrief:
+      properties:
+        event_id:
+          type: integer
+          title: Event Id
+        event_type:
+          $ref: '#/components/schemas/PlanRunEventType'
+        title:
+          type: string
+          title: Title
+        occurred_at:
+          type: string
+          format: date-time
+          title: Occurred At
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - event_type
+      - title
+      - occurred_at
+      title: EventBrief
+    EventCreate:
+      properties:
+        event_type:
+          $ref: '#/components/schemas/PlanRunEventType'
+        date:
+          type: string
+          format: date
+          title: Date
+        body:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Body
+        session_id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Session Id
+        exercise_trace_id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Exercise Trace Id
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+      additionalProperties: false
+      type: object
+      required:
+      - event_type
+      - date
+      title: EventCreate
+    EventDTO:
+      properties:
+        event_id:
+          type: integer
+          title: Event Id
+        event_type:
+          $ref: '#/components/schemas/PlanRunEventType'
+        title:
+          type: string
+          title: Title
+        occurred_at:
+          type: string
+          format: date-time
+          title: Occurred At
+        date:
+          type: string
+          format: date
+          title: Date
+        microcycle_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Microcycle Ordinal
+        day_in_microcycle:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Day In Microcycle
+        session:
+          anyOf:
+          - $ref: '#/components/schemas/EventSessionRef'
+          - type: 'null'
+        exercise_trace:
+          anyOf:
+          - $ref: '#/components/schemas/EventExerciseRef'
+          - type: 'null'
+        from_revision_no:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: From Revision No
+        to_revision_no:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: To Revision No
+        body:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Body
+        source:
+          type: string
+          enum:
+          - system
+          - user
+          title: Source
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - event_type
+      - title
+      - occurred_at
+      - date
+      - microcycle_ordinal
+      - day_in_microcycle
+      - session
+      - exercise_trace
+      - from_revision_no
+      - to_revision_no
+      - body
+      - source
+      - metadata
+      title: EventDTO
+    EventExerciseRef:
+      properties:
+        exercise_trace_id:
+          type: integer
+          title: Exercise Trace Id
+        display_name:
+          type: string
+          title: Display Name
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_trace_id
+      - display_name
+      title: EventExerciseRef
+    EventListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/EventDTO'
+          type: array
+          title: Items
+        next_cursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Next Cursor
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      - next_cursor
+      title: EventListResponse
+    EventPatch:
+      properties:
+        date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date
+        body:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Body
+        session_id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Session Id
+        exercise_trace_id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Exercise Trace Id
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Metadata
+      additionalProperties: false
+      type: object
+      title: EventPatch
+    EventSessionRef:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        workout_name:
+          type: string
+          title: Workout Name
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - workout_name
+      title: EventSessionRef
     ExerciseCatalogItem:
       properties:
         slug:
@@ -1238,6 +3097,34 @@ components:
       - muscle_recovery_cost_modifier_vector
       - joint_load_exposure_vector
       title: ExerciseEngine
+    ExerciseExecutionMode:
+      type: string
+      enum:
+      - as_prescribed
+      - substituted
+      - skipped
+      - additional
+      title: ExerciseExecutionMode
+    ExerciseExposure:
+      properties:
+        microcycle:
+          $ref: '#/components/schemas/MicrocycleRef'
+        session:
+          $ref: '#/components/schemas/ExposureSession'
+        prescription:
+          $ref: '#/components/schemas/ExposurePrescription'
+        performance:
+          anyOf:
+          - $ref: '#/components/schemas/ExposurePerformance'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle
+      - session
+      - prescription
+      - performance
+      title: ExerciseExposure
     ExerciseFacets:
       properties:
         body_part:
@@ -1363,6 +3250,56 @@ components:
       - per_page
       - facets
       title: ExerciseListResponse
+    ExercisePrescriptionPut:
+      properties:
+        based_on_exercise_performance_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Based On Exercise Performance Id
+        sets:
+          items:
+            $ref: '#/components/schemas/PrescriptionSetInput'
+          type: array
+          title: Sets
+        prescription_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prescription Comment
+        expected_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Expected Version
+      additionalProperties: false
+      type: object
+      required:
+      - based_on_exercise_performance_id
+      - sets
+      title: ExercisePrescriptionPut
+    ExerciseRef:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        variant_label:
+          type: string
+          title: Variant Label
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_id
+      - slug
+      - name
+      - variant_label
+      title: ExerciseRef
     ExerciseSlotArtifact:
       properties:
         id:
@@ -1500,6 +3437,37 @@ components:
       - VOLUME_ACCUMULATION
       - ACCESSORY
       title: ExerciseSlotRole
+    ExerciseTraceResponse:
+      properties:
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        trace:
+          $ref: '#/components/schemas/TraceHeader'
+        revision_transitions:
+          items:
+            $ref: '#/components/schemas/RevisionTransition'
+          type: array
+          title: Revision Transitions
+        exposures:
+          items:
+            $ref: '#/components/schemas/ExerciseExposure'
+          type: array
+          title: Exposures
+        next:
+          anyOf:
+          - $ref: '#/components/schemas/NextPrescription'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - trace
+      - revision_transitions
+      - exposures
+      - next
+      title: ExerciseTraceResponse
     ExerciseVariantArtifact:
       properties:
         id:
@@ -1518,6 +3486,14 @@ components:
           - type: string
           - type: 'null'
           title: Progression Model Slug
+        progression_id:
+          type: string
+          format: uuid
+          title: Progression Id
+        active_working_sets:
+          anyOf:
+          - $ref: '#/components/schemas/ActiveWorkingSets'
+          - type: 'null'
         sets:
           items:
             $ref: '#/components/schemas/SetInfraArtifact'
@@ -1560,6 +3536,14 @@ components:
             pattern: ^[a-z0-9_]+$
           - type: 'null'
           title: Progression Model Slug
+        progression_id:
+          type: string
+          format: uuid
+          title: Progression Id
+        active_working_sets:
+          anyOf:
+          - $ref: '#/components/schemas/ActiveWorkingSets'
+          - type: 'null'
         sets:
           items:
             $ref: '#/components/schemas/SetInfraDraft'
@@ -1602,6 +3586,98 @@ components:
       required:
       - video_links
       title: ExerciseVideoLinks
+    ExposurePerformance:
+      properties:
+        status:
+          $ref: '#/components/schemas/PerformanceStatus'
+        execution_mode:
+          $ref: '#/components/schemas/ExerciseExecutionMode'
+        actual_exercise:
+          anyOf:
+          - $ref: '#/components/schemas/ExerciseRef'
+          - type: 'null'
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+        sets:
+          items:
+            $ref: '#/components/schemas/SetPerformance'
+          type: array
+          title: Sets
+        summary:
+          $ref: '#/components/schemas/PerformanceSummary'
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      - execution_mode
+      - actual_exercise
+      - comment
+      - sets
+      - summary
+      title: ExposurePerformance
+    ExposurePrescription:
+      properties:
+        exercise_prescription_id:
+          type: integer
+          title: Exercise Prescription Id
+        exercise:
+          $ref: '#/components/schemas/ExerciseRef'
+        plan_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plan Comment
+        prescription_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prescription Comment
+        based_on_performance_microcycle_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Based On Performance Microcycle Ordinal
+        sets:
+          items:
+            $ref: '#/components/schemas/SetPrescription'
+          type: array
+          title: Sets
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_prescription_id
+      - exercise
+      - plan_comment
+      - prescription_comment
+      - based_on_performance_microcycle_ordinal
+      - sets
+      title: ExposurePrescription
+    ExposureSession:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+        completion_mode:
+          anyOf:
+          - $ref: '#/components/schemas/CompletionMode'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - scheduled_date
+      - status
+      - completion_mode
+      title: ExposureSession
     HTTPValidationError:
       properties:
         detail:
@@ -1740,6 +3816,235 @@ components:
       - jru
       - recovery_hours_added
       title: JointStimulus
+    LastSummary:
+      properties:
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+        execution_mode:
+          $ref: '#/components/schemas/ExerciseExecutionMode'
+        top_load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Top Load Kg
+        reps:
+          items:
+            anyOf:
+            - type: integer
+            - type: 'null'
+          type: array
+          title: Reps
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle_ordinal
+      - execution_mode
+      - top_load_kg
+      - reps
+      title: LastSummary
+    LatestExposure:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        exercises:
+          items:
+            $ref: '#/components/schemas/LatestExposureExercise'
+          type: array
+          title: Exercises
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - workout_trace_id
+      - workout_name
+      - scheduled_date
+      - exercises
+      title: LatestExposure
+    LatestExposureExercise:
+      properties:
+        exercise_trace_id:
+          type: integer
+          title: Exercise Trace Id
+        name:
+          type: string
+          title: Name
+        execution_mode:
+          anyOf:
+          - $ref: '#/components/schemas/ExerciseExecutionMode'
+          - type: 'null'
+        prescribed_summary:
+          $ref: '#/components/schemas/PrescribedSummary'
+        performed_reps:
+          items:
+            anyOf:
+            - type: integer
+            - type: 'null'
+          type: array
+          title: Performed Reps
+        performed_rir:
+          items:
+            anyOf:
+            - type: integer
+            - type: 'null'
+          type: array
+          title: Performed Rir
+        flags:
+          items:
+            type: string
+          type: array
+          title: Flags
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_trace_id
+      - name
+      - execution_mode
+      - prescribed_summary
+      - performed_reps
+      - performed_rir
+      - flags
+      title: LatestExposureExercise
+    LoadDivergence:
+      type: string
+      enum:
+      - below
+      - equal
+      - above
+      title: LoadDivergence
+    LoadPoint:
+      properties:
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+        date:
+          type: string
+          format: date
+          title: Date
+        value:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Value
+        set_count:
+          type: integer
+          title: Set Count
+        reps:
+          items:
+            anyOf:
+            - type: integer
+            - type: 'null'
+          type: array
+          title: Reps
+        status:
+          $ref: '#/components/schemas/PerformanceStatus'
+        execution_mode:
+          $ref: '#/components/schemas/ExerciseExecutionMode'
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle_ordinal
+      - date
+      - value
+      - set_count
+      - reps
+      - status
+      - execution_mode
+      title: LoadPoint
+    LoadSeries:
+      properties:
+        exercise_trace_id:
+          type: integer
+          title: Exercise Trace Id
+        display_name:
+          type: string
+          title: Display Name
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+        points:
+          items:
+            $ref: '#/components/schemas/LoadPoint'
+          type: array
+          title: Points
+        first_value:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: First Value
+        latest_value:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Latest Value
+        delta_pct:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Delta Pct
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_trace_id
+      - display_name
+      - workout_trace_id
+      - workout_name
+      - points
+      - first_value
+      - latest_value
+      - delta_pct
+      title: LoadSeries
+    LoadSeriesResponse:
+      properties:
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        metric:
+          type: string
+          enum:
+          - top_set_load
+          - mean_set_load
+          - volume_load
+          title: Metric
+        x_domain:
+          items:
+            $ref: '#/components/schemas/XDomainItem'
+          type: array
+          title: X Domain
+        series:
+          items:
+            $ref: '#/components/schemas/LoadSeries'
+          type: array
+          title: Series
+        workout_summaries:
+          items:
+            $ref: '#/components/schemas/WorkoutLoadSummary'
+          type: array
+          title: Workout Summaries
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - metric
+      - x_domain
+      - series
+      - workout_summaries
+      title: LoadSeriesResponse
     LoadingMode:
       type: string
       enum:
@@ -1747,6 +4052,142 @@ components:
       - moderate_load
       - low_load
       title: LoadingMode
+    MatrixSession:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+        completion_mode:
+          anyOf:
+          - $ref: '#/components/schemas/CompletionMode'
+          - type: 'null'
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - scheduled_date
+      - status
+      - completion_mode
+      - started_at
+      - completed_at
+      title: MatrixSession
+    MicrocycleBound:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+        classification:
+          $ref: '#/components/schemas/MicrocycleClassification'
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - starts_on
+      - ends_on
+      - classification
+      title: MicrocycleBound
+    MicrocycleClassification:
+      type: string
+      enum:
+      - normal
+      - deload
+      - reload
+      title: MicrocycleClassification
+    MicrocyclePatch:
+      properties:
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        classification:
+          anyOf:
+          - $ref: '#/components/schemas/MicrocycleClassification'
+          - type: 'null'
+        expected_version:
+          type: string
+          title: Expected Version
+      additionalProperties: false
+      type: object
+      required:
+      - expected_version
+      title: MicrocyclePatch
+    MicrocycleRef:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+        classification:
+          $ref: '#/components/schemas/MicrocycleClassification'
+        plan_revision_no:
+          type: integer
+          title: Plan Revision No
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - starts_on
+      - ends_on
+      - classification
+      - plan_revision_no
+      title: MicrocycleRef
+    MicrocycleTimeline:
+      properties:
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        day_columns:
+          items:
+            $ref: '#/components/schemas/DayColumn'
+          type: array
+          title: Day Columns
+        microcycles:
+          items:
+            $ref: '#/components/schemas/TimelineMicrocycle'
+          type: array
+          title: Microcycles
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - day_columns
+      - microcycles
+      title: MicrocycleTimeline
     MuscleAnalysisSummary:
       properties:
         slug:
@@ -2162,6 +4603,270 @@ components:
       - mru
       - recovery_hours_added
       title: MuscleStimulus
+    NextBasis:
+      properties:
+        exercise_performance_id:
+          type: integer
+          title: Exercise Performance Id
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        status:
+          $ref: '#/components/schemas/PerformanceStatus'
+        execution_mode:
+          $ref: '#/components/schemas/ExerciseExecutionMode'
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_performance_id
+      - microcycle_ordinal
+      - scheduled_date
+      - status
+      - execution_mode
+      title: NextBasis
+    NextDefaults:
+      properties:
+        from_previous_prescription:
+          items:
+            anyOf:
+            - type: number
+            - type: 'null'
+          type: array
+          title: From Previous Prescription
+        from_previous_performance:
+          items:
+            anyOf:
+            - type: number
+            - type: 'null'
+          type: array
+          title: From Previous Performance
+        from_seed_run:
+          anyOf:
+          - items:
+              anyOf:
+              - type: number
+              - type: 'null'
+            type: array
+          - type: 'null'
+          title: From Seed Run
+      additionalProperties: false
+      type: object
+      required:
+      - from_previous_prescription
+      - from_previous_performance
+      - from_seed_run
+      title: NextDefaults
+    NextPrescription:
+      properties:
+        state:
+          $ref: '#/components/schemas/NextPrescriptionState'
+        blocked_reason:
+          anyOf:
+          - $ref: '#/components/schemas/BlockedReason'
+          - type: 'null'
+        target:
+          anyOf:
+          - $ref: '#/components/schemas/NextTarget'
+          - type: 'null'
+        basis:
+          anyOf:
+          - $ref: '#/components/schemas/NextBasis'
+          - type: 'null'
+        plan_sets:
+          items:
+            $ref: '#/components/schemas/SetPlan'
+          type: array
+          title: Plan Sets
+        plan_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plan Comment
+        defaults:
+          $ref: '#/components/schemas/NextDefaults'
+        prescription:
+          anyOf:
+          - $ref: '#/components/schemas/SavedPrescription'
+          - type: 'null'
+        suggestion:
+          type: 'null'
+          title: Suggestion
+      additionalProperties: false
+      type: object
+      required:
+      - state
+      - blocked_reason
+      - target
+      - basis
+      - plan_sets
+      - plan_comment
+      - defaults
+      - prescription
+      title: NextPrescription
+    NextPrescriptionState:
+      type: string
+      enum:
+      - editable
+      - blocked
+      - locked
+      - none
+      title: NextPrescriptionState
+    NextTarget:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        microcycle:
+          $ref: '#/components/schemas/MicrocycleRef'
+        session_status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - workout_trace_id
+      - scheduled_date
+      - microcycle
+      - session_status
+      title: NextTarget
+    OrdinalVariantLoadSpec:
+      properties:
+        kind:
+          type: string
+          const: ordinal_variant
+          title: Kind
+        level:
+          type: integer
+          maximum: 32767.0
+          minimum: 1.0
+          title: Level
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - level
+      title: OrdinalVariantLoadSpec
+    OverlappingRun:
+      properties:
+        plan_run_id:
+          type: integer
+          title: Plan Run Id
+        name:
+          type: string
+          title: Name
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+      additionalProperties: false
+      type: object
+      required:
+      - plan_run_id
+      - name
+      - starts_on
+      - ends_on
+      title: OverlappingRun
+    OverviewMicrocycle:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+        classification:
+          $ref: '#/components/schemas/MicrocycleClassification'
+        plan_revision_no:
+          type: integer
+          title: Plan Revision No
+        revision_changed_here:
+          type: boolean
+          title: Revision Changed Here
+        is_current:
+          type: boolean
+          title: Is Current
+        sessions:
+          items:
+            $ref: '#/components/schemas/SessionBrief'
+          type: array
+          title: Sessions
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - starts_on
+      - ends_on
+      - classification
+      - plan_revision_no
+      - revision_changed_here
+      - is_current
+      - sessions
+      title: OverviewMicrocycle
+    PerformanceBrief:
+      properties:
+        status:
+          $ref: '#/components/schemas/PerformanceStatus'
+        synced_exercise_count:
+          type: integer
+          title: Synced Exercise Count
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      - synced_exercise_count
+      title: PerformanceBrief
+    PerformanceStatus:
+      type: string
+      enum:
+      - draft
+      - finalized
+      title: PerformanceStatus
+    PerformanceSummary:
+      properties:
+        total_reps:
+          type: integer
+          title: Total Reps
+        volume_load_kg:
+          type: number
+          title: Volume Load Kg
+        top_load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Top Load Kg
+      additionalProperties: false
+      type: object
+      required:
+      - total_reps
+      - volume_load_kg
+      - top_load_kg
+      title: PerformanceSummary
+    PerformedSetStatus:
+      type: string
+      enum:
+      - performed
+      - skipped
+      title: PerformedSetStatus
     PlanAIExportDay:
       properties:
         day:
@@ -2203,7 +4908,19 @@ components:
           title: Slug
         progression_model:
           anyOf:
-          - $ref: '#/components/schemas/PlanAIProgressionModel'
+          - type: string
+            maxLength: 200
+            minLength: 1
+            pattern: ^[a-z0-9_]+$
+          - type: 'null'
+          title: Progression Model
+        progression_id:
+          type: string
+          format: uuid
+          title: Progression Id
+        active_working_sets:
+          anyOf:
+          - $ref: '#/components/schemas/ActiveWorkingSets'
           - type: 'null'
         sets:
           items:
@@ -2216,15 +4933,17 @@ components:
       - name
       - slug
       - progression_model
+      - progression_id
+      - active_working_sets
       - sets
       title: PlanAIExportExercise
     PlanAIExportResult:
       properties:
         format:
           type: string
-          const: agonez-plan-sanity-v2
+          const: agonez-plan-sanity-v4
           title: Format
-          default: agonez-plan-sanity-v2
+          default: agonez-plan-sanity-v4
         plan_name:
           type: string
           title: Plan Name
@@ -2247,15 +4966,34 @@ components:
         reps:
           $ref: '#/components/schemas/RepRange'
         rir:
-          type: integer
-          maximum: 4.0
-          minimum: 0.0
-          title: Rir
+          $ref: '#/components/schemas/RIRPrescription'
+        role:
+          $ref: '#/components/schemas/SetRole'
+        load_spec:
+          oneOf:
+          - $ref: '#/components/schemas/AbsoluteLoadSpec'
+          - $ref: '#/components/schemas/AthleteSelectedLoadSpec'
+          - $ref: '#/components/schemas/RelativeToSetLoadSpec'
+          - $ref: '#/components/schemas/RelativeToWorkingLoadSpec'
+          - $ref: '#/components/schemas/TableDerivedLoadSpec'
+          - $ref: '#/components/schemas/OrdinalVariantLoadSpec'
+          title: Load Spec
+          discriminator:
+            propertyName: kind
+            mapping:
+              absolute: '#/components/schemas/AbsoluteLoadSpec'
+              athlete_selected: '#/components/schemas/AthleteSelectedLoadSpec'
+              ordinal_variant: '#/components/schemas/OrdinalVariantLoadSpec'
+              relative_to_set: '#/components/schemas/RelativeToSetLoadSpec'
+              relative_to_working: '#/components/schemas/RelativeToWorkingLoadSpec'
+              table_derived: '#/components/schemas/TableDerivedLoadSpec'
       additionalProperties: false
       type: object
       required:
       - reps
       - rir
+      - role
+      - load_spec
       title: PlanAIExportSet
     PlanAIImportDay:
       properties:
@@ -2307,6 +5045,8 @@ components:
           enum:
           - agonez-plan-sanity-v1
           - agonez-plan-sanity-v2
+          - agonez-plan-sanity-v3
+          - agonez-plan-sanity-v4
           title: Format
         plan_name:
           type: string
@@ -2345,6 +5085,19 @@ components:
         progression_model:
           anyOf:
           - $ref: '#/components/schemas/PlanAIImportProgressionModel'
+          - type: string
+            maxLength: 200
+            minLength: 1
+            pattern: ^[a-z0-9_]+$
+          - type: 'null'
+          title: Progression Model
+        progression_id:
+          type: string
+          format: uuid
+          title: Progression Id
+        active_working_sets:
+          anyOf:
+          - $ref: '#/components/schemas/ActiveWorkingSets'
           - type: 'null'
         sets:
           items:
@@ -2401,49 +5154,34 @@ components:
         reps:
           $ref: '#/components/schemas/RepRange'
         rir:
-          type: integer
-          maximum: 4.0
-          minimum: 0.0
-          title: Rir
+          $ref: '#/components/schemas/RIRPrescription'
+        role:
+          $ref: '#/components/schemas/SetRole'
+          default: working
+        load_spec:
+          oneOf:
+          - $ref: '#/components/schemas/AbsoluteLoadSpec'
+          - $ref: '#/components/schemas/AthleteSelectedLoadSpec'
+          - $ref: '#/components/schemas/RelativeToSetLoadSpec'
+          - $ref: '#/components/schemas/RelativeToWorkingLoadSpec'
+          - $ref: '#/components/schemas/TableDerivedLoadSpec'
+          - $ref: '#/components/schemas/OrdinalVariantLoadSpec'
+          title: Load Spec
+          discriminator:
+            propertyName: kind
+            mapping:
+              absolute: '#/components/schemas/AbsoluteLoadSpec'
+              athlete_selected: '#/components/schemas/AthleteSelectedLoadSpec'
+              ordinal_variant: '#/components/schemas/OrdinalVariantLoadSpec'
+              relative_to_set: '#/components/schemas/RelativeToSetLoadSpec'
+              relative_to_working: '#/components/schemas/RelativeToWorkingLoadSpec'
+              table_derived: '#/components/schemas/TableDerivedLoadSpec'
       additionalProperties: false
       type: object
       required:
       - reps
       - rir
       title: PlanAIImportSet
-    PlanAIProgressionModel:
-      properties:
-        slug:
-          type: string
-          maxLength: 200
-          minLength: 1
-          pattern: ^[a-z0-9_]+$
-          title: Slug
-        name:
-          type: string
-          minLength: 1
-          title: Name
-        name_full:
-          type: string
-          minLength: 1
-          title: Name Full
-        when_to_use:
-          type: string
-          minLength: 1
-          title: When To Use
-        how_to_apply:
-          type: string
-          minLength: 1
-          title: How To Apply
-      additionalProperties: false
-      type: object
-      required:
-      - slug
-      - name
-      - name_full
-      - when_to_use
-      - how_to_apply
-      title: PlanAIProgressionModel
     PlanAnalysisRequest:
       properties:
         resolution_context:
@@ -2703,6 +5441,24 @@ components:
       required:
       - items
       title: PlanListResponse
+    PlanRef:
+      properties:
+        plan_id:
+          type: integer
+          title: Plan Id
+        code:
+          type: string
+          title: Code
+        name:
+          type: string
+          title: Name
+      additionalProperties: false
+      type: object
+      required:
+      - plan_id
+      - code
+      - name
+      title: PlanRef
     PlanResolutionContext:
       properties:
         global_volume_level:
@@ -2732,6 +5488,224 @@ components:
       - RELEASED
       - ARCHIVED
       title: PlanRevisionStatus
+    PlanRunCreate:
+      properties:
+        plan_revision_id:
+          type: integer
+          minimum: 1.0
+          title: Plan Revision Id
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        microcycle_count:
+          type: integer
+          title: Microcycle Count
+      additionalProperties: false
+      type: object
+      required:
+      - plan_revision_id
+      - name
+      - starts_on
+      - microcycle_count
+      title: PlanRunCreate
+    PlanRunEventType:
+      type: string
+      enum:
+      - plan_revision_changed
+      - personal_record
+      - deload_started
+      - reload_started
+      - vacation
+      - training_break
+      - observation
+      title: PlanRunEventType
+    PlanRunListItem:
+      properties:
+        plan_run_id:
+          type: integer
+          title: Plan Run Id
+        name:
+          type: string
+          title: Name
+        status:
+          $ref: '#/components/schemas/PlanRunStatus'
+        plan:
+          $ref: '#/components/schemas/PlanRef'
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+        microcycle_count:
+          type: integer
+          title: Microcycle Count
+        microcycle_duration_days:
+          type: integer
+          title: Microcycle Duration Days
+        current_microcycle_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Current Microcycle Ordinal
+      additionalProperties: false
+      type: object
+      required:
+      - plan_run_id
+      - name
+      - status
+      - plan
+      - starts_on
+      - ends_on
+      - microcycle_count
+      - microcycle_duration_days
+      - current_microcycle_ordinal
+      title: PlanRunListItem
+    PlanRunListResponse:
+      properties:
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        items:
+          items:
+            $ref: '#/components/schemas/PlanRunListItem'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - items
+      title: PlanRunListResponse
+    PlanRunOverview:
+      properties:
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        run:
+          $ref: '#/components/schemas/RunHeader'
+        position:
+          $ref: '#/components/schemas/RunPosition'
+        microcycles:
+          items:
+            $ref: '#/components/schemas/OverviewMicrocycle'
+          type: array
+          title: Microcycles
+        current_microcycle_sessions:
+          items:
+            $ref: '#/components/schemas/CurrentMicrocycleSession'
+          type: array
+          title: Current Microcycle Sessions
+        analysis_readiness:
+          $ref: '#/components/schemas/AnalysisReadiness'
+        latest_exposure:
+          anyOf:
+          - $ref: '#/components/schemas/LatestExposure'
+          - type: 'null'
+        attendance:
+          items:
+            $ref: '#/components/schemas/Attendance'
+          type: array
+          title: Attendance
+        latest_events:
+          items:
+            $ref: '#/components/schemas/EventDTO'
+          type: array
+          title: Latest Events
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - run
+      - position
+      - microcycles
+      - current_microcycle_sessions
+      - analysis_readiness
+      - latest_exposure
+      - attendance
+      - latest_events
+      title: PlanRunOverview
+    PlanRunPatch:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 1
+          - type: 'null'
+          title: Name
+        status:
+          anyOf:
+          - $ref: '#/components/schemas/PlanRunStatus'
+          - type: 'null'
+        expected_version:
+          type: string
+          title: Expected Version
+      additionalProperties: false
+      type: object
+      required:
+      - expected_version
+      title: PlanRunPatch
+    PlanRunPreview:
+      properties:
+        revision:
+          $ref: '#/components/schemas/RevisionRef'
+        microcycle_duration_days:
+          type: integer
+          title: Microcycle Duration Days
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+        session_count:
+          type: integer
+          title: Session Count
+        workout_track_count:
+          type: integer
+          title: Workout Track Count
+        exercise_track_count:
+          type: integer
+          title: Exercise Track Count
+        first_microcycle:
+          items:
+            $ref: '#/components/schemas/PreviewDay'
+          type: array
+          title: First Microcycle
+        overlapping_runs:
+          items:
+            $ref: '#/components/schemas/OverlappingRun'
+          type: array
+          title: Overlapping Runs
+      additionalProperties: false
+      type: object
+      required:
+      - revision
+      - microcycle_duration_days
+      - ends_on
+      - session_count
+      - workout_track_count
+      - exercise_track_count
+      - first_microcycle
+      - overlapping_runs
+      title: PlanRunPreview
+    PlanRunStatus:
+      type: string
+      enum:
+      - scheduled
+      - active
+      - cancelled
+      - completed
+      title: PlanRunStatus
     PlanSummary:
       properties:
         id:
@@ -2774,6 +5748,101 @@ components:
       - draft_revision_id
       - draft_lock_version
       title: PlanSummary
+    PrescribedSummary:
+      properties:
+        set_count:
+          type: integer
+          title: Set Count
+        top_load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Top Load Kg
+        rep_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rep Min
+        rep_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rep Max
+        target_rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Target Rir
+      additionalProperties: false
+      type: object
+      required:
+      - set_count
+      - top_load_kg
+      - rep_min
+      - rep_max
+      - target_rir
+      title: PrescribedSummary
+    PrescriptionCompleteness:
+      type: string
+      enum:
+      - none
+      - partial
+      - complete
+      title: PrescriptionCompleteness
+    PrescriptionSetInput:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Kg
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - load_kg
+      title: PrescriptionSetInput
+    PrescriptionWriteResponse:
+      properties:
+        next:
+          $ref: '#/components/schemas/NextPrescription'
+        workout_prescription_completeness:
+          $ref: '#/components/schemas/PrescriptionCompleteness'
+      additionalProperties: false
+      type: object
+      required:
+      - next
+      - workout_prescription_completeness
+      title: PrescriptionWriteResponse
+    PreviewDay:
+      properties:
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        date:
+          type: string
+          format: date
+          title: Date
+        workout_unit_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Workout Unit Name
+      additionalProperties: false
+      type: object
+      required:
+      - day_ordinal
+      - date
+      - workout_unit_name
+      title: PreviewDay
     ProgressionModelCatalogItem:
       properties:
         slug:
@@ -2821,6 +5890,101 @@ components:
       - items
       - total
       title: ProgressionModelCatalogResponse
+    QueueExercise:
+      properties:
+        exercise_trace_id:
+          type: integer
+          title: Exercise Trace Id
+        slot_ordinal:
+          type: integer
+          title: Slot Ordinal
+        name:
+          type: string
+          title: Name
+        prescription_saved:
+          type: boolean
+          title: Prescription Saved
+        last_summary:
+          anyOf:
+          - $ref: '#/components/schemas/LastSummary'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_trace_id
+      - slot_ordinal
+      - name
+      - prescription_saved
+      - last_summary
+      title: QueueExercise
+    QueueWorkout:
+      properties:
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        target_session:
+          anyOf:
+          - $ref: '#/components/schemas/TargetSession'
+          - type: 'null'
+        basis_session:
+          anyOf:
+          - $ref: '#/components/schemas/BasisSession'
+          - type: 'null'
+        state:
+          $ref: '#/components/schemas/NextPrescriptionState'
+        blocked_reason:
+          anyOf:
+          - $ref: '#/components/schemas/BlockedReason'
+          - type: 'null'
+        blocked_detail:
+          anyOf:
+          - $ref: '#/components/schemas/BlockedDetail'
+          - type: 'null'
+        prescription_completeness:
+          $ref: '#/components/schemas/PrescriptionCompleteness'
+        exercises:
+          items:
+            $ref: '#/components/schemas/QueueExercise'
+          type: array
+          title: Exercises
+      additionalProperties: false
+      type: object
+      required:
+      - workout_trace_id
+      - workout_name
+      - day_ordinal
+      - target_session
+      - basis_session
+      - state
+      - blocked_reason
+      - blocked_detail
+      - prescription_completeness
+      - exercises
+      title: QueueWorkout
+    RIRDivergence:
+      type: string
+      enum:
+      - deeper
+      - on_target
+      - shallower
+      title: RIRDivergence
+    RIRPrescription:
+      type: string
+      enum:
+      - RIR0
+      - RIR1
+      - RIR2
+      - RIR3
+      - RIR4
+      - NOT_APPLICABLE
+      - UNDEFINED
+      title: RIRPrescription
     RecommendedRepProfile:
       properties:
         high_load:
@@ -2931,6 +6095,44 @@ components:
       required:
       - items
       title: RelatedExerciseResponse
+    RelativeToSetLoadSpec:
+      properties:
+        kind:
+          type: string
+          const: relative_to_set
+          title: Kind
+        ref_set_idx:
+          type: integer
+          maximum: 32767.0
+          minimum: 0.0
+          title: Ref Set Idx
+        pct:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Pct
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - ref_set_idx
+      - pct
+      title: RelativeToSetLoadSpec
+    RelativeToWorkingLoadSpec:
+      properties:
+        kind:
+          type: string
+          const: relative_to_working
+          title: Kind
+        pct:
+          type: number
+          exclusiveMinimum: 0.0
+          title: Pct
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - pct
+      title: RelativeToWorkingLoadSpec
     RepRange:
       properties:
         min:
@@ -2943,12 +6145,49 @@ components:
           maximum: 32767.0
           minimum: 1.0
           title: Max
+        semantics:
+          $ref: '#/components/schemas/RepRangeSemantics'
+          default: undefined
       additionalProperties: false
       type: object
       required:
       - min
       - max
       title: RepRange
+    RepRangeSemantics:
+      type: string
+      enum:
+      - gating
+      - estimate
+      - undefined
+      title: RepRangeSemantics
+    RepsPosition:
+      type: string
+      enum:
+      - below_range
+      - at_floor
+      - in_range
+      - top_of_range
+      - above_range
+      title: RepsPosition
+    RevisionRef:
+      properties:
+        plan_revision_id:
+          type: integer
+          title: Plan Revision Id
+        revision_no:
+          type: integer
+          title: Revision No
+        status:
+          type: string
+          title: Status
+      additionalProperties: false
+      type: object
+      required:
+      - plan_revision_id
+      - revision_no
+      - status
+      title: RevisionRef
     RevisionSummary:
       properties:
         id:
@@ -2993,6 +6232,275 @@ components:
       - updated_at
       - released_at
       title: RevisionSummary
+    RevisionTransition:
+      properties:
+        before_microcycle_ordinal:
+          type: integer
+          title: Before Microcycle Ordinal
+        from_revision_no:
+          type: integer
+          title: From Revision No
+        to_revision_no:
+          type: integer
+          title: To Revision No
+        effective_on:
+          type: string
+          format: date
+          title: Effective On
+        slot_changes:
+          items:
+            type: string
+          type: array
+          title: Slot Changes
+        event_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Event Id
+      additionalProperties: false
+      type: object
+      required:
+      - before_microcycle_ordinal
+      - from_revision_no
+      - to_revision_no
+      - effective_on
+      - slot_changes
+      - event_id
+      title: RevisionTransition
+    RunHeader:
+      properties:
+        plan_run_id:
+          type: integer
+          title: Plan Run Id
+        name:
+          type: string
+          title: Name
+        status:
+          $ref: '#/components/schemas/PlanRunStatus'
+        plan:
+          $ref: '#/components/schemas/PlanRef'
+        initial_revision:
+          $ref: '#/components/schemas/RevisionRef'
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+        microcycle_count:
+          type: integer
+          title: Microcycle Count
+        microcycle_duration_days:
+          type: integer
+          title: Microcycle Duration Days
+        version:
+          type: string
+          title: Version
+      additionalProperties: false
+      type: object
+      required:
+      - plan_run_id
+      - name
+      - status
+      - plan
+      - initial_revision
+      - starts_on
+      - ends_on
+      - microcycle_count
+      - microcycle_duration_days
+      - version
+      title: RunHeader
+    RunPosition:
+      properties:
+        microcycle_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Microcycle Ordinal
+        day_in_microcycle:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Day In Microcycle
+        run_day:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Run Day
+        run_days_total:
+          type: integer
+          title: Run Days Total
+        days_left:
+          type: integer
+          title: Days Left
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle_ordinal
+      - day_in_microcycle
+      - run_day
+      - run_days_total
+      - days_left
+      title: RunPosition
+    SavedPrescription:
+      properties:
+        exercise_prescription_id:
+          type: integer
+          title: Exercise Prescription Id
+        version:
+          type: string
+          title: Version
+        workout_prescription_version:
+          type: string
+          title: Workout Prescription Version
+        sets:
+          items:
+            $ref: '#/components/schemas/SavedPrescriptionSet'
+          type: array
+          title: Sets
+        prescription_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prescription Comment
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_prescription_id
+      - version
+      - workout_prescription_version
+      - sets
+      - prescription_comment
+      - updated_at
+      title: SavedPrescription
+    SavedPrescriptionSet:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Kg
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - load_kg
+      - comment
+      title: SavedPrescriptionSet
+    Scheme:
+      properties:
+        set_count:
+          type: integer
+          title: Set Count
+        rep_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rep Min
+        rep_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rep Max
+        target_rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Target Rir
+      additionalProperties: false
+      type: object
+      required:
+      - set_count
+      - rep_min
+      - rep_max
+      - target_rir
+      title: Scheme
+    SessionBrief:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+        completion_mode:
+          anyOf:
+          - $ref: '#/components/schemas/CompletionMode'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - workout_trace_id
+      - workout_name
+      - scheduled_date
+      - status
+      - completion_mode
+      title: SessionBrief
+    SessionPatch:
+      properties:
+        status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        log_event:
+          type: boolean
+          title: Log Event
+          default: false
+        details:
+          additionalProperties: true
+          type: object
+          title: Details
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      title: SessionPatch
+    SessionStatusResponse:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - status
+      - notes
+      title: SessionStatusResponse
     SetInfraArtifact:
       properties:
         id:
@@ -3004,8 +6512,28 @@ components:
         reps:
           $ref: '#/components/schemas/RepRange'
         rir:
-          type: integer
-          title: Rir
+          $ref: '#/components/schemas/RIRPrescription'
+        role:
+          $ref: '#/components/schemas/SetRole'
+          default: working
+        load_spec:
+          oneOf:
+          - $ref: '#/components/schemas/AbsoluteLoadSpec'
+          - $ref: '#/components/schemas/AthleteSelectedLoadSpec'
+          - $ref: '#/components/schemas/RelativeToSetLoadSpec'
+          - $ref: '#/components/schemas/RelativeToWorkingLoadSpec'
+          - $ref: '#/components/schemas/TableDerivedLoadSpec'
+          - $ref: '#/components/schemas/OrdinalVariantLoadSpec'
+          title: Load Spec
+          discriminator:
+            propertyName: kind
+            mapping:
+              absolute: '#/components/schemas/AbsoluteLoadSpec'
+              athlete_selected: '#/components/schemas/AthleteSelectedLoadSpec'
+              ordinal_variant: '#/components/schemas/OrdinalVariantLoadSpec'
+              relative_to_set: '#/components/schemas/RelativeToSetLoadSpec'
+              relative_to_working: '#/components/schemas/RelativeToWorkingLoadSpec'
+              table_derived: '#/components/schemas/TableDerivedLoadSpec'
         min_volume_level:
           type: integer
           title: Min Volume Level
@@ -3046,10 +6574,29 @@ components:
         reps:
           $ref: '#/components/schemas/RepRange'
         rir:
-          type: integer
-          maximum: 4.0
-          minimum: 0.0
-          title: Rir
+          $ref: '#/components/schemas/RIRPrescription'
+          default: RIR2
+        role:
+          $ref: '#/components/schemas/SetRole'
+          default: working
+        load_spec:
+          oneOf:
+          - $ref: '#/components/schemas/AbsoluteLoadSpec'
+          - $ref: '#/components/schemas/AthleteSelectedLoadSpec'
+          - $ref: '#/components/schemas/RelativeToSetLoadSpec'
+          - $ref: '#/components/schemas/RelativeToWorkingLoadSpec'
+          - $ref: '#/components/schemas/TableDerivedLoadSpec'
+          - $ref: '#/components/schemas/OrdinalVariantLoadSpec'
+          title: Load Spec
+          discriminator:
+            propertyName: kind
+            mapping:
+              absolute: '#/components/schemas/AbsoluteLoadSpec'
+              athlete_selected: '#/components/schemas/AthleteSelectedLoadSpec'
+              ordinal_variant: '#/components/schemas/OrdinalVariantLoadSpec'
+              relative_to_set: '#/components/schemas/RelativeToSetLoadSpec'
+              relative_to_working: '#/components/schemas/RelativeToWorkingLoadSpec'
+              table_derived: '#/components/schemas/TableDerivedLoadSpec'
         min_volume_level:
           type: integer
           maximum: 32767.0
@@ -3074,8 +6621,292 @@ components:
       required:
       - ordinal
       - reps
-      - rir
       title: SetInfraDraft
+    SetPerformance:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        prescribed_set_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Prescribed Set Ordinal
+        status:
+          $ref: '#/components/schemas/PerformedSetStatus'
+        load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Kg
+        repetitions:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Repetitions
+        rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rir
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+        recorded_at:
+          type: string
+          format: date-time
+          title: Recorded At
+        is_additional:
+          type: boolean
+          title: Is Additional
+        divergence:
+          $ref: '#/components/schemas/Divergence'
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - prescribed_set_ordinal
+      - status
+      - load_kg
+      - repetitions
+      - rir
+      - comment
+      - recorded_at
+      - is_additional
+      - divergence
+      title: SetPerformance
+    SetPlan:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        role:
+          type: string
+          title: Role
+        rep_min:
+          type: integer
+          title: Rep Min
+        rep_max:
+          type: integer
+          title: Rep Max
+        target_rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Target Rir
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - role
+      - rep_min
+      - rep_max
+      - target_rir
+      title: SetPlan
+    SetPrescription:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        role:
+          type: string
+          title: Role
+        rep_min:
+          type: integer
+          title: Rep Min
+        rep_max:
+          type: integer
+          title: Rep Max
+        target_rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Target Rir
+        load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Kg
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - role
+      - rep_min
+      - rep_max
+      - target_rir
+      - load_kg
+      - comment
+      title: SetPrescription
+    SetRole:
+      type: string
+      enum:
+      - rampup
+      - working
+      - working_topset
+      - working_backoff
+      - working_amrap
+      title: SetRole
+    TableDerivedLoadSpec:
+      properties:
+        kind:
+          type: string
+          const: table_derived
+          title: Kind
+        ref_set_idx:
+          type: integer
+          maximum: 32767.0
+          minimum: 0.0
+          title: Ref Set Idx
+        table:
+          type: string
+          maxLength: 100
+          minLength: 1
+          pattern: ^[a-z0-9_]+$
+          title: Table
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - ref_set_idx
+      - table
+      title: TableDerivedLoadSpec
+    TargetSession:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        scheduled_date:
+          type: string
+          format: date
+          title: Scheduled Date
+        status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - scheduled_date
+      - status
+      title: TargetSession
+    TimelineDay:
+      properties:
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        date:
+          type: string
+          format: date
+          title: Date
+        session:
+          anyOf:
+          - $ref: '#/components/schemas/TimelineDaySession'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - day_ordinal
+      - date
+      - session
+      title: TimelineDay
+    TimelineDaySession:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        workout_name:
+          type: string
+          title: Workout Name
+        status:
+          $ref: '#/components/schemas/WorkoutSessionStatus'
+        completion_mode:
+          anyOf:
+          - $ref: '#/components/schemas/CompletionMode'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - workout_name
+      - status
+      - completion_mode
+      title: TimelineDaySession
+    TimelineMicrocycle:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+        classification:
+          $ref: '#/components/schemas/MicrocycleClassification'
+        plan_revision_no:
+          type: integer
+          title: Plan Revision No
+        revision_changed_here:
+          type: boolean
+          title: Revision Changed Here
+        is_current:
+          type: boolean
+          title: Is Current
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        version:
+          type: string
+          title: Version
+        days:
+          items:
+            $ref: '#/components/schemas/TimelineDay'
+          type: array
+          title: Days
+        attendance:
+          $ref: '#/components/schemas/Attendance'
+        volume_load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Volume Load Kg
+        progress_marker:
+          type: 'null'
+          title: Progress Marker
+        events:
+          items:
+            $ref: '#/components/schemas/EventBrief'
+          type: array
+          title: Events
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - starts_on
+      - ends_on
+      - classification
+      - plan_revision_no
+      - revision_changed_here
+      - is_current
+      - notes
+      - version
+      - days
+      - attendance
+      - volume_load_kg
+      - events
+      title: TimelineMicrocycle
     TimelineWorkout:
       properties:
         workout_unit_id:
@@ -3123,6 +6954,33 @@ components:
       - hour_offset
       - detail
       title: TimingAssumption
+    TraceHeader:
+      properties:
+        exercise_trace_id:
+          type: integer
+          title: Exercise Trace Id
+        workout_trace:
+          $ref: '#/components/schemas/WorkoutTraceRef'
+        slot_ordinal:
+          type: integer
+          title: Slot Ordinal
+        display_name:
+          type: string
+          title: Display Name
+        current_plan:
+          $ref: '#/components/schemas/CurrentPlan'
+        continuity:
+          $ref: '#/components/schemas/Continuity'
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_trace_id
+      - workout_trace
+      - slot_ordinal
+      - display_name
+      - current_plan
+      - continuity
+      title: TraceHeader
     ValidationError:
       properties:
         loc:
@@ -3149,6 +7007,129 @@ components:
       - msg
       - type
       title: ValidationError
+    WaitlistSubmission:
+      properties:
+        email:
+          type: string
+          maxLength: 254
+          minLength: 3
+          title: Email
+        website:
+          type: string
+          maxLength: 200
+          title: Website
+          default: ''
+      additionalProperties: false
+      type: object
+      required:
+      - email
+      title: WaitlistSubmission
+    WaitlistSubmissionResponse:
+      properties:
+        accepted:
+          type: boolean
+          const: true
+          title: Accepted
+          default: true
+      additionalProperties: false
+      type: object
+      title: WaitlistSubmissionResponse
+    WorkoutLoadSummary:
+      properties:
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+        mean_delta_pct:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Mean Delta Pct
+        series_count:
+          type: integer
+          title: Series Count
+      additionalProperties: false
+      type: object
+      required:
+      - workout_trace_id
+      - workout_name
+      - mean_delta_pct
+      - series_count
+      title: WorkoutLoadSummary
+    WorkoutPrescriptionPatch:
+      properties:
+        prescription_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prescription Comment
+        expected_version:
+          type: string
+          title: Expected Version
+      additionalProperties: false
+      type: object
+      required:
+      - prescription_comment
+      - expected_version
+      title: WorkoutPrescriptionPatch
+    WorkoutPrescriptionResponse:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        prescription_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prescription Comment
+        version:
+          type: string
+          title: Version
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - prescription_comment
+      - version
+      - updated_at
+      title: WorkoutPrescriptionResponse
+    WorkoutRevisionTransition:
+      properties:
+        before_microcycle_ordinal:
+          type: integer
+          title: Before Microcycle Ordinal
+        from_revision_no:
+          type: integer
+          title: From Revision No
+        to_revision_no:
+          type: integer
+          title: To Revision No
+        summary:
+          type: string
+          title: Summary
+      additionalProperties: false
+      type: object
+      required:
+      - before_microcycle_ordinal
+      - from_revision_no
+      - to_revision_no
+      - summary
+      title: WorkoutRevisionTransition
+    WorkoutSessionStatus:
+      type: string
+      enum:
+      - scheduled
+      - in_progress
+      - completed
+      - cancelled
+      - missed
+      title: WorkoutSessionStatus
     WorkoutStimulus:
       properties:
         total_etu_scalar:
@@ -3171,6 +7152,247 @@ components:
       - muscles
       - joints
       title: WorkoutStimulus
+    WorkoutTraceCell:
+      properties:
+        exercise_trace_id:
+          type: integer
+          title: Exercise Trace Id
+        kind:
+          type: string
+          enum:
+          - performed
+          - prescribed
+          - empty
+          - not_in_trace
+          title: Kind
+        execution_mode:
+          anyOf:
+          - $ref: '#/components/schemas/ExerciseExecutionMode'
+          - type: 'null'
+        actual_exercise_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Actual Exercise Name
+        prescribed_top_load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Prescribed Top Load Kg
+        performed_top_load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Performed Top Load Kg
+        reps:
+          items:
+            anyOf:
+            - type: integer
+            - type: 'null'
+          type: array
+          title: Reps
+        flags:
+          items:
+            type: string
+          type: array
+          title: Flags
+        next_prescription_saved:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Next Prescription Saved
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_trace_id
+      - kind
+      - execution_mode
+      - actual_exercise_name
+      - prescribed_top_load_kg
+      - performed_top_load_kg
+      - reps
+      - flags
+      - next_prescription_saved
+      title: WorkoutTraceCell
+    WorkoutTraceColumn:
+      properties:
+        exercise_trace_id:
+          type: integer
+          title: Exercise Trace Id
+        slot_ordinal:
+          type: integer
+          title: Slot Ordinal
+        display_name:
+          type: string
+          title: Display Name
+        scheme:
+          $ref: '#/components/schemas/Scheme'
+        top_load_series:
+          items:
+            anyOf:
+            - type: number
+            - type: 'null'
+          type: array
+          title: Top Load Series
+        delta_pct_first_to_latest:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Delta Pct First To Latest
+        first_microcycle_ordinal:
+          type: integer
+          title: First Microcycle Ordinal
+        last_microcycle_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Last Microcycle Ordinal
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_trace_id
+      - slot_ordinal
+      - display_name
+      - scheme
+      - top_load_series
+      - delta_pct_first_to_latest
+      - first_microcycle_ordinal
+      - last_microcycle_ordinal
+      title: WorkoutTraceColumn
+    WorkoutTraceHeader:
+      properties:
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+      additionalProperties: false
+      type: object
+      required:
+      - workout_trace_id
+      - workout_name
+      - day_ordinal
+      title: WorkoutTraceHeader
+    WorkoutTraceList:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/WorkoutTraceListItem'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: WorkoutTraceList
+    WorkoutTraceListItem:
+      properties:
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        exercise_trace_count:
+          type: integer
+          title: Exercise Trace Count
+      additionalProperties: false
+      type: object
+      required:
+      - workout_trace_id
+      - workout_name
+      - day_ordinal
+      - exercise_trace_count
+      title: WorkoutTraceListItem
+    WorkoutTraceRef:
+      properties:
+        workout_trace_id:
+          type: integer
+          title: Workout Trace Id
+        workout_name:
+          type: string
+          title: Workout Name
+      additionalProperties: false
+      type: object
+      required:
+      - workout_trace_id
+      - workout_name
+      title: WorkoutTraceRef
+    WorkoutTraceResponse:
+      properties:
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        workout:
+          $ref: '#/components/schemas/WorkoutTraceHeader'
+        columns:
+          items:
+            $ref: '#/components/schemas/WorkoutTraceColumn'
+          type: array
+          title: Columns
+        revision_transitions:
+          items:
+            $ref: '#/components/schemas/WorkoutRevisionTransition'
+          type: array
+          title: Revision Transitions
+        rows:
+          items:
+            $ref: '#/components/schemas/WorkoutTraceRow'
+          type: array
+          title: Rows
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - workout
+      - columns
+      - revision_transitions
+      - rows
+      title: WorkoutTraceResponse
+    WorkoutTraceRow:
+      properties:
+        microcycle:
+          $ref: '#/components/schemas/MicrocycleRef'
+        session:
+          $ref: '#/components/schemas/MatrixSession'
+        prescription_completeness:
+          $ref: '#/components/schemas/PrescriptionCompleteness'
+        performance_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Performance Comment
+        volume_load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Volume Load Kg
+        progress_marker:
+          type: 'null'
+          title: Progress Marker
+        cells:
+          items:
+            $ref: '#/components/schemas/WorkoutTraceCell'
+          type: array
+          title: Cells
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle
+      - session
+      - prescription_completeness
+      - performance_comment
+      - volume_load_kg
+      - cells
+      title: WorkoutTraceRow
     WorkoutUnitArtifact:
       properties:
         id:
@@ -3247,3 +7469,25 @@ components:
       required:
       - name
       title: WorkoutUnitDraft
+    XDomainItem:
+      properties:
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        classification:
+          $ref: '#/components/schemas/MicrocycleClassification'
+        plan_revision_no:
+          type: integer
+          title: Plan Revision No
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle_ordinal
+      - starts_on
+      - classification
+      - plan_revision_no
+      title: XDomainItem

@@ -29,6 +29,13 @@ frontend materials are preserved in `docs/api-contract.md` and
 - `PUT /api/plans/{plan_id}/draft`
 - `POST /api/plans/{plan_id}/draft/analysis`
 - `POST /api/plans/{plan_id}/draft/export`
+- `/api/v1/exec/plan-runs` — list, preview, create, overview, and lifecycle
+- `/api/v1/exec/plan-runs/{plan_run_id}/analysis/queue`
+- `/api/v1/exec/plan-runs/{plan_run_id}/exercise-traces/...` — history and next prescription
+- `/api/v1/exec/plan-runs/{plan_run_id}/workout-traces/...`
+- `/api/v1/exec/plan-runs/{plan_run_id}/microcycles` and `/calendar`
+- `/api/v1/exec/plan-runs/{plan_run_id}/events`
+- `/api/v1/exec/plan-runs/{plan_run_id}/load-series`
 - `POST /api/waitlist` — append a private-beta email to persistent JSONL storage
 - `GET /assets/anatomy.svg`
 - `GET /health/live` and `GET /health/ready`
@@ -141,8 +148,13 @@ as `[]`. Set `PUBLIC_MEDIA_BASE_URL` to return CDN URLs without changing databas
 `agonez_api.app.create_app` wires infrastructure. Each module separates its FastAPI
 router, Pydantic schemas, service-level assembly, and Psycopg repository. Atlas owns
 catalog browsing. `modules/plans/` owns relational PlanCreator drafts and stable-ID
-reconciliation. It can acquire authentication or move to a separate image later
+reconciliation. `modules/execution/` owns the desktop `/api/v1/exec` workflows, shared
+readiness/derived-field rules, bulk run reads, and transactional prescription/event/lifecycle
+writes. It can acquire authentication or move to a separate image later
 without coupling user policy to Atlas.
+
+Execution implementation decisions and its endpoint compatibility audit are documented in
+[`../__docs__/execution/api-backend.md`](../__docs__/execution/api-backend.md).
 
 PlanCreator persists this identity chain in the PostgreSQL `plans` schema:
 

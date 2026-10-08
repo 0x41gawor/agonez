@@ -2,7 +2,9 @@
 
 ## Contract source
 
-The API is FastAPI. [openapi.yaml](openapi.yaml) was generated from `agonez_api.app.create_app()` with inert documentation settings; no database connection is opened during schema generation. It is OpenAPI 3.1 and contains 17 paths / 20 operations.
+The API is FastAPI. [openapi.yaml](openapi.yaml) was generated from
+`agonez_api.app.create_app()` with inert documentation settings; no database connection is
+opened during schema generation. It is OpenAPI 3.1 and contains 36 paths / 43 operations.
 
 Health routes, the `/media` static mount, Swagger UI (`/docs`), ReDoc (`/redoc`), and the JSON schema endpoint (`/openapi.json`) are reachable but are not all represented as application operations in OpenAPI.
 
@@ -10,6 +12,7 @@ Health routes, the `/media` static mount, Swagger UI (`/docs`), ReDoc (`/redoc`)
 
 - Atlas: `/api/atlas`
 - Plans: `/api/plans`
+- Desktop Execution: `/api/v1/exec`
 - Anatomy SVG: `/assets/anatomy.svg`
 - Static media: `/media/...` by default
 - Health: `/health/live`, `/health/ready`
@@ -20,7 +23,9 @@ There is no API-wide version segment. The FastAPI metadata version defaults to `
 
 - Request/response DTOs are Pydantic v2 models with `extra="forbid"`; unknown JSON fields are rejected.
 - Integers, bounds, enums, slug patterns, nested ordinals, rep ranges, loading cycles, and DEFAULT-variant rules are validated before services run.
-- FastAPI returns its standard 422 validation response for malformed input.
+- FastAPI returns its standard 422 validation response for malformed Atlas/Plans input.
+  Execution uses its stable `{"error":{"code","message","details"}}` envelope for every
+  expected non-2xx response, including request validation.
 - JSON numeric values are serialized as numbers. PostgreSQL `numeric` values are accepted by Pydantic and emitted as floats in declared response fields.
 - Missing optional values are `null`, not omitted.
 
@@ -61,6 +66,7 @@ The service checks hero/gallery files before returning URLs. A missing hero beco
 | 409 | Draft optimistic lock | Detail plus submitted/current lock versions |
 | 422 | FastAPI/Pydantic | Standard validation issues |
 | 422 | Plan domain handler | `{"detail": "..."}` for identity/ownership/catalog errors |
+| 404/409/422 | Execution handlers | `{"error":{"code":"...","message":"...","details":{...}}}` |
 | 503 | Readiness | Database is unavailable |
 | 500 | Unhandled DB/infrastructure error | No module-specific response contract |
 

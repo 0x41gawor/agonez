@@ -1,6 +1,8 @@
 # ERD layer 3 — physical model
 
-The diagrams below describe exact columns in `agonez_db_backup_2026-09-17.sql`. A final overlay lists changes from packaged migrations `0003` and `0004` because current code depends on them.
+The diagrams below describe the pre-Execution physical snapshot. The final overlay records the
+newer packaged migrations; the full `exec` model is split into the readable
+[Execution ERDs](../execution/erd.md).
 
 Legend: `PK` primary key, `FK` foreign key, `UK` unique. Mermaid does not encode nullability; the tables below the diagrams do.
 
@@ -246,15 +248,17 @@ erDiagram
     }
 ```
 
-All three columns are NOT NULL. The inspected rows are `0001_plancreator_foundation.sql` and `0002_loading_prescriptions.sql`.
+All three columns are NOT NULL. The inspected 2026-09-23 rows run from
+`0001_plancreator_foundation.sql` through `0004_progression_model_display_order.sql`.
 
 ## Projected migration overlay required by current code
 
-After `0003` and `0004`:
+The inspected snapshot already includes `0003` and `0004`. Later overlays are:
 
 | Table | Added column | Constraints/indexes |
 | --- | --- | --- |
-| `plans.exercise_variants` | `progression_model_slug text NULL` | FK to `core.progression_models(slug)` with update cascade/delete restrict; partial btree index where non-null |
-| `core.progression_models` | `display_order integer NOT NULL` | `CHECK (display_order > 0)`; unique constraint; documented stable catalog order |
+| `plans.exercise_variants` (`0005`) | `progression_id`, active working-set bounds | UUID lineage plus bounds check/index |
+| `plans.set_infra_prescriptions` (`0005`) | role, load specification, range semantics, enum RIR | Typed metadata and JSON-kind checks |
+| `exec.*` (`0006`) | 12 tables and 6 views | See [Execution table catalogue](../execution/table-catalogue.md) |
 
-No other physical columns are added by the four packaged migrations.
+No existing `core`, `engine`, or `plans` table is changed by `0006`.

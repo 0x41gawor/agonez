@@ -1,11 +1,16 @@
 # Execution and calculation pipeline
 
-Agonez currently has two distinct “execution” meanings:
+This document describes the existing PlanCreator request-time calculation pipeline. Agonez has
+also gained a database-only plan-run Execution domain in migration `0006`; see
+[Execution domain](../execution/README.md). No backend route invokes that schema yet.
+
+Agonez currently has two runtime “execution” meanings:
 
 1. submitting/persisting a plan prescription; and
 2. executing an in-memory analysis of that persisted prescription.
 
-It does **not** yet model an athlete performing a workout. There are no execution/session/result tables.
+The current API does **not** yet orchestrate an athlete performing a workout. Execution/session/
+performance tables exist, but they have no service/router integration.
 
 ## End-to-end plan submission
 

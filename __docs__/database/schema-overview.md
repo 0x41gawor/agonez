@@ -2,7 +2,7 @@
 
 ## Snapshot inventory
 
-The 2026-09-17 dump was produced by PostgreSQL 15.13 and contains no application views, materialized views, functions, or triggers. It contains 15 application tables plus one migration-ledger table, 16 PostgreSQL enum types, two explicit catalog sequences, and identity sequences for plan tables.
+The 2026-09-23 dump was produced by PostgreSQL 15.13 and contains no application views, materialized views, functions, or triggers. It contains 15 application tables plus one migration-ledger table, the `core`/`plans` enum types, two explicit catalog sequences, and identity sequences for plan tables. Migrations `0005` and `0006` are a projected overlay described below.
 
 | Schema | Tables | Responsibility | Rows in inspected dump |
 | --- | ---: | --- | ---: |
@@ -60,6 +60,10 @@ The 2026-09-17 dump was produced by PostgreSQL 15.13 and contains no application
 | `exercise_variant_type` | `DEFAULT`, `FALLBACK` |
 | `loading_mode` | `high_load`, `moderate_load`, `low_load` |
 
+Migration `0005` additionally creates `set_role`, `rep_range_semantics`, and
+`rir_prescription`. Migration `0006` creates the eight Execution enums catalogued in
+[Execution tables](../execution/table-catalogue.md).
+
 ## Relationship and constraint highlights
 
 - Plan child FKs use `ON DELETE CASCADE`; catalog references from plan targets/variants use `ON DELETE RESTRICT`.
@@ -90,12 +94,14 @@ The 2026-09-17 dump was produced by PostgreSQL 15.13 and contains no application
 
 ```mermaid
 flowchart LR
-    Dump["2026-09-17 physical dump\nledger: 0001, 0002"]
-    M3["0003\nvariant.progression_model_slug\nFK + partial index"]
-    M4["0004\nprogression_model.display_order\nNOT NULL + positive + unique"]
+    Dump["2026-09-23 physical dump\nledger: 0001-0004"]
+    M5["0005\nprogression identity + set metadata"]
+    M6["0006\nexec schema + trace views"]
     Expected["Schema expected by current code"]
 
-    Dump --> M3 --> M4 --> Expected
+    Dump --> M5 --> M6 --> Expected
 ```
 
-Without `0003`, plan load/import/save/duplicate SQL referencing `progression_model_slug` fails. Without `0004`, the progression-model catalog query referencing `display_order` fails. The backend Docker command runs migrations before Uvicorn, so a normal container start should close the gap; the checked-in dump proves only that the snapshot itself had not done so.
+Without `0005`, current plan SQL and DTOs referencing progression/set metadata fail. `0006` is
+database-only, so the existing API can start without querying it, but the Execution read models
+do not exist until it is applied. The backend Docker command runs migrations before Uvicorn.

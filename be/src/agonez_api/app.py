@@ -6,6 +6,9 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -22,6 +25,10 @@ from agonez_api.modules.atlas.exceptions import AtlasEntityNotFoundError
 from agonez_api.modules.atlas.repository import AtlasRepository
 from agonez_api.modules.atlas.router import router as atlas_router
 from agonez_api.modules.atlas.service import AtlasService
+from agonez_api.modules.execution.errors import ExecutionAPIError
+from agonez_api.modules.execution.repository import ExecutionRepository
+from agonez_api.modules.execution.router import router as execution_router
+from agonez_api.modules.execution.service import ExecutionService
 from agonez_api.modules.plans.analysis.service import PlanAnalysisService
 from agonez_api.modules.plans.exceptions import (
     PlanConflictError,
@@ -50,6 +57,7 @@ def create_app(
     database_pool = pool or create_database_pool(settings)
     repository = AtlasRepository(database_pool)
     plan_repository = PlanRepository(database_pool)
+    execution_repository = ExecutionRepository(database_pool)
     media = MediaResolver(
         root=settings.media_root,
         url_prefix=settings.media_url_prefix,
@@ -58,6 +66,7 @@ def create_app(
     service = AtlasService(repository, media)
     plan_service = PlanService(plan_repository)
     plan_analysis_service = PlanAnalysisService(plan_repository)
+    execution_service = ExecutionService(execution_repository)
     waitlist_store = WaitlistStore(settings.waitlist_path)
 
     @asynccontextmanager
@@ -77,8 +86,8 @@ def create_app(
         version=settings.app_version,
         description=(
             "REST API for the Agonez exercise and muscle Atlas and the relational "
-            "PlanCreator draft editor. Authentication and ownership are intentionally "
-            "deferred in this first PlanCreator iteration."
+            "PlanCreator draft editor and the desktop Execution workflow API. "
+            "Authentication and ownership are intentionally deferred."
         ),
         lifespan=lifespan,
     )
@@ -89,13 +98,15 @@ def create_app(
     app.state.plan_repository = plan_repository
     app.state.plan_service = plan_service
     app.state.plan_analysis_service = plan_analysis_service
+    app.state.execution_repository = execution_repository
+    app.state.execution_service = execution_service
     app.state.waitlist_store = waitlist_store
 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Accept", "Accept-Language", "Content-Type", "X-Request-ID"],
         expose_headers=["Content-Language", "X-Request-ID"],
     )
@@ -166,6 +177,45 @@ def create_app(
         del request
         return JSONResponse(status_code=422, content={"detail": exc.detail})
 
+    @app.exception_handler(ExecutionAPIError)
+    async def handle_execution_error(
+        request: Request,
+        exc: ExecutionAPIError,
+    ) -> JSONResponse:
+        del request
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=jsonable_encoder(
+                {
+                    "error": {
+                        "code": exc.code,
+                        "message": exc.message,
+                        "details": exc.details,
+                    }
+                }
+            ),
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def handle_request_validation(
+        request: Request,
+        exc: RequestValidationError,
+    ) -> JSONResponse:
+        if not request.url.path.startswith("/api/v1/exec"):
+            return await request_validation_exception_handler(request, exc)
+        return JSONResponse(
+            status_code=422,
+            content=jsonable_encoder(
+                {
+                    "error": {
+                        "code": "request_validation",
+                        "message": "Request validation failed",
+                        "details": {"issues": exc.errors()},
+                    }
+                }
+            ),
+        )
+
     @app.get("/health/live", tags=["Health"], include_in_schema=False)
     async def liveness() -> dict[str, str]:
         return {"status": "ok"}
@@ -196,6 +246,7 @@ def create_app(
 
     app.include_router(atlas_router)
     app.include_router(plans_router)
+    app.include_router(execution_router)
     app.include_router(waitlist_router)
     app.mount(
         settings.media_url_prefix,

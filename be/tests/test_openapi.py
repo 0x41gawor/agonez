@@ -37,6 +37,47 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     assert "post" in paths["/api/plans/{plan_id}/draft/analysis"]
     assert "post" in paths["/api/plans/{plan_id}/draft/export"]
 
+    execution_methods = {
+        "/api/v1/exec/plan-runs": {"get", "post"},
+        "/api/v1/exec/plan-runs/preview": {"get"},
+        "/api/v1/exec/plan-runs/{plan_run_id}": {"patch"},
+        "/api/v1/exec/plan-runs/{plan_run_id}/overview": {"get"},
+        "/api/v1/exec/plan-runs/{plan_run_id}/analysis/queue": {"get"},
+        "/api/v1/exec/plan-runs/{plan_run_id}/exercise-traces/{exercise_trace_id}": {
+            "get"
+        },
+        "/api/v1/exec/plan-runs/{plan_run_id}/exercise-traces/{exercise_trace_id}/next": {
+            "get"
+        },
+        (
+            "/api/v1/exec/plan-runs/{plan_run_id}/sessions/{session_id}"
+            "/exercise-prescriptions/{exercise_trace_id}"
+        ): {
+            "put",
+            "delete",
+        },
+        "/api/v1/exec/plan-runs/{plan_run_id}/sessions/{session_id}/prescription": {
+            "patch"
+        },
+        "/api/v1/exec/plan-runs/{plan_run_id}/workout-traces": {"get"},
+        "/api/v1/exec/plan-runs/{plan_run_id}/workout-traces/{workout_trace_id}": {
+            "get"
+        },
+        "/api/v1/exec/plan-runs/{plan_run_id}/microcycles": {"get"},
+        "/api/v1/exec/plan-runs/{plan_run_id}/microcycles/{ordinal}": {"patch"},
+        "/api/v1/exec/plan-runs/{plan_run_id}/calendar": {"get"},
+        "/api/v1/exec/plan-runs/{plan_run_id}/sessions/{session_id}": {"patch"},
+        "/api/v1/exec/plan-runs/{plan_run_id}/events": {"get", "post"},
+        "/api/v1/exec/plan-runs/{plan_run_id}/events/{event_id}": {
+            "patch",
+            "delete",
+        },
+        "/api/v1/exec/plan-runs/{plan_run_id}/load-series": {"get"},
+    }
+    for path, methods in execution_methods.items():
+        assert path in paths
+        assert methods <= set(paths[path])
+
     list_parameters = {
         parameter["name"] for parameter in paths["/api/atlas/exercises"]["get"]["parameters"]
     }
@@ -68,3 +109,11 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     assert "loading_mode" in schemas["ExerciseSlotDraft"]["properties"]
     assert "loading_cycle" in schemas["SetInfraDraft"]["properties"]
     assert "progression_model_slug" in schemas["ExerciseVariantDraft"]["properties"]
+    assert set(schemas["NextPrescriptionState"]["enum"]) == {
+        "editable",
+        "blocked",
+        "locked",
+        "none",
+    }
+    assert "error" in schemas["ErrorEnvelope"]["properties"]
+    assert "expected_version" in schemas["ExercisePrescriptionPut"]["properties"]

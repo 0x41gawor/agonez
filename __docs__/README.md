@@ -1,12 +1,12 @@
 # Agonez technical documentation
 
-Agonez is a Vue 3 and FastAPI application for browsing an exercise/muscle atlas and authoring relational resistance-training plans. Its distinctive subsystem is a request-time analysis engine: a saved draft is resolved into active exercise sets, combined with muscle and joint exposure vectors from PostgreSQL, and evaluated for ETU-like stimulus and recovery debt. It is currently a prescription and analysis system, not a workout-execution tracker: no athlete, session, performed-set, or progression-runtime persistence exists.
+Agonez is a Vue 3 and FastAPI application for browsing an exercise/muscle atlas and authoring relational resistance-training plans. Its distinctive subsystem is a request-time analysis engine: a saved draft is resolved into active exercise sets, combined with muscle and joint exposure vectors from PostgreSQL, and evaluated for ETU-like stimulus and recovery debt. Migration `0006` adds the database model for plan-run execution, calendar sessions, prescriptions, and performed sets; no Execution API or UI exists yet.
 
 ## Evidence baseline
 
-This package was reverse-engineered from the repository on 2026-09-17. Evidence was prioritized in this order:
+This package was reverse-engineered from the repository and refreshed for Execution on 2026-10-07. Evidence was prioritized in this order:
 
-1. `agonez_db_backup_2026-09-17.sql` for the physical PostgreSQL snapshot;
+1. `agonez_db_backup_2026-09-23.sql` for the physical PostgreSQL snapshot;
 2. packaged migrations under `be/src/agonez_api/migrations/versions/` for the intended post-migration schema;
 3. registered FastAPI routes, Pydantic models, repository SQL, and calculation code;
 4. tests, frontend consumers, deployment configuration, and older handoff documents.
@@ -31,6 +31,7 @@ Evidence labels used in these documents:
 7. [Execution pipeline](flows/execution-pipeline.md)
 8. [Physical ERD](database/erd-layer-3.md)
 9. [Data dictionary](database/data-dictionary.md)
+10. [Execution domain](execution/README.md)
 
 ## Documentation map
 
@@ -64,6 +65,14 @@ Evidence labels used in these documents:
 - [Data lineage](flows/data-lineage.md) — database rows through Python/domain transformations to HTTP and back.
 - [Execution pipeline](flows/execution-pipeline.md) — draft resolution, ETU/MRU/JRU calculations, recovery simulation, import, and export.
 
+### Execution domain
+
+- [Execution overview](execution/README.md) — plan runs, calendar projection, prescription/performance, and lifecycle.
+- [Execution ERDs](execution/erd.md) — conceptual and physical diagrams.
+- [Execution invariants](execution/invariants.md) — database and workflow enforcement ownership.
+- [Repeatable Unit Identity](execution/repeatable-unit-identity.md) — trace continuity across plan revisions.
+- [Execution mock dataset](execution/mock-data.md) and [read queries](execution/queries.md).
+
 ### Findings
 
 - [Ambiguities](findings/ambiguities.md) — schema drift, ungoverned JSON, missing relationships, and unresolved semantics.
@@ -78,13 +87,13 @@ Evidence labels used in these documents:
 | Atlas module | Read-heavy exercise/muscle catalog plus video-link append | `be/src/agonez_api/modules/atlas/` |
 | Plans module | Relational draft persistence, optimistic locking, duplication, import/export | `be/src/agonez_api/modules/plans/` |
 | Analysis module | In-memory resolution and ETU/MRU/JRU/recovery evaluation | `be/src/agonez_api/modules/plans/analysis/` |
-| PostgreSQL | Canonical catalog, calculated exercise vectors, relational plans | `agonez_db_backup_2026-09-17.sql` |
+| PostgreSQL | Canonical catalog, calculated exercise vectors, relational plans, and database-only Execution | `agonez_db_backup_2026-09-23.sql` plus migrations |
 | Filesystem media | Exercise/muscle images, galleries, anatomy SVG | `media/` |
 
 ## Scope boundaries
 
 **Confirmed present:** catalog browsing, localization overlays, relational plan drafts, loading metadata, progression-model metadata in current code, compact plan import/export, request-time analysis, static media, and PostgreSQL-backed health checks.
 
-**Confirmed absent:** authentication, authorization, user ownership, performed workout/session storage, actual load tracking, automatic progression execution, analysis persistence, and a canonical joint table.
+**Confirmed absent:** authentication, authorization, user ownership, an Execution backend/API/UI, automatic progression execution, persisted derived analysis results, and a canonical joint table. The `exec` database schema stores sessions, actual loads, and performance artifacts but is not wired to application code yet.
 
 **Important:** all plan data is currently application-global. The source explicitly warns that ownership must be added before plans are treated as private user data.
