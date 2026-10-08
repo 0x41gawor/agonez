@@ -51,15 +51,17 @@ async function logObservation(): Promise<void> {
 <template>
   <div class="execution-overview">
     <section class="panel exec-position-panel">
-      <div class="exec-position-copy">
-        <span class="eyebrow">{{ $t('execution.overview.where') }}</span>
-        <strong v-if="data.position.microcycle_ordinal">
-          {{ $t('execution.overview.position', { current: data.position.microcycle_ordinal, total: data.run.microcycle_count, day: data.position.day_in_microcycle, days: data.run.microcycle_duration_days }) }}
-          <small>{{ $t('execution.overview.positionSub', { runDay: data.position.run_day, runDays: data.position.run_days_total, left: data.position.days_left }) }}</small>
-        </strong>
-      </div>
-      <div class="exec-status-legend">
-        <span v-for="status in ['completed', 'in_progress', 'scheduled', 'missed', 'cancelled'] as const" :key="status"><SessionStatusMark :status="status" compact />{{ $t(`execution.status.${status}`) }}</span>
+      <div class="exec-position-head">
+        <div class="exec-position-copy">
+          <span class="eyebrow">{{ $t('execution.overview.where') }}</span>
+          <strong v-if="data.position.microcycle_ordinal">
+            {{ $t('execution.overview.position', { current: data.position.microcycle_ordinal, total: data.run.microcycle_count, day: data.position.day_in_microcycle, days: data.run.microcycle_duration_days }) }}
+            <small>{{ $t('execution.overview.positionSub', { runDay: data.position.run_day, runDays: data.position.run_days_total, left: data.position.days_left }) }}</small>
+          </strong>
+        </div>
+        <div class="exec-status-legend">
+          <span v-for="status in ['completed', 'in_progress', 'scheduled', 'missed', 'cancelled'] as const" :key="status"><SessionStatusMark :status="status" compact />{{ $t(`execution.status.${status}`) }}</span>
+        </div>
       </div>
       <div class="exec-microcycle-strip">
         <button v-for="microcycle in data.microcycles" :key="microcycle.ordinal" type="button" class="exec-microcycle-card" :class="{ current: microcycle.is_current, revision: microcycle.revision_changed_here }" @click="goTimeline()">
