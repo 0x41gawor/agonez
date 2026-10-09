@@ -3,7 +3,9 @@ export default {
     shellStatus: 'UITVOERING · DESKTOP', nav: 'Uitvoering',
     tabs: { overview: 'Overzicht', analysis: 'Analyse', timeline: 'Tijdlijn', loads: 'Belastingen' },
     common: { kg: 'kg', rir: 'RIR', reps: 'herh.', today: 'Vandaag', close: 'Sluiten', save: 'Opslaan', cancel: 'Annuleren', edit: 'Bewerken', locked: 'Vergrendeld', loading: 'Uitvoeringsgegevens laden…', marker: 'MARKER.X', reserved: 'gereserveerd' },
+    cycle: { microcycle: { label: 'Microcyclus {ordinal}', short: 'MC{ordinal}' }, week: { label: 'Week {ordinal}', short: 'W{ordinal}' } },
     run: {
+      metaWeek: '{start} → {end} · {count} × trainingsweken van 7 dagen',
       eyebrow: 'Planuitvoering', from: 'Van {plan}', all: 'Alle uitvoeringen ({count})', new: 'Nieuwe planuitvoering', meta: '{start} → {end} · {count} × microcycli van {days} dagen',
       status: { scheduled: 'Gepland', active: 'Actief', cancelled: 'Geannuleerd', completed: 'Voltooid' }, emptyTitle: 'Nog geen planuitvoeringen', emptyBody: 'Een planuitvoering plaatst een trainingsplan in concrete kalendertijd.', loadError: 'De planuitvoering kon niet worden geladen', listError: 'De planuitvoeringen konden niet worden geladen.',
     },
@@ -12,6 +14,7 @@ export default {
       previous_exposure_in_progress: 'De vorige blootstelling is nog bezig.', previous_exposure_not_performed: 'De vorige voorgeschreven blootstelling is niet uitgevoerd.', session_started: 'Deze sessie is al begonnen.', no_future_session: 'Er is geen latere sessie in deze uitvoering.', run_not_active: 'Deze planuitvoering is niet actief.', unknown: 'Dit voorschrift kan nog niet worden bewerkt.',
     },
     overview: {
+      positionWeek: 'Week {current} van {total} · dag {day} van {days}', thisMicrocycleWeek: 'Deze week', prescriptionsWeek: 'Voorschriften voor de volgende week', noCurrentSessionsWeek: 'Er zijn geen sessies in de huidige week.',
       where: 'Huidige positie', position: 'Microcyclus {current} van {total} · dag {day} van {days}', positionSub: 'uitvoeringsdag {runDay} van {runDays}, nog {left} dagen', thisMicrocycle: 'Deze microcyclus', sessions: 'Sessies in de kalender', analysisEyebrow: 'Analyse na training · volgende: MC{mc}', prescriptions: 'Voorschriften voor de volgende microcyclus',
       continue: 'Doorgaan met {workout}', waiting: 'Wachten', saved: '{saved} / {total} opgeslagen', latest: 'Laatste blootstelling · {workout} · {date}', comparison: 'Voorgeschreven vs. uitgevoerd', exercise: 'Oefening', prescribed: 'Voorgeschreven', performed: 'Uitgevoerd', note: 'Notitie', adherence: 'Naleving', didPlanHappen: 'Is het plan uitgevoerd?',
       journal: 'Logboek', latestEvents: 'Laatste gebeurtenissen', allEvents: 'Alle ({count})', observationPlaceholder: 'Observatie vastleggen…', log: 'Vastleggen', fullCalendar: 'Volledige kalender', readOnlyDraft: 'Lopende prestaties komen uit de mobiele app en zijn hier alleen-lezen.', noCurrentSessions: 'Er zijn geen sessies in de huidige microcyclus.', noExposure: 'Nog geen afgeronde blootstelling.', noEvents: 'Er zijn geen gebeurtenissen vastgelegd.',
@@ -26,6 +29,7 @@ export default {
       flags: { substituted: 'Vervangen', skipped: 'Overgeslagen', additional_set: 'Extra set', reps_below_range: 'Herhalingen onder bereik', reps_at_floor: 'Herhalingen op ondergrens', top_of_range: 'Bovengrens van bereik', load_reduced: 'Belasting verlaagd', personal_record: 'Persoonlijk record' },
     },
     editor: {
+      planOwnedWeek: 'Het aantal sets, het herhalingsbereik en RIR komen uit planrevisie r{revision}. Wijzig ze in de Planmaker voor toekomstige weken.',
       eyebrow: 'Volgend voorschrift', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · bewerkbaar tot de sessie start', status: { clean: 'Niet gestart', dirty: 'Niet opgeslagen', saving: 'Opslaan…', saved: 'Opgeslagen', locked: 'Vergrendeld' },
       basis: 'Gebaseerd op prestatie in MC{mc} · {date} · afgerond', firstExposure: 'Eerste blootstelling — er is geen eerdere prestatie.', evidence: 'Herh. {reps} · belastingen {loads} kg · {top} op bovengrens · {floor} op ondergrens · {deeper} dieper dan doel-RIR',
       startFrom: 'Beginnen met', previousPrescription: 'Voorschrift MC{mc}', previousPerformance: 'Prestatie MC{mc}', allMinus: 'alle −{step}', allPlus: 'alle +{step}', suggestion: 'Suggestie', suggestionNone: 'Progressiemodel · geen', suggestionBody: 'Er is geen progressiemodel aan deze positie toegewezen.',
@@ -36,9 +40,11 @@ export default {
       not_next_session: 'Dit is niet langer de volgende sessie.', set_count_mismatch: 'Het aantal sets in het plan is gewijzigd. Herlaad de geschiedenis.', invalid_load: 'Een of meer belastingen zijn ongeldig.', genericError: 'Het voorschrift kon niet worden opgeslagen.', savedToast: 'Opgeslagen · {exercise} · MC{mc}', noLoadStep: 'Het plan definieert geen belastingstap; gebruik directe invoer.',
     },
     workout: {
+      subtitleWeek: 'dag {day} van elke week · {count} oefenposities',
       breadcrumb: 'Analyse / geschiedenis van de trainingseenheid', title: '{workout}', subtitle: 'dag {day} van elke microcyclus · {count} oefenposities', help: 'Cel = hoogste uitgevoerde belasting · herhalingen per set. Open een kolom of cel om de oefengeschiedenis te bekijken.', occurrence: 'Voorkomen', volume: 'Volumebelasting', comment: 'Trainingsopmerking', prescribed: 'voorgeschreven', notPerformed: 'niet uitgevoerd', empty: 'nog niet voorgeschreven', skipped: 'overgeslagen', locked: 'vergrendeld', loadError: 'De trainingsgeschiedenis kon niet worden geladen.',
     },
     timeline: {
+      eyebrowWeek: 'Geschiedenis van trainingsweken · kalender', titleWeek: '{count} trainingsweken · {start} → {end}', microcyclesWeek: 'Trainingsweken', helpMicrocyclesWeek: 'Eén rij per trainingsweek, plandagen van links naar rechts.', helpWeeksWeek: 'Kalenderweken van maandag tot zondag. De grenzen van trainingsweken blijven zichtbaar.',
       eyebrow: 'Microcyclusgeschiedenis · kalender', title: '{count} microcycli · {start} → {end}', microcycles: 'Microcycli', weeks: 'Kalenderweken', axis: 'Tijdas', helpMicrocycles: 'Eén rij per microcyclus, plandagen van links naar rechts.', helpWeeks: 'Kalenderweken van maandag tot zondag. Microcyclusgrenzen blijven zichtbaar.',
       attendance: 'Aanwezigheid', volume: 'Vol.-bel.', note: '+ notitie', notePlaceholder: 'Observatie voor MC{mc}…', saveNote: 'Notitie opslaan', selectSession: 'Selecteer een sessie voor details.', session: 'Sessie · MC{mc} · D{day}', prescription: 'Voorschrift: {state}',
       cancelSession: 'Sessie annuleren…', reclassify: 'Als geannuleerd classificeren…', restore: 'Herstellen als gepland', restorePast: 'Een eerdere sessie kan niet opnieuw worden gepland.', reason: 'Reden', reasonPlaceholder: 'bijv. vakantie', logEvent: 'Ook als logboekgebeurtenis vastleggen', confirm: 'Bevestigen',
@@ -49,6 +55,7 @@ export default {
       top_set_load: 'Belasting zwaarste set', mean_set_load: 'Gemiddelde setbelasting', volume_load: 'Volumebelasting', chart: 'Grafiek van belastingsprogressie', noSelection: 'Geen oefengeschiedenissen geselecteerd', noSelectionBody: 'Selecteer links geschiedenissen of toon ze allemaal.', showAll: 'Alles tonen', byUnit: 'Per trainingseenheid', loadError: 'De belastingsanalyse kon niet worden geladen.', gap: 'gat: {reason}',
     },
     newRun: {
+      countWeek: 'Trainingsweken', microcyclesWeek: 'trainingsweken',
       back: 'Terug naar Uitvoering', title: 'Nieuwe planuitvoering', subtitle: 'Plaats een planrevisie in concrete kalendertijd.', defaultName: '{plan} — uitvoering', plan: 'Trainingsplan', revision: 'Planrevisie', name: 'Naam van uitvoering', start: 'Startdatum', count: 'Microcycli', end: 'Einde (berekend)',
       preview: 'Voorbeeld · wat wordt gemaakt', microcycles: 'microcycli', sessions: 'geplande sessies', workouts: 'trainingsgeschiedenissen', exercises: 'oefengeschiedenissen', overlap: 'Deze uitvoering overlapt {count} bestaande uitvoering(en). De sessies komen op dezelfde datums.', draftWarning: 'Conceptrevisies kunnen nog veranderen.', revisionStatus: { released: 'Uitgebracht', draft: 'Concept', archived: 'Gearchiveerd' },
       invalid: 'Kies een planrevisie, geldige startdatum en 1–52 microcycli.', create: 'Uitvoering maken', creating: 'Maken…', loadError: 'De plannen konden niet worden geladen.', previewError: 'Het voorbeeld kon niet worden berekend.', createError: 'De uitvoering kon niet worden gemaakt.', noPlans: 'Maak een trainingsplan voordat je een uitvoering start.',

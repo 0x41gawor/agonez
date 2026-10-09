@@ -3,10 +3,12 @@ import { computed, ref } from 'vue'
 
 import type { AnalysisQueue } from '@/api/execution-types'
 import type { PrescriptionDraft } from '@/stores/executionDrafts'
+import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { executionDate, loadValue } from '@/features/execution/format'
 
 const props = defineProps<{ queue: AnalysisQueue; selectedTraceId: number | null; drafts: Record<number, PrescriptionDraft> }>()
 const emit = defineEmits<{ select: [traceId: number]; workout: [workoutTraceId: number] }>()
+const cycle = useExecutionCycleLabels()
 const open = ref<Set<number>>(new Set(props.queue.workouts.filter((workout) => workout.state === 'editable').map((workout) => workout.workout_trace_id)))
 const totals = computed(() => props.queue.workouts.reduce((result, workout) => ({ total: result.total + workout.exercises.length, saved: result.saved + workout.exercises.filter((item) => item.prescription_saved).length, locked: result.locked + (workout.state === 'editable' ? 0 : workout.exercises.length) }), { total: 0, saved: 0, locked: 0 }))
 
@@ -21,7 +23,7 @@ function toggle(id: number): void {
 <template>
   <aside class="analysis-queue">
     <header>
-      <span class="eyebrow">{{ $t('execution.analysis.queue', { mc: queue.target_microcycle?.ordinal ?? '—' }) }}</span>
+      <span class="eyebrow">{{ cycle.text('execution.analysis.queue', queue.target_microcycle?.ordinal ?? '—') }}</span>
       <p>{{ $t('execution.analysis.progress', totals) }} <kbd class="mono">{{ $t('execution.analysis.keyboard') }}</kbd></p>
       <span class="exec-progress"><i :style="{ width: `${totals.total ? (totals.saved / totals.total) * 100 : 0}%` }" /></span>
     </header>
@@ -31,7 +33,7 @@ function toggle(id: number): void {
         <em class="mono" :class="workout.state">{{ workout.state === 'editable' ? $t('execution.analysis.ready') : $t('execution.common.locked') }}</em>
       </button>
       <div class="queue-group-meta">
-        <span v-if="workout.basis_session">{{ $t('execution.analysis.basedOn', { mc: workout.basis_session.microcycle_ordinal, date: executionDate(workout.basis_session.scheduled_date) }) }}</span>
+        <span v-if="workout.basis_session">{{ cycle.text('execution.analysis.basedOn', workout.basis_session.microcycle_ordinal, { date: executionDate(workout.basis_session.scheduled_date) }) }}</span>
         <span v-else>{{ $t(`execution.blocked.${workout.blocked_reason ?? 'unknown'}`) }}</span>
         <button type="button" @click="emit('workout', workout.workout_trace_id)">{{ $t('execution.analysis.workoutTrace') }} →</button>
       </div>
@@ -40,7 +42,7 @@ function toggle(id: number): void {
           <span class="queue-state" :class="{ dirty: drafts[exercise.exercise_trace_id]?.dirty, saved: exercise.prescription_saved, locked: workout.state !== 'editable' }">
             {{ workout.state !== 'editable' ? '–' : drafts[exercise.exercise_trace_id]?.dirty ? '●' : exercise.prescription_saved ? '✓' : '○' }}
           </span>
-          <span><b>{{ exercise.slot_ordinal + 1 }} · {{ exercise.name }}</b><small class="mono" v-if="exercise.last_summary">MC{{ exercise.last_summary.microcycle_ordinal }} · {{ loadValue(exercise.last_summary.top_load_kg) }} kg · {{ exercise.last_summary.reps.join('/') }}</small><small v-else>{{ $t('execution.analysis.noSummary') }}</small></span>
+          <span><b>{{ exercise.slot_ordinal + 1 }} · {{ exercise.name }}</b><small class="mono" v-if="exercise.last_summary">{{ cycle.shortLabel(exercise.last_summary.microcycle_ordinal) }} · {{ loadValue(exercise.last_summary.top_load_kg) }} kg · {{ exercise.last_summary.reps.join('/') }}</small><small v-else>{{ $t('execution.analysis.noSummary') }}</small></span>
         </button>
       </div>
     </section>

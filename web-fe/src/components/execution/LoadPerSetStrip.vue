@@ -3,9 +3,11 @@ import { computed } from 'vue'
 
 import type { ExerciseTraceResponse } from '@/api/execution-types'
 import type { PrescriptionDraft } from '@/stores/executionDrafts'
+import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { loadValue, parseLoad } from '@/features/execution/format'
 
 const props = defineProps<{ trace: ExerciseTraceResponse; draft: PrescriptionDraft | undefined }>()
+const cycle = useExecutionCycleLabels()
 const width = 760
 const height = 138
 const points = computed(() => {
@@ -39,12 +41,12 @@ function color(kind: string): string { return ['below_range'].includes(kind) ? '
       <text x="2" y="25">{{ loadValue(max) }} kg</text><text x="2" y="105">{{ loadValue(min) }} kg</text>
       <g v-for="exposure in trace.exposures" :key="exposure.session.session_id">
         <line v-for="set in exposure.prescription.sets.filter((item) => item.load_kg != null)" :key="set.ordinal" :x1="x(exposure.microcycle.ordinal) - 10" :x2="x(exposure.microcycle.ordinal) + 10" :y1="y(set.load_kg!)" :y2="y(set.load_kg!)" class="prescribed-tick" />
-        <text :x="x(exposure.microcycle.ordinal) - 14" y="129">MC{{ exposure.microcycle.ordinal }}</text>
+        <text :x="x(exposure.microcycle.ordinal) - 14" y="129">{{ cycle.shortLabel(exposure.microcycle.ordinal) }}</text>
       </g>
-      <circle v-for="point in points" :key="`${point.mc}-${point.set}`" :cx="x(point.mc) + (point.set - 1) * 7" :cy="y(point.load)" r="4" :fill="color(point.kind)" tabindex="0"><title>MC{{ point.mc }} · {{ $t('execution.analysis.set', { set: point.set + 1 }) }} · {{ loadValue(point.load) }} kg × {{ point.reps }}</title></circle>
+      <circle v-for="point in points" :key="`${point.mc}-${point.set}`" :cx="x(point.mc) + (point.set - 1) * 7" :cy="y(point.load)" r="4" :fill="color(point.kind)" tabindex="0"><title>{{ cycle.shortLabel(point.mc) }} · {{ $t('execution.analysis.set', { set: point.set + 1 }) }} · {{ loadValue(point.load) }} kg × {{ point.reps }}</title></circle>
       <template v-if="draft && trace.next?.target">
         <line v-for="(load, index) in draft.loads" :key="index" :x1="710" :x2="734" :y1="y(parseLoad(load) ?? 0)" :y2="y(parseLoad(load) ?? 0)" class="next-tick" />
-        <text x="700" y="129">MC{{ trace.next.target.microcycle.ordinal }}</text>
+        <text x="700" y="129">{{ cycle.shortLabel(trace.next.target.microcycle.ordinal) }}</text>
       </template>
     </svg>
   </section>

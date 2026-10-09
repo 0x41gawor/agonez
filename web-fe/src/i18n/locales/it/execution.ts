@@ -3,7 +3,9 @@ export default {
     shellStatus: 'ESECUZIONE · DESKTOP', nav: 'Esecuzione',
     tabs: { overview: 'Panoramica', analysis: 'Analisi', timeline: 'Cronologia', loads: 'Carichi' },
     common: { kg: 'kg', rir: 'RIR', reps: 'rip.', today: 'Oggi', close: 'Chiudi', save: 'Salva', cancel: 'Annulla', edit: 'Modifica', locked: 'Bloccato', loading: 'Caricamento dei dati di esecuzione…', marker: 'MARKER.X', reserved: 'riservato' },
+    cycle: { microcycle: { label: 'Microciclo {ordinal}', short: 'MC{ordinal}' }, week: { label: 'Settimana {ordinal}', short: 'S{ordinal}' } },
     run: {
+      metaWeek: '{start} → {end} · {count} × settimane di allenamento di 7 giorni',
       eyebrow: 'Esecuzione del piano', from: 'Da {plan}', all: 'Tutte le esecuzioni ({count})', new: 'Nuova esecuzione', meta: '{start} → {end} · {count} × microcicli di {days} giorni',
       status: { scheduled: 'Pianificata', active: 'Attiva', cancelled: 'Annullata', completed: 'Completata' }, emptyTitle: 'Nessuna esecuzione del piano', emptyBody: 'Un’esecuzione colloca un piano di allenamento nel calendario reale.', loadError: 'Impossibile caricare l’esecuzione', listError: 'Impossibile caricare le esecuzioni.',
     },
@@ -12,6 +14,7 @@ export default {
       previous_exposure_in_progress: 'L’esposizione precedente è ancora in corso.', previous_exposure_not_performed: 'L’esposizione prescritta precedente non è stata eseguita.', session_started: 'Questa sessione è già iniziata.', no_future_session: 'Non ci sono sessioni successive in questa esecuzione.', run_not_active: 'Questa esecuzione non è attiva.', unknown: 'Questa prescrizione non è ancora modificabile.',
     },
     overview: {
+      positionWeek: 'Settimana {current} di {total} · giorno {day} di {days}', thisMicrocycleWeek: 'Questa settimana', prescriptionsWeek: 'Prescrizioni per la prossima settimana', noCurrentSessionsWeek: 'Non ci sono sessioni nella settimana corrente.',
       where: 'Posizione attuale', position: 'Microciclo {current} di {total} · giorno {day} di {days}', positionSub: 'giorno {runDay} di {runDays}, {left} giorni rimanenti', thisMicrocycle: 'Questo microciclo', sessions: 'Sessioni nel calendario', analysisEyebrow: 'Analisi post-allenamento · successivo: MC{mc}', prescriptions: 'Prescrizioni per il prossimo microciclo',
       continue: 'Continua {workout}', waiting: 'In attesa', saved: '{saved} / {total} salvate', latest: 'Ultima esposizione · {workout} · {date}', comparison: 'Prescritto e svolto', exercise: 'Esercizio', prescribed: 'Prescritto', performed: 'Svolto', note: 'Nota', adherence: 'Aderenza', didPlanHappen: 'Il piano è stato eseguito?',
       journal: 'Diario', latestEvents: 'Eventi recenti', allEvents: 'Tutti ({count})', observationPlaceholder: 'Registra un’osservazione…', log: 'Registra', fullCalendar: 'Calendario completo', readOnlyDraft: 'La prestazione in corso proviene dall’app mobile ed è di sola lettura qui.', noCurrentSessions: 'Nessuna sessione nel microciclo corrente.', noExposure: 'Nessuna esposizione finalizzata.', noEvents: 'Nessun evento registrato.',
@@ -26,6 +29,7 @@ export default {
       flags: { substituted: 'Sostituito', skipped: 'Saltato', additional_set: 'Serie aggiuntiva', reps_below_range: 'Ripetizioni sotto l’intervallo', reps_at_floor: 'Ripetizioni al limite inferiore', top_of_range: 'Limite superiore dell’intervallo', load_reduced: 'Carico ridotto', personal_record: 'Record personale' },
     },
     editor: {
+      planOwnedWeek: 'Numero di serie, intervallo di ripetizioni e RIR derivano dalla revisione r{revision}. Modificali nel Creatore del piano per le settimane future.',
       eyebrow: 'Prossima prescrizione', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · modificabile fino all’inizio della sessione', status: { clean: 'Non iniziato', dirty: 'Non salvato', saving: 'Salvataggio…', saved: 'Salvato', locked: 'Bloccato' },
       basis: 'Basato sulla prestazione MC{mc} · {date} · finalizzata', firstExposure: 'Prima esposizione — non ci sono prestazioni precedenti.', evidence: 'Rip. {reps} · carichi {loads} kg · {top} al limite superiore · {floor} al limite inferiore · {deeper} più profondo del RIR obiettivo',
       startFrom: 'Inizia da', previousPrescription: 'Prescrizione MC{mc}', previousPerformance: 'Prestazione MC{mc}', allMinus: 'tutte −{step}', allPlus: 'tutte +{step}', suggestion: 'Suggerimento', suggestionNone: 'Modello di progressione · nessuno', suggestionBody: 'Nessun modello di progressione è assegnato a questo slot.',
@@ -36,9 +40,11 @@ export default {
       not_next_session: 'Questa non è più la prossima sessione.', set_count_mismatch: 'Il numero di serie del piano è cambiato. Ricarica lo storico.', invalid_load: 'Uno o più carichi non sono validi.', genericError: 'Impossibile salvare la prescrizione.', savedToast: 'Salvato · {exercise} · MC{mc}', noLoadStep: 'Il piano non definisce un incremento di carico; usa l’inserimento diretto.',
     },
     workout: {
+      subtitleWeek: 'giorno {day} di ogni settimana · {count} posizioni di esercizio',
       breadcrumb: 'Analisi / storico dell’unità di allenamento', title: '{workout}', subtitle: 'giorno {day} di ogni microciclo · {count} slot esercizio', help: 'Cella = carico massimo svolto · ripetizioni per serie. Apri una colonna o cella per consultare lo storico dell’esercizio.', occurrence: 'Occorrenza', volume: 'Carico-volume', comment: 'Commento allenamento', prescribed: 'prescritto', notPerformed: 'non svolto', empty: 'non ancora prescritto', skipped: 'saltato', locked: 'bloccato', loadError: 'Impossibile caricare lo storico dell’allenamento.',
     },
     timeline: {
+      eyebrowWeek: 'Storico settimane di allenamento · calendario', titleWeek: '{count} settimane di allenamento · {start} → {end}', microcyclesWeek: 'Settimane di allenamento', helpMicrocyclesWeek: 'Una riga per settimana di allenamento, giorni del piano da sinistra a destra.', helpWeeksWeek: 'Settimane di calendario da lunedì a domenica. I confini delle settimane di allenamento restano visibili.',
       eyebrow: 'Storico microcicli · calendario', title: '{count} microcicli · {start} → {end}', microcycles: 'Microcicli', weeks: 'Settimane di calendario', axis: 'Asse temporale', helpMicrocycles: 'Una riga per microciclo, giorni del piano da sinistra a destra.', helpWeeks: 'Settimane da lunedì a domenica. I confini dei microcicli restano visibili.',
       attendance: 'Presenza', volume: 'Carico-vol.', note: '+ nota', notePlaceholder: 'Osservazione per MC{mc}…', saveNote: 'Salva nota', selectSession: 'Seleziona una sessione per i dettagli.', session: 'Sessione · MC{mc} · G{day}', prescription: 'Prescrizione: {state}',
       cancelSession: 'Annulla sessione…', reclassify: 'Riclassifica come annullata…', restore: 'Ripristina come pianificata', restorePast: 'Una sessione passata non può essere ripianificata.', reason: 'Motivo', reasonPlaceholder: 'es. vacanza', logEvent: 'Registra anche un evento nel diario', confirm: 'Conferma',
@@ -49,6 +55,7 @@ export default {
       top_set_load: 'Carico della serie massima', mean_set_load: 'Carico medio delle serie', volume_load: 'Carico-volume', chart: 'Grafico della progressione dei carichi', noSelection: 'Nessuno storico selezionato', noSelectionBody: 'Scegli gli storici a sinistra o mostrali tutti.', showAll: 'Mostra tutti', byUnit: 'Per unità di allenamento', loadError: 'Impossibile caricare l’analisi dei carichi.', gap: 'spazio: {reason}',
     },
     newRun: {
+      countWeek: 'Settimane di allenamento', microcyclesWeek: 'settimane di allenamento',
       back: 'Torna a Esecuzione', title: 'Nuova esecuzione', subtitle: 'Porta una revisione del piano nel calendario reale.', defaultName: '{plan} — esecuzione', plan: 'Piano di allenamento', revision: 'Revisione del piano', name: 'Nome esecuzione', start: 'Data di inizio', count: 'Microcicli', end: 'Fine (calcolata)',
       preview: 'Anteprima · cosa verrà creato', microcycles: 'microcicli', sessions: 'sessioni pianificate', workouts: 'storici allenamenti', exercises: 'storici esercizi', overlap: 'Questa esecuzione si sovrappone a {count} esecuzione/i esistente/i. Le sessioni saranno collocate nelle stesse date.', draftWarning: 'Le revisioni in bozza possono ancora cambiare.', revisionStatus: { released: 'Pubblicata', draft: 'Bozza', archived: 'Archiviata' },
       invalid: 'Scegli una revisione, una data di inizio valida e da 1 a 52 microcicli.', create: 'Crea esecuzione', creating: 'Creazione…', loadError: 'Impossibile caricare i piani.', previewError: 'Impossibile calcolare l’anteprima.', createError: 'Impossibile creare l’esecuzione.', noPlans: 'Crea un piano di allenamento prima di iniziare un’esecuzione.',

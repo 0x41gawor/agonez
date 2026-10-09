@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { defineComponent } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
 import { executionApi } from '@/api/execution'
@@ -10,7 +11,8 @@ import LoadsChart from '@/components/execution/LoadsChart.vue'
 import PrescriptionEditor from '@/components/execution/PrescriptionEditor.vue'
 import SessionStatusMark from '@/components/execution/SessionStatusMark.vue'
 import AppShell from '@/components/shell/AppShell.vue'
-import { i18n } from '@/i18n'
+import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
+import { i18n, setActiveLocale } from '@/i18n'
 import router from '@/router'
 import { useExecutionDraftsStore } from '@/stores/executionDrafts'
 
@@ -43,6 +45,26 @@ const queue: AnalysisQueueDTO = {
 }
 
 describe('Execution critical workflows', () => {
+  it('uses localized week labels only for seven-day plan runs', async () => {
+    const CycleProbe = defineComponent({
+      props: { duration: { type: Number, required: true } },
+      setup(props) { return { cycle: useExecutionCycleLabels(() => props.duration) } },
+      template: '<div :data-copy="cycle.routeCopy(\'execution.timeline.title\')">{{ cycle.label(6) }}|{{ cycle.shortLabel(6) }}|{{ cycle.text(\'execution.editor.title\', 6, { exercise: \'Bench Press\' }) }}</div>',
+    })
+
+    const weekly = mount(CycleProbe, { props: { duration: 7 } })
+    expect(weekly.text()).toBe('Week 6|W6|Bench Press · W6')
+    expect(weekly.attributes('data-copy')).toBe('execution.timeline.titleWeek')
+
+    const nonWeekly = mount(CycleProbe, { props: { duration: 6 } })
+    expect(nonWeekly.text()).toBe('Microcycle 6|MC6|Bench Press · MC6')
+    expect(nonWeekly.attributes('data-copy')).toBe('execution.timeline.title')
+
+    await setActiveLocale('pl', { persist: false })
+    const localized = mount(CycleProbe, { props: { duration: 7 } })
+    expect(localized.text()).toBe('Tydzień 6|T6|Bench Press · T6')
+  })
+
   it('compiles the Analysis plan summary containing the literal @RIR notation', () => {
     expect(i18n.global.t('execution.analysis.plan', { sets: 3, min: 5, max: 7, rir: 1 }))
       .toBe('plan: 3 × 5–7 @RIR 1')

@@ -3,11 +3,13 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ExerciseExposure, ExerciseTraceResponse, SetPerformance } from '@/api/execution-types'
 import type { PrescriptionDraft } from '@/stores/executionDrafts'
+import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { executionDate, executionDateTime, loadValue, parseLoad } from '@/features/execution/format'
 import ClassificationTag from './ClassificationTag.vue'
 
 const props = defineProps<{ trace: ExerciseTraceResponse; draft: PrescriptionDraft | undefined }>()
 const { t } = useI18n()
+const cycle = useExecutionCycleLabels()
 const expanded = ref<Set<number>>(new Set())
 const columns = computed(() => Math.max(props.trace.trace.current_plan.sets.length, ...props.trace.exposures.map((item) => Math.max(item.prescription.sets.length, item.performance?.sets.length ?? 0))))
 const gridStyle = computed(() => ({ gridTemplateColumns: `160px 64px repeat(${columns.value}, minmax(142px, 156px)) minmax(320px, 1fr)` }))
@@ -24,11 +26,11 @@ function sessionLabel(exposure: ExerciseExposure): string { return exposure.sess
       <div class="trace-table-head" role="row" :style="gridStyle"><span>{{ $t('execution.analysis.exposure') }}</span><span /><span v-for="index in columns" :key="index">{{ $t('execution.analysis.set', { set: index }) }}</span><span>{{ $t('execution.analysis.comments') }}</span></div>
       <template v-for="exposure in trace.exposures" :key="exposure.session.session_id">
         <div v-if="trace.revision_transitions.some((transition) => transition.before_microcycle_ordinal === exposure.microcycle.ordinal)" class="trace-revision-row" :style="{ gridColumn: `1 / span ${columns + 3}` }">
-          <template v-for="transition in trace.revision_transitions.filter((item) => item.before_microcycle_ordinal === exposure.microcycle.ordinal)" :key="transition.to_revision_no"><b class="mono">{{ $t('execution.analysis.revision', { from: transition.from_revision_no, to: transition.to_revision_no }) }}</b><span>{{ $t('execution.analysis.revisionBody', { mc: transition.before_microcycle_ordinal, date: executionDate(transition.effective_on), changes: transition.slot_changes.join(', ') || '—' }) }}</span></template>
+          <template v-for="transition in trace.revision_transitions.filter((item) => item.before_microcycle_ordinal === exposure.microcycle.ordinal)" :key="transition.to_revision_no"><b class="mono">{{ $t('execution.analysis.revision', { from: transition.from_revision_no, to: transition.to_revision_no }) }}</b><span>{{ cycle.text('execution.analysis.revisionBody', transition.before_microcycle_ordinal, { date: executionDate(transition.effective_on), changes: transition.slot_changes.join(', ') || '—' }) }}</span></template>
         </div>
         <div class="trace-exposure-label" role="rowheader">
-          <button type="button" :aria-label="$t(expanded.has(exposure.session.session_id) ? 'execution.analysis.collapse' : 'execution.analysis.expand', { mc: exposure.microcycle.ordinal })" @click="toggle(exposure.session.session_id)">{{ expanded.has(exposure.session.session_id) ? '▾' : '▸' }}</button>
-          <span><b class="mono">MC{{ exposure.microcycle.ordinal }}</b><small class="mono">{{ executionDate(exposure.session.scheduled_date, { weekday: 'short', day: '2-digit', month: 'short' }) }}</small><ClassificationTag :classification="exposure.microcycle.classification" /></span>
+          <button type="button" :aria-label="cycle.text(expanded.has(exposure.session.session_id) ? 'execution.analysis.collapse' : 'execution.analysis.expand', exposure.microcycle.ordinal)" @click="toggle(exposure.session.session_id)">{{ expanded.has(exposure.session.session_id) ? '▾' : '▸' }}</button>
+          <span><b class="mono">{{ cycle.shortLabel(exposure.microcycle.ordinal) }}</b><small class="mono">{{ executionDate(exposure.session.scheduled_date, { weekday: 'short', day: '2-digit', month: 'short' }) }}</small><ClassificationTag :classification="exposure.microcycle.classification" /></span>
         </div>
         <span class="trace-row-label prescribed mono">{{ $t('execution.analysis.prescription') }}</span>
         <span v-for="index in columns" :key="`p-${index}`" class="trace-set-cell prescribed mono">{{ exposure.prescription.sets[index - 1] ? `${loadValue(exposure.prescription.sets[index - 1]?.load_kg ?? null)} × ${exposure.prescription.sets[index - 1]?.rep_min}–${exposure.prescription.sets[index - 1]?.rep_max} @${exposure.prescription.sets[index - 1]?.target_rir ?? '—'}` : '—' }}</span>
@@ -52,7 +54,7 @@ function sessionLabel(exposure: ExerciseExposure): string { return exposure.sess
       </template>
 
       <template v-if="trace.next?.target">
-        <div class="trace-exposure-label next-row"><span><b class="mono">MC{{ trace.next.target.microcycle.ordinal }} · NEXT</b><small class="mono">{{ executionDate(trace.next.target.scheduled_date) }}</small></span></div>
+        <div class="trace-exposure-label next-row"><span><b class="mono">{{ cycle.shortLabel(trace.next.target.microcycle.ordinal) }} · NEXT</b><small class="mono">{{ executionDate(trace.next.target.scheduled_date) }}</small></span></div>
         <span class="trace-row-label next-row mono">{{ $t('execution.analysis.prescription') }}</span>
         <template v-if="trace.next.state === 'editable' && draft"><span v-for="index in columns" :key="`n-${index}`" class="trace-set-cell next-row mono">{{ index <= draft.loads.length ? `${loadValue(parseLoad(draft.loads[index - 1] ?? '') ?? null)} kg` : '—' }}</span><span class="trace-comment-cell next-row">{{ draft.prescriptionComment || $t('execution.analysis.noComment') }}</span></template>
         <template v-else><span class="trace-span-state locked" :style="{ gridColumn: `3 / span ${columns + 1}` }">{{ $t(`execution.blocked.${trace.next.blocked_reason ?? 'unknown'}`) }}</span></template>

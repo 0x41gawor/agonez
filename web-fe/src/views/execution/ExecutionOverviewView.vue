@@ -7,11 +7,13 @@ import { executionApi } from '@/api/execution'
 import ClassificationTag from '@/components/execution/ClassificationTag.vue'
 import SessionStatusMark from '@/components/execution/SessionStatusMark.vue'
 import { executionContextKey } from '@/features/execution/context'
+import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { executionDate, executionDateTime, loadValue } from '@/features/execution/format'
 
 const context = inject(executionContextKey)!
 const router = useRouter()
 const { t } = useI18n()
+const cycle = useExecutionCycleLabels()
 const observation = ref('')
 const posting = ref(false)
 const postError = ref<string | null>(null)
@@ -55,7 +57,7 @@ async function logObservation(): Promise<void> {
         <div class="exec-position-copy">
           <span class="eyebrow">{{ $t('execution.overview.where') }}</span>
           <strong v-if="data.position.microcycle_ordinal">
-            {{ $t('execution.overview.position', { current: data.position.microcycle_ordinal, total: data.run.microcycle_count, day: data.position.day_in_microcycle, days: data.run.microcycle_duration_days }) }}
+            {{ $t(cycle.routeCopy('execution.overview.position'), { current: data.position.microcycle_ordinal, total: data.run.microcycle_count, day: data.position.day_in_microcycle, days: data.run.microcycle_duration_days }) }}
             <small>{{ $t('execution.overview.positionSub', { runDay: data.position.run_day, runDays: data.position.run_days_total, left: data.position.days_left }) }}</small>
           </strong>
         </div>
@@ -65,7 +67,7 @@ async function logObservation(): Promise<void> {
       </div>
       <div class="exec-microcycle-strip">
         <button v-for="microcycle in data.microcycles" :key="microcycle.ordinal" type="button" class="exec-microcycle-card" :class="{ current: microcycle.is_current, revision: microcycle.revision_changed_here }" @click="goTimeline()">
-          <span class="exec-mc-title mono">MC{{ microcycle.ordinal }} <ClassificationTag :classification="microcycle.classification" /><b v-if="microcycle.is_current">{{ $t('execution.common.today') }}</b></span>
+          <span class="exec-mc-title mono">{{ cycle.shortLabel(microcycle.ordinal) }} <ClassificationTag :classification="microcycle.classification" /><b v-if="microcycle.is_current">{{ $t('execution.common.today') }}</b></span>
           <span class="exec-mc-dates mono">{{ executionDate(microcycle.starts_on) }}–{{ executionDate(microcycle.ends_on) }}</span>
           <span class="exec-pips">
             <SessionStatusMark v-for="session in microcycle.sessions" :key="session.session_id" :status="session.status" :completion-mode="session.completion_mode" :today="statusToday(session.scheduled_date)" compact />
@@ -78,7 +80,7 @@ async function logObservation(): Promise<void> {
     <div class="execution-overview-grid">
       <section class="panel exec-overview-panel">
         <header class="exec-panel-header">
-          <div><span class="eyebrow">{{ $t('execution.overview.thisMicrocycle') }}<template v-if="current"> · MC{{ current.ordinal }}</template></span><h2>{{ $t('execution.overview.sessions') }}</h2></div>
+          <div><span class="eyebrow">{{ $t(cycle.routeCopy('execution.overview.thisMicrocycle')) }}<template v-if="current"> · {{ cycle.label(current.ordinal) }}</template></span><h2>{{ $t('execution.overview.sessions') }}</h2></div>
           <button class="exec-link-button" type="button" @click="goTimeline()">{{ $t('execution.overview.fullCalendar') }} →</button>
         </header>
         <button v-for="session in data.current_microcycle_sessions" :key="session.session_id" type="button" class="exec-list-row exec-session-row" @click="goTimeline(session.session_id)">
@@ -86,14 +88,14 @@ async function logObservation(): Promise<void> {
           <span><b>{{ session.workout_name }}</b><small v-if="session.status === 'completed'">{{ executionDateTime(session.completed_at) }} · {{ session.exercise_count }} · {{ $t('execution.status.completed') }}</small><small v-else-if="session.status === 'in_progress'">{{ executionDateTime(session.started_at) }} · {{ session.performance?.synced_exercise_count ?? 0 }}/{{ session.exercise_count }}</small><small v-else>{{ $t(`execution.status.${session.status}`) }}</small></span>
           <span class="exec-session-state mono">{{ $t(`execution.status.${statusToday(session.scheduled_date) && session.status === 'scheduled' ? 'today' : session.status}`) }}</span>
         </button>
-        <p v-if="!data.current_microcycle_sessions.length" class="exec-empty-row">{{ $t('execution.overview.noCurrentSessions') }}</p>
+        <p v-if="!data.current_microcycle_sessions.length" class="exec-empty-row">{{ $t(cycle.routeCopy('execution.overview.noCurrentSessions')) }}</p>
         <p class="exec-panel-note">{{ $t('execution.overview.readOnlyDraft') }}</p>
       </section>
 
       <div class="exec-overview-middle">
         <section class="panel exec-overview-panel">
           <header class="exec-panel-header">
-            <div><span class="eyebrow accent">{{ $t('execution.overview.analysisEyebrow', { mc: data.analysis_readiness.target_microcycle_ordinal ?? '—' }) }}</span><h2>{{ $t('execution.overview.prescriptions') }}</h2></div>
+            <div><span class="eyebrow accent">{{ cycle.text('execution.overview.analysisEyebrow', data.analysis_readiness.target_microcycle_ordinal ?? '—') }}</span><h2>{{ $t(cycle.routeCopy('execution.overview.prescriptions')) }}</h2></div>
             <RouterLink v-if="firstReady" class="button primary" :to="{ name: 'execution-analysis', params: { runId: context.runId.value } }">{{ $t('execution.overview.continue', { workout: firstReady.workout_name }) }} →</RouterLink>
           </header>
           <RouterLink v-for="workout in data.analysis_readiness.workouts" :key="workout.workout_trace_id" class="exec-list-row exec-readiness-row" :to="{ name: 'execution-workout-trace', params: { runId: context.runId.value, workoutTraceId: workout.workout_trace_id } }">
@@ -125,13 +127,13 @@ async function logObservation(): Promise<void> {
           <span class="eyebrow">{{ $t('execution.overview.adherence') }} · {{ completed }}/{{ due }}</span>
           <h2>{{ $t('execution.overview.didPlanHappen') }}</h2>
           <div v-for="row in data.attendance" :key="row.microcycle_ordinal" class="exec-attendance-row" :title="`${row.missed} ${$t('execution.status.missed')} · ${row.cancelled} ${$t('execution.status.cancelled')}`">
-            <span class="mono">MC{{ row.microcycle_ordinal }}</span><span class="exec-attendance-bar"><i :class="{ missed: row.missed, cancelled: row.cancelled }" :style="{ width: `${(row.ratio ?? 0) * 100}%` }" /></span><span class="mono">{{ row.completed }}/{{ row.due }}</span>
+            <span class="mono">{{ cycle.shortLabel(row.microcycle_ordinal) }}</span><span class="exec-attendance-bar"><i :class="{ missed: row.missed, cancelled: row.cancelled }" :style="{ width: `${(row.ratio ?? 0) * 100}%` }" /></span><span class="mono">{{ row.completed }}/{{ row.due }}</span>
           </div>
         </section>
         <section class="panel exec-overview-panel">
           <header class="exec-panel-header"><div><span class="eyebrow">{{ $t('execution.overview.journal') }}</span><h2>{{ $t('execution.overview.latestEvents') }}</h2></div><button class="exec-link-button" type="button" @click="goTimeline()">{{ $t('execution.overview.allEvents', { count: data.latest_events.length }) }} →</button></header>
           <div v-if="data.latest_events.length">
-            <article v-for="event in data.latest_events" :key="event.event_id" class="exec-event-row"><i :class="`event-${event.event_type}`" /><span><b>{{ event.title }}</b><small>{{ event.body ?? '—' }}</small></span><time class="mono">{{ executionDate(event.date) }}<template v-if="event.microcycle_ordinal"> · MC{{ event.microcycle_ordinal }}</template></time></article>
+            <article v-for="event in data.latest_events" :key="event.event_id" class="exec-event-row"><i :class="`event-${event.event_type}`" /><span><b>{{ event.title }}</b><small>{{ event.body ?? '—' }}</small></span><time class="mono">{{ executionDate(event.date) }}<template v-if="event.microcycle_ordinal"> · {{ cycle.shortLabel(event.microcycle_ordinal) }}</template></time></article>
           </div>
           <p v-else class="exec-empty-row">{{ $t('execution.overview.noEvents') }}</p>
           <form class="exec-observation-form" @submit.prevent="logObservation"><label class="sr-only" for="overview-observation">{{ $t('execution.overview.observationPlaceholder') }}</label><input id="overview-observation" v-model="observation" class="exec-input" :placeholder="$t('execution.overview.observationPlaceholder')" /><button class="button" type="submit" :disabled="!observation.trim() || posting">{{ $t('execution.overview.log') }}</button></form>

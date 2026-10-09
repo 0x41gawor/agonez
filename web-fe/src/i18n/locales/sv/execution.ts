@@ -3,7 +3,9 @@ export default {
     shellStatus: 'UTFÖRANDE · DESKTOP', nav: 'Utförande',
     tabs: { overview: 'Översikt', analysis: 'Analys', timeline: 'Tidslinje', loads: 'Belastningar' },
     common: { kg: 'kg', rir: 'RIR', reps: 'reps', today: 'I dag', close: 'Stäng', save: 'Spara', cancel: 'Avbryt', edit: 'Redigera', locked: 'Låst', loading: 'Läser in utförandedata…', marker: 'MARKER.X', reserved: 'reserverad' },
+    cycle: { microcycle: { label: 'Mikrocykel {ordinal}', short: 'MC{ordinal}' }, week: { label: 'Vecka {ordinal}', short: 'V{ordinal}' } },
     run: {
+      metaWeek: '{start} → {end} · {count} × 7-dagars träningsveckor',
       eyebrow: 'Plankörning', from: 'Från {plan}', all: 'Alla körningar ({count})', new: 'Ny plankörning', meta: '{start} → {end} · {count} × mikrocykler på {days} dagar',
       status: { scheduled: 'Planerad', active: 'Aktiv', cancelled: 'Avbruten', completed: 'Slutförd' }, emptyTitle: 'Inga plankörningar ännu', emptyBody: 'En plankörning placerar en träningsplan i verklig kalendertid.', loadError: 'Plankörningen kunde inte läsas in', listError: 'Plankörningarna kunde inte läsas in.',
     },
@@ -12,6 +14,7 @@ export default {
       previous_exposure_in_progress: 'Föregående exponering pågår fortfarande.', previous_exposure_not_performed: 'Föregående ordinerade exponering har inte genomförts.', session_started: 'Det här passet har redan startat.', no_future_session: 'Det finns inget senare pass i den här körningen.', run_not_active: 'Den här plankörningen är inte aktiv.', unknown: 'Den här ordinationen kan inte redigeras ännu.',
     },
     overview: {
+      positionWeek: 'Vecka {current} av {total} · dag {day} av {days}', thisMicrocycleWeek: 'Denna vecka', prescriptionsWeek: 'Ordinationer för nästa vecka', noCurrentSessionsWeek: 'Det finns inga pass i den aktuella veckan.',
       where: 'Din position', position: 'Mikrocykel {current} av {total} · dag {day} av {days}', positionSub: 'körningsdag {runDay} av {runDays}, {left} dagar kvar', thisMicrocycle: 'Denna mikrocykel', sessions: 'Pass i kalendern', analysisEyebrow: 'Efterträningsanalys · nästa: MC{mc}', prescriptions: 'Ordinationer för nästa mikrocykel',
       continue: 'Fortsätt {workout}', waiting: 'Väntar', saved: '{saved} / {total} sparade', latest: 'Senaste exponering · {workout} · {date}', comparison: 'Ordinerat jämfört med utfört', exercise: 'Övning', prescribed: 'Ordinerat', performed: 'Utfört', note: 'Anteckning', adherence: 'Följsamhet', didPlanHappen: 'Genomfördes planen?',
       journal: 'Journal', latestEvents: 'Senaste händelser', allEvents: 'Alla ({count})', observationPlaceholder: 'Logga en observation…', log: 'Logga', fullCalendar: 'Fullständig kalender', readOnlyDraft: 'Pågående prestation kommer från mobilappen och är skrivskyddad här.', noCurrentSessions: 'Det finns inga pass i den aktuella mikrocykeln.', noExposure: 'Ingen slutförd exponering ännu.', noEvents: 'Inga händelser har loggats.',
@@ -26,6 +29,7 @@ export default {
       flags: { substituted: 'Ersatt', skipped: 'Överhoppad', additional_set: 'Extra set', reps_below_range: 'Repetitioner under intervallet', reps_at_floor: 'Repetitioner vid nedre gränsen', top_of_range: 'Övre delen av intervallet', load_reduced: 'Belastning minskad', personal_record: 'Personligt rekord' },
     },
     editor: {
+      planOwnedWeek: 'Antal set, repetitionsintervall och RIR kommer från planrevision r{revision}. Ändra dem i Planskaparen för kommande veckor.',
       eyebrow: 'Nästa ordination', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · redigerbar tills passet startar', status: { clean: 'Inte påbörjad', dirty: 'Osparad', saving: 'Sparar…', saved: 'Sparad', locked: 'Låst' },
       basis: 'Baserat på prestationen i MC{mc} · {date} · slutförd', firstExposure: 'Första exponeringen — det finns ingen tidigare prestation.', evidence: 'Reps {reps} · belastningar {loads} kg · {top} vid övre gränsen · {floor} vid nedre gränsen · {deeper} djupare än mål-RIR',
       startFrom: 'Börja från', previousPrescription: 'Ordination MC{mc}', previousPerformance: 'Prestation MC{mc}', allMinus: 'alla −{step}', allPlus: 'alla +{step}', suggestion: 'Förslag', suggestionNone: 'Progressionsmodell · ingen', suggestionBody: 'Ingen progressionsmodell är tilldelad den här platsen.',
@@ -36,9 +40,11 @@ export default {
       not_next_session: 'Detta är inte längre nästa pass.', set_count_mismatch: 'Antalet set i planen har ändrats. Läs in historiken igen.', invalid_load: 'En eller flera belastningar är ogiltiga.', genericError: 'Ordinationen kunde inte sparas.', savedToast: 'Sparad · {exercise} · MC{mc}', noLoadStep: 'Planen anger inget belastningssteg; använd direkt inmatning.',
     },
     workout: {
+      subtitleWeek: 'dag {day} i varje vecka · {count} övningsplatser',
       breadcrumb: 'Analys / träningsenhetens historik', title: '{workout}', subtitle: 'dag {day} i varje mikrocykel · {count} övningsplatser', help: 'Cell = högsta utförda belastning · repetitioner per set. Öppna en kolumn eller cell för att granska övningens historik.', occurrence: 'Tillfälle', volume: 'Volymbelastning', comment: 'Träningskommentar', prescribed: 'ordinerat', notPerformed: 'inte utfört', empty: 'inte ordinerat ännu', skipped: 'överhoppat', locked: 'låst', loadError: 'Träningshistoriken kunde inte läsas in.',
     },
     timeline: {
+      eyebrowWeek: 'Träningsveckohistorik · kalender', titleWeek: '{count} träningsveckor · {start} → {end}', microcyclesWeek: 'Träningsveckor', helpMicrocyclesWeek: 'En rad per träningsvecka, plandagar från vänster till höger.', helpWeeksWeek: 'Kalenderveckor från måndag till söndag. Träningsveckornas gränser förblir synliga.',
       eyebrow: 'Mikrocykelhistorik · kalender', title: '{count} mikrocykler · {start} → {end}', microcycles: 'Mikrocykler', weeks: 'Kalenderveckor', axis: 'Tidsaxel', helpMicrocycles: 'En rad per mikrocykel, plandagar från vänster till höger.', helpWeeks: 'Kalenderveckor från måndag till söndag. Mikrocykelgränserna förblir synliga.',
       attendance: 'Närvaro', volume: 'Volymbel.', note: '+ anteckning', notePlaceholder: 'Observation för MC{mc}…', saveNote: 'Spara anteckning', selectSession: 'Välj ett pass för att visa detaljer.', session: 'Pass · MC{mc} · D{day}', prescription: 'Ordination: {state}',
       cancelSession: 'Avbryt pass…', reclassify: 'Klassificera som avbrutet…', restore: 'Återställ som planerat', restorePast: 'Ett tidigare pass kan inte planeras om.', reason: 'Orsak', reasonPlaceholder: 't.ex. semester', logEvent: 'Logga även en journalhändelse', confirm: 'Bekräfta',
@@ -49,6 +55,7 @@ export default {
       top_set_load: 'Belastning i tyngsta set', mean_set_load: 'Genomsnittlig setbelastning', volume_load: 'Volymbelastning', chart: 'Diagram över belastningsutveckling', noSelection: 'Ingen övningshistorik vald', noSelectionBody: 'Välj historik till vänster eller visa alla.', showAll: 'Visa alla', byUnit: 'Efter träningsenhet', loadError: 'Belastningsanalysen kunde inte läsas in.', gap: 'lucka: {reason}',
     },
     newRun: {
+      countWeek: 'Träningsveckor', microcyclesWeek: 'träningsveckor',
       back: 'Tillbaka till Utförande', title: 'Ny plankörning', subtitle: 'Placera en planrevision i verklig kalendertid.', defaultName: '{plan} — körning', plan: 'Träningsplan', revision: 'Planrevision', name: 'Körningens namn', start: 'Startdatum', count: 'Mikrocykler', end: 'Slut (beräknat)',
       preview: 'Förhandsgranskning · det här skapas', microcycles: 'mikrocykler', sessions: 'planerade pass', workouts: 'träningshistorik', exercises: 'övningshistorik', overlap: 'Den här körningen överlappar {count} befintliga körning(ar). Passen placeras på samma datum.', draftWarning: 'Utkastrevisioner kan fortfarande ändras.', revisionStatus: { released: 'Publicerad', draft: 'Utkast', archived: 'Arkiverad' },
       invalid: 'Välj en planrevision, ett giltigt startdatum och 1–52 mikrocykler.', create: 'Skapa körning', creating: 'Skapar…', loadError: 'Planerna kunde inte läsas in.', previewError: 'Förhandsgranskningen kunde inte beräknas.', createError: 'Körningen kunde inte skapas.', noPlans: 'Skapa en träningsplan innan du startar en körning.',

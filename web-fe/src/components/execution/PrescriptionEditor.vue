@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 
 import type { ExerciseTraceResponse } from '@/api/execution-types'
 import type { PrescriptionDraft } from '@/stores/executionDrafts'
+import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { executionDate, loadValue, parseLoad } from '@/features/execution/format'
 
 const props = defineProps<{ trace: ExerciseTraceResponse; draft: PrescriptionDraft | undefined; saving: boolean; errorCode: string | null }>()
@@ -10,6 +11,7 @@ const emit = defineEmits<{
   load: [index: number, value: string]; comment: [index: number, value: string]; prescriptionComment: [value: string]; selected: [index: number, value: boolean];
   replaceLoads: [values: Array<number | null>]; stepAll: [direction: number]; apply: [value: string]; discard: []; save: []; saveNext: []; reload: [];
 }>()
+const cycle = useExecutionCycleLabels()
 const bulk = ref('')
 const next = computed(() => props.trace.next)
 const editable = computed(() => next.value?.state === 'editable' && !!next.value.target && !!props.draft)
@@ -37,16 +39,16 @@ function lastSet(index: number): string {
 <template>
   <aside class="prescription-editor">
     <header class="editor-header">
-      <span><span class="eyebrow accent">{{ $t('execution.editor.eyebrow') }}</span><h2>{{ $t('execution.editor.title', { exercise: trace.trace.display_name, mc: next?.target?.microcycle.ordinal ?? '—' }) }}</h2><small v-if="next?.target">{{ $t('execution.editor.scheduled', { workout: trace.trace.workout_trace.workout_name, date: executionDate(next.target.scheduled_date) }) }}</small></span>
+      <span><span class="eyebrow accent">{{ $t('execution.editor.eyebrow') }}</span><h2>{{ cycle.text('execution.editor.title', next?.target?.microcycle.ordinal ?? '—', { exercise: trace.trace.display_name }) }}</h2><small v-if="next?.target">{{ $t('execution.editor.scheduled', { workout: trace.trace.workout_trace.workout_name, date: executionDate(next.target.scheduled_date) }) }}</small></span>
       <b class="editor-status mono" :class="status">{{ $t(`execution.editor.status.${status}`) }}</b>
     </header>
     <div v-if="errorCode" class="editor-error" role="alert"><b>{{ $t(`execution.editor.${errorKey}`) }}</b><button v-if="['stale_basis', 'version_conflict', 'set_count_mismatch'].includes(errorCode)" type="button" @click="emit('reload')">{{ $t('execution.editor.reload') }}</button></div>
 
     <template v-if="editable && draft && next?.target">
-      <section class="editor-section editor-basis"><p v-if="next.basis">{{ $t('execution.editor.basis', { mc: next.basis.microcycle_ordinal, date: executionDate(next.basis.scheduled_date) }) }}<br /><span>{{ $t('execution.editor.evidence', evidence) }}</span></p><p v-else>{{ $t('execution.editor.firstExposure') }}</p></section>
+      <section class="editor-section editor-basis"><p v-if="next.basis">{{ cycle.text('execution.editor.basis', next.basis.microcycle_ordinal, { date: executionDate(next.basis.scheduled_date) }) }}<br /><span>{{ $t('execution.editor.evidence', evidence) }}</span></p><p v-else>{{ $t('execution.editor.firstExposure') }}</p></section>
       <section class="editor-section">
         <span class="editor-label mono">{{ $t('execution.editor.startFrom') }}</span>
-        <div class="editor-action-row"><button class="button" type="button" :disabled="!next.defaults.from_previous_prescription.some((value) => value != null)" @click="emit('replaceLoads', next.defaults.from_previous_prescription)">{{ $t('execution.editor.previousPrescription', { mc: next.basis?.microcycle_ordinal ?? '—' }) }}</button><button class="button" type="button" :disabled="!next.defaults.from_previous_performance.some((value) => value != null)" @click="emit('replaceLoads', next.defaults.from_previous_performance)">{{ $t('execution.editor.previousPerformance', { mc: next.basis?.microcycle_ordinal ?? '—' }) }}</button></div>
+        <div class="editor-action-row"><button class="button" type="button" :disabled="!next.defaults.from_previous_prescription.some((value) => value != null)" @click="emit('replaceLoads', next.defaults.from_previous_prescription)">{{ cycle.text('execution.editor.previousPrescription', next.basis?.microcycle_ordinal ?? '—') }}</button><button class="button" type="button" :disabled="!next.defaults.from_previous_performance.some((value) => value != null)" @click="emit('replaceLoads', next.defaults.from_previous_performance)">{{ cycle.text('execution.editor.previousPerformance', next.basis?.microcycle_ordinal ?? '—') }}</button></div>
         <div class="editor-action-row"><button class="button" type="button" :disabled="trace.trace.current_plan.load_step_kg == null" :title="trace.trace.current_plan.load_step_kg == null ? $t('execution.editor.noLoadStep') : undefined" @click="emit('stepAll', -1)">{{ $t('execution.editor.allMinus', { step: trace.trace.current_plan.load_step_kg ?? '—' }) }}</button><button class="button" type="button" :disabled="trace.trace.current_plan.load_step_kg == null" :title="trace.trace.current_plan.load_step_kg == null ? $t('execution.editor.noLoadStep') : undefined" @click="emit('stepAll', 1)">{{ $t('execution.editor.allPlus', { step: trace.trace.current_plan.load_step_kg ?? '—' }) }}</button></div>
       </section>
       <section class="editor-suggestion"><span class="editor-label mono">{{ $t('execution.editor.suggestion') }}</span><b class="mono">{{ $t('execution.editor.suggestionNone') }}</b><p>{{ $t('execution.editor.suggestionBody') }}</p></section>
@@ -58,7 +60,7 @@ function lastSet(index: number): string {
           <p v-if="parseLoad(draft.loads[index] ?? '') === undefined" class="field-error">{{ $t('execution.editor.invalid', { set: index + 1 }) }}</p>
         </div>
         <div class="editor-bulk"><input v-model="bulk" class="exec-input mono" inputmode="decimal" placeholder="kg" /><button class="button" type="button" :disabled="!selectedCount || parseLoad(bulk) === undefined" @click="emit('apply', bulk)">{{ $t('execution.editor.apply') }}</button><span>{{ $t('execution.editor.selected', { count: selectedCount }) }}</span></div>
-        <p class="editor-plan-owned">{{ $t('execution.editor.planOwned', { revision: trace.trace.current_plan.plan_revision_no }) }}</p>
+        <p class="editor-plan-owned">{{ $t(cycle.routeCopy('execution.editor.planOwned'), { revision: trace.trace.current_plan.plan_revision_no }) }}</p>
       </section>
       <section class="editor-section"><label class="editor-label" for="prescription-comment">{{ $t('execution.editor.prescriptionComment') }}</label><textarea id="prescription-comment" class="exec-textarea" :value="draft.prescriptionComment" :placeholder="$t('execution.editor.commentPlaceholder')" @input="emit('prescriptionComment', ($event.target as HTMLTextAreaElement).value)" /></section>
       <footer class="editor-footer"><span v-if="invalid" class="field-error">{{ $t('execution.editor.fix') }}</span><button class="button ghost" type="button" :disabled="saving || !draft.dirty" @click="emit('discard')">{{ $t('execution.editor.discard') }}</button><button class="button" type="button" :disabled="saving || invalid || !draft.dirty" @click="emit('save')">{{ $t('execution.editor.save') }}</button><button class="button primary" type="button" :disabled="saving || invalid || !draft.dirty" @click="emit('saveNext')">{{ $t('execution.editor.saveNext') }}</button></footer>

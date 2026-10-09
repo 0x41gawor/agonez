@@ -3,7 +3,9 @@ export default {
     shellStatus: 'AUSFÜHRUNG · DESKTOP', nav: 'Ausführung',
     tabs: { overview: 'Übersicht', analysis: 'Analyse', timeline: 'Zeitleiste', loads: 'Lasten' },
     common: { kg: 'kg', rir: 'RIR', reps: 'Wdh.', today: 'Heute', close: 'Schließen', save: 'Speichern', cancel: 'Abbrechen', edit: 'Bearbeiten', locked: 'Gesperrt', loading: 'Ausführungsdaten werden geladen…', marker: 'MARKER.X', reserved: 'reserviert' },
+    cycle: { microcycle: { label: 'Mikrozyklus {ordinal}', short: 'MC{ordinal}' }, week: { label: 'Woche {ordinal}', short: 'W{ordinal}' } },
     run: {
+      metaWeek: '{start} → {end} · {count} × 7-tägige Trainingswochen',
       eyebrow: 'Plandurchlauf', from: 'Aus {plan}', all: 'Alle Durchläufe ({count})', new: 'Neuer Plandurchlauf', meta: '{start} → {end} · {count} × {days}-Tage-Mikrozyklen',
       status: { scheduled: 'Geplant', active: 'Aktiv', cancelled: 'Abgebrochen', completed: 'Abgeschlossen' }, emptyTitle: 'Noch keine Plandurchläufe', emptyBody: 'Ein Plandurchlauf setzt einen Trainingsplan in konkrete Kalenderzeit um.', loadError: 'Der Plandurchlauf konnte nicht geladen werden', listError: 'Die Plandurchläufe konnten nicht geladen werden.',
     },
@@ -12,6 +14,7 @@ export default {
       previous_exposure_in_progress: 'Die vorherige Belastung läuft noch.', previous_exposure_not_performed: 'Die vorherige vorgeschriebene Belastung wurde nicht ausgeführt.', session_started: 'Diese Einheit hat bereits begonnen.', no_future_session: 'In diesem Durchlauf gibt es keine spätere Einheit.', run_not_active: 'Dieser Plandurchlauf ist nicht aktiv.', unknown: 'Diese Vorgabe kann noch nicht bearbeitet werden.',
     },
     overview: {
+      positionWeek: 'Woche {current} von {total} · Tag {day} von {days}', thisMicrocycleWeek: 'Diese Woche', prescriptionsWeek: 'Vorgaben für die nächste Woche', noCurrentSessionsWeek: 'In der aktuellen Woche gibt es keine Einheiten.',
       where: 'Aktuelle Position', position: 'Mikrozyklus {current} von {total} · Tag {day} von {days}', positionSub: 'Durchlauftag {runDay} von {runDays}, {left} Tage verbleiben', thisMicrocycle: 'Dieser Mikrozyklus', sessions: 'Einheiten im Kalender', analysisEyebrow: 'Post-Workout-Analyse · nächster: MC{mc}', prescriptions: 'Vorgaben für den nächsten Mikrozyklus',
       continue: '{workout} fortsetzen', waiting: 'Warten', saved: '{saved} / {total} gespeichert', latest: 'Letzte Belastung · {workout} · {date}', comparison: 'Vorgegeben vs. ausgeführt', exercise: 'Übung', prescribed: 'Vorgegeben', performed: 'Ausgeführt', note: 'Notiz', adherence: 'Planerfüllung', didPlanHappen: 'Wurde der Plan umgesetzt?',
       journal: 'Journal', latestEvents: 'Neueste Ereignisse', allEvents: 'Alle ({count})', observationPlaceholder: 'Beobachtung protokollieren…', log: 'Eintragen', fullCalendar: 'Vollständiger Kalender', readOnlyDraft: 'Laufende Leistungen stammen aus der mobilen App und sind hier schreibgeschützt.', noCurrentSessions: 'Im aktuellen Mikrozyklus gibt es keine Einheiten.', noExposure: 'Noch keine finalisierte Belastung.', noEvents: 'Es wurden keine Ereignisse protokolliert.',
@@ -26,6 +29,7 @@ export default {
       flags: { substituted: 'Ersetzt', skipped: 'Übersprungen', additional_set: 'Zusätzlicher Satz', reps_below_range: 'Wiederholungen unter dem Bereich', reps_at_floor: 'Wiederholungen an der Untergrenze', top_of_range: 'Obergrenze des Bereichs', load_reduced: 'Last reduziert', personal_record: 'Persönlicher Rekord' },
     },
     editor: {
+      planOwnedWeek: 'Satzanzahl, Wiederholungsbereich und RIR stammen aus Planrevision r{revision}. Ändere sie im Planersteller für zukünftige Wochen.',
       eyebrow: 'Nächste Vorgabe', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · bis zum Start der Einheit bearbeitbar', status: { clean: 'Nicht begonnen', dirty: 'Ungespeichert', saving: 'Speichern…', saved: 'Gespeichert', locked: 'Gesperrt' },
       basis: 'Basierend auf der Leistung in MC{mc} · {date} · finalisiert', firstExposure: 'Erste Belastung — es gibt keine vorherige Leistung.', evidence: 'Wdh. {reps} · Lasten {loads} kg · {top} an der Obergrenze · {floor} an der Untergrenze · {deeper} tiefer als Ziel-RIR',
       startFrom: 'Ausgangspunkt', previousPrescription: 'Vorgabe MC{mc}', previousPerformance: 'Leistung MC{mc}', allMinus: 'alle −{step}', allPlus: 'alle +{step}', suggestion: 'Vorschlag', suggestionNone: 'Progressionsmodell · keines', suggestionBody: 'Diesem Slot ist kein Progressionsmodell zugewiesen.',
@@ -36,9 +40,11 @@ export default {
       not_next_session: 'Dies ist nicht mehr die nächste Einheit.', set_count_mismatch: 'Die Satzanzahl im Plan hat sich geändert. Verlauf neu laden.', invalid_load: 'Mindestens eine Last ist ungültig.', genericError: 'Die Vorgabe konnte nicht gespeichert werden.', savedToast: 'Gespeichert · {exercise} · MC{mc}', noLoadStep: 'Der Plan definiert keine Laststufe; verwende die Direkteingabe.',
     },
     workout: {
+      subtitleWeek: 'Tag {day} jeder Woche · {count} Übungspositionen',
       breadcrumb: 'Analyse / Verlauf der Trainingseinheit', title: '{workout}', subtitle: 'Tag {day} jedes Mikrozyklus · {count} Übungsslots', help: 'Zelle = höchste ausgeführte Last · Wiederholungen je Satz. Spalte oder Zelle öffnen, um den Übungsverlauf zu prüfen.', occurrence: 'Durchgang', volume: 'Volumenlast', comment: 'Trainingskommentar', prescribed: 'vorgegeben', notPerformed: 'nicht ausgeführt', empty: 'noch nicht vorgegeben', skipped: 'übersprungen', locked: 'gesperrt', loadError: 'Der Trainingsverlauf konnte nicht geladen werden.',
     },
     timeline: {
+      eyebrowWeek: 'Trainingswochenverlauf · Kalender', titleWeek: '{count} Trainingswochen · {start} → {end}', microcyclesWeek: 'Trainingswochen', helpMicrocyclesWeek: 'Eine Zeile pro Trainingswoche, Plantage von links nach rechts.', helpWeeksWeek: 'Kalenderwochen von Montag bis Sonntag. Die Grenzen der Trainingswochen bleiben sichtbar.',
       eyebrow: 'Mikrozyklusverlauf · Kalender', title: '{count} Mikrozyklen · {start} → {end}', microcycles: 'Mikrozyklen', weeks: 'Kalenderwochen', axis: 'Zeitachse', helpMicrocycles: 'Eine Zeile pro Mikrozyklus, Plantage von links nach rechts.', helpWeeks: 'Kalenderwochen von Montag bis Sonntag. Mikrozyklusgrenzen bleiben sichtbar.',
       attendance: 'Anwesenheit', volume: 'Vol.-Last', note: '+ Notiz', notePlaceholder: 'Beobachtung für MC{mc}…', saveNote: 'Notiz speichern', selectSession: 'Einheit auswählen, um Details anzuzeigen.', session: 'Einheit · MC{mc} · T{day}', prescription: 'Vorgabe: {state}',
       cancelSession: 'Einheit abbrechen…', reclassify: 'Als abgebrochen einstufen…', restore: 'Als geplant wiederherstellen', restorePast: 'Eine vergangene Einheit kann nicht neu geplant werden.', reason: 'Grund', reasonPlaceholder: 'z. B. Urlaub', logEvent: 'Auch als Journalereignis protokollieren', confirm: 'Bestätigen',
@@ -49,6 +55,7 @@ export default {
       top_set_load: 'Last des schwersten Satzes', mean_set_load: 'Mittlere Satzlast', volume_load: 'Volumenlast', chart: 'Diagramm der Lastprogression', noSelection: 'Keine Übungsverläufe ausgewählt', noSelectionBody: 'Wähle links Verläufe aus oder zeige alle.', showAll: 'Alle anzeigen', byUnit: 'Nach Trainingseinheit', loadError: 'Die Lastanalyse konnte nicht geladen werden.', gap: 'Lücke: {reason}',
     },
     newRun: {
+      countWeek: 'Trainingswochen', microcyclesWeek: 'Trainingswochen',
       back: 'Zurück zur Ausführung', title: 'Neuer Plandurchlauf', subtitle: 'Setze eine Planrevision in konkrete Kalenderzeit um.', defaultName: '{plan} — Durchlauf', plan: 'Trainingsplan', revision: 'Planrevision', name: 'Name des Durchlaufs', start: 'Startdatum', count: 'Mikrozyklen', end: 'Ende (berechnet)',
       preview: 'Vorschau · wird erstellt', microcycles: 'Mikrozyklen', sessions: 'geplante Einheiten', workouts: 'Trainingsverläufe', exercises: 'Übungsverläufe', overlap: 'Dieser Durchlauf überschneidet sich mit {count} bestehenden Durchlauf/Durchläufen. Die Einheiten liegen auf denselben Daten.', draftWarning: 'Entwurfsrevisionen können sich noch ändern.', revisionStatus: { released: 'Freigegeben', draft: 'Entwurf', archived: 'Archiviert' },
       invalid: 'Wähle eine Planrevision, ein gültiges Startdatum und 1–52 Mikrozyklen.', create: 'Durchlauf erstellen', creating: 'Wird erstellt…', loadError: 'Die Pläne konnten nicht geladen werden.', previewError: 'Die Vorschau konnte nicht berechnet werden.', createError: 'Der Durchlauf konnte nicht erstellt werden.', noPlans: 'Erstelle einen Trainingsplan, bevor du einen Durchlauf startest.',

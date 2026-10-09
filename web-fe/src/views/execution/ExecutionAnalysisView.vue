@@ -13,6 +13,7 @@ import ExecutionSkeleton from '@/components/execution/ExecutionSkeleton.vue'
 import LoadPerSetStrip from '@/components/execution/LoadPerSetStrip.vue'
 import PrescriptionEditor from '@/components/execution/PrescriptionEditor.vue'
 import { executionContextKey } from '@/features/execution/context'
+import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { parseLoad } from '@/features/execution/format'
 import { useExecutionDraftsStore } from '@/stores/executionDrafts'
 
@@ -20,6 +21,7 @@ const context = inject(executionContextKey)!
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const cycle = useExecutionCycleLabels()
 const drafts = useExecutionDraftsStore()
 const queue = ref<AnalysisQueueDTO | null>(null)
 const trace = ref<ExerciseTraceResponse | null>(null)
@@ -112,7 +114,7 @@ async function save(advance = false): Promise<void> {
     })
     trace.value.next = result.next
     drafts.initialize(trace.value.trace.exercise_trace_id, result.next, true)
-    savedMessage.value = t('execution.editor.savedToast', { exercise: trace.value.trace.display_name, mc: result.next.target?.microcycle.ordinal ?? '—' })
+    savedMessage.value = cycle.text('execution.editor.savedToast', result.next.target?.microcycle.ordinal ?? '—', { exercise: trace.value.trace.display_name })
     await loadQueue()
     await context.reload()
     if (advance) selectRelative(1, true)

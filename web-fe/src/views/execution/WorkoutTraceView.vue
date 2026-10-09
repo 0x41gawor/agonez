@@ -9,10 +9,12 @@ import ErrorState from '@/components/common/ErrorState.vue'
 import ClassificationTag from '@/components/execution/ClassificationTag.vue'
 import ExecutionSkeleton from '@/components/execution/ExecutionSkeleton.vue'
 import { executionContextKey } from '@/features/execution/context'
+import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { executionDate, loadValue } from '@/features/execution/format'
 
 const props = defineProps<{ workoutTraceId: string }>()
 const context = inject(executionContextKey)!
+const cycle = useExecutionCycleLabels()
 const router = useRouter()
 const { t } = useI18n()
 const list = ref<WorkoutTraceListItem[]>([])
@@ -44,7 +46,7 @@ watch(numericId, () => void load())
     <ExecutionSkeleton v-if="loading" mode="analysis" :rows="10" />
     <ErrorState v-else-if="error || !trace" :title="$t('execution.workout.loadError')" :message="error || $t('execution.workout.loadError')" @retry="load" />
     <template v-else>
-      <header class="exec-view-header"><div><span class="eyebrow">{{ $t('execution.workout.breadcrumb') }}</span><h1>{{ $t('execution.workout.title', { workout: trace.workout.workout_name }) }}</h1><p>{{ $t('execution.workout.subtitle', { day: trace.workout.day_ordinal + 1, count: trace.columns.length }) }}</p></div></header>
+      <header class="exec-view-header"><div><span class="eyebrow">{{ $t('execution.workout.breadcrumb') }}</span><h1>{{ $t('execution.workout.title', { workout: trace.workout.workout_name }) }}</h1><p>{{ $t(cycle.routeCopy('execution.workout.subtitle'), { day: trace.workout.day_ordinal + 1, count: trace.columns.length }) }}</p></div></header>
       <nav class="workout-unit-tabs" :aria-label="$t('execution.workout.breadcrumb')"><RouterLink v-for="item in list" :key="item.workout_trace_id" :to="{ name: 'execution-workout-trace', params: { runId: context.runId.value, workoutTraceId: item.workout_trace_id } }" :aria-current="item.workout_trace_id === numericId ? 'page' : undefined">{{ item.workout_name }}</RouterLink></nav>
       <p class="exec-help">{{ $t('execution.workout.help') }}</p>
       <div class="workout-matrix-scroll panel">
@@ -53,7 +55,7 @@ watch(numericId, () => void load())
           <tbody>
             <template v-for="row in trace.rows" :key="row.session.session_id">
               <tr v-if="trace.revision_transitions.some((transition) => transition.before_microcycle_ordinal === row.microcycle.ordinal)" class="matrix-revision"><td :colspan="trace.columns.length + 4"><span v-for="transition in trace.revision_transitions.filter((item) => item.before_microcycle_ordinal === row.microcycle.ordinal)" :key="transition.to_revision_no"><b>r{{ transition.from_revision_no }} → r{{ transition.to_revision_no }}</b> · {{ transition.summary }}</span></td></tr>
-              <tr><th><span><b class="mono">MC{{ row.microcycle.ordinal }}</b><ClassificationTag :classification="row.microcycle.classification" /></span><small>{{ executionDate(row.session.scheduled_date) }} · {{ $t(`execution.status.${row.session.status}`) }}</small></th><td v-for="cell in row.cells" :key="cell.exercise_trace_id"><button type="button" :class="[`kind-${cell.kind}`, `mode-${cell.execution_mode ?? 'none'}`]" @click="openExercise(cell.exercise_trace_id)"><span class="mono">{{ cellLabel(cell) }}</span><small v-if="cell.actual_exercise_name">⇄ {{ cell.actual_exercise_name }}</small><small v-if="cell.flags.length">{{ cell.flags.map(flagLabel).join(' · ') }}</small></button></td><td class="mono">{{ loadValue(row.volume_load_kg) }}</td><td class="mono">—</td><td>{{ row.performance_comment ?? '—' }}</td></tr>
+              <tr><th><span><b class="mono">{{ cycle.shortLabel(row.microcycle.ordinal) }}</b><ClassificationTag :classification="row.microcycle.classification" /></span><small>{{ executionDate(row.session.scheduled_date) }} · {{ $t(`execution.status.${row.session.status}`) }}</small></th><td v-for="cell in row.cells" :key="cell.exercise_trace_id"><button type="button" :class="[`kind-${cell.kind}`, `mode-${cell.execution_mode ?? 'none'}`]" @click="openExercise(cell.exercise_trace_id)"><span class="mono">{{ cellLabel(cell) }}</span><small v-if="cell.actual_exercise_name">⇄ {{ cell.actual_exercise_name }}</small><small v-if="cell.flags.length">{{ cell.flags.map(flagLabel).join(' · ') }}</small></button></td><td class="mono">{{ loadValue(row.volume_load_kg) }}</td><td class="mono">—</td><td>{{ row.performance_comment ?? '—' }}</td></tr>
             </template>
           </tbody>
         </table>

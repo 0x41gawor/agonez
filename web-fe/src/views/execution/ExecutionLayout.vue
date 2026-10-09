@@ -7,6 +7,7 @@ import type { PlanRunListItem, PlanRunOverview } from '@/api/execution-types'
 import ErrorState from '@/components/common/ErrorState.vue'
 import ExecutionSkeleton from '@/components/execution/ExecutionSkeleton.vue'
 import { executionContextKey } from '@/features/execution/context'
+import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { executionDate } from '@/features/execution/format'
 
 const props = defineProps<{ runId: string }>()
@@ -15,6 +16,7 @@ const router = useRouter()
 const numericRunId = computed(() => Number(props.runId))
 const runIdRef = ref(numericRunId.value)
 const overview = ref<PlanRunOverview | null>(null)
+const cycle = useExecutionCycleLabels(() => overview.value?.run.microcycle_duration_days)
 const runs = ref<PlanRunListItem[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -62,7 +64,7 @@ watch(numericRunId, (value) => { runIdRef.value = value; void load() })
           <h1>{{ overview?.run.name ?? $t('execution.common.loading') }}</h1>
           <p v-if="overview">
             {{ $t('execution.run.from', { plan: `${overview.run.plan.code} · ${overview.run.plan.name}` }) }} ·
-            {{ $t('execution.run.meta', { start: executionDate(overview.run.starts_on), end: executionDate(overview.run.ends_on, { day: '2-digit', month: 'short', year: 'numeric' }), count: overview.run.microcycle_count, days: overview.run.microcycle_duration_days }) }}
+            {{ $t(cycle.routeCopy('execution.run.meta'), { start: executionDate(overview.run.starts_on), end: executionDate(overview.run.ends_on, { day: '2-digit', month: 'short', year: 'numeric' }), count: overview.run.microcycle_count, days: overview.run.microcycle_duration_days }) }}
           </p>
         </div>
         <div class="execution-run-actions">
