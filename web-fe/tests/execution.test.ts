@@ -5,6 +5,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { executionApi } from '@/api/execution'
 import type { AnalysisQueue as AnalysisQueueDTO, ExerciseTraceResponse, LoadSeriesResponse } from '@/api/execution-types'
 import AnalysisQueue from '@/components/execution/AnalysisQueue.vue'
+import ExerciseTraceTable from '@/components/execution/ExerciseTraceTable.vue'
 import LoadsChart from '@/components/execution/LoadsChart.vue'
 import PrescriptionEditor from '@/components/execution/PrescriptionEditor.vue'
 import SessionStatusMark from '@/components/execution/SessionStatusMark.vue'
@@ -107,6 +108,13 @@ describe('Execution critical workflows', () => {
     expect(cancelled.text()).toBe('—')
     expect(missed.classes()).toContain('is-missed')
     expect(cancelled.classes()).toContain('is-cancelled')
+  })
+
+  it('keeps analysis set columns compact instead of stretching each set across the workspace', () => {
+    const store = useExecutionDraftsStore()
+    const wrapper = mount(ExerciseTraceTable, { props: { trace, draft: store.initialize(41, next) } })
+    expect(wrapper.get('.exercise-trace-table').attributes('style')).toContain('repeat(3, minmax(142px, 156px))')
+    expect(wrapper.get('.exercise-trace-table').attributes('style')).toContain('minmax(320px, 1fr)')
   })
 
   it('breaks load chart paths across null substitution points', () => {

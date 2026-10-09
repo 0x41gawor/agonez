@@ -56,7 +56,7 @@ watch(numericRunId, (value) => { runIdRef.value = value; void load() })
 <template>
   <div class="execution-module">
     <header class="execution-runbar">
-      <div class="execution-runbar-inner" :class="{ wide: activeTab !== 'overview' }">
+      <div class="execution-runbar-inner">
         <div class="execution-run-summary">
           <span class="eyebrow">{{ $t('execution.run.eyebrow') }} · <b v-if="overview" :class="`run-${overview.run.status}`">● {{ $t(`execution.run.status.${overview.run.status}`) }}</b></span>
           <h1>{{ overview?.run.name ?? $t('execution.common.loading') }}</h1>

@@ -10,7 +10,7 @@ const props = defineProps<{ trace: ExerciseTraceResponse; draft: PrescriptionDra
 const { t } = useI18n()
 const expanded = ref<Set<number>>(new Set())
 const columns = computed(() => Math.max(props.trace.trace.current_plan.sets.length, ...props.trace.exposures.map((item) => Math.max(item.prescription.sets.length, item.performance?.sets.length ?? 0))))
-const gridStyle = computed(() => ({ gridTemplateColumns: `160px 64px repeat(${columns.value}, minmax(122px, 1fr)) minmax(240px, 1.7fr)` }))
+const gridStyle = computed(() => ({ gridTemplateColumns: `160px 64px repeat(${columns.value}, minmax(142px, 156px)) minmax(320px, 1fr)` }))
 
 function toggle(id: number): void { const next = new Set(expanded.value); if (next.has(id)) next.delete(id); else next.add(id); expanded.value = next }
 function performedFor(exposure: ExerciseExposure, ordinal: number): SetPerformance | undefined { return exposure.performance?.sets.find((set) => (set.prescribed_set_ordinal ?? set.ordinal) === ordinal) }
