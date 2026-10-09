@@ -1,0 +1,65 @@
+export default {
+  execution: {
+    shellStatus: 'REALIZACJA · DESKTOP', nav: 'Realizacja',
+    tabs: { overview: 'Przegląd', analysis: 'Analiza', timeline: 'Oś czasu', loads: 'Obciążenia' },
+    common: { kg: 'kg', rir: 'RIR', reps: 'powt.', today: 'Dzisiaj', close: 'Zamknij', save: 'Zapisz', cancel: 'Anuluj', edit: 'Edytuj', locked: 'Zablokowane', loading: 'Ładowanie danych realizacji…', marker: 'MARKER.X', reserved: 'zarezerwowane' },
+    run: {
+      eyebrow: 'Realizacja planu', from: 'Na podstawie {plan}', all: 'Wszystkie realizacje ({count})', new: 'Nowa realizacja planu', meta: '{start} → {end} · {count} × mikrocykl {days}-dniowy',
+      status: { scheduled: 'Zaplanowana', active: 'Aktywna', cancelled: 'Anulowana', completed: 'Zakończona' },
+      emptyTitle: 'Brak realizacji planu', emptyBody: 'Realizacja planu umieszcza plan treningowy w konkretnym czasie kalendarzowym.', loadError: 'Nie udało się załadować realizacji planu', listError: 'Nie udało się załadować realizacji planów.',
+    },
+    status: { scheduled: 'Zaplanowana', in_progress: 'W toku', completed: 'Ukończona', cancelled: 'Anulowana', missed: 'Opuszczona', today: 'Dzisiaj' },
+    completion: { as_prescribed: 'Zgodnie z zaleceniem', fallback: 'Wariant zastępczy' },
+    classification: { normal: 'Normalny', deload: 'Deload', reload: 'Reload' },
+    blocked: {
+      previous_exposure_in_progress: 'Poprzednia ekspozycja nadal trwa.', previous_exposure_not_performed: 'Poprzednia zalecona ekspozycja nie została wykonana.',
+      session_started: 'Ta sesja już się rozpoczęła.', no_future_session: 'W tej realizacji nie ma późniejszej sesji.', run_not_active: 'Ta realizacja planu nie jest aktywna.', unknown: 'Tego zalecenia nie można jeszcze edytować.',
+    },
+    overview: {
+      where: 'Aktualna pozycja', position: 'Mikrocykl {current} z {total} · dzień {day} z {days}', positionSub: 'dzień realizacji {runDay} z {runDays}, pozostało {left} dni', thisMicrocycle: 'Ten mikrocykl', sessions: 'Sesje w kalendarzu',
+      analysisEyebrow: 'Analiza potreningowa · następny: MC{mc}', prescriptions: 'Zalecenia na następny mikrocykl', continue: 'Kontynuuj {workout}', waiting: 'Oczekiwanie', saved: 'zapisano {saved} / {total}',
+      latest: 'Ostatnia ekspozycja · {workout} · {date}', comparison: 'Zalecone a wykonane', exercise: 'Ćwiczenie', prescribed: 'Zalecone', performed: 'Wykonane', note: 'Notatka', adherence: 'Realizacja', didPlanHappen: 'Czy plan został wykonany?',
+      journal: 'Dziennik', latestEvents: 'Ostatnie zdarzenia', allEvents: 'Wszystkie ({count})', observationPlaceholder: 'Zapisz obserwację…', log: 'Zapisz', fullCalendar: 'Pełny kalendarz', readOnlyDraft: 'Wyniki sesji w toku pochodzą z aplikacji mobilnej i są tutaj tylko do odczytu.',
+      noCurrentSessions: 'W bieżącym mikrocyklu nie ma sesji.', noExposure: 'Brak zakończonej ekspozycji.', noEvents: 'Nie zapisano żadnych zdarzeń.',
+    },
+    analysis: {
+      queue: 'Zaplanuj MC{mc}', queueToggle: 'Kolejka', progress: 'zapisano {saved} z {total} · zablokowano {locked}', workoutTrace: 'historia jednostki treningowej',
+      ready: 'Gotowe', keyboard: 'J / K', notStarted: 'Nierozpoczęte', unsaved: 'Niezapisane zmiany', saved: 'Zapisano', locked: 'Zablokowane', confirmLeave: 'Masz niezapisane zalecenia. Opuścić Analizę? Szkice pozostaną w tej sesji przeglądarki.',
+      basedOn: 'Na podstawie MC{mc} · {date}', noSummary: 'Brak wykonanej ekspozycji', loadError: 'Nie udało się załadować Analizy.', traceEyebrow: '{workout} · slot {slot} · historia ćwiczenia', plan: "plan: {sets} × {min}–{max} {'@'}RIR {rir}",
+      continuity: 'jedna historia od MC{from} przez wersje planu {revisions}', planNote: 'Notatka planu', previous: 'Poprzednie ćwiczenie', next: 'Następne ćwiczenie', position: '{current} / {total}',
+      loadStrip: 'Obciążenie na serię · kg', prescribedLegend: 'zalecone', performedLegend: 'wykonane', nextLegend: 'następne', exposure: 'Ekspozycja', set: 'Seria {set}', comments: 'Komentarze', prescription: 'Zalecenie', actual: 'Wykonanie', draft: 'Szkic',
+      setSkipped: 'seria pominięta', notSynced: 'niezsynchronizowane', additional: '+DOD.', missed: 'Opuszczona', cancelled: 'Anulowana', scheduled: 'Zaplanowana', inProgress: 'W toku', substituted: 'Zamieniono na: {exercise}', exerciseSkipped: 'Ćwiczenie pominięte — nie wykonano serii', noComment: 'Brak komentarza',
+      revision: 'Wersja planu r{from} → r{to}', revisionBody: 'Obowiązuje od MC{mc} · {date}. {changes}. Historia tego ćwiczenia jest kontynuowana.', compare: 'Porównaj wersje', expand: 'Rozwiń szczegóły MC{mc}', collapse: 'Zwiń szczegóły MC{mc}', session: 'Sesja', recorded: 'Zarejestrowano', setComment: 'Komentarz do serii', performanceAfterSync: 'Wynik pojawi się po synchronizacji sesji z aplikacji mobilnej.',
+      flags: { substituted: 'Zamieniono', skipped: 'Pominięto', additional_set: 'Dodatkowa seria', reps_below_range: 'Powtórzenia poniżej zakresu', reps_at_floor: 'Powtórzenia na dolnej granicy', top_of_range: 'Górna granica zakresu', load_reduced: 'Zmniejszono obciążenie', personal_record: 'Rekord osobisty' },
+    },
+    editor: {
+      eyebrow: 'Następne zalecenie', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · edytowalne do rozpoczęcia sesji', status: { clean: 'Nierozpoczęte', dirty: 'Niezapisane', saving: 'Zapisywanie…', saved: 'Zapisano', locked: 'Zablokowane' },
+      basis: 'Na podstawie wyniku MC{mc} · {date} · zakończony', firstExposure: 'Pierwsza ekspozycja — brak wcześniejszego wyniku.', evidence: 'Powt. {reps} · obciążenia {loads} kg · {top} na górnej granicy · {floor} na dolnej granicy · {deeper} głębiej niż docelowy RIR',
+      startFrom: 'Zacznij od', previousPrescription: 'Zalecenie MC{mc}', previousPerformance: 'Wynik MC{mc}', allMinus: 'wszystkie −{step}', allPlus: 'wszystkie +{step}', suggestion: 'Sugestia', suggestionNone: 'Model progresji · brak', suggestionBody: 'Do tego slotu nie przypisano modelu progresji.',
+      fromPlan: 'Z planu', load: 'Obciążenie kg', last: 'ostatnio {load}', comment: 'Komentarz do serii (opcjonalny)', selectSet: 'Wybierz serię {set}', minus: 'Seria {set}: odejmij {step} kg', plus: 'Seria {set}: dodaj {step} kg',
+      apply: 'Zastosuj', selected: 'do {count} wybranych', prescriptionComment: 'Komentarz do zalecenia · tylko dla tej ekspozycji', commentPlaceholder: 'Na czym sportowiec powinien skupić się następnym razem?', planOwned: 'Liczba serii, zakres powtórzeń i RIR pochodzą z wersji planu r{revision}. Zmień je w Kreatorze planu dla przyszłych mikrocykli.',
+      discard: 'Odrzuć', save: 'Zapisz', saveNext: 'Zapisz i przejdź do następnego', reload: 'Wczytaj historię ponownie', invalid: 'Seria {set}: podaj prawidłowe obciążenie od 0 do 1000 kg, maksymalnie z 2 miejscami po przecinku.', fix: 'Popraw nieprawidłowe obciążenia przed zapisem.', lockedHelp: 'W oczekiwaniu przejrzyj historię; backend odblokuje edytor po spełnieniu warunku gotowości.',
+      stale_basis: 'Istnieje nowszy wynik. Wczytaj historię ponownie; wpisane wartości zostaną zachowane.', version_conflict: 'Ktoś inny zapisał to zalecenie. Wczytaj najnowszą wersję; Twoje wartości zostaną zachowane.', prescription_blocked: 'Zalecenie jest zablokowane przez poprzednią ekspozycję.', session_locked: 'Sesja się rozpoczęła, a jej zalecenie jest zablokowane.',
+      not_next_session: 'To nie jest już następna sesja.', set_count_mismatch: 'Liczba serii w planie uległa zmianie. Wczytaj historię ponownie.', invalid_load: 'Co najmniej jedno obciążenie jest nieprawidłowe.', genericError: 'Nie udało się zapisać zalecenia.', savedToast: 'Zapisano · {exercise} · MC{mc}', noLoadStep: 'Plan nie określa kroku obciążenia; wpisz wartość bezpośrednio.',
+    },
+    workout: {
+      breadcrumb: 'Analiza / historia jednostki treningowej', title: '{workout}', subtitle: 'dzień {day} każdego mikrocyklu · sloty ćwiczeń: {count}', help: 'Komórka = najwyższe wykonane obciążenie · powtórzenia w seriach. Otwórz kolumnę lub komórkę, aby zobaczyć historię ćwiczenia.', occurrence: 'Wystąpienie', volume: 'Objętość', comment: 'Komentarz do treningu',
+      prescribed: 'zalecone', notPerformed: 'niewykonane', empty: 'jeszcze nie zalecono', skipped: 'pominięte', locked: 'zablokowane', loadError: 'Nie udało się załadować historii jednostki treningowej.',
+    },
+    timeline: {
+      eyebrow: 'Historia mikrocykli · kalendarz', title: '{count} mikrocykli · {start} → {end}', microcycles: 'Mikrocykle', weeks: 'Tygodnie kalendarzowe', axis: 'Oś czasu', helpMicrocycles: 'Jeden wiersz na mikrocykl, dni planu od lewej do prawej.', helpWeeks: 'Tygodnie od poniedziałku do niedzieli. Granice mikrocykli pozostają widoczne.',
+      attendance: 'Obecność', volume: 'Objętość', note: '+ notatka', notePlaceholder: 'Obserwacja dla MC{mc}…', saveNote: 'Zapisz notatkę', selectSession: 'Wybierz sesję, aby zobaczyć szczegóły.', session: 'Sesja · MC{mc} · D{day}', prescription: 'Zalecenie: {state}',
+      cancelSession: 'Anuluj sesję…', reclassify: 'Zmień na anulowaną…', restore: 'Przywróć jako zaplanowaną', restorePast: 'Nie można ponownie zaplanować minionej sesji.', reason: 'Powód', reasonPlaceholder: 'np. urlop', logEvent: 'Zapisz także zdarzenie w dzienniku', confirm: 'Potwierdź',
+      journal: 'Historia realizacji planu', filters: { all: 'Wszystkie', plan: 'Zmiany planu', phases: 'Fazy obciążenia', breaks: 'Przerwy', notes: 'Wpisy i notatki' }, eventType: 'Typ zdarzenia', date: 'Data', text: 'Treść', eventPlaceholder: 'np. Zastój od dwóch tygodni. Sprawdź regenerację.', log: 'Zapisz zdarzenie', noEvents: 'Brak zdarzeń tego typu.', eventTypes: { observation: 'Obserwacja', vacation: 'Urlop', training_break: 'Przerwa treningowa' }, system: 'zdarzenie systemowe', user: 'wpis użytkownika', loadError: 'Nie udało się załadować osi czasu.',
+    },
+    loads: {
+      eyebrow: 'Analiza wszystkich obciążeń', title: 'Czy wyniki rosną razem?', subtitle: 'Tylko zakończone wyniki; zamiany, pominięcia oraz opuszczone i anulowane sesje pozostawiają luki.', traces: 'Historie ćwiczeń · pokazano {shown} z {total}', primary: 'Główne ćwiczenia', all: 'Wszystkie', none: 'Żadne', metric: 'Metryka', scale: 'Skala', relative: '% pierwszej ekspozycji', kg: 'kg',
+      top_set_load: 'Obciążenie top setu', mean_set_load: 'Średnie obciążenie serii', volume_load: 'Objętość', chart: 'Wykres progresji obciążenia', noSelection: 'Nie wybrano historii ćwiczeń', noSelectionBody: 'Wybierz historie po lewej lub pokaż wszystkie.', showAll: 'Pokaż wszystkie', byUnit: 'Według jednostki treningowej', loadError: 'Nie udało się załadować analizy obciążeń.', gap: 'luka: {reason}',
+    },
+    newRun: {
+      back: 'Wróć do Realizacji', title: 'Nowa realizacja planu', subtitle: 'Umieść wersję planu w konkretnym czasie kalendarzowym.', defaultName: '{plan} — realizacja', plan: 'Plan treningowy', revision: 'Wersja planu', name: 'Nazwa realizacji', start: 'Data rozpoczęcia', count: 'Mikrocykle', end: 'Koniec (obliczony)',
+      preview: 'Podgląd · co zostanie utworzone', microcycles: 'mikrocykle', sessions: 'zaplanowane sesje', workouts: 'historie treningów', exercises: 'historie ćwiczeń', overlap: 'Ta realizacja nakłada się na {count} istniejące realizacje. Sesje obu realizacji trafią na te same daty.', draftWarning: 'Wersje robocze nadal mogą się zmienić.', revisionStatus: { released: 'Wydana', draft: 'Robocza', archived: 'Zarchiwizowana' },
+      invalid: 'Wybierz wersję planu, prawidłową datę rozpoczęcia i od 1 do 52 mikrocykli.', create: 'Utwórz realizację', creating: 'Tworzenie…', loadError: 'Nie udało się załadować planów.', previewError: 'Nie udało się obliczyć podglądu realizacji.', createError: 'Nie udało się utworzyć realizacji.', noPlans: 'Utwórz plan treningowy przed rozpoczęciem realizacji.',
+    },
+  },
+}

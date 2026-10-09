@@ -2,15 +2,26 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { getJson } from '@/api/client'
 import dePlans from '@/i18n/locales/de/plans'
+import deExecution from '@/i18n/locales/de/execution'
+import enExecution from '@/i18n/locales/en/execution'
 import enPlans from '@/i18n/locales/en/plans'
+import esExecution from '@/i18n/locales/es/execution'
 import esPlans from '@/i18n/locales/es/plans'
+import frExecution from '@/i18n/locales/fr/execution'
 import frPlans from '@/i18n/locales/fr/plans'
+import itExecution from '@/i18n/locales/it/execution'
 import itPlans from '@/i18n/locales/it/plans'
+import nlExecution from '@/i18n/locales/nl/execution'
 import nlPlans from '@/i18n/locales/nl/plans'
+import plExecution from '@/i18n/locales/pl/execution'
 import plPlans from '@/i18n/locales/pl/plans'
+import ptBRExecution from '@/i18n/locales/pt-BR/execution'
 import ptBRPlans from '@/i18n/locales/pt-BR/plans'
+import svExecution from '@/i18n/locales/sv/execution'
 import svPlans from '@/i18n/locales/sv/plans'
+import trExecution from '@/i18n/locales/tr/execution'
 import trPlans from '@/i18n/locales/tr/plans'
+import ukExecution from '@/i18n/locales/uk/execution'
 import ukPlans from '@/i18n/locales/uk/plans'
 import {
   activeLocale,
@@ -60,6 +71,60 @@ function interpolationTokens(value: string): string[] {
 }
 
 describe('frontend locale runtime', () => {
+  it('provides complete native Execution copy with aligned placeholders in every locale', async () => {
+    const rawExecution = {
+      en: enExecution, pl: plExecution, fr: frExecution, es: esExecution, de: deExecution,
+      it: itExecution, 'pt-BR': ptBRExecution, sv: svExecution, nl: nlExecution,
+      uk: ukExecution, tr: trExecution,
+    }
+    const englishPaths = messageLeaves(rawExecution.en).sort()
+    const englishStrings = new Map(stringMessages(rawExecution.en))
+    const representativeNativePaths = [
+      'execution.tabs.overview',
+      'execution.common.today',
+      'execution.run.emptyBody',
+      'execution.overview.didPlanHappen',
+      'execution.analysis.confirmLeave',
+      'execution.editor.saveNext',
+      'execution.timeline.journal',
+      'execution.loads.title',
+      'execution.newRun.title',
+    ]
+    const interpolationValues = {
+      plan: 'Plan', count: 3, start: '2026-10-01', end: '2026-11-01', days: 7,
+      current: 2, total: 8, day: 3, runDay: 10, runDays: 56, left: 46, mc: 4,
+      workout: 'Push A', saved: 2, locked: 1, date: '2026-10-09', slot: 1,
+      sets: 3, min: 5, max: 7, rir: 1, from: 1, revisions: '1–2', set: 1,
+      exercise: 'Bench Press', changes: 'Changed', reps: '7/6/5', loads: '70/70/70',
+      top: 1, floor: 1, deeper: 0, step: 2.5, load: 70, revision: 2,
+      state: 'ready', shown: 3, reason: 'skipped',
+    }
+
+    for (const locale of SUPPORTED_LOCALES) {
+      const raw = rawExecution[locale]
+      expect(messageLeaves(raw).sort(), locale).toEqual(englishPaths)
+
+      for (const [path, englishMessage] of englishStrings) {
+        const localized = messageAt(raw, path)
+        expect(localized, `${locale}: ${path}`).toBeTypeOf('string')
+        expect(interpolationTokens(String(localized)), `${locale}: ${path}`)
+          .toEqual(interpolationTokens(englishMessage))
+      }
+
+      if (locale !== 'en') {
+        for (const path of representativeNativePaths) {
+          expect(messageAt(raw, path), `${locale}: ${path}`)
+            .not.toBe(messageAt(rawExecution.en, path))
+        }
+      }
+
+      await setActiveLocale(locale, { persist: false })
+      for (const [path] of englishStrings) {
+        expect(() => i18n.global.t(path, interpolationValues), `${locale}: ${path}`).not.toThrow()
+      }
+    }
+  })
+
   it('defines native PlanCreator prescription-metadata copy in every locale pack', () => {
     const rawPlans = {
       en: enPlans, pl: plPlans, fr: frPlans, es: esPlans, de: dePlans, it: itPlans,

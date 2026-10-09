@@ -4,6 +4,7 @@ export default {
     primaryNavigation: 'Hoofdnavigatie',
     atlas: 'Atlas',
     myPlans: 'Mijn plannen',
+    execution: 'Uitvoering',
     dashboard: 'Dashboard',
     plannedModule: 'Geplande module',
     exercisesCount: 'Oefeningen: {count}',

@@ -1,6 +1,6 @@
 export default {
   app: {
-    home: 'Agonez-Atlas-Startseite', primaryNavigation: 'Hauptnavigation', atlas: 'Atlas', myPlans: 'Meine Pläne',
+    home: 'Agonez-Atlas-Startseite', primaryNavigation: 'Hauptnavigation', atlas: 'Atlas', myPlans: 'Meine Pläne', execution: 'Ausführung',
     dashboard: 'Übersicht', plannedModule: 'Geplantes Modul', exercisesCount: '{count} Übungen',
     musclesCount: '{count} Muskeln', planCreatorDraft: 'PLANERSTELLER · ENTWURF',
   },

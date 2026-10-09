@@ -4,6 +4,7 @@ export default {
     primaryNavigation: 'Ana gezinme',
     atlas: 'Atlas',
     myPlans: 'Planlarım',
+    execution: 'Uygulama',
     dashboard: 'Panel',
     plannedModule: 'Planlanan modül',
     exercisesCount: '{count} egzersiz',

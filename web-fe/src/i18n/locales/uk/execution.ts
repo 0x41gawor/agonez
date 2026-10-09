@@ -1,0 +1,57 @@
+export default {
+  execution: {
+    shellStatus: 'ВИКОНАННЯ · КОМП’ЮТЕР', nav: 'Виконання',
+    tabs: { overview: 'Огляд', analysis: 'Аналіз', timeline: 'Хронологія', loads: 'Навантаження' },
+    common: { kg: 'кг', rir: 'RIR', reps: 'повт.', today: 'Сьогодні', close: 'Закрити', save: 'Зберегти', cancel: 'Скасувати', edit: 'Редагувати', locked: 'Заблоковано', loading: 'Завантаження даних виконання…', marker: 'MARKER.X', reserved: 'зарезервовано' },
+    run: {
+      eyebrow: 'Виконання плану', from: 'На основі {plan}', all: 'Усі виконання ({count})', new: 'Нове виконання плану', meta: '{start} → {end} · {count} × мікроциклів по {days} днів',
+      status: { scheduled: 'Заплановано', active: 'Активне', cancelled: 'Скасовано', completed: 'Завершено' }, emptyTitle: 'Ще немає виконань плану', emptyBody: 'Виконання плану розміщує тренувальний план у реальному календарі.', loadError: 'Не вдалося завантажити виконання плану', listError: 'Не вдалося завантажити виконання планів.',
+    },
+    status: { scheduled: 'Заплановано', in_progress: 'Триває', completed: 'Завершено', cancelled: 'Скасовано', missed: 'Пропущено', today: 'Сьогодні' }, completion: { as_prescribed: 'За приписом', fallback: 'Альтернатива' }, classification: { normal: 'Звичайний', deload: 'Розвантаження', reload: 'Повернення навантаження' },
+    blocked: {
+      previous_exposure_in_progress: 'Попередня експозиція ще триває.', previous_exposure_not_performed: 'Попередню призначену експозицію не виконано.', session_started: 'Ця сесія вже розпочалася.', no_future_session: 'У цьому виконанні немає наступної сесії.', run_not_active: 'Це виконання плану неактивне.', unknown: 'Цей припис ще не можна редагувати.',
+    },
+    overview: {
+      where: 'Поточна позиція', position: 'Мікроцикл {current} з {total} · день {day} з {days}', positionSub: 'день виконання {runDay} з {runDays}, залишилося {left} днів', thisMicrocycle: 'Цей мікроцикл', sessions: 'Сесії в календарі', analysisEyebrow: 'Післятренувальний аналіз · наступний: MC{mc}', prescriptions: 'Приписи для наступного мікроциклу',
+      continue: 'Продовжити {workout}', waiting: 'Очікування', saved: 'збережено {saved} / {total}', latest: 'Остання експозиція · {workout} · {date}', comparison: 'Приписано та виконано', exercise: 'Вправа', prescribed: 'Приписано', performed: 'Виконано', note: 'Нотатка', adherence: 'Дотримання', didPlanHappen: 'Чи виконано план?',
+      journal: 'Журнал', latestEvents: 'Останні події', allEvents: 'Усі ({count})', observationPlaceholder: 'Записати спостереження…', log: 'Записати', fullCalendar: 'Повний календар', readOnlyDraft: 'Поточні результати надходять із мобільного застосунку й тут доступні лише для читання.', noCurrentSessions: 'У поточному мікроциклі немає сесій.', noExposure: 'Ще немає завершеної експозиції.', noEvents: 'Жодної події не записано.',
+    },
+    analysis: {
+      queue: 'Призначити MC{mc}', queueToggle: 'Черга', progress: 'збережено {saved} з {total} · заблоковано {locked}', workoutTrace: 'історія тренувальної одиниці', ready: 'Готово', keyboard: 'J / K', notStarted: 'Не розпочато', unsaved: 'Незбережені зміни', saved: 'Збережено', locked: 'Заблоковано',
+      confirmLeave: 'Є незбережені приписи. Вийти з Аналізу? Чернетки залишаться в цій сесії браузера.', basedOn: 'На основі MC{mc} · {date}', noSummary: 'Немає виконаної експозиції', loadError: 'Не вдалося завантажити Аналіз.', traceEyebrow: '{workout} · слот {slot} · історія вправи', plan: "план: {sets} × {min}–{max} {'@'}RIR {rir}",
+      continuity: 'єдина історія від MC{from} через редакції плану {revisions}', planNote: 'Нотатка плану', previous: 'Попередня вправа', next: 'Наступна вправа', position: '{current} / {total}', loadStrip: 'Вага на підхід · кг', prescribedLegend: 'приписано', performedLegend: 'виконано', nextLegend: 'наступне',
+      exposure: 'Експозиція', set: 'Підхід {set}', comments: 'Коментарі', prescription: 'Припис', actual: 'Фактично', draft: 'Чернетка', setSkipped: 'підхід пропущено', notSynced: 'не синхронізовано', additional: '+ДОД.', missed: 'Пропущено', cancelled: 'Скасовано', scheduled: 'Заплановано', inProgress: 'Триває',
+      substituted: 'Замінено на: {exercise}', exerciseSkipped: 'Вправу пропущено — жодного підходу не виконано', noComment: 'Без коментаря', revision: 'Редакція плану r{from} → r{to}', revisionBody: 'Чинна від MC{mc} · {date}. {changes}. Та сама історія вправи продовжується.', compare: 'Порівняти редакції',
+      expand: 'Розгорнути деталі MC{mc}', collapse: 'Згорнути деталі MC{mc}', session: 'Сесія', recorded: 'Записано', setComment: 'Коментар до підходу', performanceAfterSync: 'Результат з’явиться після синхронізації сесії з мобільного застосунку.',
+      flags: { substituted: 'Замінено', skipped: 'Пропущено', additional_set: 'Додатковий підхід', reps_below_range: 'Повторення нижче діапазону', reps_at_floor: 'Повторення на нижній межі', top_of_range: 'Верхня межа діапазону', load_reduced: 'Вагу зменшено', personal_record: 'Особистий рекорд' },
+    },
+    editor: {
+      eyebrow: 'Наступний припис', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · можна редагувати до початку сесії', status: { clean: 'Не розпочато', dirty: 'Не збережено', saving: 'Збереження…', saved: 'Збережено', locked: 'Заблоковано' },
+      basis: 'На основі результату MC{mc} · {date} · завершено', firstExposure: 'Перша експозиція — попереднього результату немає.', evidence: 'Повт. {reps} · ваги {loads} кг · {top} на верхній межі · {floor} на нижній межі · {deeper} глибше за цільовий RIR',
+      startFrom: 'Почати з', previousPrescription: 'Припис MC{mc}', previousPerformance: 'Результат MC{mc}', allMinus: 'усі −{step}', allPlus: 'усі +{step}', suggestion: 'Порада', suggestionNone: 'Модель прогресії · немає', suggestionBody: 'Для цього слота не призначено модель прогресії.',
+      fromPlan: 'Із плану', load: 'Вага, кг', last: 'минулого разу {load}', comment: 'Коментар до підходу (необов’язково)', selectSet: 'Вибрати підхід {set}', minus: 'Підхід {set}: відняти {step} кг', plus: 'Підхід {set}: додати {step} кг', apply: 'Застосувати', selected: 'до {count} вибраних',
+      prescriptionComment: 'Коментар до припису · лише для цієї експозиції', commentPlaceholder: 'На чому спортсмену зосередитися наступного разу?', planOwned: 'Кількість підходів, діапазон повторень і RIR походять із редакції плану r{revision}. Змініть їх у Конструкторі плану для майбутніх мікроциклів.',
+      discard: 'Відкинути', save: 'Зберегти', saveNext: 'Зберегти й наступна вправа', reload: 'Перезавантажити історію', invalid: 'Підхід {set}: введіть коректну вагу від 0 до 1000 кг із не більш ніж 2 десятковими знаками.', fix: 'Виправте некоректні ваги перед збереженням.', lockedHelp: 'Перегляньте історію в очікуванні; backend розблокує редактор після виконання умови готовності.',
+      stale_basis: 'Є новіший результат. Перезавантажте історію; введені значення буде збережено.', version_conflict: 'Хтось інший зберіг цей припис. Завантажте останню версію; ваші значення буде збережено.', prescription_blocked: 'Припис заблоковано попередньою експозицією.', session_locked: 'Сесію розпочато, її припис заблоковано.',
+      not_next_session: 'Це вже не наступна сесія.', set_count_mismatch: 'Кількість підходів у плані змінилася. Перезавантажте історію.', invalid_load: 'Одна або кілька ваг некоректні.', genericError: 'Не вдалося зберегти припис.', savedToast: 'Збережено · {exercise} · MC{mc}', noLoadStep: 'План не визначає крок ваги; введіть значення безпосередньо.',
+    },
+    workout: {
+      breadcrumb: 'Аналіз / історія тренувальної одиниці', title: '{workout}', subtitle: 'день {day} кожного мікроциклу · слотів вправ: {count}', help: 'Комірка = найбільша виконана вага · повторення в підходах. Відкрийте стовпець або комірку, щоб переглянути історію вправи.', occurrence: 'Виконання', volume: 'Обсяг навантаження', comment: 'Коментар до тренування', prescribed: 'приписано', notPerformed: 'не виконано', empty: 'ще не приписано', skipped: 'пропущено', locked: 'заблоковано', loadError: 'Не вдалося завантажити історію тренування.',
+    },
+    timeline: {
+      eyebrow: 'Історія мікроциклів · календар', title: '{count} мікроциклів · {start} → {end}', microcycles: 'Мікроцикли', weeks: 'Календарні тижні', axis: 'Часова вісь', helpMicrocycles: 'Один рядок на мікроцикл, дні плану зліва направо.', helpWeeks: 'Тижні від понеділка до неділі. Межі мікроциклів залишаються видимими.',
+      attendance: 'Відвідування', volume: 'Обсяг', note: '+ нотатка', notePlaceholder: 'Спостереження для MC{mc}…', saveNote: 'Зберегти нотатку', selectSession: 'Виберіть сесію, щоб переглянути деталі.', session: 'Сесія · MC{mc} · Д{day}', prescription: 'Припис: {state}',
+      cancelSession: 'Скасувати сесію…', reclassify: 'Змінити на скасовану…', restore: 'Відновити як заплановану', restorePast: 'Минулу сесію неможливо перепланувати.', reason: 'Причина', reasonPlaceholder: 'напр. відпустка', logEvent: 'Також записати подію в журналі', confirm: 'Підтвердити',
+      journal: 'Історія виконання плану', filters: { all: 'Усі', plan: 'Зміни плану', phases: 'Фази навантаження', breaks: 'Перерви', notes: 'Записи й нотатки' }, eventType: 'Тип події', date: 'Дата', text: 'Текст', eventPlaceholder: 'напр. Плато два тижні. Перевірити відновлення.', log: 'Записати подію', noEvents: 'Немає подій цього типу.', eventTypes: { observation: 'Спостереження', vacation: 'Відпустка', training_break: 'Перерва у тренуваннях' }, system: 'системна подія', user: 'записано користувачем', loadError: 'Не вдалося завантажити хронологію.',
+    },
+    loads: {
+      eyebrow: 'Аналіз усіх навантажень', title: 'Чи прогресують вправи разом?', subtitle: 'Лише завершені результати; заміни, пропуски та пропущені чи скасовані сесії залишають прогалини.', traces: 'Історії вправ · показано {shown} з {total}', primary: 'Основні вправи', all: 'Усі', none: 'Жодної', metric: 'Метрика', scale: 'Шкала', relative: '% від першої експозиції', kg: 'кг',
+      top_set_load: 'Вага найважчого підходу', mean_set_load: 'Середня вага підходів', volume_load: 'Обсяг навантаження', chart: 'Графік прогресії ваги', noSelection: 'Не вибрано історії вправ', noSelectionBody: 'Виберіть історії ліворуч або покажіть усі.', showAll: 'Показати всі', byUnit: 'За тренувальною одиницею', loadError: 'Не вдалося завантажити аналіз навантажень.', gap: 'прогалина: {reason}',
+    },
+    newRun: {
+      back: 'Назад до Виконання', title: 'Нове виконання плану', subtitle: 'Розмістіть редакцію плану в реальному календарі.', defaultName: '{plan} — виконання', plan: 'Тренувальний план', revision: 'Редакція плану', name: 'Назва виконання', start: 'Дата початку', count: 'Мікроцикли', end: 'Завершення (обчислено)',
+      preview: 'Попередній перегляд · що буде створено', microcycles: 'мікроцикли', sessions: 'заплановані сесії', workouts: 'історії тренувань', exercises: 'історії вправ', overlap: 'Це виконання перетинається з {count} наявними виконаннями. Сесії потраплять на ті самі дати.', draftWarning: 'Чернетки редакцій іще можуть змінитися.', revisionStatus: { released: 'Опублікована', draft: 'Чернетка', archived: 'Архівна' },
+      invalid: 'Виберіть редакцію плану, коректну дату початку та від 1 до 52 мікроциклів.', create: 'Створити виконання', creating: 'Створення…', loadError: 'Не вдалося завантажити плани.', previewError: 'Не вдалося обчислити попередній перегляд.', createError: 'Не вдалося створити виконання.', noPlans: 'Створіть тренувальний план перед початком виконання.',
+    },
+  },
+}

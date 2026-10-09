@@ -1,6 +1,6 @@
 export default {
   app: {
-    home: 'Inicio de Agonez Atlas', primaryNavigation: 'Navegación principal', atlas: 'Atlas', myPlans: 'Mis planes',
+    home: 'Inicio de Agonez Atlas', primaryNavigation: 'Navegación principal', atlas: 'Atlas', myPlans: 'Mis planes', execution: 'Ejecución',
     dashboard: 'Panel', plannedModule: 'Módulo previsto', exercisesCount: '{count} ejercicios',
     musclesCount: '{count} músculos', planCreatorDraft: 'CREADOR DE PLANES · BORRADOR',
   },

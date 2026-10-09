@@ -4,6 +4,7 @@ export default {
     primaryNavigation: 'Основна навігація',
     atlas: 'Atlas',
     myPlans: 'Мої плани',
+    execution: 'Виконання',
     dashboard: 'Панель',
     plannedModule: 'Запланований модуль',
     exercisesCount: 'Вправи: {count}',

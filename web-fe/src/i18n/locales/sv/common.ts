@@ -4,6 +4,7 @@ export default {
     primaryNavigation: 'Huvudnavigering',
     atlas: 'Atlas',
     myPlans: 'Mina planer',
+    execution: 'Utförande',
     dashboard: 'Översikt',
     plannedModule: 'Planerad modul',
     exercisesCount: 'Övningar: {count}',
