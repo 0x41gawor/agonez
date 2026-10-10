@@ -36,6 +36,14 @@ frontend materials are preserved in `docs/api-contract.md` and
 - `/api/v1/exec/plan-runs/{plan_run_id}/microcycles` and `/calendar`
 - `/api/v1/exec/plan-runs/{plan_run_id}/events`
 - `/api/v1/exec/plan-runs/{plan_run_id}/load-series`
+- `/api/v1/mobile/context` and `/plan-runs` — mobile home/context reads
+- `/api/v1/mobile/sessions/{session_id}/prescription` — immutable workout prescription
+- `/api/v1/mobile/workouts` — idempotent offline-first start
+- `/api/v1/mobile/workouts/active` and `/{workout_id}` — resume/snapshot reads
+- `/api/v1/mobile/workouts/{workout_id}/claim` — explicit device-lease takeover
+- `/api/v1/mobile/workouts/{workout_id}/ops` — ordered, replay-safe operation sync
+- `/api/v1/mobile/workouts/{workout_id}/finalize` — atomic workout completion
+- `/api/v1/mobile/atlas/exercises` and `/{exercise_id}/peek` — compact mobile Atlas reads
 - `POST /api/waitlist` — append a private-beta email to persistent JSONL storage
 - `GET /assets/anatomy.svg`
 - `GET /health/live` and `GET /health/ready`
@@ -56,6 +64,12 @@ Atlas read endpoints negotiate localized exercise and muscle content from the
 Localized fields fall back independently to their canonical `core.exercises` or
 `core.muscles` value. Exercise translations must have `status = 'published'` to be
 served. Responses include `Content-Language` and `Vary: Accept-Language`.
+
+Mobile Execution uses the same locale negotiation. Every mobile request requires
+`X-Agonez-Device-Id`; `X-Agonez-Client` is accepted for client-version diagnostics. The
+device id identifies a write lease, not a user: authentication and athlete ownership are
+still intentionally absent. Mobile context and workout snapshots support `ETag` /
+`If-None-Match`.
 
 ## Configuration
 
@@ -155,6 +169,8 @@ without coupling user policy to Atlas.
 
 Execution implementation decisions and its endpoint compatibility audit are documented in
 [`../__docs__/execution/api-backend.md`](../__docs__/execution/api-backend.md).
+The offline-first mobile backend and contract adaptations are documented in
+[`../__docs__/execution/api-mobile-backend.md`](../__docs__/execution/api-mobile-backend.md).
 
 PlanCreator persists this identity chain in the PostgreSQL `plans` schema:
 

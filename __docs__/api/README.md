@@ -4,7 +4,7 @@
 
 The API is FastAPI. [openapi.yaml](openapi.yaml) was generated from
 `agonez_api.app.create_app()` with inert documentation settings; no database connection is
-opened during schema generation. It is OpenAPI 3.1 and contains 36 paths / 43 operations.
+opened during schema generation. It is OpenAPI 3.1 and contains 47 paths / 54 operations.
 
 Health routes, the `/media` static mount, Swagger UI (`/docs`), ReDoc (`/redoc`), and the JSON schema endpoint (`/openapi.json`) are reachable but are not all represented as application operations in OpenAPI.
 
@@ -13,6 +13,7 @@ Health routes, the `/media` static mount, Swagger UI (`/docs`), ReDoc (`/redoc`)
 - Atlas: `/api/atlas`
 - Plans: `/api/plans`
 - Desktop Execution: `/api/v1/exec`
+- Mobile Execution: `/api/v1/mobile`
 - Anatomy SVG: `/assets/anatomy.svg`
 - Static media: `/media/...` by default
 - Health: `/health/live`, `/health/ready`
@@ -24,8 +25,9 @@ There is no API-wide version segment. The FastAPI metadata version defaults to `
 - Request/response DTOs are Pydantic v2 models with `extra="forbid"`; unknown JSON fields are rejected.
 - Integers, bounds, enums, slug patterns, nested ordinals, rep ranges, loading cycles, and DEFAULT-variant rules are validated before services run.
 - FastAPI returns its standard 422 validation response for malformed Atlas/Plans input.
-  Execution uses its stable `{"error":{"code","message","details"}}` envelope for every
-  expected non-2xx response, including request validation.
+  Desktop and Mobile Execution use their stable
+  `{"error":{"code","message","details"}}` envelope for every expected non-2xx response,
+  including request validation.
 - JSON numeric values are serialized as numbers. PostgreSQL `numeric` values are accepted by Pydantic and emitted as floats in declared response fields.
 - Missing optional values are `null`, not omitted.
 
@@ -71,6 +73,11 @@ The service checks hero/gallery files before returning URLs. A missing hero beco
 | 500 | Unhandled DB/infrastructure error | No module-specific response contract |
 
 OpenAPI automatically documents validation responses but does not enumerate every custom 404/409/422 path response declared through exception handlers.
+
+Mobile clients send `X-Agonez-Device-Id` on every request and may send
+`X-Agonez-Client`. Context and workout snapshot reads accept `If-None-Match`. These headers
+are CORS-allowlisted, and `ETag` is exposed. The device identifier controls only the current
+workout write lease; it is not authentication.
 
 ## Authentication and mutation warning
 

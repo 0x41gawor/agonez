@@ -29,6 +29,9 @@ from agonez_api.modules.execution.errors import ExecutionAPIError
 from agonez_api.modules.execution.repository import ExecutionRepository
 from agonez_api.modules.execution.router import router as execution_router
 from agonez_api.modules.execution.service import ExecutionService
+from agonez_api.modules.mobile_execution.repository import MobileExecutionRepository
+from agonez_api.modules.mobile_execution.router import router as mobile_execution_router
+from agonez_api.modules.mobile_execution.service import MobileExecutionService
 from agonez_api.modules.plans.analysis.service import PlanAnalysisService
 from agonez_api.modules.plans.exceptions import (
     PlanConflictError,
@@ -58,6 +61,7 @@ def create_app(
     repository = AtlasRepository(database_pool)
     plan_repository = PlanRepository(database_pool)
     execution_repository = ExecutionRepository(database_pool)
+    mobile_execution_repository = MobileExecutionRepository(database_pool)
     media = MediaResolver(
         root=settings.media_root,
         url_prefix=settings.media_url_prefix,
@@ -67,6 +71,7 @@ def create_app(
     plan_service = PlanService(plan_repository)
     plan_analysis_service = PlanAnalysisService(plan_repository)
     execution_service = ExecutionService(execution_repository)
+    mobile_execution_service = MobileExecutionService(mobile_execution_repository)
     waitlist_store = WaitlistStore(settings.waitlist_path)
 
     @asynccontextmanager
@@ -87,6 +92,7 @@ def create_app(
         description=(
             "REST API for the Agonez exercise and muscle Atlas and the relational "
             "PlanCreator draft editor and the desktop Execution workflow API. "
+            "It also provides the offline-first mobile workout execution API. "
             "Authentication and ownership are intentionally deferred."
         ),
         lifespan=lifespan,
@@ -100,6 +106,8 @@ def create_app(
     app.state.plan_analysis_service = plan_analysis_service
     app.state.execution_repository = execution_repository
     app.state.execution_service = execution_service
+    app.state.mobile_execution_repository = mobile_execution_repository
+    app.state.mobile_execution_service = mobile_execution_service
     app.state.waitlist_store = waitlist_store
 
     app.add_middleware(
@@ -107,8 +115,16 @@ def create_app(
         allow_origins=settings.cors_origins,
         allow_credentials=False,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Accept", "Accept-Language", "Content-Type", "X-Request-ID"],
-        expose_headers=["Content-Language", "X-Request-ID"],
+        allow_headers=[
+            "Accept",
+            "Accept-Language",
+            "Content-Type",
+            "If-None-Match",
+            "X-Agonez-Client",
+            "X-Agonez-Device-Id",
+            "X-Request-ID",
+        ],
+        expose_headers=["Content-Language", "ETag", "X-Request-ID"],
     )
 
     @app.middleware("http")
@@ -201,7 +217,7 @@ def create_app(
         request: Request,
         exc: RequestValidationError,
     ) -> JSONResponse:
-        if not request.url.path.startswith("/api/v1/exec"):
+        if not request.url.path.startswith(("/api/v1/exec", "/api/v1/mobile")):
             return await request_validation_exception_handler(request, exc)
         return JSONResponse(
             status_code=422,
@@ -247,6 +263,7 @@ def create_app(
     app.include_router(atlas_router)
     app.include_router(plans_router)
     app.include_router(execution_router)
+    app.include_router(mobile_execution_router)
     app.include_router(waitlist_router)
     app.mount(
         settings.media_url_prefix,

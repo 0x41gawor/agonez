@@ -48,11 +48,13 @@ class ExerciseExecutionMode(str, Enum):
     SUBSTITUTED = "substituted"
     SKIPPED = "skipped"
     ADDITIONAL = "additional"
+    NOT_PERFORMED = "not_performed"
 
 
 class PerformedSetStatus(str, Enum):
     PERFORMED = "performed"
     SKIPPED = "skipped"
+    NOT_PERFORMED = "not_performed"
 
 
 class PlanRunEventType(str, Enum):

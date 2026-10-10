@@ -2,8 +2,9 @@ openapi: 3.1.0
 info:
   title: Agonez Atlas API
   description: REST API for the Agonez exercise and muscle Atlas and the relational
-    PlanCreator draft editor and the desktop Execution workflow API. Authentication
-    and ownership are intentionally deferred.
+    PlanCreator draft editor and the desktop Execution workflow API. It also provides
+    the offline-first mobile workout execution API. Authentication and ownership are
+    intentionally deferred.
   version: 0.1.0
 paths:
   /assets/anatomy.svg:
@@ -1851,6 +1852,734 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/context:
+    get:
+      tags:
+      - Mobile Execution
+      summary: Get Context
+      operationId: get_context_api_v1_mobile_context_get
+      parameters:
+      - name: plan_run_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 1
+          - type: 'null'
+          title: Plan Run Id
+      - name: date
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: If-None-Match
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: If-None-Match
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileContext'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/plan-runs:
+    get:
+      tags:
+      - Mobile Execution
+      summary: List Plan Runs
+      operationId: list_plan_runs_api_v1_mobile_plan_runs_get
+      parameters:
+      - name: date
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanRunCompact'
+                title: Response List Plan Runs Api V1 Mobile Plan Runs Get
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/sessions/{session_id}/prescription:
+    get:
+      tags:
+      - Mobile Execution
+      summary: Get Prescription
+      operationId: get_prescription_api_v1_mobile_sessions__session_id__prescription_get
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Session Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutPrescription'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/workouts:
+    post:
+      tags:
+      - Mobile Execution
+      summary: Start Workout
+      operationId: start_workout_api_v1_mobile_workouts_post
+      parameters:
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartWorkout'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutSnapshot'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/workouts/active:
+    get:
+      tags:
+      - Mobile Execution
+      summary: Get Active Workout
+      operationId: get_active_workout_api_v1_mobile_workouts_active_get
+      parameters:
+      - name: plan_run_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveWorkoutSummary'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/workouts/{workout_id}:
+    get:
+      tags:
+      - Mobile Execution
+      summary: Get Workout
+      operationId: get_workout_api_v1_mobile_workouts__workout_id__get
+      parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workout Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: If-None-Match
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: If-None-Match
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutSnapshot'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/workouts/{workout_id}/claim:
+    post:
+      tags:
+      - Mobile Execution
+      summary: Claim Workout
+      operationId: claim_workout_api_v1_mobile_workouts__workout_id__claim_post
+      parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workout Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimWorkout'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutSnapshot'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/workouts/{workout_id}/ops:
+    post:
+      tags:
+      - Mobile Execution
+      summary: Apply Workout Operations
+      operationId: apply_workout_operations_api_v1_mobile_workouts__workout_id__ops_post
+      parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workout Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OperationBatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationBatchResponse'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/workouts/{workout_id}/finalize:
+    post:
+      tags:
+      - Mobile Execution
+      summary: Finalize Workout
+      operationId: finalize_workout_api_v1_mobile_workouts__workout_id__finalize_post
+      parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workout Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinalizeWorkout'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinalizeResponse'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/atlas/exercises/{exercise_id}/peek:
+    get:
+      tags:
+      - Mobile Execution
+      summary: Get Atlas Peek
+      operationId: get_atlas_peek_api_v1_mobile_atlas_exercises__exercise_id__peek_get
+      parameters:
+      - name: exercise_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Exercise Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtlasPeek'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/atlas/exercises:
+    get:
+      tags:
+      - Mobile Execution
+      summary: Search Atlas
+      operationId: search_atlas_api_v1_mobile_atlas_exercises_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          title: Q
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 30
+          minimum: 1
+          default: 30
+          title: Limit
+      - name: plan_run_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 1
+          - type: 'null'
+          title: Plan Run Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AtlasSearchResponse'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/waitlist:
     post:
       tags:
@@ -1915,6 +2644,105 @@ components:
       - min
       - max
       title: ActiveWorkingSets
+    ActiveWorkoutSummary:
+      properties:
+        workout_id:
+          type: string
+          format: uuid
+          title: Workout Id
+        session_id:
+          type: integer
+          title: Session Id
+        workout_unit_name:
+          type: string
+          title: Workout Unit Name
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        lease:
+          $ref: '#/components/schemas/Lease'
+        applied_seq:
+          type: integer
+          title: Applied Seq
+        revision:
+          type: integer
+          title: Revision
+        position_hint:
+          anyOf:
+          - $ref: '#/components/schemas/PositionHint'
+          - type: 'null'
+        counts:
+          $ref: '#/components/schemas/WorkoutCounts'
+      additionalProperties: false
+      type: object
+      required:
+      - workout_id
+      - session_id
+      - workout_unit_name
+      - started_at
+      - lease
+      - applied_seq
+      - revision
+      - position_hint
+      - counts
+      title: ActiveWorkoutSummary
+    AddUnplannedExerciseData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        exercise_performance_id:
+          type: string
+          format: uuid
+          title: Exercise Performance Id
+        actual_exercise_id:
+          type: integer
+          minimum: 1.0
+          title: Actual Exercise Id
+        performed_ordinal:
+          type: integer
+          minimum: 0.0
+          title: Performed Ordinal
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_performance_id
+      - actual_exercise_id
+      - performed_ordinal
+      title: AddUnplannedExerciseData
+    AddUnplannedExerciseOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: add_unplanned_exercise
+          title: Type
+        data:
+          $ref: '#/components/schemas/AddUnplannedExerciseData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: AddUnplannedExerciseOperation
     AnalysisDiagnostic:
       properties:
         code:
@@ -2215,6 +3043,116 @@ components:
       - muscle_complex
       - counts
       title: AtlasMeta
+    AtlasMuscle:
+      properties:
+        muscle_id:
+          type: integer
+          title: Muscle Id
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        etu_cm2:
+          type: number
+          title: Etu Cm2
+        capacity_share:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Capacity Share
+      additionalProperties: false
+      type: object
+      required:
+      - muscle_id
+      - slug
+      - name
+      - etu_cm2
+      - capacity_share
+      title: AtlasMuscle
+    AtlasPeek:
+      properties:
+        exercise:
+          $ref: '#/components/schemas/ExerciseIdentity'
+        tags:
+          items:
+            type: string
+          type: array
+          title: Tags
+        technique_tldr:
+          $ref: '#/components/schemas/TechniqueTLDR'
+        muscles_top:
+          items:
+            $ref: '#/components/schemas/AtlasMuscle'
+          type: array
+          title: Muscles Top
+        body_map:
+          $ref: '#/components/schemas/BodyMap'
+        content_locale:
+          type: string
+          title: Content Locale
+        atlas_version:
+          type: string
+          title: Atlas Version
+      additionalProperties: false
+      type: object
+      required:
+      - exercise
+      - tags
+      - technique_tldr
+      - muscles_top
+      - body_map
+      - content_locale
+      - atlas_version
+      title: AtlasPeek
+    AtlasSearchItem:
+      properties:
+        id:
+          type: integer
+          title: Id
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        full_name:
+          type: string
+          title: Full Name
+        mechanics_tier:
+          type: string
+          title: Mechanics Tier
+        target_category:
+          type: string
+          title: Target Category
+        last_performed_in_run:
+          anyOf:
+          - $ref: '#/components/schemas/LastPerformedInRun'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - slug
+      - name
+      - full_name
+      - mechanics_tier
+      - target_category
+      - last_performed_in_run
+      title: AtlasSearchItem
+    AtlasSearchResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AtlasSearchItem'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: AtlasSearchResponse
     Attendance:
       properties:
         microcycle_ordinal:
@@ -2309,6 +3247,42 @@ components:
       - no_future_session
       - run_not_active
       title: BlockedReason
+    BodyMap:
+      properties:
+        asset:
+          type: string
+          title: Asset
+        asset_version:
+          type: string
+          title: Asset Version
+        regions:
+          items:
+            $ref: '#/components/schemas/BodyMapRegion'
+          type: array
+          title: Regions
+      additionalProperties: false
+      type: object
+      required:
+      - asset
+      - asset_version
+      - regions
+      title: BodyMap
+    BodyMapRegion:
+      properties:
+        region_id:
+          type: string
+          title: Region Id
+        intensity:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Intensity
+      additionalProperties: false
+      type: object
+      required:
+      - region_id
+      - intensity
+      title: BodyMapRegion
     CalendarResponse:
       properties:
         as_of:
@@ -2385,12 +3359,162 @@ components:
       - performance_status
       - fallback_workout_name
       title: CalendarSession
+    ClaimWorkout:
+      properties:
+        device_id:
+          type: string
+          format: uuid
+          title: Device Id
+        observed_applied_seq:
+          type: integer
+          minimum: 0.0
+          title: Observed Applied Seq
+      additionalProperties: false
+      type: object
+      required:
+      - device_id
+      - observed_applied_seq
+      title: ClaimWorkout
+    ClearSetData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        set_performance_id:
+          type: string
+          format: uuid
+          title: Set Performance Id
+      additionalProperties: false
+      type: object
+      required:
+      - set_performance_id
+      title: ClearSetData
+    ClearSetOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: clear_set
+          title: Type
+        data:
+          $ref: '#/components/schemas/ClearSetData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: ClearSetOperation
     CompletionMode:
       type: string
       enum:
       - as_prescribed
       - fallback
       title: CompletionMode
+    CompletionSummary:
+      properties:
+        prescribed_sets:
+          type: integer
+          title: Prescribed Sets
+        performed_sets:
+          type: integer
+          title: Performed Sets
+        skipped_sets:
+          type: integer
+          title: Skipped Sets
+        not_performed_sets:
+          type: integer
+          title: Not Performed Sets
+        additional_sets:
+          type: integer
+          title: Additional Sets
+        substitutions:
+          type: integer
+          title: Substitutions
+        skipped_exercises:
+          type: integer
+          title: Skipped Exercises
+        added_exercises:
+          type: integer
+          title: Added Exercises
+        reordered:
+          type: boolean
+          title: Reordered
+      additionalProperties: false
+      type: object
+      required:
+      - prescribed_sets
+      - performed_sets
+      - skipped_sets
+      - not_performed_sets
+      - additional_sets
+      - substitutions
+      - skipped_exercises
+      - added_exercises
+      - reordered
+      title: CompletionSummary
+    ContextPlanRun:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        status:
+          type: string
+          title: Status
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+        microcycle_count:
+          type: integer
+          title: Microcycle Count
+        current_microcycle_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Current Microcycle Ordinal
+        plan_name:
+          type: string
+          title: Plan Name
+        microcycle_duration_days:
+          type: integer
+          title: Microcycle Duration Days
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - name
+      - status
+      - starts_on
+      - ends_on
+      - microcycle_count
+      - current_microcycle_ordinal
+      - plan_name
+      - microcycle_duration_days
+      title: ContextPlanRun
     Continuity:
       properties:
         first_microcycle_ordinal:
@@ -3104,6 +4228,7 @@ components:
       - substituted
       - skipped
       - additional
+      - not_performed
       title: ExerciseExecutionMode
     ExerciseExposure:
       properties:
@@ -3150,6 +4275,40 @@ components:
       additionalProperties: false
       type: object
       title: ExerciseFacets
+    ExerciseHistory:
+      properties:
+        previous_exposure:
+          anyOf:
+          - $ref: '#/components/schemas/PreviousExposure'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - previous_exposure
+      title: ExerciseHistory
+    ExerciseIdentity:
+      properties:
+        id:
+          type: integer
+          title: Id
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - slug
+      - name
+      title: ExerciseIdentity
     ExerciseListItem:
       properties:
         slug:
@@ -3250,6 +4409,58 @@ components:
       - per_page
       - facets
       title: ExerciseListResponse
+    ExercisePerformance:
+      properties:
+        exercise_performance_id:
+          type: string
+          format: uuid
+          title: Exercise Performance Id
+        exercise_prescription_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Exercise Prescription Id
+        performed_ordinal:
+          type: integer
+          title: Performed Ordinal
+        mode:
+          type: string
+          enum:
+          - as_prescribed
+          - substituted
+          - skipped
+          - not_performed
+          - added
+          title: Mode
+        actual_exercise:
+          anyOf:
+          - $ref: '#/components/schemas/ExerciseIdentity'
+          - type: 'null'
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+        rev:
+          type: integer
+          title: Rev
+        sets:
+          items:
+            $ref: '#/components/schemas/agonez_api__modules__mobile_execution__schemas__SetPerformance'
+          type: array
+          title: Sets
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_performance_id
+      - exercise_prescription_id
+      - performed_ordinal
+      - mode
+      - actual_exercise
+      - comment
+      - rev
+      - sets
+      title: ExercisePerformance
     ExercisePrescriptionPut:
       properties:
         based_on_exercise_performance_id:
@@ -3603,7 +4814,7 @@ components:
           title: Comment
         sets:
           items:
-            $ref: '#/components/schemas/SetPerformance'
+            $ref: '#/components/schemas/agonez_api__modules__execution__schemas__SetPerformance'
           type: array
           title: Sets
         summary:
@@ -3678,6 +4889,60 @@ components:
       - status
       - completion_mode
       title: ExposureSession
+    FinalizeResponse:
+      properties:
+        workout_id:
+          type: string
+          format: uuid
+          title: Workout Id
+        status:
+          type: string
+          const: completed
+          title: Status
+        finished_at:
+          type: string
+          format: date-time
+          title: Finished At
+        summary:
+          $ref: '#/components/schemas/CompletionSummary'
+      additionalProperties: false
+      type: object
+      required:
+      - workout_id
+      - status
+      - finished_at
+      - summary
+      title: FinalizeResponse
+    FinalizeWorkout:
+      properties:
+        lease_epoch:
+          type: integer
+          minimum: 1.0
+          title: Lease Epoch
+        final_seq:
+          type: integer
+          minimum: 0.0
+          title: Final Seq
+        finished_at:
+          type: string
+          format: date-time
+          title: Finished At
+        unrecorded:
+          type: string
+          const: mark_not_performed
+          title: Unrecorded
+          default: mark_not_performed
+        acknowledged_incomplete:
+          type: boolean
+          title: Acknowledged Incomplete
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - lease_epoch
+      - final_seq
+      - finished_at
+      title: FinalizeWorkout
     HTTPValidationError:
       properties:
         detail:
@@ -3816,6 +5081,44 @@ components:
       - jru
       - recovery_hours_added
       title: JointStimulus
+    LastPerformedInRun:
+      properties:
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+        sets:
+          items:
+            $ref: '#/components/schemas/LastPerformedSet'
+          type: array
+          title: Sets
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle_ordinal
+      - sets
+      title: LastPerformedInRun
+    LastPerformedSet:
+      properties:
+        load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Kg
+        repetitions:
+          type: integer
+          title: Repetitions
+        rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rir
+      additionalProperties: false
+      type: object
+      required:
+      - load_kg
+      - repetitions
+      - rir
+      title: LastPerformedSet
     LastSummary:
       properties:
         microcycle_ordinal:
@@ -3916,6 +5219,25 @@ components:
       - performed_rir
       - flags
       title: LatestExposureExercise
+    Lease:
+      properties:
+        device_id:
+          type: string
+          format: uuid
+          title: Device Id
+        epoch:
+          type: integer
+          title: Epoch
+        is_this_device:
+          type: boolean
+          title: Is This Device
+      additionalProperties: false
+      type: object
+      required:
+      - device_id
+      - epoch
+      - is_this_device
+      title: Lease
     LoadDivergence:
       type: string
       enum:
@@ -4119,6 +5441,37 @@ components:
       - deload
       - reload
       title: MicrocycleClassification
+    MicrocycleDay:
+      properties:
+        date:
+          type: string
+          format: date
+          title: Date
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        session_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Session Id
+        workout_unit_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Workout Unit Name
+        status:
+          type: string
+          title: Status
+      additionalProperties: false
+      type: object
+      required:
+      - date
+      - day_ordinal
+      - session_id
+      - workout_unit_name
+      - status
+      title: MicrocycleDay
     MicrocyclePatch:
       properties:
         notes:
@@ -4188,6 +5541,70 @@ components:
       - day_columns
       - microcycles
       title: MicrocycleTimeline
+    MobileContext:
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+          title: Generated At
+        context_version:
+          type: string
+          title: Context Version
+        plan_run:
+          anyOf:
+          - $ref: '#/components/schemas/ContextPlanRun'
+          - type: 'null'
+        selection_required:
+          type: boolean
+          title: Selection Required
+        today:
+          anyOf:
+          - $ref: '#/components/schemas/TodayPosition'
+          - type: 'null'
+        microcycle_days:
+          items:
+            $ref: '#/components/schemas/MicrocycleDay'
+          type: array
+          title: Microcycle Days
+        expected_session:
+          anyOf:
+          - $ref: '#/components/schemas/SessionSummary'
+          - type: 'null'
+        alternatives:
+          items:
+            $ref: '#/components/schemas/SessionSummary'
+          type: array
+          title: Alternatives
+        fallbacks:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Fallbacks
+        active_workout:
+          anyOf:
+          - $ref: '#/components/schemas/ActiveWorkoutSummary'
+          - type: 'null'
+        recent:
+          items:
+            $ref: '#/components/schemas/RecentWorkout'
+          type: array
+          title: Recent
+      additionalProperties: false
+      type: object
+      required:
+      - generated_at
+      - context_version
+      - plan_run
+      - selection_required
+      - today
+      - microcycle_days
+      - expected_session
+      - alternatives
+      - fallbacks
+      - active_workout
+      - recent
+      title: MobileContext
     MuscleAnalysisSummary:
       properties:
         slug:
@@ -4740,6 +6157,155 @@ components:
       - microcycle
       - session_status
       title: NextTarget
+    OffSchedule:
+      properties:
+        acknowledged:
+          type: boolean
+          title: Acknowledged
+        selected_from:
+          type: string
+          title: Selected From
+        expected_session_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Expected Session Id
+      additionalProperties: false
+      type: object
+      required:
+      - acknowledged
+      - selected_from
+      title: OffSchedule
+    OperationBatch:
+      properties:
+        lease_epoch:
+          type: integer
+          minimum: 1.0
+          title: Lease Epoch
+        base_seq:
+          type: integer
+          minimum: 0.0
+          title: Base Seq
+        ops:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/UpsertSetOperation'
+            - $ref: '#/components/schemas/SkipSetOperation'
+            - $ref: '#/components/schemas/ClearSetOperation'
+            - $ref: '#/components/schemas/SetExerciseCommentOperation'
+            - $ref: '#/components/schemas/SkipExerciseOperation'
+            - $ref: '#/components/schemas/SubstituteExerciseOperation'
+            - $ref: '#/components/schemas/AddUnplannedExerciseOperation'
+            - $ref: '#/components/schemas/ReorderExercisesOperation'
+            - $ref: '#/components/schemas/SetCursorOperation'
+            - $ref: '#/components/schemas/SetWorkoutCommentOperation'
+            discriminator:
+              propertyName: type
+              mapping:
+                add_unplanned_exercise: '#/components/schemas/AddUnplannedExerciseOperation'
+                clear_set: '#/components/schemas/ClearSetOperation'
+                reorder_exercises: '#/components/schemas/ReorderExercisesOperation'
+                set_cursor: '#/components/schemas/SetCursorOperation'
+                set_exercise_comment: '#/components/schemas/SetExerciseCommentOperation'
+                set_workout_comment: '#/components/schemas/SetWorkoutCommentOperation'
+                skip_exercise: '#/components/schemas/SkipExerciseOperation'
+                skip_set: '#/components/schemas/SkipSetOperation'
+                substitute_exercise: '#/components/schemas/SubstituteExerciseOperation'
+                upsert_set: '#/components/schemas/UpsertSetOperation'
+          type: array
+          maxItems: 200
+          minItems: 1
+          title: Ops
+      additionalProperties: false
+      type: object
+      required:
+      - lease_epoch
+      - base_seq
+      - ops
+      title: OperationBatch
+    OperationBatchResponse:
+      properties:
+        applied_seq:
+          type: integer
+          title: Applied Seq
+        revision:
+          type: integer
+          title: Revision
+        results:
+          items:
+            $ref: '#/components/schemas/OperationResult'
+          type: array
+          title: Results
+        unsupported_fields:
+          items:
+            type: string
+          type: array
+          title: Unsupported Fields
+        server_time:
+          type: string
+          format: date-time
+          title: Server Time
+      additionalProperties: false
+      type: object
+      required:
+      - applied_seq
+      - revision
+      - results
+      - server_time
+      title: OperationBatchResponse
+    OperationError:
+      properties:
+        code:
+          type: string
+          title: Code
+        message:
+          type: string
+          title: Message
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - message
+      title: OperationError
+    OperationResult:
+      properties:
+        seq:
+          type: integer
+          title: Seq
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        status:
+          type: string
+          enum:
+          - applied
+          - duplicate
+          - conflict
+          - rejected
+          title: Status
+        entity_rev:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Entity Rev
+        server_state:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Server State
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/OperationError'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - seq
+      - op_id
+      - status
+      title: OperationResult
     OrdinalVariantLoadSpec:
       properties:
         kind:
@@ -4861,11 +6427,30 @@ components:
       - volume_load_kg
       - top_load_kg
       title: PerformanceSummary
+    PerformanceTree:
+      properties:
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+        exercises:
+          items:
+            $ref: '#/components/schemas/ExercisePerformance'
+          type: array
+          title: Exercises
+      additionalProperties: false
+      type: object
+      required:
+      - comment
+      - exercises
+      title: PerformanceTree
     PerformedSetStatus:
       type: string
       enum:
       - performed
       - skipped
+      - not_performed
       title: PerformedSetStatus
     PlanAIExportDay:
       properties:
@@ -5488,6 +7073,44 @@ components:
       - RELEASED
       - ARCHIVED
       title: PlanRevisionStatus
+    PlanRunCompact:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        status:
+          type: string
+          title: Status
+        starts_on:
+          type: string
+          format: date
+          title: Starts On
+        ends_on:
+          type: string
+          format: date
+          title: Ends On
+        microcycle_count:
+          type: integer
+          title: Microcycle Count
+        current_microcycle_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Current Microcycle Ordinal
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - name
+      - status
+      - starts_on
+      - ends_on
+      - microcycle_count
+      - current_microcycle_ordinal
+      title: PlanRunCompact
     PlanRunCreate:
       properties:
         plan_revision_id:
@@ -5748,6 +7371,28 @@ components:
       - draft_revision_id
       - draft_lock_version
       title: PlanSummary
+    PositionHint:
+      properties:
+        exercise_performance_id:
+          type: string
+          format: uuid
+          title: Exercise Performance Id
+        set_ordinal:
+          type: integer
+          title: Set Ordinal
+        phase:
+          type: string
+          enum:
+          - set
+          - exercise_complete
+          title: Phase
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_performance_id
+      - set_ordinal
+      - phase
+      title: PositionHint
     PrescribedSummary:
       properties:
         set_count:
@@ -5782,6 +7427,27 @@ components:
       - rep_max
       - target_rir
       title: PrescribedSummary
+    PrescriptionAlternative:
+      properties:
+        exercise:
+          $ref: '#/components/schemas/ExerciseIdentity'
+        source:
+          type: string
+          const: plan_variant
+          title: Source
+          default: plan_variant
+        variant_ordinal:
+          type: integer
+          title: Variant Ordinal
+        atlas_peek:
+          $ref: '#/components/schemas/AtlasPeek'
+      additionalProperties: false
+      type: object
+      required:
+      - exercise
+      - variant_ordinal
+      - atlas_peek
+      title: PrescriptionAlternative
     PrescriptionCompleteness:
       type: string
       enum:
@@ -5789,6 +7455,176 @@ components:
       - partial
       - complete
       title: PrescriptionCompleteness
+    PrescriptionExercise:
+      properties:
+        exercise_prescription_id:
+          type: integer
+          title: Exercise Prescription Id
+        ordinal:
+          type: integer
+          title: Ordinal
+        exercise_track_id:
+          type: integer
+          title: Exercise Track Id
+        slot:
+          $ref: '#/components/schemas/PrescriptionSlot'
+        exercise:
+          $ref: '#/components/schemas/ExerciseIdentity'
+        variant_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Variant Label
+        plan_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plan Comment
+        prescription_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prescription Comment
+        load_step_kg:
+          type: number
+          title: Load Step Kg
+        default_rest_s:
+          type: integer
+          title: Default Rest S
+        sets:
+          items:
+            $ref: '#/components/schemas/PrescriptionSet'
+          type: array
+          title: Sets
+        alternatives:
+          items:
+            $ref: '#/components/schemas/PrescriptionAlternative'
+          type: array
+          title: Alternatives
+        history:
+          $ref: '#/components/schemas/ExerciseHistory'
+        atlas_peek:
+          $ref: '#/components/schemas/AtlasPeek'
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_prescription_id
+      - ordinal
+      - exercise_track_id
+      - slot
+      - exercise
+      - variant_label
+      - plan_comment
+      - prescription_comment
+      - load_step_kg
+      - default_rest_s
+      - sets
+      - alternatives
+      - history
+      - atlas_peek
+      title: PrescriptionExercise
+    PrescriptionMicrocycle:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        classification:
+          type: string
+          enum:
+          - normal
+          - deload
+          - reload
+          title: Classification
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - classification
+      title: PrescriptionMicrocycle
+    PrescriptionReadiness:
+      properties:
+        readiness:
+          type: string
+          enum:
+          - ready
+          - missing
+          - not_applicable
+          title: Readiness
+        prescription_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prescription Version
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated At
+        exercise_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Exercise Count
+        set_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Set Count
+        estimated_duration_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Estimated Duration Min
+      additionalProperties: false
+      type: object
+      required:
+      - readiness
+      title: PrescriptionReadiness
+    PrescriptionSet:
+      properties:
+        set_prescription_id:
+          type: integer
+          title: Set Prescription Id
+        ordinal:
+          type: integer
+          title: Ordinal
+        role:
+          type: string
+          title: Role
+        prescribed_load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Prescribed Load Kg
+        rep_min:
+          type: integer
+          title: Rep Min
+        rep_max:
+          type: integer
+          title: Rep Max
+        target_rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Target Rir
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+      additionalProperties: false
+      type: object
+      required:
+      - set_prescription_id
+      - ordinal
+      - role
+      - prescribed_load_kg
+      - rep_min
+      - rep_max
+      - target_rir
+      - comment
+      title: PrescriptionSet
     PrescriptionSetInput:
       properties:
         ordinal:
@@ -5810,6 +7646,22 @@ components:
       - ordinal
       - load_kg
       title: PrescriptionSetInput
+    PrescriptionSlot:
+      properties:
+        goal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Goal
+        role:
+          type: string
+          title: Role
+      additionalProperties: false
+      type: object
+      required:
+      - goal
+      - role
+      title: PrescriptionSlot
     PrescriptionWriteResponse:
       properties:
         next:
@@ -5843,6 +7695,66 @@ components:
       - date
       - workout_unit_name
       title: PreviewDay
+    PreviousExposure:
+      properties:
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+        performed_on:
+          type: string
+          format: date
+          title: Performed On
+        exercise:
+          $ref: '#/components/schemas/ExerciseIdentity'
+        sets:
+          items:
+            $ref: '#/components/schemas/PreviousSet'
+          type: array
+          title: Sets
+      additionalProperties: false
+      type: object
+      required:
+      - microcycle_ordinal
+      - performed_on
+      - exercise
+      - sets
+      title: PreviousExposure
+    PreviousSet:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        status:
+          type: string
+          enum:
+          - performed
+          - skipped
+          - not_performed
+          title: Status
+        load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Kg
+        repetitions:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Repetitions
+        rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rir
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - status
+      - load_kg
+      - repetitions
+      - rir
+      title: PreviousSet
     ProgressionModelCatalogItem:
       properties:
         slug:
@@ -5985,6 +7897,37 @@ components:
       - NOT_APPLICABLE
       - UNDEFINED
       title: RIRPrescription
+    RecentWorkout:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        workout_unit_name:
+          type: string
+          title: Workout Unit Name
+        completed_at:
+          type: string
+          format: date-time
+          title: Completed At
+        performed_sets:
+          type: integer
+          title: Performed Sets
+        prescribed_sets:
+          type: integer
+          title: Prescribed Sets
+        skipped_sets:
+          type: integer
+          title: Skipped Sets
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - workout_unit_name
+      - completed_at
+      - performed_sets
+      - prescribed_sets
+      - skipped_sets
+      title: RecentWorkout
     RecommendedRepProfile:
       properties:
         high_load:
@@ -6133,6 +8076,55 @@ components:
       - kind
       - pct
       title: RelativeToWorkingLoadSpec
+    ReorderExercisesData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        order:
+          items:
+            type: string
+            format: uuid
+          type: array
+          minItems: 1
+          title: Order
+      additionalProperties: false
+      type: object
+      required:
+      - order
+      title: ReorderExercisesData
+    ReorderExercisesOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: reorder_exercises
+          title: Type
+        data:
+          $ref: '#/components/schemas/ReorderExercisesData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: ReorderExercisesOperation
     RepRange:
       properties:
         min:
@@ -6501,6 +8493,160 @@ components:
       - status
       - notes
       title: SessionStatusResponse
+    SessionSummary:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        workout_unit_name:
+          type: string
+          title: Workout Unit Name
+        workout_track_id:
+          type: integer
+          title: Workout Track Id
+        scheduled_on:
+          type: string
+          format: date
+          title: Scheduled On
+        status:
+          type: string
+          title: Status
+        prescription:
+          $ref: '#/components/schemas/PrescriptionReadiness'
+        relation:
+          anyOf:
+          - type: string
+            enum:
+            - earlier_missed
+            - later_in_microcycle
+          - type: 'null'
+          title: Relation
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - workout_unit_name
+      - workout_track_id
+      - scheduled_on
+      - status
+      - prescription
+      title: SessionSummary
+    SetCursorData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        exercise_performance_id:
+          type: string
+          format: uuid
+          title: Exercise Performance Id
+        set_ordinal:
+          type: integer
+          minimum: 0.0
+          title: Set Ordinal
+        phase:
+          type: string
+          enum:
+          - set
+          - exercise_complete
+          title: Phase
+          default: set
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_performance_id
+      - set_ordinal
+      title: SetCursorData
+    SetCursorOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: set_cursor
+          title: Type
+        data:
+          $ref: '#/components/schemas/SetCursorData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: SetCursorOperation
+    SetExerciseCommentData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        exercise_performance_id:
+          type: string
+          format: uuid
+          title: Exercise Performance Id
+        exercise_prescription_id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Exercise Prescription Id
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_performance_id
+      - comment
+      title: SetExerciseCommentData
+    SetExerciseCommentOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: set_exercise_comment
+          title: Type
+        data:
+          $ref: '#/components/schemas/SetExerciseCommentData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: SetExerciseCommentOperation
     SetInfraArtifact:
       properties:
         id:
@@ -6622,61 +8768,6 @@ components:
       - ordinal
       - reps
       title: SetInfraDraft
-    SetPerformance:
-      properties:
-        ordinal:
-          type: integer
-          title: Ordinal
-        prescribed_set_ordinal:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Prescribed Set Ordinal
-        status:
-          $ref: '#/components/schemas/PerformedSetStatus'
-        load_kg:
-          anyOf:
-          - type: number
-          - type: 'null'
-          title: Load Kg
-        repetitions:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Repetitions
-        rir:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Rir
-        comment:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Comment
-        recorded_at:
-          type: string
-          format: date-time
-          title: Recorded At
-        is_additional:
-          type: boolean
-          title: Is Additional
-        divergence:
-          $ref: '#/components/schemas/Divergence'
-      additionalProperties: false
-      type: object
-      required:
-      - ordinal
-      - prescribed_set_ordinal
-      - status
-      - load_kg
-      - repetitions
-      - rir
-      - comment
-      - recorded_at
-      - is_additional
-      - divergence
-      title: SetPerformance
     SetPlan:
       properties:
         ordinal:
@@ -6754,6 +8845,283 @@ components:
       - working_backoff
       - working_amrap
       title: SetRole
+    SetWorkoutCommentData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+      additionalProperties: false
+      type: object
+      required:
+      - comment
+      title: SetWorkoutCommentData
+    SetWorkoutCommentOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: set_workout_comment
+          title: Type
+        data:
+          $ref: '#/components/schemas/SetWorkoutCommentData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: SetWorkoutCommentOperation
+    SkipExerciseData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        exercise_performance_id:
+          type: string
+          format: uuid
+          title: Exercise Performance Id
+        exercise_prescription_id:
+          type: integer
+          minimum: 1.0
+          title: Exercise Prescription Id
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_performance_id
+      - exercise_prescription_id
+      title: SkipExerciseData
+    SkipExerciseOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: skip_exercise
+          title: Type
+        data:
+          $ref: '#/components/schemas/SkipExerciseData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: SkipExerciseOperation
+    SkipSetData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        set_performance_id:
+          type: string
+          format: uuid
+          title: Set Performance Id
+        exercise_performance_id:
+          type: string
+          format: uuid
+          title: Exercise Performance Id
+        exercise_prescription_id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Exercise Prescription Id
+        prescribed_set_id:
+          type: integer
+          minimum: 1.0
+          title: Prescribed Set Id
+        ordinal:
+          type: integer
+          minimum: 0.0
+          title: Ordinal
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+      additionalProperties: false
+      type: object
+      required:
+      - set_performance_id
+      - exercise_performance_id
+      - prescribed_set_id
+      - ordinal
+      title: SkipSetData
+    SkipSetOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: skip_set
+          title: Type
+        data:
+          $ref: '#/components/schemas/SkipSetData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: SkipSetOperation
+    StartWorkout:
+      properties:
+        workout_id:
+          type: string
+          format: uuid
+          title: Workout Id
+        session_id:
+          type: integer
+          minimum: 1.0
+          title: Session Id
+        prescription_version:
+          type: string
+          title: Prescription Version
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        allow_missing_loads:
+          type: boolean
+          title: Allow Missing Loads
+          default: false
+        off_schedule:
+          anyOf:
+          - $ref: '#/components/schemas/OffSchedule'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - workout_id
+      - session_id
+      - prescription_version
+      - started_at
+      title: StartWorkout
+    SubstituteExerciseData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        exercise_performance_id:
+          type: string
+          format: uuid
+          title: Exercise Performance Id
+        exercise_prescription_id:
+          type: integer
+          minimum: 1.0
+          title: Exercise Prescription Id
+        actual_exercise_id:
+          type: integer
+          minimum: 1.0
+          title: Actual Exercise Id
+        source:
+          type: string
+          enum:
+          - plan_variant
+          - atlas
+          title: Source
+        variant_ordinal:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Variant Ordinal
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_performance_id
+      - exercise_prescription_id
+      - actual_exercise_id
+      - source
+      title: SubstituteExerciseData
+    SubstituteExerciseOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: substitute_exercise
+          title: Type
+        data:
+          $ref: '#/components/schemas/SubstituteExerciseData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: SubstituteExerciseOperation
     TableDerivedLoadSpec:
       properties:
         kind:
@@ -6796,6 +9164,31 @@ components:
       - scheduled_date
       - status
       title: TargetSession
+    TechniqueTLDR:
+      properties:
+        setup:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Setup
+        execution:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Execution
+        focus:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Focus
+        stop_when:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stop When
+      additionalProperties: false
+      type: object
+      title: TechniqueTLDR
     TimelineDay:
       properties:
         day_ordinal:
@@ -6954,6 +9347,44 @@ components:
       - hour_offset
       - detail
       title: TimingAssumption
+    TodayMicrocycle:
+      properties:
+        id:
+          type: integer
+          title: Id
+        ordinal:
+          type: integer
+          title: Ordinal
+        day_ordinal:
+          type: integer
+          title: Day Ordinal
+        classification:
+          type: string
+          title: Classification
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - ordinal
+      - day_ordinal
+      - classification
+      title: TodayMicrocycle
+    TodayPosition:
+      properties:
+        date:
+          type: string
+          format: date
+          title: Date
+        microcycle:
+          anyOf:
+          - $ref: '#/components/schemas/TodayMicrocycle'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - date
+      - microcycle
+      title: TodayPosition
     TraceHeader:
       properties:
         exercise_trace_id:
@@ -6981,6 +9412,110 @@ components:
       - current_plan
       - continuity
       title: TraceHeader
+    UpsertSetData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        set_performance_id:
+          type: string
+          format: uuid
+          title: Set Performance Id
+        exercise_performance_id:
+          type: string
+          format: uuid
+          title: Exercise Performance Id
+        exercise_prescription_id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Exercise Prescription Id
+        prescribed_set_id:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Prescribed Set Id
+        ordinal:
+          type: integer
+          minimum: 0.0
+          title: Ordinal
+        status:
+          type: string
+          const: performed
+          title: Status
+          default: performed
+        load_kg:
+          anyOf:
+          - type: number
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Load Kg
+        repetitions:
+          type: integer
+          title: Repetitions
+        rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rir
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+        heart_rate_bpm:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Heart Rate Bpm
+        performed_at:
+          type: string
+          format: date-time
+          title: Performed At
+      additionalProperties: false
+      type: object
+      required:
+      - set_performance_id
+      - exercise_performance_id
+      - ordinal
+      - repetitions
+      - performed_at
+      title: UpsertSetData
+    UpsertSetOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: upsert_set
+          title: Type
+        data:
+          $ref: '#/components/schemas/UpsertSetData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: UpsertSetOperation
     ValidationError:
       properties:
         loc:
@@ -7034,6 +9569,24 @@ components:
       additionalProperties: false
       type: object
       title: WaitlistSubmissionResponse
+    WorkoutCounts:
+      properties:
+        prescribed_sets:
+          type: integer
+          title: Prescribed Sets
+        performed_sets:
+          type: integer
+          title: Performed Sets
+        skipped_sets:
+          type: integer
+          title: Skipped Sets
+      additionalProperties: false
+      type: object
+      required:
+      - prescribed_sets
+      - performed_sets
+      - skipped_sets
+      title: WorkoutCounts
     WorkoutLoadSummary:
       properties:
         workout_trace_id:
@@ -7058,6 +9611,53 @@ components:
       - mean_delta_pct
       - series_count
       title: WorkoutLoadSummary
+    WorkoutPrescription:
+      properties:
+        session_id:
+          type: integer
+          title: Session Id
+        prescription_id:
+          type: integer
+          title: Prescription Id
+        prescription_version:
+          type: string
+          title: Prescription Version
+        workout_unit_name:
+          type: string
+          title: Workout Unit Name
+        workout_track_id:
+          type: integer
+          title: Workout Track Id
+        microcycle:
+          $ref: '#/components/schemas/PrescriptionMicrocycle'
+        plan_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plan Comment
+        prescription_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prescription Comment
+        exercises:
+          items:
+            $ref: '#/components/schemas/PrescriptionExercise'
+          type: array
+          title: Exercises
+      additionalProperties: false
+      type: object
+      required:
+      - session_id
+      - prescription_id
+      - prescription_version
+      - workout_unit_name
+      - workout_track_id
+      - microcycle
+      - plan_comment
+      - prescription_comment
+      - exercises
+      title: WorkoutPrescription
     WorkoutPrescriptionPatch:
       properties:
         prescription_comment:
@@ -7130,6 +9730,62 @@ components:
       - cancelled
       - missed
       title: WorkoutSessionStatus
+    WorkoutSnapshot:
+      properties:
+        workout_id:
+          type: string
+          format: uuid
+          title: Workout Id
+        session_id:
+          type: integer
+          title: Session Id
+        status:
+          type: string
+          enum:
+          - in_progress
+          - completed
+          title: Status
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+        lease:
+          $ref: '#/components/schemas/Lease'
+        applied_seq:
+          type: integer
+          title: Applied Seq
+        revision:
+          type: integer
+          title: Revision
+        position_hint:
+          anyOf:
+          - $ref: '#/components/schemas/PositionHint'
+          - type: 'null'
+        prescription:
+          $ref: '#/components/schemas/WorkoutPrescription'
+        performance:
+          $ref: '#/components/schemas/PerformanceTree'
+      additionalProperties: false
+      type: object
+      required:
+      - workout_id
+      - session_id
+      - status
+      - started_at
+      - finished_at
+      - lease
+      - applied_seq
+      - revision
+      - position_hint
+      - prescription
+      - performance
+      title: WorkoutSnapshot
     WorkoutStimulus:
       properties:
         total_etu_scalar:
@@ -7491,3 +10147,133 @@ components:
       - classification
       - plan_revision_no
       title: XDomainItem
+    agonez_api__modules__execution__schemas__SetPerformance:
+      properties:
+        ordinal:
+          type: integer
+          title: Ordinal
+        prescribed_set_ordinal:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Prescribed Set Ordinal
+        status:
+          $ref: '#/components/schemas/PerformedSetStatus'
+        load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Kg
+        repetitions:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Repetitions
+        rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rir
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+        recorded_at:
+          type: string
+          format: date-time
+          title: Recorded At
+        is_additional:
+          type: boolean
+          title: Is Additional
+        divergence:
+          $ref: '#/components/schemas/Divergence'
+      additionalProperties: false
+      type: object
+      required:
+      - ordinal
+      - prescribed_set_ordinal
+      - status
+      - load_kg
+      - repetitions
+      - rir
+      - comment
+      - recorded_at
+      - is_additional
+      - divergence
+      title: SetPerformance
+    agonez_api__modules__mobile_execution__schemas__SetPerformance:
+      properties:
+        set_performance_id:
+          type: string
+          format: uuid
+          title: Set Performance Id
+        prescribed_set_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Prescribed Set Id
+        ordinal:
+          type: integer
+          title: Ordinal
+        status:
+          type: string
+          enum:
+          - performed
+          - skipped
+          - not_performed
+          title: Status
+        load_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Load Kg
+        repetitions:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Repetitions
+        rir:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rir
+        comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Comment
+        heart_rate_bpm:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Heart Rate Bpm
+        performed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Performed At
+        received_at:
+          type: string
+          format: date-time
+          title: Received At
+        rev:
+          type: integer
+          title: Rev
+      additionalProperties: false
+      type: object
+      required:
+      - set_performance_id
+      - prescribed_set_id
+      - ordinal
+      - status
+      - load_kg
+      - repetitions
+      - rir
+      - comment
+      - heart_rate_bpm
+      - performed_at
+      - received_at
+      - rev
+      title: SetPerformance

@@ -52,7 +52,7 @@ def divergence(
     performed_rir: int | None,
     is_additional: bool,
 ) -> dict[str, str | None]:
-    if performed_status == "skipped":
+    if performed_status in {"skipped", "not_performed"}:
         return {"load": None, "reps": None, "rir": None}
 
     load_result: LoadDivergence | None = None

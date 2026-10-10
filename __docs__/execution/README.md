@@ -138,3 +138,4 @@ when it has no first-microcycle baseline remains an explicit product decision.
 - [Mock dataset](mock-data.md)
 - [Read models and representative queries](queries.md)
 - [Desktop API implementation and compatibility audit](api-backend.md)
+- [Mobile workout API implementation and compatibility audit](api-mobile-backend.md)
