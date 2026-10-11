@@ -304,6 +304,21 @@
     padding-inline: 10px;
   }
 
+  .main-nav {
+    min-width: 0;
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .main-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-bar-spacer {
+    display: none;
+  }
+
   .theme-toggle {
     min-width: 40px;
     min-height: 40px;

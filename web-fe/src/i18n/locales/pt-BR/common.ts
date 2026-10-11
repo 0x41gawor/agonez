@@ -5,6 +5,7 @@ export default {
     atlas: 'Atlas',
     myPlans: 'Meus planos',
     execution: 'Execução',
+    mobileDemo: 'Demo mobile',
     dashboard: 'Painel',
     plannedModule: 'Módulo planejado',
     exercisesCount: 'Exercícios: {count}',

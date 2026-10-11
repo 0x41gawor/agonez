@@ -5,6 +5,7 @@ export default {
     atlas: 'Atlas',
     myPlans: 'My Plans',
     execution: 'Execution',
+    mobileDemo: 'Mobile Demo',
     dashboard: 'Dashboard',
     plannedModule: 'Planned module',
     exercisesCount: '{count} exercises',

@@ -5,6 +5,7 @@ export default {
     atlas: 'Atlas',
     myPlans: 'Mijn plannen',
     execution: 'Uitvoering',
+    mobileDemo: 'Mobiele demo',
     dashboard: 'Dashboard',
     plannedModule: 'Geplande module',
     exercisesCount: 'Oefeningen: {count}',

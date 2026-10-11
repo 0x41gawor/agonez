@@ -50,6 +50,11 @@ const router = createRouter({
       component: () => import('@/views/execution/ExecutionLandingView.vue'),
     },
     {
+      path: '/mobile-demo',
+      name: 'mobile-demo',
+      component: () => import('@/views/MobileDemoView.vue'),
+    },
+    {
       path: '/execution/runs/new',
       name: 'execution-new-run',
       component: () => import('@/views/execution/NewPlanRunView.vue'),

@@ -5,6 +5,7 @@ export default {
     atlas: 'Atlas',
     myPlans: 'Mina planer',
     execution: 'Utförande',
+    mobileDemo: 'Mobildemo',
     dashboard: 'Översikt',
     plannedModule: 'Planerad modul',
     exercisesCount: 'Övningar: {count}',

@@ -84,6 +84,7 @@ describe('Execution critical workflows', () => {
         { path: '/home', component: { template: '<div />' } },
         { path: '/atlas/exercises', component: { template: '<div />' } },
         { path: '/execution', component: { template: '<div />' } },
+        { path: '/mobile-demo', component: { template: '<div />' } },
         { path: '/plans', component: { template: '<div />' } },
       ],
     })

@@ -5,6 +5,7 @@ export default {
     atlas: 'Atlas',
     myPlans: 'Мої плани',
     execution: 'Виконання',
+    mobileDemo: 'Мобільна демоверсія',
     dashboard: 'Панель',
     plannedModule: 'Запланований модуль',
     exercisesCount: 'Вправи: {count}',

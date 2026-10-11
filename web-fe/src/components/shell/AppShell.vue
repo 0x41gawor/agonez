@@ -12,6 +12,7 @@ const { theme, toggleTheme } = useTheme()
 const atlasActive = computed(() => route.path.startsWith('/atlas'))
 const plansActive = computed(() => route.path.startsWith('/plans'))
 const executionActive = computed(() => route.path.startsWith('/execution'))
+const mobileDemoActive = computed(() => route.path.startsWith('/mobile-demo'))
 </script>
 
 <template>
@@ -26,6 +27,7 @@ const executionActive = computed(() => route.path.startsWith('/execution'))
         <RouterLink :class="{ active: atlasActive }" to="/atlas/exercises">{{ $t('app.atlas') }}</RouterLink>
         <RouterLink :class="{ active: plansActive }" to="/plans">{{ $t('app.myPlans') }}</RouterLink>
         <RouterLink :class="{ active: executionActive }" to="/execution">{{ $t('app.execution') }}</RouterLink>
+        <RouterLink :class="{ active: mobileDemoActive }" to="/mobile-demo">{{ $t('app.mobileDemo') }}</RouterLink>
         <span class="planned-nav" :title="$t('app.plannedModule')" aria-disabled="true">{{ $t('app.dashboard') }}</span>
       </nav>
 
@@ -33,6 +35,7 @@ const executionActive = computed(() => route.path.startsWith('/execution'))
       <span class="atlas-version">
         <template v-if="executionActive">{{ $t('execution.shellStatus') }}</template>
         <template v-else-if="plansActive">{{ $t('app.planCreatorDraft') }}</template>
+        <template v-else-if="mobileDemoActive">MOBILE · DESIGN DEMO</template>
         <template v-else>
           ATLAS v0.1
           <template v-if="atlas.meta">· {{ $t('app.exercisesCount', { count: atlas.meta.counts.exercises }) }} · {{ $t('app.musclesCount', { count: atlas.meta.counts.muscles }) }}</template>
