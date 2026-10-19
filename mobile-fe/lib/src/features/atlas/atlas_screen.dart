@@ -183,8 +183,9 @@ class _AtlasScreenState extends ConsumerState<AtlasScreen> {
         }
         if (snapshot.hasError) {
           return _RestoreFailure(
-            onRetry: () =>
-                setState(() => _restoring = _restoreAndOpenInitial()),
+            onRetry: () => setState(() {
+              _restoring = _restoreAndOpenInitial();
+            }),
           );
         }
         final current = _workspaces.current;

@@ -73,7 +73,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _refresh() async {
     final next = _loadContext();
-    setState(() => _context = next);
+    setState(() {
+      _context = next;
+    });
     await next;
   }
 
