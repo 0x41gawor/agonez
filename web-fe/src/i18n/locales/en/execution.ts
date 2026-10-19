@@ -55,7 +55,7 @@ export default {
       evidence: 'Reps {reps} · loads {loads} kg · {top} at top of range · {floor} at range floor · {deeper} deeper than target RIR',
       startFrom: 'Start from', previousPrescription: 'MC{mc} prescription', previousPerformance: 'MC{mc} performance', allMinus: 'all −{step}', allPlus: 'all +{step}',
       suggestion: 'Suggestion', suggestionNone: 'Progression model · none', suggestionBody: 'No progression model is assigned to this slot.',
-      fromPlan: 'From plan', load: 'Load kg', last: 'last {load}', comment: 'Set comment (optional)', selectSet: 'Select set {set}', minus: 'Set {set}: minus {step} kg', plus: 'Set {set}: plus {step} kg',
+      fromPlan: 'From plan', load: 'Load kg', last: 'last {load}', comment: 'Set comment (optional)', selectSet: 'Select set {set}', minus: 'Set {set}: minus {step} kg', plus: 'Set {set}: plus {step} kg', bulkMinus: 'Bulk load: minus {step} kg', bulkPlus: 'Bulk load: plus {step} kg',
       apply: 'Apply', selected: 'to {count} selected', selectAll: 'Select all', clearAll: 'Clear all', prescriptionComment: 'Prescription comment · for this exposure only', commentPlaceholder: 'What should the athlete focus on next time?',
       planOwned: 'Set count, rep range and RIR come from plan revision r{revision}. Change them in Plan Creator for future microcycles.', planOwnedWeek: 'Set count, rep range and RIR come from plan revision r{revision}. Change them in Plan Creator for future weeks.',
       discard: 'Discard', save: 'Save', saveNext: 'Save & next exercise', reload: 'Reload trace',

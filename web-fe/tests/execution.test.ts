@@ -138,6 +138,32 @@ describe('Execution critical workflows', () => {
     expect(wrapper.emitted('selectedAll')).toEqual([[true]])
   })
 
+  it('starts the bulk load from set one and adjusts it with the provisioned load step', async () => {
+    const store = useExecutionDraftsStore()
+    store.initialize(41, next)
+    const draft = store.drafts[41]!
+    draft.selected.fill(true)
+    const steppedTrace = structuredClone(trace)
+    steppedTrace.trace.current_plan.load_step_kg = 2.5
+    const wrapper = mount(PrescriptionEditor, {
+      props: { trace: steppedTrace, draft, saving: false, errorCode: null },
+    })
+    const bulk = wrapper.get<HTMLInputElement>('.bulk-load-input')
+    const [minus, plus] = wrapper.findAll('.bulk-step-button')
+
+    expect(bulk.element.value).toBe('67.5')
+    draft.loads[0] = '70'
+    await wrapper.vm.$nextTick()
+    expect(bulk.element.value).toBe('70')
+
+    await plus!.trigger('click')
+    expect(bulk.element.value).toBe('72.5')
+    await minus!.trigger('click')
+    expect(bulk.element.value).toBe('70')
+    await wrapper.get('.editor-bulk .button').trigger('click')
+    expect(wrapper.emitted('apply')).toEqual([['70']])
+  })
+
   it('enables exact per-set adjustments when the plan provisions a load step', async () => {
     const store = useExecutionDraftsStore()
     const steppedTrace = structuredClone(trace)

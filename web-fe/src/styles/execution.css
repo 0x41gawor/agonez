@@ -197,7 +197,7 @@
 .editor-suggestion p { clear: both; margin: 4px 0 0; color: var(--text2); font-size: 11px; }
 .editor-set { padding: 8px 0; border-bottom: 1px solid var(--border); }
 .editor-select-all { display: inline-flex; align-items: center; gap: 7px; min-height: 24px; color: var(--text2); font-size: 10.5px; cursor: pointer; }
-.editor-select-all input { margin: 0; }
+.editor-select-all input { margin: 0; accent-color: var(--accent); }
 .editor-set-line { display: grid; grid-template-columns: 18px 22px 1fr 26px 64px 26px; gap: 5px; align-items: center; }
 .editor-set-line input[type='checkbox'] { accent-color: var(--accent); }
 .set-plan { color: var(--execPrescription); font-size: 10.5px; }
@@ -207,7 +207,9 @@
 .set-comment-input { margin: 6px 0 0 45px; width: calc(100% - 45px); min-height: 28px; }
 .set-last { display: block; margin: 3px 0 0 45px; color: var(--text3); font-size: 9.5px; }
 .field-error { margin: 4px 0 0 45px !important; color: var(--execMissed); font-size: 10.5px; }
-.editor-bulk { display: grid; grid-template-columns: 70px auto 1fr; gap: 6px; align-items: center; margin-top: 10px; color: var(--text3); font-size: 10.5px; }
+.editor-bulk { display: grid; grid-template-columns: 26px 64px 26px auto minmax(0, 1fr); gap: 5px; align-items: center; margin-top: 10px; color: var(--text3); font-size: 10.5px; }
+.editor-bulk .bulk-step-button { width: 26px; height: 32px; padding: 0; border: 1px solid var(--border2); border-radius: 5px; background: transparent; }
+.editor-bulk .bulk-load-input { padding-inline: 5px; color: var(--accent2); text-align: right; }
 .editor-plan-owned { margin-top: 10px !important; color: var(--text3); font-size: 10.5px; }
 .editor-footer { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; margin-top: auto; padding: 12px 18px 16px; border-top: 1px solid var(--border); background: var(--bg2); }
 .editor-footer .field-error { flex: 1 1 100%; margin: 0 !important; }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import type { ExerciseTraceResponse } from '@/api/execution-types'
 import type { PrescriptionDraft } from '@/stores/executionDrafts'
@@ -13,6 +13,7 @@ const emit = defineEmits<{
 }>()
 const cycle = useExecutionCycleLabels()
 const bulk = ref('')
+watch(() => props.draft?.loads[0], (value) => { bulk.value = value ?? '' }, { immediate: true })
 const next = computed(() => props.trace.next)
 const editable = computed(() => next.value?.state === 'editable' && !!next.value.target && !!props.draft)
 const invalid = computed(() => props.draft?.loads.some((load) => parseLoad(load) === undefined) ?? false)
@@ -35,6 +36,12 @@ const evidence = computed(() => {
 function lastSet(index: number): string {
   const set = basisExposure.value?.performance?.sets.find((item) => item.prescribed_set_ordinal === index)
   return set && set.status === 'performed' ? `${loadValue(set.load_kg)} × ${set.repetitions ?? '—'} @${set.rir ?? '—'}` : '—'
+}
+function stepBulk(direction: number): void {
+  const step = props.trace.trace.current_plan.load_step_kg
+  const value = parseLoad(bulk.value)
+  if (step == null || value === undefined) return
+  bulk.value = String(Math.max(0, (value ?? 0) + direction * step))
 }
 </script>
 
@@ -71,7 +78,13 @@ function lastSet(index: number): string {
           <small class="set-last mono">{{ $t('execution.editor.last', { load: lastSet(index) }) }}</small>
           <p v-if="parseLoad(draft.loads[index] ?? '') === undefined" class="field-error">{{ $t('execution.editor.invalid', { set: index + 1 }) }}</p>
         </div>
-        <div class="editor-bulk"><input v-model="bulk" class="exec-input mono" inputmode="decimal" placeholder="kg" /><button class="button" type="button" :disabled="!selectedCount || parseLoad(bulk) === undefined" @click="emit('apply', bulk)">{{ $t('execution.editor.apply') }}</button><span>{{ $t('execution.editor.selected', { count: selectedCount }) }}</span></div>
+        <div class="editor-bulk">
+          <button class="bulk-step-button" type="button" :disabled="trace.trace.current_plan.load_step_kg == null || parseLoad(bulk) === undefined" :aria-label="$t('execution.editor.bulkMinus', { step: trace.trace.current_plan.load_step_kg ?? '—' })" @click="stepBulk(-1)">−</button>
+          <input v-model="bulk" class="exec-input bulk-load-input mono" inputmode="decimal" :aria-label="$t('execution.editor.load')" placeholder="kg" />
+          <button class="bulk-step-button" type="button" :disabled="trace.trace.current_plan.load_step_kg == null || parseLoad(bulk) === undefined" :aria-label="$t('execution.editor.bulkPlus', { step: trace.trace.current_plan.load_step_kg ?? '—' })" @click="stepBulk(1)">+</button>
+          <button class="button" type="button" :disabled="!selectedCount || parseLoad(bulk) === undefined" @click="emit('apply', bulk)">{{ $t('execution.editor.apply') }}</button>
+          <span>{{ $t('execution.editor.selected', { count: selectedCount }) }}</span>
+        </div>
         <p class="editor-plan-owned">{{ $t(cycle.routeCopy('execution.editor.planOwned'), { revision: trace.trace.current_plan.plan_revision_no }) }}</p>
       </section>
       <section class="editor-section"><label class="editor-label" for="prescription-comment">{{ $t('execution.editor.prescriptionComment') }}</label><textarea id="prescription-comment" class="exec-textarea" :value="draft.prescriptionComment" :placeholder="$t('execution.editor.commentPlaceholder')" @input="emit('prescriptionComment', ($event.target as HTMLTextAreaElement).value)" /></section>
