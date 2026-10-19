@@ -79,9 +79,9 @@ class YouScreen extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    ListTile(
-                      title: Text(strings.youTheme),
-                      trailing: Text(strings.youThemeDark),
+                    _ThemeModeTile(
+                      value: settings.themeMode,
+                      onChanged: settings.setThemeMode,
                     ),
                     const Divider(),
                     ListTile(
@@ -117,6 +117,45 @@ class YouScreen extends ConsumerWidget {
   }
 }
 
+class _ThemeModeTile extends StatelessWidget {
+  const _ThemeModeTile({required this.value, required this.onChanged});
+
+  final ThemeMode value;
+  final ValueChanged<ThemeMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    return ListTile(
+      title: Text(strings.youTheme),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: SegmentedButton<ThemeMode>(
+          segments: [
+            ButtonSegment(
+              value: ThemeMode.system,
+              label: Text(strings.youThemeSystem),
+            ),
+            ButtonSegment(
+              value: ThemeMode.light,
+              label: Text(strings.youThemeLight),
+            ),
+            ButtonSegment(
+              value: ThemeMode.dark,
+              label: Text(strings.youThemeDark),
+            ),
+          ],
+          selected: {value},
+          showSelectedIcon: false,
+          expandedInsets: EdgeInsets.zero,
+          style: const ButtonStyle(visualDensity: VisualDensity.compact),
+          onSelectionChanged: (selection) => onChanged(selection.single),
+        ),
+      ),
+    );
+  }
+}
+
 class _DurationTile extends StatelessWidget {
   const _DurationTile({
     required this.title,
@@ -145,7 +184,7 @@ class _DurationTile extends StatelessWidget {
         child: Text(
           _duration(seconds),
           textAlign: TextAlign.end,
-          style: AgonezTypography.monoSmall,
+          style: AgonezTypography.of(context).labelSmall,
         ),
       ),
     );

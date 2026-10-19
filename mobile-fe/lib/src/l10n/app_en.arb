@@ -401,6 +401,8 @@
   "youUnits": "Units",
   "youAppSettings": "App",
   "youTheme": "Theme",
+  "youThemeSystem": "System",
+  "youThemeLight": "Light",
   "youThemeDark": "Dark",
   "youLanguage": "Language",
   "youSyncStatus": "Sync",

@@ -5,60 +5,80 @@ import 'agonez_tokens.dart';
 import 'agonez_typography.dart';
 
 abstract final class AgonezTheme {
-  static ThemeData get dark {
+  static ThemeData get dark =>
+      _build(colors: AgonezThemeColors.dark, brightness: Brightness.dark);
+
+  static ThemeData get light =>
+      _build(colors: AgonezThemeColors.light, brightness: Brightness.light);
+
+  static ThemeData _build({
+    required AgonezThemeColors colors,
+    required Brightness brightness,
+  }) {
     final colorScheme =
         ColorScheme.fromSeed(
-          seedColor: AgonezColors.gold,
-          brightness: Brightness.dark,
+          seedColor: colors.gold,
+          brightness: brightness,
         ).copyWith(
-          primary: AgonezColors.gold,
-          onPrimary: AgonezColors.goldInk,
-          primaryContainer: AgonezColors.goldSoft,
-          onPrimaryContainer: AgonezColors.goldText,
-          secondary: AgonezColors.prescription,
-          onSecondary: AgonezColors.ground,
-          secondaryContainer: AgonezColors.prescriptionBackground,
-          onSecondaryContainer: AgonezColors.prescriptionText,
-          error: AgonezColors.error,
-          onError: AgonezColors.ground,
-          surface: AgonezColors.panel,
-          onSurface: AgonezColors.textPrimary,
-          onSurfaceVariant: AgonezColors.textMuted,
-          outline: AgonezColors.control,
-          outlineVariant: AgonezColors.line,
+          primary: colors.gold,
+          onPrimary: colors.goldInk,
+          primaryContainer: colors.goldSoft,
+          onPrimaryContainer: colors.goldText,
+          secondary: colors.prescription,
+          onSecondary: colors.goldInk,
+          secondaryContainer: colors.prescriptionBackground,
+          onSecondaryContainer: colors.prescriptionText,
+          error: colors.error,
+          onError: colors.goldInk,
+          surface: colors.panel,
+          onSurface: colors.textPrimary,
+          onSurfaceVariant: colors.textMuted,
+          outline: colors.control,
+          outlineVariant: colors.line,
+          inverseSurface: colors.snackBarBackground,
+          onInverseSurface: colors.snackBarForeground,
           shadow: Colors.black,
-          scrim: Colors.black,
+          scrim: colors.scrim,
         );
 
     final base = ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: brightness,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AgonezColors.ground,
-      canvasColor: AgonezColors.ground,
-      textTheme: AgonezTypography.textTheme,
-      extensions: const <ThemeExtension<dynamic>>[AgonezThemeColors.dark],
+      scaffoldBackgroundColor: colors.ground,
+      canvasColor: colors.ground,
+      textTheme: AgonezTypography.themedTextTheme(colors),
+      extensions: <ThemeExtension<dynamic>>[colors],
     );
 
     return base.copyWith(
-      dividerColor: AgonezColors.lineSubtle,
-      disabledColor: AgonezColors.textDim,
-      focusColor: AgonezColors.gold,
+      dividerColor: colors.lineSubtle,
+      disabledColor: colors.textDim,
+      focusColor: colors.gold,
       highlightColor: Colors.transparent,
-      splashColor: AgonezColors.goldSoft,
-      cardTheme: const CardThemeData(
-        color: AgonezColors.panel,
+      splashColor: colors.goldSoft,
+      iconTheme: IconThemeData(color: colors.textSecondary),
+      primaryIconTheme: IconThemeData(color: colors.textPrimary),
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.ground,
+        foregroundColor: colors.textPrimary,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      cardTheme: CardThemeData(
+        color: colors.panel,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: AgonezRadii.cardBorder,
-          side: BorderSide(color: AgonezColors.line),
+          side: BorderSide(color: colors.line),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AgonezColors.lineSubtle,
+      dividerTheme: DividerThemeData(
+        color: colors.lineSubtle,
         thickness: 1,
         space: 1,
       ),
@@ -72,15 +92,15 @@ abstract final class AgonezTheme {
           ),
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return const Color(0xFF2E2A20);
+              return colors.disabledButtonBackground;
             }
-            return AgonezColors.gold;
+            return colors.gold;
           }),
           foregroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) {
-              return const Color(0xFF8C8370);
+              return colors.disabledButtonForeground;
             }
-            return AgonezColors.goldInk;
+            return colors.goldInk;
           }),
           textStyle: const WidgetStatePropertyAll(AgonezTypography.button),
           shape: const WidgetStatePropertyAll(
@@ -92,12 +112,8 @@ abstract final class AgonezTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
           minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
-          foregroundColor: const WidgetStatePropertyAll(
-            AgonezColors.textSecondary,
-          ),
-          side: const WidgetStatePropertyAll(
-            BorderSide(color: AgonezColors.control),
-          ),
+          foregroundColor: WidgetStatePropertyAll(colors.textSecondary),
+          side: WidgetStatePropertyAll(BorderSide(color: colors.control)),
           shape: const WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: AgonezRadii.buttonBorder),
           ),
@@ -112,9 +128,7 @@ abstract final class AgonezTheme {
               AgonezSizes.minimumTouchTarget,
             ),
           ),
-          foregroundColor: const WidgetStatePropertyAll(
-            AgonezColors.textSecondary,
-          ),
+          foregroundColor: WidgetStatePropertyAll(colors.textSecondary),
           shape: const WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: AgonezRadii.controlBorder),
           ),
@@ -125,107 +139,130 @@ abstract final class AgonezTheme {
           minimumSize: const WidgetStatePropertyAll(
             Size.square(AgonezSizes.iconButton),
           ),
-          foregroundColor: const WidgetStatePropertyAll(
-            AgonezColors.textSecondary,
-          ),
+          foregroundColor: WidgetStatePropertyAll(colors.textSecondary),
           shape: const WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: AgonezRadii.buttonBorder),
           ),
         ),
       ),
-      chipTheme: const ChipThemeData(
+      chipTheme: ChipThemeData(
         backgroundColor: Colors.transparent,
-        selectedColor: AgonezColors.goldSoft,
+        selectedColor: colors.goldSoft,
         disabledColor: Colors.transparent,
-        side: BorderSide(color: AgonezColors.control),
-        shape: StadiumBorder(),
-        labelStyle: AgonezTypography.label,
-        secondaryLabelStyle: AgonezTypography.label,
-        padding: EdgeInsets.symmetric(horizontal: AgonezSpacing.sm),
+        side: BorderSide(color: colors.control),
+        shape: const StadiumBorder(),
+        labelStyle: AgonezTypography.label.copyWith(
+          color: colors.textSecondary,
+        ),
+        secondaryLabelStyle: AgonezTypography.label.copyWith(
+          color: colors.goldText,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: AgonezSpacing.sm),
       ),
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Color(0xFF15181C),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            return states.contains(WidgetState.selected)
+                ? colors.selectedControlBackground
+                : Colors.transparent;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            return states.contains(WidgetState.selected)
+                ? colors.selectedControlForeground
+                : colors.textMuted;
+          }),
+          side: WidgetStatePropertyAll(BorderSide(color: colors.control)),
+          textStyle: const WidgetStatePropertyAll(AgonezTypography.label),
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: colors.sheet,
         surfaceTintColor: Colors.transparent,
-        modalBackgroundColor: Color(0xFF15181C),
-        modalBarrierColor: Color(0xA0040506),
+        modalBackgroundColor: colors.sheet,
+        modalBarrierColor: colors.scrim,
         elevation: 16,
         shape: RoundedRectangleBorder(
           borderRadius: AgonezRadii.sheetTopBorder,
-          side: BorderSide(color: AgonezColors.control),
+          side: BorderSide(color: colors.control),
         ),
         showDragHandle: false,
       ),
-      dialogTheme: const DialogThemeData(
-        backgroundColor: AgonezColors.raised,
+      dialogTheme: DialogThemeData(
+        backgroundColor: colors.raised,
         surfaceTintColor: Colors.transparent,
         elevation: 16,
-        shape: RoundedRectangleBorder(borderRadius: AgonezRadii.cardBorder),
+        shape: const RoundedRectangleBorder(
+          borderRadius: AgonezRadii.cardBorder,
+        ),
       ),
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: AgonezColors.textPrimary,
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: colors.snackBarBackground,
         contentTextStyle: TextStyle(
-          color: AgonezColors.ground,
+          color: colors.snackBarForeground,
           fontSize: 13.5,
           fontWeight: FontWeight.w500,
         ),
-        actionTextColor: Color(0xFF6B5320),
+        actionTextColor: colors.snackBarAction,
         behavior: SnackBarBehavior.floating,
         elevation: 12,
-        shape: RoundedRectangleBorder(borderRadius: AgonezRadii.cardBorder),
+        shape: const RoundedRectangleBorder(
+          borderRadius: AgonezRadii.cardBorder,
+        ),
       ),
-      inputDecorationTheme: const InputDecorationTheme(
+      inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AgonezColors.sunk,
-        contentPadding: EdgeInsets.symmetric(
+        fillColor: colors.sunk,
+        contentPadding: const EdgeInsets.symmetric(
           horizontal: AgonezSpacing.lg,
           vertical: AgonezSpacing.md,
         ),
-        hintStyle: AgonezTypography.body,
+        hintStyle: AgonezTypography.body.copyWith(color: colors.textMuted),
         border: OutlineInputBorder(
           borderRadius: AgonezRadii.buttonBorder,
-          borderSide: BorderSide(color: AgonezColors.control),
+          borderSide: BorderSide(color: colors.control),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: AgonezRadii.buttonBorder,
-          borderSide: BorderSide(color: AgonezColors.control),
+          borderSide: BorderSide(color: colors.control),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AgonezRadii.buttonBorder,
-          borderSide: BorderSide(color: AgonezColors.gold, width: 2),
+          borderSide: BorderSide(color: colors.gold, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AgonezRadii.buttonBorder,
-          borderSide: BorderSide(color: AgonezColors.error),
+          borderSide: BorderSide(color: colors.error),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         height: 64,
-        backgroundColor: AgonezColors.ground,
+        backgroundColor: colors.ground,
         surfaceTintColor: Colors.transparent,
         indicatorColor: Colors.transparent,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           return IconThemeData(
             color: states.contains(WidgetState.selected)
-                ? AgonezColors.gold
-                : AgonezColors.textDim,
+                ? colors.gold
+                : colors.textDim,
           );
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           return AgonezTypography.caption.copyWith(
             color: states.contains(WidgetState.selected)
-                ? AgonezColors.textPrimary
-                : AgonezColors.textDim,
+                ? colors.textPrimary
+                : colors.textDim,
           );
         }),
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AgonezColors.gold,
-        linearTrackColor: AgonezColors.line,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: colors.gold,
+        linearTrackColor: colors.line,
       ),
-      textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: AgonezColors.gold,
-        selectionColor: AgonezColors.goldSoft,
-        selectionHandleColor: AgonezColors.gold,
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: colors.gold,
+        selectionColor: colors.goldSoft,
+        selectionHandleColor: colors.gold,
       ),
     );
   }

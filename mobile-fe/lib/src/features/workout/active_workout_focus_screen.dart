@@ -857,7 +857,7 @@ class _AtlasExercisePickerSheetState extends State<_AtlasExercisePickerSheet> {
                   Expanded(
                     child: Text(
                       l10n.deviationSelectExercise,
-                      style: AgonezTypography.sheetTitle,
+                      style: AgonezTypography.of(context).headlineMedium,
                     ),
                   ),
                   IconButton(
@@ -913,7 +913,7 @@ class _AtlasExercisePickerSheetState extends State<_AtlasExercisePickerSheet> {
                           child: Text(
                             l10n.errorNetworkUnavailable,
                             textAlign: TextAlign.center,
-                            style: AgonezTypography.body,
+                            style: AgonezTypography.of(context).bodyMedium,
                           ),
                         );
                       }
@@ -950,10 +950,10 @@ class _ExerciseChoiceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(
     minTileHeight: 56,
-    title: Text(choice.name, style: AgonezTypography.label),
+    title: Text(choice.name, style: AgonezTypography.of(context).labelMedium),
     subtitle: choice.fullName == null
         ? null
-        : Text(choice.fullName!, style: AgonezTypography.caption),
+        : Text(choice.fullName!, style: AgonezTypography.of(context).bodySmall),
     trailing: const Icon(Icons.chevron_right),
     onTap: () => Navigator.of(context).pop(choice),
   );
@@ -1000,7 +1000,7 @@ Future<void> _showSyncSheet(
           children: [
             const AgonezSheetHandle(),
             const SizedBox(height: 10),
-            Text(title, style: AgonezTypography.sheetTitle),
+            Text(title, style: AgonezTypography.of(context).headlineMedium),
             const SizedBox(height: 8),
             Text(
               isConflict
@@ -1010,7 +1010,7 @@ Future<void> _showSyncSheet(
                   : workout.syncStatus == WorkoutSyncStatus.superseded
                   ? l10n.syncSupersededExplanation
                   : l10n.syncLocalFirstExplanation,
-              style: AgonezTypography.body,
+              style: AgonezTypography.of(context).bodyMedium,
             ),
             if (isConflict && blocking != null) ...[
               const SizedBox(height: 16),
@@ -1030,12 +1030,12 @@ Future<void> _showSyncSheet(
                 Expanded(
                   child: Text(
                     l10n.syncWaiting,
-                    style: AgonezTypography.caption,
+                    style: AgonezTypography.of(context).bodySmall,
                   ),
                 ),
                 Text(
                   '${workout.pendingOperationCount}',
-                  style: AgonezTypography.monoSmall,
+                  style: AgonezTypography.of(context).labelSmall,
                 ),
               ],
             ),
@@ -1102,7 +1102,7 @@ class _ConflictValue extends StatelessWidget {
       children: [
         AgonezEyebrow(label),
         const SizedBox(height: 6),
-        Text(value, style: AgonezTypography.monoSmall),
+        Text(value, style: AgonezTypography.of(context).labelSmall),
       ],
     ),
   );

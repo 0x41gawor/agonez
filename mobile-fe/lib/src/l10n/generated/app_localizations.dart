@@ -1739,6 +1739,18 @@ abstract class AppLocalizations {
   /// **'Theme'**
   String get youTheme;
 
+  /// No description provided for @youThemeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get youThemeSystem;
+
+  /// No description provided for @youThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get youThemeLight;
+
   /// No description provided for @youThemeDark.
   ///
   /// In en, this message translates to:
