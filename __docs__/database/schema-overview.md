@@ -2,7 +2,7 @@
 
 ## Snapshot inventory
 
-The 2026-09-23 dump was produced by PostgreSQL 15.13 and contains no application views, materialized views, functions, or triggers. It contains 15 application tables plus one migration-ledger table, the `core`/`plans` enum types, two explicit catalog sequences, and identity sequences for plan tables. Migrations `0005` and `0006` are a projected overlay described below.
+The 2026-09-23 dump was produced by PostgreSQL 15.13 and contains no application views, materialized views, functions, or triggers. It contains 15 application tables plus one migration-ledger table, the `core`/`plans` enum types, two explicit catalog sequences, and identity sequences for plan tables. Packaged migrations after `0004` form the projected overlay described below.
 
 | Schema | Tables | Responsibility | Rows in inspected dump |
 | --- | ---: | --- | ---: |
@@ -64,6 +64,9 @@ Migration `0005` additionally creates `set_role`, `rep_range_semantics`, and
 `rir_prescription`. Migration `0006` creates the eight Execution enums catalogued in
 [Execution tables](../execution/table-catalogue.md).
 
+Migration `0011` adds no enum values. It seeds every existing `resistance_source_enum` value
+in `core.resistance_source_load_defaults`; see [Default load steps](load-step-defaults.md).
+
 ## Relationship and constraint highlights
 
 - Plan child FKs use `ON DELETE CASCADE`; catalog references from plan targets/variants use `ON DELETE RESTRICT`.
@@ -97,11 +100,14 @@ flowchart LR
     Dump["2026-09-23 physical dump\nledger: 0001-0004"]
     M5["0005\nprogression identity + set metadata"]
     M6["0006\nexec schema + trace views"]
+    Later["0007–0011\nAPI versions, mobile sync, load-step defaults"]
     Expected["Schema expected by current code"]
 
-    Dump --> M5 --> M6 --> Expected
+    Dump --> M5 --> M6 --> Later --> Expected
 ```
 
 Without `0005`, current plan SQL and DTOs referencing progression/set metadata fail. `0006` is
 database-only, so the existing API can start without querying it, but the Execution read models
-do not exist until it is applied. The backend Docker command runs migrations before Uvicorn.
+do not exist until it is applied. Migrations `0010` and `0011` add the plan/snapshot step fields
+and the 12-row catalog mapping described in [Default load steps](load-step-defaults.md). The
+backend Docker command runs migrations before Uvicorn.

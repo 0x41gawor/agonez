@@ -105,10 +105,12 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     catalog_schema = schemas["ExerciseCatalogItem"]
     assert "created_at" not in catalog_schema["properties"]
     assert "recommended_rep_profile" in catalog_schema["properties"]
+    assert "default_load_step_kg" in catalog_schema["properties"]
     assert "recommended_rep_profile" in schemas["ExerciseListItem"]["properties"]
     assert "loading_mode" in schemas["ExerciseSlotDraft"]["properties"]
     assert "loading_cycle" in schemas["SetInfraDraft"]["properties"]
     assert "progression_model_slug" in schemas["ExerciseVariantDraft"]["properties"]
+    assert "load_step_kg" in schemas["ExerciseVariantDraft"]["properties"]
     assert set(schemas["NextPrescriptionState"]["enum"]) == {
         "editable",
         "blocked",

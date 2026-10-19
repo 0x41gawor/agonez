@@ -23,6 +23,7 @@ class FakeRepository:
                     "target_category": "Core",
                     "mechanics_tier": "Secondary_Compound",
                     "resistance_source": "Bodyweight",
+                    "default_load_step_kg": 2.5,
                     "execution_pattern": "Bilateral",
                     "load_capacity": 55,
                     "systemic_propulsive_fcsa_demand": 115,
@@ -70,6 +71,7 @@ class FakeRepository:
                 "target_category": "Core",
                 "mechanics_tier": "Secondary_Compound",
                 "resistance_source": "Bodyweight",
+                "default_load_step_kg": 2.5,
                 "systemic_propulsive_fcsa_demand": 115,
                 "recommended_rep_profile": {
                     "high_load": None,
@@ -166,6 +168,7 @@ async def test_exercise_list_is_shaped_for_the_contract(service: AtlasService) -
     assert response.items[0].recommended_rep_profile.high_load is None
     assert response.items[0].recommended_rep_profile.moderate_load is not None
     assert response.items[0].recommended_rep_profile.moderate_load.max == 12
+    assert response.items[0].default_load_step_kg == 2.5
 
 
 async def test_exercise_catalog_returns_all_editor_fields_without_pagination(
@@ -177,6 +180,7 @@ async def test_exercise_catalog_returns_all_editor_fields_without_pagination(
     assert response.items[0].slug == "dragon_flag"
     assert response.items[0].mechanics_tier == "Secondary_Compound"
     assert response.items[0].systemic_propulsive_fcsa_demand == 115
+    assert response.items[0].default_load_step_kg == 2.5
     assert response.items[0].recommended_rep_profile.high_load is None
     assert response.items[0].image_url == "/media/exercises/dragon_flag.png"
 

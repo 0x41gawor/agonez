@@ -96,6 +96,7 @@ def resolve_plan(
                         exercise_slug=default_variant.exercise_slug,
                         progression_model_slug=default_variant.progression_model_slug,
                         progression_id=default_variant.progression_id,
+                        load_step_kg=default_variant.load_step_kg,
                         active_working_sets=default_variant.active_working_sets,
                         sets=tuple(
                             ResolvedSet(

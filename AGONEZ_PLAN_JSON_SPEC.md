@@ -39,6 +39,7 @@ documents should use V4. V1–V3 remain importable as described below.
           "slug": "smith_machine_incline_bench_press",
           "progression_model": "e1rm_top_set_backoffs",
           "progression_id": "e3aee2b7-a8c9-4b4c-9fd9-7f919c3c3668",
+          "load_step_kg": 2.5,
           "active_working_sets": { "min": 3, "max": 3 },
           "sets": [
             {
@@ -140,6 +141,7 @@ PlanCreator creates the surrounding slot and generates its stable database ident
 | `slug` | string | 1–200 characters; `^[a-z0-9_]+$`. Authoritative Atlas exercise identity. |
 | `progression_model` | string or `null` | Known `core.progression_models.slug`, or `null`. Descriptions are deliberately not repeated. |
 | `progression_id` | UUID string | Progression-loop identity. Reuse the exact UUID on multiple exercise units to couple their loop. |
+| `load_step_kg` | number or `null` | Optional load increment in kilograms; greater than 0, at most 1000, and at most two decimal places. `null` inherits the Atlas resistance-source default. |
 | `active_working_sets` | object or `null` | Optional future-execution range `{ "min": int, "max": int }`. `null` means fixed prescribed count. |
 | `sets` | array | 0–100 ordered set prescriptions. |
 
@@ -230,6 +232,7 @@ Import creates the full draft atomically:
 | Exercise | Exercise slot with one `DEFAULT` exercise variant |
 | `progression_model` | Progression-model slug on that variant |
 | `progression_id` | Shareable progression-loop UUID on that variant |
+| `load_step_kg` | Load increment on that variant |
 | Set | Basic-level set-infrastructure prescription |
 
 Database IDs, revision numbers, lock versions, ordinals, and fallback variants are never

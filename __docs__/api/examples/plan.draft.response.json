@@ -37,6 +37,7 @@
                 "variant_type": "DEFAULT",
                 "exercise_slug": "barbell_bench_press",
                 "progression_model_slug": "shared_reprange_shared_load_double_progression",
+                "load_step_kg": 2.5,
                 "sets": [
                   {
                     "id": 501,
@@ -64,6 +65,7 @@
                 "variant_type": "FALLBACK",
                 "exercise_slug": "flat_dumbbell_bench_press",
                 "progression_model_slug": null,
+                "load_step_kg": 2,
                 "sets": [
                   {
                     "id": 503,

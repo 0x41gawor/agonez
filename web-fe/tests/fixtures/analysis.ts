@@ -239,6 +239,7 @@ export function planExportResult(): PlanAIExportResult {
             slug: 'barbell_bench_press',
             progression_model: 'double_progression',
             progression_id: '11111111-1111-4111-8111-111111111111',
+            load_step_kg: 2.5,
             active_working_sets: null,
             sets: [{
               reps: { min: 5, max: 7, semantics: 'undefined' },

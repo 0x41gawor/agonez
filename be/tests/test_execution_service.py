@@ -1,10 +1,11 @@
 from datetime import date
+from decimal import Decimal
 from typing import Any, cast
 
 import pytest
 
 from agonez_api.modules.execution.errors import ExecutionAPIError
-from agonez_api.modules.execution.repository import ExecutionRepository, RevisionTree
+from agonez_api.modules.execution.repository import ExecutionRepository, RevisionTree, RunBundle
 from agonez_api.modules.execution.schemas import ExercisePrescriptionPut
 from agonez_api.modules.execution.service import ExecutionService
 
@@ -51,6 +52,67 @@ def test_projection_is_shared_screen_shape() -> None:
         {"day_ordinal": 1, "date": date(2026, 10, 28), "workout_unit_name": None},
         {"day_ordinal": 2, "date": date(2026, 10, 29), "workout_unit_name": "Pull A"},
     ]
+
+
+def test_exercise_trace_exposes_the_governing_variant_load_step() -> None:
+    bundle = RunBundle(
+        run={},
+        microcycles=[
+            {
+                "id": 1,
+                "ordinal": 1,
+                "plan_revision_id": 31,
+                "plan_revision_no": 2,
+            }
+        ],
+        workout_tracks=[{"id": 2, "name": "Push A", "logical_key": "day:0"}],
+        exercise_tracks=[
+            {"id": 41, "workout_unit_track_id": 2, "logical_key": "slot:0"}
+        ],
+        sessions=[],
+        workout_prescriptions=[],
+        exercise_prescriptions=[],
+        set_prescriptions=[],
+        workout_performances=[],
+        exercise_performances=[],
+        set_performances=[],
+        events=[],
+        plan_days=[],
+        plan_workouts=[{"id": 10, "revision_id": 31, "day_ordinal": 0}],
+        plan_slots=[
+            {
+                "id": 20,
+                "workout_unit_id": 10,
+                "ordinal": 0,
+                "role": "PRIMARY_PROGRESSIVE",
+                "description": None,
+            }
+        ],
+        plan_variants=[
+            {
+                "id": 30,
+                "slot_id": 20,
+                "variant_type": "DEFAULT",
+                "exercise_id": 4,
+                "exercise_slug": "barbell_bench_press",
+                "exercise_name": "Bench Press",
+                "exercise_name_full": "Barbell Bench Press",
+                "progression_model_slug": None,
+                "load_step_kg": Decimal("2.500"),
+            }
+        ],
+        plan_sets=[],
+    )
+    service = ExecutionService(cast(Any, None))
+
+    value = service._exercise_trace(
+        bundle,
+        date(2026, 10, 19),
+        exercise_track_id=41,
+        include_next=False,
+    )
+
+    assert value["trace"]["current_plan"]["load_step_kg"] == 2.5
 
 
 @pytest.mark.asyncio

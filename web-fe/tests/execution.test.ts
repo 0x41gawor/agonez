@@ -122,6 +122,34 @@ describe('Execution critical workflows', () => {
     expect(wrapper.findAll('.editor-action-row button').slice(-2).every((button) => button.attributes('disabled') !== undefined)).toBe(true)
     expect(wrapper.findAll('.load-input')).toHaveLength(3)
     expect(wrapper.get('.load-input').attributes('disabled')).toBeUndefined()
+    expect(wrapper.get('.editor-step-help').text()).toBe('The plan does not define a load step; use direct entry.')
+  })
+
+  it('offers a mixed-state select-all control for bulk load entry', async () => {
+    const store = useExecutionDraftsStore()
+    const draft = store.initialize(41, next)
+    draft.selected[0] = true
+    const wrapper = mount(PrescriptionEditor, { props: { trace, draft, saving: false, errorCode: null } })
+    const selectAll = wrapper.get<HTMLInputElement>('.editor-select-all input')
+
+    expect(selectAll.element.indeterminate).toBe(true)
+    expect(wrapper.get('.editor-select-all').text()).toBe('Select all')
+    await selectAll.setValue(true)
+    expect(wrapper.emitted('selectedAll')).toEqual([[true]])
+  })
+
+  it('enables exact per-set adjustments when the plan provisions a load step', async () => {
+    const store = useExecutionDraftsStore()
+    const steppedTrace = structuredClone(trace)
+    steppedTrace.trace.current_plan.load_step_kg = 2.5
+    const wrapper = mount(PrescriptionEditor, {
+      props: { trace: steppedTrace, draft: store.initialize(41, next), saving: false, errorCode: null },
+    })
+    const plus = wrapper.get('.editor-set-line button:last-child')
+
+    expect(plus.attributes('disabled')).toBeUndefined()
+    await plus.trigger('click')
+    expect(wrapper.emitted('load')?.[0]).toEqual([0, '70'])
   })
 
   it('distinguishes missed and cancelled sessions by text and visual class', () => {

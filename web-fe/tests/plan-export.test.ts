@@ -17,6 +17,7 @@ describe('Plan AI export', () => {
     expect(json).toContain('"format": "agonez-plan-sanity-v4"')
     expect(json).toContain('"progression_model": "double_progression"')
     expect(json).toContain('"progression_id": "11111111-1111-4111-8111-111111111111"')
+    expect(json).toContain('"load_step_kg": 2.5')
     expect(json).toContain('"role": "working"')
     expect(json).toContain('"kind": "absolute"')
     expect(json).not.toContain('when_to_use')

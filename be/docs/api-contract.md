@@ -65,6 +65,7 @@ Query params:
       "target_category": "Core",
       "mechanics_tier": "Secondary_Compound",
       "resistance_source": "Bodyweight",
+      "default_load_step_kg": 2.5,
       "execution_pattern": "Bilateral",
       "load_capacity": 55.0,
       "systemic_propulsive_fcsa_demand": 115.0,
@@ -88,11 +89,15 @@ Notes:
 - `has_engine_vectors` drives the green dot + whether hover-preview paints the body.
 - `facets` optional but lets filter checkboxes show counts.
 - `image_url: null` is the contract for the placeholder state — never omit the key.
+- `default_load_step_kg` is joined from the resistance-source mapping and initializes the
+  editable PlanCreator exercise-variant step.
 
 ### GET /api/atlas/exercises/catalog
 
 Complete, unpaginated selector catalog for PlanCreator. It is ordered by full exercise
-name and intentionally omits Atlas-only fields, facets, timestamps, and vectors.
+name and intentionally omits Atlas-only fields, facets, timestamps, and vectors. It includes
+the resistance-family `default_load_step_kg` so exercise selection can provision Execution
+controls without a second request.
 
 ```json
 {
@@ -104,6 +109,7 @@ name and intentionally omits Atlas-only fields, facets, timestamps, and vectors.
       "target_category": "Core",
       "mechanics_tier": "Secondary_Compound",
       "resistance_source": "Bodyweight",
+      "default_load_step_kg": 2.5,
       "systemic_propulsive_fcsa_demand": 115.0,
       "recommended_rep_profile": {
         "high_load": null,
@@ -130,6 +136,7 @@ Detail page. One call returns core row + engine vectors.
   "target_category": "Core",
   "mechanics_tier": "Secondary_Compound",
   "resistance_source": "Bodyweight",
+  "default_load_step_kg": 2.5,
   "execution_pattern": "Bilateral",
   "load_capacity": 55.0,
   "systemic_propulsive_fcsa_demand": 115.0,

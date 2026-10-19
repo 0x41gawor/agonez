@@ -35,7 +35,7 @@ export default {
       addTrainingDay: 'Añadir día de entrenamiento', defaultDay: 'Día {number}', defaultDayRoot: 'Día', trainingSession: 'Sesión de entrenamiento', copySuffix: ' copia',
       validation: {
         planName: 'El nombre del plan es obligatorio.', dayName: 'El nombre del día es obligatorio.', workoutName: 'El nombre de la sesión es obligatorio.',
-        defaultExercise: 'Un slot con contenido necesita exactamente un ejercicio predeterminado.', chooseExercise: 'Elige un ejercicio antes de guardar.',
+        defaultExercise: 'Un slot con contenido necesita exactamente un ejercicio predeterminado.', chooseExercise: 'Elige un ejercicio antes de guardar.', loadStep: 'El incremento de carga debe ser mayor que 0, no superar 1000 kg y tener como máximo 2 decimales.',
         minReps: 'El mínimo de repeticiones debe ser un entero positivo.', maxReps: 'El máximo debe ser igual o superior al mínimo.',
         rir: 'Elige un valor de RIR válido.', activeWorkingSets: 'El rango de series de trabajo activas debe caber en las series de trabajo prescritas.',
         setReference: 'La serie de referencia debe existir y una serie relativa no puede referirse a sí misma.',
@@ -90,6 +90,7 @@ export default {
     variant: {
       default: 'Ejercicio predeterminado', fallback: 'Alternativa {number}', fallbackExercise: 'Ejercicio alternativo',
       moveUp: 'Subir alternativa', moveDown: 'Bajar alternativa', remove: 'Eliminar alternativa', prescription: 'Prescripción de series', addSet: '+ Añadir serie',
+      loadStep: 'Incremento de carga', loadStepPlaceholder: 'p. ej., 2,5', loadStepHelp: 'Se usa en los botones −/+ al prescribir este ejercicio.',
     },
     selector: {
       triggerTitle: 'Haz clic para elegir · Ctrl/Cmd+clic para abrir en el Atlas', emptyTriggerTitle: 'Haz clic para elegir un ejercicio',

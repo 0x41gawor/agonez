@@ -6,6 +6,7 @@
   "target_category": "Core",
   "mechanics_tier": "Secondary_Compound",
   "resistance_source": "Bodyweight",
+  "default_load_step_kg": 2.5,
   "execution_pattern": "Bilateral",
   "load_capacity": 55.0,
   "systemic_propulsive_fcsa_demand": 115.0,

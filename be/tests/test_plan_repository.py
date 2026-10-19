@@ -158,6 +158,7 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
                 "exercise_slug": "barbell_bench_press",
                 "progression_model_slug": "double_progression",
                 "progression_id": "11111111-1111-4111-8111-111111111111",
+                "load_step_kg": 2.5,
                 "active_working_set_min": 1,
                 "active_working_set_max": 1,
             }
@@ -224,7 +225,7 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
     assert variant_params is not None
     assert variant_params[:5] == (103, 0, "DEFAULT", 60, "double_progression")
     assert variant_params[5] != "11111111-1111-4111-8111-111111111111"
-    assert variant_params[6:] == (1, 1)
+    assert variant_params[6:] == (2.5, 1, 1)
     set_params = inserted_parameters[4]
     assert set_params is not None
     assert set_params[:7] == (104, 0, 5, 7, "estimate", "RIR2", "working_topset")

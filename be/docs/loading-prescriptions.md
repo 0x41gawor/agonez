@@ -39,6 +39,14 @@ A set-infrastructure prescription has:
 - `loading_mode`: optional static override; `null` means inherit;
 - `loading_cycle`: optional repeating override of 2–52 loading modes.
 
+An exercise variant also has `load_step_kg`, an optional positive increment up to
+1000 kg with at most two decimal places. It represents the smallest useful adjustment for the actual implement or
+machine. `core.resistance_source_load_defaults` supplies the initial value from the selected
+exercise's resistance family; the PlanCreator value remains editable for gym-specific plates,
+stacks, or implements. A null variant value inherits the catalog default. Execution uses the
+effective value for its −/+ controls and snapshots it when a prescription is saved. It does
+not choose an athlete's starting load.
+
 Effective loading is resolved with this precedence:
 
 1. set `loading_cycle`;
@@ -67,7 +75,8 @@ Modulation resolver.
 ## Compact JSON interchange
 
 `agonez-plan-sanity-v4` exports concrete reps together with set role, rep-range semantics,
-extended RIR, and unresolved `load_spec`. It still omits PlanCreator's loading modes and
+extended RIR, unresolved `load_spec`, and the optional exercise-level `load_step_kg`.
+It still omits PlanCreator's loading modes and
 cycles: imported slots use `moderate_load` and their sets inherit it. The selected
 progression model remains a compact slug, while `progression_id` can couple multiple
 exercise units to one future progression loop. Legacy V1–V3 documents remain importable

@@ -24,6 +24,7 @@ export interface ExerciseListItem {
   target_category: string
   mechanics_tier: string
   resistance_source: string
+  default_load_step_kg: number
   execution_pattern: string
   load_capacity: number | null
   systemic_propulsive_fcsa_demand: number | null
@@ -42,6 +43,7 @@ export type ExerciseCatalogItem = Pick<
   | 'target_category'
   | 'mechanics_tier'
   | 'resistance_source'
+  | 'default_load_step_kg'
   | 'systemic_propulsive_fcsa_demand'
   | 'recommended_rep_profile'
   | 'image_url'

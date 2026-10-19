@@ -1,9 +1,10 @@
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Any, Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class APIModel(BaseModel):
@@ -43,6 +44,19 @@ class SetRole(str, Enum):
 
 
 WORKING_SET_ROLES = frozenset(SetRole) - {SetRole.RAMPUP}
+
+
+def _validate_load_step_precision(value: float) -> float:
+    if Decimal(str(value)).as_tuple().exponent < -2:
+        raise ValueError("load_step_kg must have at most 2 decimal places")
+    return value
+
+
+LoadStepKg = Annotated[
+    float,
+    Field(gt=0, le=1000),
+    AfterValidator(_validate_load_step_precision),
+]
 
 
 class RepRangeSemantics(str, Enum):
@@ -172,6 +186,7 @@ class ExerciseVariantDraft(APIModel):
         pattern=r"^[a-z0-9_]+$",
     )
     progression_id: UUID = Field(default_factory=uuid4)
+    load_step_kg: LoadStepKg | None = None
     active_working_sets: ActiveWorkingSets | None = None
     sets: list[SetInfraDraft] = Field(default_factory=list)
 
@@ -312,6 +327,7 @@ class ExerciseVariantArtifact(APIModel):
     exercise_slug: str
     progression_model_slug: str | None = None
     progression_id: UUID = Field(default_factory=uuid4)
+    load_step_kg: LoadStepKg | None = None
     active_working_sets: ActiveWorkingSets | None = None
     sets: list[SetInfraArtifact]
 

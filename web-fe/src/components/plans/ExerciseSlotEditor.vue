@@ -122,6 +122,7 @@ function completeInitialSetup(mode: LoadingMode): void {
 
   applySlotLoadingMode(mode)
   const variant = createVariant('DEFAULT', 0, exercise.slug)
+  variant.load_step_kg = exercise.default_load_step_kg
   variant.sets = Array.from({ length: 3 }, (_, ordinal) =>
     createSet(ordinal, undefined, mode, exercise.recommended_rep_profile),
   )

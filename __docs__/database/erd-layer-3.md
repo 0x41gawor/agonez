@@ -260,5 +260,8 @@ The inspected snapshot already includes `0003` and `0004`. Later overlays are:
 | `plans.exercise_variants` (`0005`) | `progression_id`, active working-set bounds | UUID lineage plus bounds check/index |
 | `plans.set_infra_prescriptions` (`0005`) | role, load specification, range semantics, enum RIR | Typed metadata and JSON-kind checks |
 | `exec.*` (`0006`) | 12 tables and 6 views | See [Execution table catalogue](../execution/table-catalogue.md) |
+| `plans.exercise_variants` (`0010`) | `load_step_kg` | Optional positive per-variant override |
+| `exec.exercise_unit_prescriptions` (`0010`) | `load_step_kg_snapshot` | Immutable effective-step snapshot |
+| `core.resistance_source_load_defaults` (`0011`) | New 12-row mapping table | Positive default per resistance enum; existing nulls backfilled |
 
 No existing `core`, `engine`, or `plans` table is changed by `0006`.

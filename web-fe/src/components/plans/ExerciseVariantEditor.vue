@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 import type { LoadingMode, ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem } from '@/api/types'
@@ -54,6 +54,39 @@ const selectedExercise = computed(() =>
   props.exercises.find((exercise) => exercise.slug === model.value.exercise_slug),
 )
 
+const exerciseSlug = computed({
+  get: () => model.value.exercise_slug,
+  set: (slug: string) => {
+    const previousDefault = selectedExercise.value?.default_load_step_kg ?? null
+    const inheritsCatalogDefault = model.value.load_step_kg === null
+      || model.value.load_step_kg === previousDefault
+    model.value.exercise_slug = slug
+    if (inheritsCatalogDefault) {
+      model.value.load_step_kg = props.exercises.find(
+        (exercise) => exercise.slug === slug,
+      )?.default_load_step_kg ?? null
+    }
+  },
+})
+
+watch(selectedExercise, (exercise) => {
+  if (model.value.load_step_kg === null && exercise) {
+    model.value.load_step_kg = exercise.default_load_step_kg
+  }
+}, { immediate: true })
+
+const loadStep = computed<string | number>({
+  get: () => model.value.load_step_kg ?? '',
+  set: (value) => {
+    if (value === '') {
+      model.value.load_step_kg = null
+      return
+    }
+    const parsed = Number(value)
+    model.value.load_step_kg = Number.isFinite(parsed) ? parsed : null
+  },
+})
+
 function duplicateSet(index: number): void {
   duplicateSetPrescription(model.value.sets, index)
 }
@@ -73,7 +106,7 @@ function duplicateSet(index: number): void {
     </header>
 
     <ExerciseSelector
-      v-model="model.exercise_slug"
+      v-model="exerciseSlug"
       :exercises="exercises"
       :label="model.variant_type === 'DEFAULT' ? $t('plans.variant.default') : $t('plans.variant.fallbackExercise')"
     />
@@ -86,6 +119,27 @@ function duplicateSet(index: number): void {
       :models="progressionModels"
       @opened="$emit('progressionOpen')"
     />
+
+    <label class="field variant-load-step">
+      <span class="field-label">{{ $t('plans.variant.loadStep') }}</span>
+      <span class="load-step-control">
+        <input
+          v-model="loadStep"
+          class="text-input mono"
+          type="number"
+          inputmode="decimal"
+          min="0.01"
+          max="1000"
+          step="0.01"
+          :placeholder="$t('plans.variant.loadStepPlaceholder')"
+        />
+        <span class="mono">kg</span>
+      </span>
+      <small>{{ $t('plans.variant.loadStepHelp') }}</small>
+      <span v-if="issues.some((issue) => issue.path === `${path}.loadStep`)" class="field-error">
+        {{ issues.find((issue) => issue.path === `${path}.loadStep`)?.message }}
+      </span>
+    </label>
 
     <ExerciseUnitMetadataEditor v-model="model" :exercise-units="exerciseUnits" />
 

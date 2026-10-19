@@ -41,12 +41,13 @@ def test_ai_export_is_small_and_uses_the_resolved_basic_plan() -> None:
                                         "id": 400,
                                         "ordinal": 0,
                                         "variant_type": "DEFAULT",
-                                            "exercise_slug": "barbell_bench_press",
-                                            "progression_model_slug": "double_progression",
-                                            "progression_id": (
-                                                "11111111-1111-4111-8111-111111111111"
-                                            ),
-                                            "active_working_sets": {"min": 1, "max": 1},
+                                        "exercise_slug": "barbell_bench_press",
+                                        "progression_model_slug": "double_progression",
+                                        "progression_id": (
+                                            "11111111-1111-4111-8111-111111111111"
+                                        ),
+                                        "load_step_kg": 2.5,
+                                        "active_working_sets": {"min": 1, "max": 1},
                                         "sets": [
                                             {
                                                 "id": 500,
@@ -123,6 +124,7 @@ def test_ai_export_is_small_and_uses_the_resolved_basic_plan() -> None:
                         "slug": "barbell_bench_press",
                         "progression_model": "double_progression",
                         "progression_id": "11111111-1111-4111-8111-111111111111",
+                        "load_step_kg": 2.5,
                         "active_working_sets": {"min": 1, "max": 1},
                         "sets": [
                             {

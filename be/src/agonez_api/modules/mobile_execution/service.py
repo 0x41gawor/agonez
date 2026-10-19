@@ -315,7 +315,7 @@ class MobileExecutionService:
                     "variant_label": item["slot_name_snapshot"] or item["full_name"],
                     "plan_comment": item["plan_description_snapshot"],
                     "prescription_comment": item["prescription_comment"],
-                    "load_step_kg": 2.5,
+                    "load_step_kg": self._number(item["load_step_kg"]),
                     "default_rest_s": (
                         180 if role in {"primary_progressive", "secondary_progressive"} else 90
                     ),

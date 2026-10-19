@@ -40,6 +40,7 @@ function convertToLegacy(
   for (const day of days) {
     for (const exercise of day.exercises) {
       delete exercise.progression_id
+      delete exercise.load_step_kg
       delete exercise.active_working_sets
       if (format === 'agonez-plan-sanity-v1') delete exercise.progression_model
       const sets = exercise.sets as Array<Record<string, unknown>>
@@ -123,6 +124,7 @@ describe('Plan JSON import', () => {
     const source = planExportResult() as unknown as Record<string, unknown>
     const exercises = (source.days as Array<{ exercises: Array<Record<string, unknown>> }>)[0]!.exercises
     const exercise = exercises[0]!
+    exercise.load_step_kg = 2.555
     exercise.active_working_sets = { min: 1, max: 2 }
     const sets = exercise.sets as Array<Record<string, unknown>>
     sets[0]!.load_spec = { kind: 'relative_to_set', ref_set_idx: 0, pct: 92 }
@@ -133,6 +135,7 @@ describe('Plan JSON import', () => {
     } catch (caught) {
       expect(caught).toBeInstanceOf(PlanImportValidationError)
       const issues = (caught as PlanImportValidationError).issues.join(' ')
+      expect(issues).toContain('load_step_kg must be a number greater than 0')
       expect(issues).toContain('active_working_sets.max must not exceed 1 working sets')
       expect(issues).toContain('must not reference itself')
     }

@@ -36,7 +36,7 @@ export default {
       addTrainingDay: 'Ajouter un jour', defaultDay: 'Jour {number}', defaultDayRoot: 'Jour', trainingSession: "Séance d’entraînement", copySuffix: ' copie',
       validation: {
         planName: 'Le nom du plan est requis.', dayName: 'Le nom du jour est requis.', workoutName: 'Le nom de la séance est requis.',
-        defaultExercise: 'Un emplacement rempli doit avoir exactement un exercice par défaut.', chooseExercise: "Choisissez un exercice avant d’enregistrer.",
+        defaultExercise: 'Un emplacement rempli doit avoir exactement un exercice par défaut.', chooseExercise: "Choisissez un exercice avant d’enregistrer.", loadStep: 'Le pas de charge doit être supérieur à 0, ne pas dépasser 1 000 kg et comporter au plus 2 décimales.',
         minReps: 'Le minimum de répétitions doit être un entier positif.', maxReps: 'Le maximum doit être supérieur ou égal au minimum.',
         rir: 'Choisissez une valeur RIR valide.', activeWorkingSets: 'La plage de séries de travail actives doit tenir dans les séries de travail prescrites.',
         setReference: 'La série référencée doit exister et une série relative ne peut pas se référencer elle-même.',
@@ -92,6 +92,7 @@ export default {
       default: 'Exercice par défaut', fallback: 'Remplacement {number}', fallbackExercise: 'Exercice de remplacement',
       moveUp: 'Monter le remplacement', moveDown: 'Descendre le remplacement', remove: 'Supprimer le remplacement',
       prescription: 'Prescription des séries', addSet: '+ Ajouter une série',
+      loadStep: 'Pas de charge', loadStepPlaceholder: 'p. ex. 2,5', loadStepHelp: 'Utilisé par les boutons −/+ lors de la prescription de cet exercice.',
     },
     selector: {
       triggerTitle: "Cliquer pour choisir · Ctrl/Cmd+clic pour ouvrir dans l’Atlas", emptyTriggerTitle: 'Cliquer pour choisir un exercice',

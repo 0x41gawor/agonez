@@ -122,6 +122,7 @@ class AtlasService:
             target_category=row["target_category"],
             mechanics_tier=row["mechanics_tier"],
             resistance_source=row["resistance_source"],
+            default_load_step_kg=row["default_load_step_kg"],
             execution_pattern=row["execution_pattern"],
             load_capacity=row["load_capacity"],
             systemic_propulsive_fcsa_demand=row["systemic_propulsive_fcsa_demand"],

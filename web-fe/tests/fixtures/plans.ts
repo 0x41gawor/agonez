@@ -9,6 +9,7 @@ export const exercise: ExerciseListItem = {
   target_category: 'Chest_Sternal',
   mechanics_tier: 'Heavy_Compound',
   resistance_source: 'Barbell',
+  default_load_step_kg: 2.5,
   execution_pattern: 'Bilateral',
   load_capacity: 72,
   systemic_propulsive_fcsa_demand: 175,
@@ -85,6 +86,7 @@ export function planArtifact(lockVersion = 4): PlanDraftArtifact {
                   exercise_slug: exercise.slug,
                   progression_model_slug: null,
                   progression_id: '11111111-1111-4111-8111-111111111111',
+                  load_step_kg: null,
                   active_working_sets: null,
                   sets: [
                     {

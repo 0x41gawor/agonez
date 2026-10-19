@@ -4036,6 +4036,11 @@ components:
         resistance_source:
           type: string
           title: Resistance Source
+        default_load_step_kg:
+          type: number
+          maximum: 1000.0
+          exclusiveMinimum: 0.0
+          title: Default Load Step Kg
         systemic_propulsive_fcsa_demand:
           anyOf:
           - type: number
@@ -4057,6 +4062,7 @@ components:
       - target_category
       - mechanics_tier
       - resistance_source
+      - default_load_step_kg
       - systemic_propulsive_fcsa_demand
       - recommended_rep_profile
       - image_url
@@ -4100,6 +4106,11 @@ components:
         resistance_source:
           type: string
           title: Resistance Source
+        default_load_step_kg:
+          type: number
+          maximum: 1000.0
+          exclusiveMinimum: 0.0
+          title: Default Load Step Kg
         execution_pattern:
           type: string
           title: Execution Pattern
@@ -4162,6 +4173,7 @@ components:
       - target_category
       - mechanics_tier
       - resistance_source
+      - default_load_step_kg
       - execution_pattern
       - load_capacity
       - systemic_propulsive_fcsa_demand
@@ -4332,6 +4344,11 @@ components:
         resistance_source:
           type: string
           title: Resistance Source
+        default_load_step_kg:
+          type: number
+          maximum: 1000.0
+          exclusiveMinimum: 0.0
+          title: Default Load Step Kg
         execution_pattern:
           type: string
           title: Execution Pattern
@@ -4373,6 +4390,7 @@ components:
       - target_category
       - mechanics_tier
       - resistance_source
+      - default_load_step_kg
       - execution_pattern
       - load_capacity
       - systemic_propulsive_fcsa_demand
@@ -4701,6 +4719,13 @@ components:
           type: string
           format: uuid
           title: Progression Id
+        load_step_kg:
+          anyOf:
+          - type: number
+            maximum: 1000.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Load Step Kg
         active_working_sets:
           anyOf:
           - $ref: '#/components/schemas/ActiveWorkingSets'
@@ -4751,6 +4776,13 @@ components:
           type: string
           format: uuid
           title: Progression Id
+        load_step_kg:
+          anyOf:
+          - type: number
+            maximum: 1000.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Load Step Kg
         active_working_sets:
           anyOf:
           - $ref: '#/components/schemas/ActiveWorkingSets'
@@ -6503,6 +6535,13 @@ components:
           type: string
           format: uuid
           title: Progression Id
+        load_step_kg:
+          anyOf:
+          - type: number
+            maximum: 1000.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Load Step Kg
         active_working_sets:
           anyOf:
           - $ref: '#/components/schemas/ActiveWorkingSets'
@@ -6680,6 +6719,13 @@ components:
           type: string
           format: uuid
           title: Progression Id
+        load_step_kg:
+          anyOf:
+          - type: number
+            maximum: 1000.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Load Step Kg
         active_working_sets:
           anyOf:
           - $ref: '#/components/schemas/ActiveWorkingSets'

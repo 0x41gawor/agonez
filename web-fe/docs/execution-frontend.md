@@ -52,8 +52,12 @@ expose exact values through SVG titles. MARKER.X remains visibly reserved and em
 
 - The prototype's standalone stylesheet, top navigation, fonts, and state switcher were
   not copied. Existing Agonez infrastructure is used.
-- `current_plan.load_step_kg` is `null` in the implemented API. Step controls remain
-  visible but disabled with an explanation; direct and bulk load entry work normally.
+- `current_plan.load_step_kg` is the effective governing plan value: the per-variant override
+  or the selected exercise's resistance-source default. Step controls remain visible but
+  retain their null-state explanation for malformed or legacy responses; direct and bulk
+  load entry still work normally.
+- The set selector has a master checkbox with selected, cleared, and mixed states so a
+  coach can apply one load to every set without checking them individually.
 - Seed-run defaults are absent because the optional backend field was deliberately omitted.
 - The overview's current-session DTO does not expose completion mode, so it does not infer
   “as prescribed.” The calendar and workout trace show completion mode where supplied.
@@ -80,7 +84,7 @@ Implemented:
 Implemented with justified adaptation:
 
 - charts use focused SVG components instead of a dependency;
-- load-step controls reflect the backend's null step value;
+- load-step controls reflect the backend's effective step and retain a defensive null state;
 - the primary-load preset uses stable API ordering due to missing slot-role metadata;
 - all untranslated locales use the repository's established English fallback mechanism.
 

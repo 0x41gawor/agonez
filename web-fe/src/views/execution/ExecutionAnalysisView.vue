@@ -94,6 +94,7 @@ function setLoad(index: number, value: string): void { if (!draft.value) return;
 function setComment(index: number, value: string): void { if (!draft.value) return; draft.value.comments[index] = value; markDirty() }
 function setPrescriptionComment(value: string): void { if (!draft.value) return; draft.value.prescriptionComment = value; markDirty() }
 function setSelected(index: number, value: boolean): void { if (draft.value) draft.value.selected[index] = value }
+function setAllSelected(value: boolean): void { if (draft.value) draft.value.selected.fill(value) }
 function replaceLoads(values: Array<number | null>): void { if (!draft.value) return; draft.value.loads = draft.value.loads.map((_, index) => values[index] == null ? '' : String(values[index])); markDirty() }
 function stepAll(direction: number): void { const step = trace.value?.trace.current_plan.load_step_kg; if (!draft.value || step == null) return; draft.value.loads = draft.value.loads.map((load) => String(Math.max(0, (parseLoad(load) ?? 0) + direction * step))); markDirty() }
 function applyBulk(value: string): void { if (!draft.value || parseLoad(value) === undefined) return; draft.value.loads = draft.value.loads.map((load, index) => draft.value?.selected[index] ? value : load); markDirty() }
@@ -165,6 +166,6 @@ watch(selectedTraceId, () => void loadTrace(), { immediate: true })
         <ExerciseTraceTable :trace="trace" :draft="draft" />
       </template>
     </section>
-    <PrescriptionEditor v-if="trace" :trace="trace" :draft="draft" :saving="saving" :error-code="saveErrorCode" @load="setLoad" @comment="setComment" @prescription-comment="setPrescriptionComment" @selected="setSelected" @replace-loads="replaceLoads" @step-all="stepAll" @apply="applyBulk" @discard="discard" @save="save(false)" @save-next="save(true)" @reload="loadTrace(true)" />
+    <PrescriptionEditor v-if="trace" :trace="trace" :draft="draft" :saving="saving" :error-code="saveErrorCode" @load="setLoad" @comment="setComment" @prescription-comment="setPrescriptionComment" @selected="setSelected" @selected-all="setAllSelected" @replace-loads="replaceLoads" @step-all="stepAll" @apply="applyBulk" @discard="discard" @save="save(false)" @save-next="save(true)" @reload="loadTrace(true)" />
   </div>
 </template>

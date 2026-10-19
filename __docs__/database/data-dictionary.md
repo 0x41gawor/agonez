@@ -61,6 +61,20 @@ Purpose: locale-specific overlays for selected exercise fields. Primary key: (`e
 | `status` | `varchar(20) NOT NULL DEFAULT 'published'` | Only `published` rows are served; values are not enum/check constrained |
 | `created_at`, `updated_at` | `timestamptz NOT NULL` | Audit timestamps |
 
+## `core.resistance_source_load_defaults` (projected by `0011`)
+
+Purpose: catalog-owned product defaults for the smallest useful load increment by equipment
+or resistance family. Primary key: `resistance_source`.
+
+| Column | Type | Meaning | Unit |
+| --- | --- | --- | --- |
+| `resistance_source` | `core.resistance_source_enum PK` | Equipment/resistance family | Dimensionless |
+| `default_load_step_kg` | `numeric(8,2) NOT NULL`, >0 and ≤1000 | Default exercise load increment | kg |
+
+Atlas joins this table to every exercise. Plan variants can store an explicit override, and
+Execution snapshots the effective value. The seeded mapping and inheritance rules are in
+[Default load steps](load-step-defaults.md).
+
 ## `core.muscles`
 
 Purpose: canonical anatomy, morphology, capacity, programming traits, authored content, and media references.
@@ -233,6 +247,7 @@ Purpose: ordered concrete exercise alternatives for a slot. Unique deferred (`sl
 | `variant_type` | enum NOT NULL | DEFAULT or FALLBACK |
 | `exercise_id` | integer FK NOT NULL, restrict | Catalog exercise |
 | `progression_model_slug` | **Projected:** text NULL, FK update cascade/delete restrict | Optional descriptive progression intent |
+| `load_step_kg` | **Projected:** numeric(8,2) NULL, >0 and ≤1000 | Per-exercise override; null inherits the resistance-source default | kg |
 
 ## `plans.set_infra_prescriptions`
 

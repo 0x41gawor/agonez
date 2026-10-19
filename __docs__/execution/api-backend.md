@@ -105,7 +105,9 @@ and automated progression remain `null`/unimplemented.
 
 - `seed_loads_from_plan_run_id` is intentionally omitted from v1. It is optional in the
   contract and would add no value to the core readiness/write flow yet.
-- `current_plan.load_step_kg` is `null`: neither `plans` nor `exec` stores a load increment.
+- `current_plan.load_step_kg` uses the governing plan exercise variant override, falling back
+  to `core.resistance_source_load_defaults` for that exercise family. Saved exercise
+  prescriptions snapshot the effective value for historical consistency.
 - `next.prescription.workout_prescription_version` is the concurrency extension described
   above.
 - Obvious resource-not-found and malformed-filter failures add stable codes such as

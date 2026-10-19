@@ -471,7 +471,7 @@ describe('PlanEditor', () => {
     expect(variant.sets).toHaveLength(1)
     expect(variant.sets[0]?.reps).toEqual({ min: 7, max: 11, semantics: 'undefined' })
     expect(variant.sets[0]?.loading_mode).toBe('moderate_load')
-    await wrapper.get('input[type="number"]').setValue('6')
+    await wrapper.get('.set-editor input[type="number"]').setValue('6')
     expect(variant.sets[0]?.reps.min).toBe(6)
     await wrapper.get('button[title="Duplicate set"]').trigger('click')
     expect(variant.sets).toHaveLength(2)
@@ -480,6 +480,58 @@ describe('PlanEditor', () => {
     expect(variant.sets.map((item) => item.ordinal)).toEqual([0, 1])
     await wrapper.findAll('button[title="Remove set"]')[0]?.trigger('click')
     expect(variant.sets).toHaveLength(1)
+  })
+
+  it('provisions the catalog load step and allows an exercise override', async () => {
+    const variant = createVariant('DEFAULT', 0, exercise.slug)
+    const wrapper = mount(ExerciseVariantEditor, {
+      props: {
+        modelValue: variant,
+        exercises: [exercise],
+        path: `variant.${variant.clientKey}`,
+        issues: [],
+      },
+    })
+
+    expect(variant.load_step_kg).toBe(2.5)
+    await wrapper.get('.variant-load-step input').setValue('5')
+    expect(variant.load_step_kg).toBe(5)
+    await wrapper.get('.variant-load-step input').setValue('')
+    expect(variant.load_step_kg).toBeNull()
+  })
+
+  it('updates an inherited load step when the selected exercise changes', async () => {
+    const variant = createVariant('DEFAULT', 0, exercise.slug)
+    const machineExercise = {
+      ...fallbackExercise,
+      slug: 'selectorized_chest_press',
+      name: 'Selectorized Chest Press',
+      name_full: 'Selectorized Chest Press',
+      resistance_source: 'Selectorized_Machine',
+      default_load_step_kg: 5,
+    }
+    const wrapper = mount(ExerciseVariantEditor, {
+      props: {
+        modelValue: variant,
+        exercises: [exercise, machineExercise],
+        path: `variant.${variant.clientKey}`,
+        issues: [],
+      },
+    })
+
+    expect(variant.load_step_kg).toBe(2.5)
+    await wrapper.get('.catalog-selector-trigger').trigger('click')
+    await wrapper.findAll('.catalog-option')
+      .find((option) => option.text().includes('Selectorized Chest Press'))
+      ?.trigger('click')
+    expect(variant.load_step_kg).toBe(5)
+
+    await wrapper.get('.variant-load-step input').setValue('3')
+    await wrapper.get('.catalog-selector-trigger').trigger('click')
+    await wrapper.findAll('.catalog-option')
+      .find((option) => option.text().includes('Barbell Bench Press'))
+      ?.trigger('click')
+    expect(variant.load_step_kg).toBe(3)
   })
 
   it('edits advanced set metadata without exposing it in the default flow', async () => {
@@ -656,10 +708,12 @@ describe('PlanEditor', () => {
     const editor = toPlanEditorState(planArtifact())
     const variant = editor.days[0]!.workout_unit!.exercise_slots[0]!.variants[0]!
     variant.exercise_slug = ''
+    variant.load_step_kg = 2.555
     variant.sets[0]!.reps = { min: 10, max: 8, semantics: 'undefined' }
     const messages = validatePlanEditor(editor).map((issue) => issue.message)
 
     expect(messages).toContain('Choose an exercise before saving.')
+    expect(messages).toContain('Load step must be greater than 0, no more than 1000 kg, and use at most 2 decimal places.')
     expect(messages).toContain('Maximum reps must be at least the minimum.')
   })
 })

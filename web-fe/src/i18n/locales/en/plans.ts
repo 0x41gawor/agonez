@@ -85,7 +85,7 @@ export default {
       defaultDay: 'Day {number}', defaultDayRoot: 'Day', trainingSession: 'Training session', copySuffix: ' copy',
       validation: {
         planName: 'Plan name is required.', dayName: 'Day name is required.', workoutName: 'Workout name is required.',
-        defaultExercise: 'A populated slot needs exactly one default exercise.', chooseExercise: 'Choose an exercise before saving.',
+        defaultExercise: 'A populated slot needs exactly one default exercise.', chooseExercise: 'Choose an exercise before saving.', loadStep: 'Load step must be greater than 0, no more than 1000 kg, and use at most 2 decimal places.',
         minReps: 'Minimum reps must be a positive whole number.', maxReps: 'Maximum reps must be at least the minimum.',
         rir: 'RIR must be between 0 and 4.', fixFields: 'Fix the highlighted plan fields before saving.',
         activeWorkingSets: 'Active working-set range must fit the prescribed working sets.',
@@ -218,6 +218,7 @@ export default {
       remove: 'Remove fallback',
       prescription: 'Set prescription',
       addSet: '+ Add set',
+      loadStep: 'Load step', loadStepPlaceholder: 'e.g. 2.5', loadStepHelp: 'Used by the −/+ controls when prescribing this exercise.',
     },
     selector: {
       triggerTitle: 'Click to choose an exercise · Ctrl/Cmd+click to open in Atlas',

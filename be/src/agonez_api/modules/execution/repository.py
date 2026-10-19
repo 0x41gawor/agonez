@@ -197,10 +197,16 @@ class ExecutionRepository:
                    variant.variant_type::text AS variant_type,
                    variant.exercise_id, variant.progression_id,
                    variant.progression_model_slug,
+                   COALESCE(
+                       variant.load_step_kg,
+                       rs_default.default_load_step_kg
+                   ) AS load_step_kg,
                    exercise.slug AS exercise_slug, exercise.name AS exercise_name,
                    exercise.name_full AS exercise_name_full
             FROM plans.exercise_variants AS variant
             JOIN core.exercises AS exercise ON exercise.id = variant.exercise_id
+            JOIN core.resistance_source_load_defaults AS rs_default
+              ON rs_default.resistance_source = exercise.resistance_source
             JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id
             JOIN plans.workout_unit_prescriptions AS workout
               ON workout.id = slot.workout_unit_id
@@ -939,10 +945,11 @@ class ExecutionRepository:
                             prescribed_exercise_id, slot_name_snapshot,
                             plan_description_snapshot, plan_goal_snapshot,
                             slot_role_snapshot, progression_model_slug_snapshot,
-                            prescription_comment, previous_exercise_performance_id
+                            load_step_kg_snapshot, prescription_comment,
+                            previous_exercise_performance_id
                         ) VALUES (
                             %s, %s, %s, %s, %s, %s, %s, %s,
-                            %s, %s, %s, %s, %s, %s
+                            %s, %s, %s, %s, %s, %s, %s
                         ) RETURNING id
                         """,
                         (
@@ -958,6 +965,7 @@ class ExecutionRepository:
                             target_slot["goal"],
                             target_slot["role"],
                             target_variant["progression_model_slug"],
+                            target_variant["load_step_kg"],
                             payload.prescription_comment,
                             current_basis_id,
                         ),
@@ -985,6 +993,7 @@ class ExecutionRepository:
                             plan_goal_snapshot = %s,
                             slot_role_snapshot = %s,
                             progression_model_slug_snapshot = %s,
+                            load_step_kg_snapshot = %s,
                             prescription_comment = %s,
                             previous_exercise_performance_id = %s,
                             updated_at = clock_timestamp()
@@ -1000,6 +1009,7 @@ class ExecutionRepository:
                             target_slot["goal"],
                             target_slot["role"],
                             target_variant["progression_model_slug"],
+                            target_variant["load_step_kg"],
                             payload.prescription_comment,
                             current_basis_id,
                             exercise_prescription_id,

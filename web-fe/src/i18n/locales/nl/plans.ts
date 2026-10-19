@@ -43,7 +43,7 @@ export default {
       defaultDay: 'Dag {number}', defaultDayRoot: 'Dag', trainingSession: 'Trainingssessie', copySuffix: ' kopie',
       validation: {
         planName: 'Naam van het plan is verplicht.', dayName: 'Naam van de dag is verplicht.', workoutName: 'Naam van de training is verplicht.',
-        defaultExercise: 'Een gevuld slot moet precies één standaardoefening hebben.', chooseExercise: 'Kies een oefening voordat je opslaat.',
+        defaultExercise: 'Een gevuld slot moet precies één standaardoefening hebben.', chooseExercise: 'Kies een oefening voordat je opslaat.', loadStep: 'De belastingsstap moet groter zijn dan 0, maximaal 1000 kg en hoogstens 2 decimalen hebben.',
         minReps: 'Het minimum aantal herhalingen moet een positief geheel getal zijn.', maxReps: 'Het maximum aantal herhalingen moet minstens gelijk zijn aan het minimum.',
         rir: 'Kies een geldige RIR-waarde.', activeWorkingSets: 'Het bereik van actieve werksets moet binnen de voorgeschreven werksets passen.',
         setReference: 'De referentieset moet bestaan en een relatieve set mag niet naar zichzelf verwijzen.',
@@ -100,6 +100,7 @@ export default {
       default: 'Standaardoefening', fallback: 'Alternatief {number}', fallbackExercise: 'Alternatieve oefening',
       moveUp: 'Alternatief omhoog verplaatsen', moveDown: 'Alternatief omlaag verplaatsen', remove: 'Alternatief verwijderen',
       prescription: 'Setvoorschrift', addSet: '+ Set toevoegen',
+      loadStep: 'Belastingsstap', loadStepPlaceholder: 'bijv. 2,5', loadStepHelp: 'Wordt gebruikt door de −/+-knoppen bij het voorschrijven van deze oefening.',
     },
     selector: {
       triggerTitle: 'Klik om een oefening te kiezen · Ctrl/Cmd+klik om te openen in Atlas', emptyTriggerTitle: 'Klik om een oefening te kiezen',

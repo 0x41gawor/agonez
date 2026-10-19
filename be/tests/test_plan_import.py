@@ -104,6 +104,7 @@ def test_import_schema_accepts_v4_prescription_metadata_and_shared_progression()
     for exercise in exercises:
         exercise["progression_model"] = None  # type: ignore[index]
         exercise["progression_id"] = shared_id  # type: ignore[index]
+        exercise["load_step_kg"] = 2.5  # type: ignore[index]
         exercise["active_working_sets"] = None  # type: ignore[index]
         for item in exercise["sets"]:  # type: ignore[index]
             item["rir"] = "RIR2"
@@ -131,6 +132,7 @@ def test_import_schema_accepts_v4_prescription_metadata_and_shared_progression()
     )
     assert document.days[0].exercises[0].sets[0].role.value == "rampup"
     assert document.days[0].exercises[0].sets[0].load_spec.kind == "relative_to_set"
+    assert document.days[0].exercises[0].load_step_kg == 2.5
 
 
 def test_v2_and_v3_require_progression_field_and_v1_rejects_it() -> None:

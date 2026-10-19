@@ -64,6 +64,28 @@ def test_conflict_comparison_normalizes_decimal_scale_and_timezones() -> None:
     assert MobileExecutionRepository._states_equal(first, same_in_other_offset)
 
 
+async def test_prescription_version_includes_the_load_step_snapshot() -> None:
+    repository = MobileExecutionRepository(None)  # type: ignore[arg-type]
+    captured_query = ""
+
+    async def fetch_all(
+        connection: object,
+        query: str,
+        params: tuple[object, ...] | None = None,
+    ) -> list[dict[str, object]]:
+        nonlocal captured_query
+        del connection, params
+        captured_query = query
+        return [{"exercise_id": 1, "load_step_kg_snapshot": Decimal("2.50")}]
+
+    repository._fetch_all = fetch_all  # type: ignore[method-assign]
+
+    version = await repository._prescription_version(object(), 7)
+
+    assert version.startswith("rx-7-")
+    assert "exercise.load_step_kg_snapshot" in captured_query
+
+
 def test_atlas_peek_reuses_anatomy_slug_mapping_and_normalizes_intensity() -> None:
     peek = MobileExecutionService._atlas_peek(
         {

@@ -96,6 +96,27 @@ def test_progression_model_slug_rejects_non_catalog_shape() -> None:
         PlanDraftUpdate.model_validate(payload)
 
 
+def test_load_step_is_optional_positive_variant_metadata() -> None:
+    payload = draft_payload()
+    variant = payload["days"][0]["workout_unit"]["exercise_slots"][0]["variants"][0]  # type: ignore[index]
+    variant["load_step_kg"] = 2.5
+
+    draft = PlanDraftUpdate.model_validate(payload)
+
+    parsed = draft.days[0].workout_unit.exercise_slots[0].variants[0]  # type: ignore[union-attr]
+    assert parsed.load_step_kg == 2.5
+
+
+@pytest.mark.parametrize("value", [0, -2.5, 2.555, 1000.1])
+def test_load_step_rejects_invalid_values(value: float) -> None:
+    payload = draft_payload()
+    variant = payload["days"][0]["workout_unit"]["exercise_slots"][0]["variants"][0]  # type: ignore[index]
+    variant["load_step_kg"] = value
+
+    with pytest.raises(ValidationError, match="load_step_kg"):
+        PlanDraftUpdate.model_validate(payload)
+
+
 def test_loading_mode_inheritance_and_cycles_are_accepted() -> None:
     payload = draft_payload()
     slot = payload["days"][0]["workout_unit"]["exercise_slots"][0]  # type: ignore[index]

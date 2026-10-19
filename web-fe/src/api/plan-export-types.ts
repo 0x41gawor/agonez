@@ -17,6 +17,7 @@ export interface PlanAIExportExercise {
   slug: string
   progression_model: string | null
   progression_id: string
+  load_step_kg: number | null
   active_working_sets: { min: number; max: number } | null
   sets: PlanAIExportSet[]
 }
@@ -49,6 +50,7 @@ export interface PlanAIImportExercise {
   slug: string
   progression_model?: PlanAIImportProgressionModel | string | null
   progression_id?: string
+  load_step_kg?: number | null
   active_working_sets?: { min: number; max: number } | null
   sets: PlanAIExportSet[]
 }

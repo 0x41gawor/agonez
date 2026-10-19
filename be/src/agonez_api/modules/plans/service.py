@@ -101,6 +101,7 @@ class PlanService:
                     exercise_slug=variant["exercise_slug"],
                     progression_model_slug=variant.get("progression_model_slug"),
                     progression_id=variant["progression_id"],
+                    load_step_kg=variant.get("load_step_kg"),
                     active_working_sets=(
                         {
                             "min": variant["active_working_set_min"],

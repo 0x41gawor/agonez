@@ -224,6 +224,7 @@ BEGIN
                         exercise_id,
                         progression_model_slug,
                         progression_id,
+                        load_step_kg,
                         active_working_set_min,
                         active_working_set_max
                     )
@@ -234,6 +235,7 @@ BEGIN
                         source_variant.exercise_id,
                         source_variant.progression_model_slug,
                         source_variant.progression_id,
+                        source_variant.load_step_kg,
                         source_variant.active_working_set_min,
                         source_variant.active_working_set_max
                     )
@@ -562,6 +564,7 @@ BEGIN
                 variant.id AS variant_id,
                 variant.progression_id,
                 variant.progression_model_slug,
+                variant.load_step_kg,
                 exercise.id AS exercise_id,
                 exercise.slug AS exercise_slug,
                 exercise.name AS exercise_name
@@ -623,6 +626,7 @@ BEGIN
                 plan_goal_snapshot,
                 slot_role_snapshot,
                 progression_model_slug_snapshot,
+                load_step_kg_snapshot,
                 prescription_comment,
                 previous_exercise_performance_id
             )
@@ -639,6 +643,7 @@ BEGIN
                 exercise_row.slot_goal,
                 exercise_row.slot_role,
                 exercise_row.progression_model_slug,
+                exercise_row.load_step_kg,
                 exercise_comment,
                 previous_exercise_performance_id
             )

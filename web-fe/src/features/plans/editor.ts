@@ -89,6 +89,7 @@ function editorVariant(item: ExerciseVariantDraft): EditorVariant {
     ...item,
     clientKey: clientKey('variant', item.id),
     progression_id: item.progression_id || newProgressionId(),
+    load_step_kg: item.load_step_kg ?? null,
     active_working_sets: item.active_working_sets ? { ...item.active_working_sets } : null,
     sets: item.sets.map(editorSet),
   }
@@ -171,6 +172,7 @@ export function toPlanDraftUpdate(editor: PlanEditorState): PlanDraftUpdate {
                 exercise_slug: variant.exercise_slug,
                 progression_model_slug: variant.progression_model_slug,
                 progression_id: variant.progression_id,
+                load_step_kg: variant.load_step_kg,
                 active_working_sets: variant.active_working_sets
                   ? { ...variant.active_working_sets }
                   : null,
@@ -248,6 +250,7 @@ export function createVariant(
     exercise_slug: exerciseSlug,
     progression_model_slug: progressionModelSlug,
     progression_id: newProgressionId(),
+    load_step_kg: null,
     active_working_sets: null,
     sets: [],
   }
@@ -552,6 +555,20 @@ export function validatePlanEditor(editor: PlanEditorState): PlanValidationIssue
         const variantPath = `${slotPath}.variants.${variant.clientKey}`
         if (!variant.exercise_slug) {
           issues.push({ path: variantPath, message: i18n.global.t('plans.editor.validation.chooseExercise') })
+        }
+        if (
+          variant.load_step_kg !== null
+          && (
+            !Number.isFinite(variant.load_step_kg)
+            || variant.load_step_kg <= 0
+            || variant.load_step_kg > 1000
+            || Math.abs(variant.load_step_kg * 100 - Math.round(variant.load_step_kg * 100)) > 1e-8
+          )
+        ) {
+          issues.push({
+            path: `${variantPath}.loadStep`,
+            message: i18n.global.t('plans.editor.validation.loadStep'),
+          })
         }
         const workingCount = variant.sets.filter((item) => item.role !== 'rampup').length
         if (

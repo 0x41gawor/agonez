@@ -39,6 +39,7 @@ class ResolvedExercise:
     exercise_slug: str
     progression_model_slug: str | None
     progression_id: UUID
+    load_step_kg: float | None
     active_working_sets: ActiveWorkingSets | None
     sets: tuple[ResolvedSet, ...]
 

@@ -295,7 +295,7 @@ function parseExercise(
   rejectUnknownKeys(
     source,
     isV4
-      ? ['name', 'slug', 'progression_model', 'progression_id', 'active_working_sets', 'sets']
+      ? ['name', 'slug', 'progression_model', 'progression_id', 'load_step_kg', 'active_working_sets', 'sets']
       : format !== PLAN_IMPORT_LEGACY_FORMAT
       ? ['name', 'slug', 'progression_model', 'sets']
       : ['name', 'slug', 'sets'],
@@ -328,6 +328,21 @@ function parseExercise(
       issues.push(`${path}.progression_id must be a UUID string.`)
     }
     exercise.progression_id = typeof progressionId === 'string' ? progressionId : globalThis.crypto.randomUUID()
+
+    if (source.load_step_kg === null || source.load_step_kg === undefined) {
+      exercise.load_step_kg = null
+    } else if (
+      typeof source.load_step_kg !== 'number'
+      || !Number.isFinite(source.load_step_kg)
+      || source.load_step_kg <= 0
+      || source.load_step_kg > 1000
+      || Math.abs(source.load_step_kg * 100 - Math.round(source.load_step_kg * 100)) > 1e-8
+    ) {
+      issues.push(`${path}.load_step_kg must be a number greater than 0, no more than 1000, and use at most 2 decimal places.`)
+      exercise.load_step_kg = null
+    } else {
+      exercise.load_step_kg = source.load_step_kg
+    }
 
     if (source.active_working_sets === null || source.active_working_sets === undefined) {
       exercise.active_working_sets = null

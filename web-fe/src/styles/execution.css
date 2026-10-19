@@ -191,10 +191,13 @@
 .editor-label { display: block; margin-bottom: 6px; color: var(--text3); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 .editor-action-row { display: flex; gap: 6px; margin-top: 6px; }
 .editor-action-row .button { flex: 1; min-width: 0; font-size: 10.5px; }
+.editor-step-help { margin-top: 7px !important; color: var(--text3); font-size: 10.5px; line-height: 1.4; }
 .editor-suggestion { margin: 12px 18px 0; padding: 9px 11px; border: 1px dashed var(--border2); border-radius: 6px; }
 .editor-suggestion b { float: right; color: var(--text3); font-size: 9px; }
 .editor-suggestion p { clear: both; margin: 4px 0 0; color: var(--text2); font-size: 11px; }
 .editor-set { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.editor-select-all { display: inline-flex; align-items: center; gap: 7px; min-height: 24px; color: var(--text2); font-size: 10.5px; cursor: pointer; }
+.editor-select-all input { margin: 0; }
 .editor-set-line { display: grid; grid-template-columns: 18px 22px 1fr 26px 64px 26px; gap: 5px; align-items: center; }
 .editor-set-line input[type='checkbox'] { accent-color: var(--accent); }
 .set-plan { color: var(--execPrescription); font-size: 10.5px; }

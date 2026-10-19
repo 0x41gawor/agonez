@@ -35,7 +35,7 @@ export default {
       addTrainingDay: 'Trainingstag hinzufügen', defaultDay: 'Tag {number}', defaultDayRoot: 'Tag', trainingSession: 'Trainingseinheit', copySuffix: ' Kopie',
       validation: {
         planName: 'Der Planname ist erforderlich.', dayName: 'Der Tagesname ist erforderlich.', workoutName: 'Der Trainingsname ist erforderlich.',
-        defaultExercise: 'Ein belegter Slot benötigt genau eine Standardübung.', chooseExercise: 'Wähle vor dem Speichern eine Übung.',
+        defaultExercise: 'Ein belegter Slot benötigt genau eine Standardübung.', chooseExercise: 'Wähle vor dem Speichern eine Übung.', loadStep: 'Die Laststufe muss größer als 0, höchstens 1000 kg und auf 2 Dezimalstellen begrenzt sein.',
         minReps: 'Die minimale Wiederholungszahl muss eine positive ganze Zahl sein.', maxReps: 'Das Maximum muss mindestens dem Minimum entsprechen.',
         rir: 'Wähle einen gültigen RIR-Wert.', activeWorkingSets: 'Der Bereich aktiver Arbeitssätze muss in die vorgeschriebenen Arbeitssätze passen.',
         setReference: 'Der referenzierte Satz muss existieren; ein relativer Satz darf nicht auf sich selbst verweisen.',
@@ -89,6 +89,7 @@ export default {
     variant: {
       default: 'Standardübung', fallback: 'Ersatz {number}', fallbackExercise: 'Ersatzübung', moveUp: 'Ersatz nach oben',
       moveDown: 'Ersatz nach unten', remove: 'Ersatz entfernen', prescription: 'Satzvorgabe', addSet: '+ Satz hinzufügen',
+      loadStep: 'Laststufe', loadStepPlaceholder: 'z. B. 2,5', loadStepHelp: 'Wird von den −/+-Tasten beim Verordnen dieser Übung verwendet.',
     },
     selector: {
       triggerTitle: 'Klicken zum Auswählen · Strg/Cmd+Klick zum Öffnen im Atlas', emptyTriggerTitle: 'Klicken, um eine Übung auszuwählen',

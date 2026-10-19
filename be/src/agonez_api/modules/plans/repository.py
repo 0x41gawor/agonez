@@ -184,9 +184,10 @@ class PlanRepository:
                                 (
                                     slot_id, ordinal, variant_type, exercise_id,
                                     progression_model_slug, progression_id,
+                                    load_step_kg,
                                     active_working_set_min, active_working_set_max
                                 )
-                            VALUES (%s, 0, 'DEFAULT', %s, %s, %s, %s, %s)
+                            VALUES (%s, 0, 'DEFAULT', %s, %s, %s, %s, %s, %s)
                             RETURNING id
                             """,
                             (
@@ -196,6 +197,7 @@ class PlanRepository:
                                 if exercise.progression_model is not None
                                 else None,
                                 exercise.progression_id,
+                                exercise.load_step_kg,
                                 exercise.active_working_sets.min
                                 if exercise.active_working_sets is not None
                                 else None,
@@ -395,9 +397,10 @@ class PlanRepository:
                     (
                         slot_id, ordinal, variant_type, exercise_id,
                         progression_model_slug, progression_id,
+                        load_step_kg,
                         active_working_set_min, active_working_set_max
                     )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 (
@@ -407,6 +410,7 @@ class PlanRepository:
                     variant["exercise_id"],
                     variant.get("progression_model_slug"),
                     copied_progression_id,
+                    variant.get("load_step_kg"),
                     variant.get("active_working_set_min"),
                     variant.get("active_working_set_max"),
                 ),
@@ -995,6 +999,7 @@ class PlanRepository:
             exercise_id,
             variant.progression_model_slug,
             variant.progression_id,
+            variant.load_step_kg,
             variant.active_working_sets.min if variant.active_working_sets else None,
             variant.active_working_sets.max if variant.active_working_sets else None,
         )
@@ -1006,9 +1011,10 @@ class PlanRepository:
                     (
                         slot_id, ordinal, variant_type, exercise_id,
                         progression_model_slug, progression_id,
+                        load_step_kg,
                         active_working_set_min, active_working_set_max
                     )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 values,
@@ -1020,6 +1026,7 @@ class PlanRepository:
             UPDATE plans.exercise_variants
             SET slot_id = %s, ordinal = %s, variant_type = %s, exercise_id = %s,
                 progression_model_slug = %s, progression_id = %s,
+                load_step_kg = %s,
                 active_working_set_min = %s, active_working_set_max = %s
             WHERE id = %s
             """,
@@ -1152,9 +1159,15 @@ class PlanRepository:
                    variant.variant_type::text AS variant_type,
                    variant.exercise_id, exercise.slug AS exercise_slug,
                    variant.progression_model_slug, variant.progression_id,
+                   COALESCE(
+                       variant.load_step_kg,
+                       rs_default.default_load_step_kg
+                   ) AS load_step_kg,
                    variant.active_working_set_min, variant.active_working_set_max
             FROM plans.exercise_variants AS variant
             JOIN core.exercises AS exercise ON exercise.id = variant.exercise_id
+            JOIN core.resistance_source_load_defaults AS rs_default
+              ON rs_default.resistance_source = exercise.resistance_source
             JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id
             JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
             JOIN plans.day_prescriptions AS day ON day.id = unit.day_id

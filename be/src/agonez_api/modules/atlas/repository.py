@@ -63,6 +63,7 @@ class AtlasRepository:
                 e.target_category::text AS target_category,
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
+                rs_default.default_load_step_kg,
                 e.execution_pattern::text AS execution_pattern,
                 e.recommended_rep_profile,
                 e.created_at,
@@ -84,6 +85,8 @@ class AtlasRepository:
                 AND et.locale = %s
                 AND et.status = 'published'
             LEFT JOIN engine.exercises AS eng ON eng.slug = e.slug
+            JOIN core.resistance_source_load_defaults AS rs_default
+                ON rs_default.resistance_source = e.resistance_source
             {where_sql}
             ORDER BY {sort_expression} {direction} NULLS LAST, e.slug ASC
             LIMIT %s OFFSET %s
@@ -149,6 +152,7 @@ class AtlasRepository:
                 e.target_category::text AS target_category,
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
+                rs_default.default_load_step_kg,
                 e.execution_pattern::text AS execution_pattern,
                 e.recommended_rep_profile,
                 e.created_at,
@@ -171,6 +175,8 @@ class AtlasRepository:
                 AND et.locale = %s
                 AND et.status = 'published'
             LEFT JOIN engine.exercises AS eng ON eng.slug = e.slug
+            JOIN core.resistance_source_load_defaults AS rs_default
+                ON rs_default.resistance_source = e.resistance_source
             WHERE e.slug = %s
             """,
             (locale, slug),
@@ -186,6 +192,7 @@ class AtlasRepository:
                 e.target_category::text AS target_category,
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
+                rs_default.default_load_step_kg,
                 eng.systemic_propulsive_fcsa_demand,
                 e.recommended_rep_profile
             FROM core.exercises AS e
@@ -194,6 +201,8 @@ class AtlasRepository:
                 AND et.locale = %s
                 AND et.status = 'published'
             LEFT JOIN engine.exercises AS eng ON eng.slug = e.slug
+            JOIN core.resistance_source_load_defaults AS rs_default
+                ON rs_default.resistance_source = e.resistance_source
             ORDER BY LOWER(COALESCE(et.name_full, e.name_full)) ASC, e.slug ASC
             """,
             (locale,),

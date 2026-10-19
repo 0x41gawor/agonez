@@ -56,7 +56,7 @@ export default {
       startFrom: 'Start from', previousPrescription: 'MC{mc} prescription', previousPerformance: 'MC{mc} performance', allMinus: 'all −{step}', allPlus: 'all +{step}',
       suggestion: 'Suggestion', suggestionNone: 'Progression model · none', suggestionBody: 'No progression model is assigned to this slot.',
       fromPlan: 'From plan', load: 'Load kg', last: 'last {load}', comment: 'Set comment (optional)', selectSet: 'Select set {set}', minus: 'Set {set}: minus {step} kg', plus: 'Set {set}: plus {step} kg',
-      apply: 'Apply', selected: 'to {count} selected', prescriptionComment: 'Prescription comment · for this exposure only', commentPlaceholder: 'What should the athlete focus on next time?',
+      apply: 'Apply', selected: 'to {count} selected', selectAll: 'Select all', clearAll: 'Clear all', prescriptionComment: 'Prescription comment · for this exposure only', commentPlaceholder: 'What should the athlete focus on next time?',
       planOwned: 'Set count, rep range and RIR come from plan revision r{revision}. Change them in Plan Creator for future microcycles.', planOwnedWeek: 'Set count, rep range and RIR come from plan revision r{revision}. Change them in Plan Creator for future weeks.',
       discard: 'Discard', save: 'Save', saveNext: 'Save & next exercise', reload: 'Reload trace',
       invalid: 'Set {set}: enter a valid load from 0 to 1000 kg with at most 2 decimals.', fix: 'Fix invalid loads before saving.', lockedHelp: 'Review the history while waiting; the backend will unlock the editor when the readiness invariant is satisfied.',

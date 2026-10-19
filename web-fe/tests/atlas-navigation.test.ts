@@ -15,6 +15,7 @@ const exercise: ExerciseListItem = {
   target_category: 'Chest_Sternal',
   mechanics_tier: 'Heavy_Compound',
   resistance_source: 'Barbell',
+  default_load_step_kg: 2.5,
   execution_pattern: 'Bilateral',
   load_capacity: 72,
   systemic_propulsive_fcsa_demand: 175.61,

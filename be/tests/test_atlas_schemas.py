@@ -10,6 +10,7 @@ def exercise_fields() -> dict[str, object]:
         "target_category": "Other",
         "mechanics_tier": "Accessory",
         "resistance_source": "Cable",
+        "default_load_step_kg": 2.5,
         "execution_pattern": "Bilateral",
         "load_capacity": None,
         "systemic_propulsive_fcsa_demand": None,

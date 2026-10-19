@@ -49,8 +49,9 @@ the existing database enum value `additional`; the API deliberately renders that
 `added`, matching the mobile contract without changing desktop semantics.
 
 `prescription_version` is a deterministic SHA-256 digest of the ordered relational
-prescription tree, not the timestamp of one row. Start locks the plan run, rechecks the
-version, and freezes the current prescription by linking the draft performance to it. A stale
+prescription tree, including each exercise's effective load-step snapshot, not the timestamp
+of one row. Start locks the plan run, rechecks the version, and freezes the current
+prescription by linking the draft performance to it. A stale
 start returns `409 prescription_changed` with the fresh prescription embedded at
 `error.details.prescription`.
 

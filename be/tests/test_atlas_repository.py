@@ -63,6 +63,7 @@ async def test_exercise_list_metrics_and_sorting_are_sourced_from_engine() -> No
     assert "e.created_at" in list_query
     assert "e.updated_at" in list_query
     assert "e.recommended_rep_profile" in list_query
+    assert "rs_default.default_load_step_kg" in list_query
 
 
 async def test_exercise_detail_propulsive_fields_are_sourced_from_engine() -> None:
@@ -90,6 +91,7 @@ async def test_exercise_detail_propulsive_fields_are_sourced_from_engine() -> No
     assert "e.created_at" in captured_query
     assert "e.updated_at" in captured_query
     assert "e.recommended_rep_profile" in captured_query
+    assert "rs_default.default_load_step_kg" in captured_query
     assert "e.load_capacity," not in captured_query
     assert "e.systemic_propulsive_fcsa_demand" not in captured_query
     assert "e.propulsive_fcsa_contribution_vector" not in captured_query
@@ -118,6 +120,8 @@ async def test_exercise_catalog_is_complete_lightweight_and_sorted() -> None:
     assert "e.mechanics_tier::text AS mechanics_tier" in captured_query
     assert "eng.systemic_propulsive_fcsa_demand" in captured_query
     assert "e.recommended_rep_profile" in captured_query
+    assert "rs_default.default_load_step_kg" in captured_query
+    assert "core.resistance_source_load_defaults" in captured_query
     assert "LEFT JOIN engine.exercises AS eng" in captured_query
     assert "ORDER BY LOWER(COALESCE(et.name_full, e.name_full)) ASC, e.slug ASC" in captured_query
     assert "et.status = 'published'" in captured_query

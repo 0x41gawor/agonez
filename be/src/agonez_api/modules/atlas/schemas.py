@@ -40,6 +40,7 @@ class ExerciseListItem(APIModel):
     target_category: str
     mechanics_tier: str
     resistance_source: str
+    default_load_step_kg: float = Field(gt=0, le=1000)
     execution_pattern: str
     load_capacity: float | None
     systemic_propulsive_fcsa_demand: float | None
@@ -72,6 +73,7 @@ class ExerciseCatalogItem(APIModel):
     target_category: str
     mechanics_tier: str
     resistance_source: str
+    default_load_step_kg: float = Field(gt=0, le=1000)
     systemic_propulsive_fcsa_demand: float | None
     recommended_rep_profile: RecommendedRepProfile
     image_url: str | None
@@ -98,6 +100,7 @@ class ExerciseDetail(APIModel):
     target_category: str
     mechanics_tier: str
     resistance_source: str
+    default_load_step_kg: float = Field(gt=0, le=1000)
     execution_pattern: str
     load_capacity: float | None
     systemic_propulsive_fcsa_demand: float | None

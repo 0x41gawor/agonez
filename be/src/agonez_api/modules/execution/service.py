@@ -1163,7 +1163,7 @@ class ExecutionService:
                     "sets": [self._plan_set(item) for item in structure["sets"]],
                     "plan_comment": structure["slot"]["description"],
                     "progression_model": structure["variant"]["progression_model_slug"],
-                    "load_step_kg": None,
+                    "load_step_kg": numeric(structure["variant"]["load_step_kg"]),
                 },
                 "continuity": {
                     "first_microcycle_ordinal": first_ordinal,

@@ -43,7 +43,7 @@ export default {
       defaultDay: 'Dag {number}', defaultDayRoot: 'Dag', trainingSession: 'Träningspass', copySuffix: ' kopia',
       validation: {
         planName: 'Planens namn krävs.', dayName: 'Dagens namn krävs.', workoutName: 'Passets namn krävs.',
-        defaultExercise: 'Ett ifyllt övningsblock måste ha exakt en standardövning.', chooseExercise: 'Välj en övning innan du sparar.',
+        defaultExercise: 'Ett ifyllt övningsblock måste ha exakt en standardövning.', chooseExercise: 'Välj en övning innan du sparar.', loadStep: 'Belastningssteget måste vara större än 0, högst 1000 kg och ha högst 2 decimaler.',
         minReps: 'Minsta antal reps måste vara ett positivt heltal.', maxReps: 'Högsta antal reps måste vara minst lika med minsta antalet.',
         rir: 'Välj ett giltigt RIR-värde.', activeWorkingSets: 'Intervallet för aktiva arbetsset måste rymmas inom de föreskrivna arbetsseten.',
         setReference: 'Det refererade setet måste finnas och ett relativt set får inte referera till sig självt.',
@@ -100,6 +100,7 @@ export default {
       default: 'Standardövning', fallback: 'Alternativ {number}', fallbackExercise: 'Alternativ övning',
       moveUp: 'Flytta alternativet uppåt', moveDown: 'Flytta alternativet nedåt', remove: 'Ta bort alternativ',
       prescription: 'Setupplägg', addSet: '+ Lägg till set',
+      loadStep: 'Belastningssteg', loadStepPlaceholder: 't.ex. 2,5', loadStepHelp: 'Används av −/+-knapparna när övningen ordineras.',
     },
     selector: {
       triggerTitle: 'Klicka för att välja en övning · Ctrl/Cmd+klick för att öppna i Atlas', emptyTriggerTitle: 'Klicka för att välja en övning',

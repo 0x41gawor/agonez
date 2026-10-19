@@ -43,7 +43,7 @@ export default {
       defaultDay: 'Giorno {number}', defaultDayRoot: 'Giorno', trainingSession: 'Sessione di allenamento', copySuffix: ' copia',
       validation: {
         planName: 'Il nome del piano è obbligatorio.', dayName: 'Il nome del giorno è obbligatorio.', workoutName: "Il nome dell'allenamento è obbligatorio.",
-        defaultExercise: 'Uno slot compilato deve avere esattamente un esercizio predefinito.', chooseExercise: 'Scegli un esercizio prima di salvare.',
+        defaultExercise: 'Uno slot compilato deve avere esattamente un esercizio predefinito.', chooseExercise: 'Scegli un esercizio prima di salvare.', loadStep: "L'incremento del carico deve essere maggiore di 0, non superare 1000 kg e avere al massimo 2 decimali.",
         minReps: 'Le ripetizioni minime devono essere un numero intero positivo.', maxReps: 'Le ripetizioni massime devono essere almeno pari al minimo.',
         rir: 'Scegli un valore RIR valido.', activeWorkingSets: 'L’intervallo delle serie di lavoro attive deve rientrare nelle serie di lavoro prescritte.',
         setReference: 'La serie di riferimento deve esistere e una serie relativa non può fare riferimento a se stessa.',
@@ -100,6 +100,7 @@ export default {
       default: 'Esercizio predefinito', fallback: 'Alternativa {number}', fallbackExercise: 'Esercizio alternativo',
       moveUp: 'Sposta alternativa su', moveDown: 'Sposta alternativa giù', remove: 'Rimuovi alternativa',
       prescription: 'Prescrizione delle serie', addSet: '+ Aggiungi serie',
+      loadStep: 'Incremento del carico', loadStepPlaceholder: 'es. 2,5', loadStepHelp: 'Usato dai pulsanti −/+ quando si prescrive questo esercizio.',
     },
     selector: {
       triggerTitle: 'Clicca per scegliere un esercizio · Ctrl/Cmd+clic per aprirlo in Atlas', emptyTriggerTitle: 'Clicca per scegliere un esercizio',

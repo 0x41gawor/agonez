@@ -137,6 +137,7 @@ def build_plan_ai_export(
                         slug=selected.exercise_slug,
                         progression_model=selected.progression_model_slug,
                         progression_id=selected.progression_id,
+                        load_step_kg=selected.load_step_kg,
                         active_working_sets=selected.active_working_sets,
                         sets=[
                             PlanAIExportSet(

@@ -85,7 +85,7 @@ export default {
       defaultDay: 'Gün {number}', defaultDayRoot: 'Gün', trainingSession: 'Antrenman seansı', copySuffix: ' kopyası',
       validation: {
         planName: 'Plan adı gereklidir.', dayName: 'Gün adı gereklidir.', workoutName: 'Antrenman adı gereklidir.',
-        defaultExercise: 'Doldurulmuş bir slotta tam olarak bir varsayılan egzersiz bulunmalıdır.', chooseExercise: 'Kaydetmeden önce bir egzersiz seçin.',
+        defaultExercise: 'Doldurulmuş bir slotta tam olarak bir varsayılan egzersiz bulunmalıdır.', chooseExercise: 'Kaydetmeden önce bir egzersiz seçin.', loadStep: 'Yük adımı 0’dan büyük, en fazla 1000 kg ve en çok 2 ondalık basamaklı olmalıdır.',
         minReps: 'Minimum tekrar pozitif bir tam sayı olmalıdır.', maxReps: 'Maksimum tekrar minimumdan az olamaz.',
         rir: 'Geçerli bir RIR değeri seçin.', activeWorkingSets: 'Aktif çalışma seti aralığı, tanımlanan çalışma setlerinin içine sığmalıdır.',
         setReference: 'Başvurulan set mevcut olmalı ve göreli bir set kendisine başvurmamalıdır.',
@@ -218,6 +218,7 @@ export default {
       remove: 'Alternatifi kaldır',
       prescription: 'Set reçetesi',
       addSet: '+ Set ekle',
+      loadStep: 'Yük adımı', loadStepPlaceholder: 'örn. 2,5', loadStepHelp: 'Bu egzersiz reçetelenirken −/+ düğmeleri tarafından kullanılır.',
     },
     selector: {
       triggerTitle: 'Egzersiz seçmek için tıklayın · Atlas’ta açmak için Ctrl/Cmd+tıklayın',

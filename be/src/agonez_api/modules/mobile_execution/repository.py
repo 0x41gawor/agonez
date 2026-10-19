@@ -254,11 +254,17 @@ class MobileExecutionRepository:
                    exercise.plan_goal_snapshot,
                    lower(exercise.slot_role_snapshot::text) AS slot_role,
                    exercise.progression_model_slug_snapshot,
+                   COALESCE(
+                       exercise.load_step_kg_snapshot,
+                       rs_default.default_load_step_kg
+                   ) AS load_step_kg,
                    exercise.prescription_comment,
                    core.slug, COALESCE(translation.name, core.name) AS name,
                    COALESCE(translation.name_full, core.name_full) AS full_name
             FROM exec.exercise_unit_prescriptions AS exercise
             JOIN core.exercises AS core ON core.id = exercise.prescribed_exercise_id
+            JOIN core.resistance_source_load_defaults AS rs_default
+              ON rs_default.resistance_source = core.resistance_source
             LEFT JOIN core.exercise_translations AS translation
               ON translation.exercise_id = core.id
              AND translation.locale = %s AND translation.status = 'published'
@@ -1954,7 +1960,8 @@ class MobileExecutionRepository:
             SELECT workout.id AS workout_id, workout.updated_at AS workout_updated_at,
                    exercise.id AS exercise_id, exercise.updated_at AS exercise_updated_at,
                    exercise.ordinal AS exercise_ordinal,
-                   exercise.prescribed_exercise_id, exercise.prescription_comment,
+                   exercise.prescribed_exercise_id, exercise.load_step_kg_snapshot,
+                   exercise.prescription_comment,
                    sets.id AS set_id, sets.ordinal AS set_ordinal,
                    sets.prescribed_load_kg, sets.rep_min, sets.rep_max,
                    sets.target_rir::text AS target_rir, sets.prescription_comment AS set_comment

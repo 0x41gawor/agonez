@@ -10,6 +10,7 @@ from agonez_api.modules.plans.schemas import (
     APIModel,
     ExerciseSlotRole,
     LoadSpec,
+    LoadStepKg,
     RepRange,
     RIRPrescription,
     SetRole,
@@ -57,6 +58,7 @@ class PlanAIExportExercise(APIModel):
     slug: str
     progression_model: ProgressionModelSlug | None
     progression_id: UUID
+    load_step_kg: LoadStepKg | None = None
     active_working_sets: ActiveWorkingSets | None
     sets: list[PlanAIExportSet]
 
@@ -114,6 +116,7 @@ class PlanAIImportExercise(APIModel):
     slug: str = Field(min_length=1, max_length=200, pattern=r"^[a-z0-9_]+$")
     progression_model: PlanAIImportProgressionModel | ProgressionModelSlug | None = None
     progression_id: UUID = Field(default_factory=uuid4)
+    load_step_kg: LoadStepKg | None = None
     active_working_sets: ActiveWorkingSets | None = None
     sets: list[PlanAIImportSet] = Field(max_length=100)
 

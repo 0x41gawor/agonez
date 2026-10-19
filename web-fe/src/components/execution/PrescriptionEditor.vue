@@ -9,7 +9,7 @@ import { executionDate, loadValue, parseLoad } from '@/features/execution/format
 const props = defineProps<{ trace: ExerciseTraceResponse; draft: PrescriptionDraft | undefined; saving: boolean; errorCode: string | null }>()
 const emit = defineEmits<{
   load: [index: number, value: string]; comment: [index: number, value: string]; prescriptionComment: [value: string]; selected: [index: number, value: boolean];
-  replaceLoads: [values: Array<number | null>]; stepAll: [direction: number]; apply: [value: string]; discard: []; save: []; saveNext: []; reload: [];
+  selectedAll: [value: boolean]; replaceLoads: [values: Array<number | null>]; stepAll: [direction: number]; apply: [value: string]; discard: []; save: []; saveNext: []; reload: [];
 }>()
 const cycle = useExecutionCycleLabels()
 const bulk = ref('')
@@ -17,6 +17,8 @@ const next = computed(() => props.trace.next)
 const editable = computed(() => next.value?.state === 'editable' && !!next.value.target && !!props.draft)
 const invalid = computed(() => props.draft?.loads.some((load) => parseLoad(load) === undefined) ?? false)
 const selectedCount = computed(() => props.draft?.selected.filter(Boolean).length ?? 0)
+const allSelected = computed(() => !!props.draft?.selected.length && props.draft.selected.every(Boolean))
+const someSelected = computed(() => selectedCount.value > 0 && !allSelected.value)
 const status = computed(() => props.saving ? 'saving' : props.draft?.dirty ? 'dirty' : next.value?.prescription ? 'saved' : editable.value ? 'clean' : 'locked')
 const errorKey = computed(() => props.errorCode && ['stale_basis', 'version_conflict', 'prescription_blocked', 'session_locked', 'not_next_session', 'set_count_mismatch', 'invalid_load'].includes(props.errorCode) ? props.errorCode : 'genericError')
 const basisExposure = computed(() => props.trace.exposures.find((exposure) => exposure.microcycle.ordinal === next.value?.basis?.microcycle_ordinal))
@@ -50,9 +52,19 @@ function lastSet(index: number): string {
         <span class="editor-label mono">{{ $t('execution.editor.startFrom') }}</span>
         <div class="editor-action-row"><button class="button" type="button" :disabled="!next.defaults.from_previous_prescription.some((value) => value != null)" @click="emit('replaceLoads', next.defaults.from_previous_prescription)">{{ cycle.text('execution.editor.previousPrescription', next.basis?.microcycle_ordinal ?? '—') }}</button><button class="button" type="button" :disabled="!next.defaults.from_previous_performance.some((value) => value != null)" @click="emit('replaceLoads', next.defaults.from_previous_performance)">{{ cycle.text('execution.editor.previousPerformance', next.basis?.microcycle_ordinal ?? '—') }}</button></div>
         <div class="editor-action-row"><button class="button" type="button" :disabled="trace.trace.current_plan.load_step_kg == null" :title="trace.trace.current_plan.load_step_kg == null ? $t('execution.editor.noLoadStep') : undefined" @click="emit('stepAll', -1)">{{ $t('execution.editor.allMinus', { step: trace.trace.current_plan.load_step_kg ?? '—' }) }}</button><button class="button" type="button" :disabled="trace.trace.current_plan.load_step_kg == null" :title="trace.trace.current_plan.load_step_kg == null ? $t('execution.editor.noLoadStep') : undefined" @click="emit('stepAll', 1)">{{ $t('execution.editor.allPlus', { step: trace.trace.current_plan.load_step_kg ?? '—' }) }}</button></div>
+        <p v-if="trace.trace.current_plan.load_step_kg == null" class="editor-step-help">{{ $t('execution.editor.noLoadStep') }}</p>
       </section>
       <section class="editor-suggestion"><span class="editor-label mono">{{ $t('execution.editor.suggestion') }}</span><b class="mono">{{ $t('execution.editor.suggestionNone') }}</b><p>{{ $t('execution.editor.suggestionBody') }}</p></section>
       <section class="editor-section editor-sets">
+        <label class="editor-select-all">
+          <input
+            type="checkbox"
+            :checked="allSelected"
+            :indeterminate="someSelected"
+            @change="emit('selectedAll', ($event.target as HTMLInputElement).checked)"
+          />
+          <span>{{ $t(allSelected ? 'execution.editor.clearAll' : 'execution.editor.selectAll') }}</span>
+        </label>
         <div v-for="(set, index) in next.plan_sets" :key="set.ordinal" class="editor-set">
           <div class="editor-set-line"><input :id="`select-set-${set.ordinal}`" type="checkbox" :checked="draft.selected[index]" :aria-label="$t('execution.editor.selectSet', { set: index + 1 })" @change="emit('selected', index, ($event.target as HTMLInputElement).checked)" /><label :for="`load-set-${set.ordinal}`" class="mono">S{{ index + 1 }}</label><span class="set-plan mono">{{ set.role }} · {{ set.rep_min }}–{{ set.rep_max }} @{{ set.target_rir ?? '—' }}</span><button type="button" :disabled="trace.trace.current_plan.load_step_kg == null" :aria-label="$t('execution.editor.minus', { set: index + 1, step: trace.trace.current_plan.load_step_kg ?? '—' })" @click="emit('load', index, String(Math.max(0, (parseLoad(draft.loads[index] ?? '') ?? 0) - (trace.trace.current_plan.load_step_kg ?? 0))))">−</button><input :id="`load-set-${set.ordinal}`" class="exec-input load-input mono" :class="{ invalid: parseLoad(draft.loads[index] ?? '') === undefined }" inputmode="decimal" :value="draft.loads[index]" @input="emit('load', index, ($event.target as HTMLInputElement).value)" /><button type="button" :disabled="trace.trace.current_plan.load_step_kg == null" :aria-label="$t('execution.editor.plus', { set: index + 1, step: trace.trace.current_plan.load_step_kg ?? '—' })" @click="emit('load', index, String((parseLoad(draft.loads[index] ?? '') ?? 0) + (trace.trace.current_plan.load_step_kg ?? 0)))">+</button></div>
           <input class="exec-input set-comment-input" :value="draft.comments[index]" :placeholder="$t('execution.editor.comment')" @input="emit('comment', index, ($event.target as HTMLInputElement).value)" />

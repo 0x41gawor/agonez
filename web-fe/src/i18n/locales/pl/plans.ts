@@ -43,7 +43,7 @@ export default {
       defaultDay: 'Dzień {number}', defaultDayRoot: 'Dzień', trainingSession: 'Sesja treningowa', copySuffix: ' kopia',
       validation: {
         planName: 'Nazwa planu jest wymagana.', dayName: 'Nazwa dnia jest wymagana.', workoutName: 'Nazwa treningu jest wymagana.',
-        defaultExercise: 'Wypełniony slot musi mieć dokładnie jedno ćwiczenie domyślne.', chooseExercise: 'Wybierz ćwiczenie przed zapisaniem.',
+        defaultExercise: 'Wypełniony slot musi mieć dokładnie jedno ćwiczenie domyślne.', chooseExercise: 'Wybierz ćwiczenie przed zapisaniem.', loadStep: 'Krok obciążenia musi być większy od 0, nie większy niż 1000 kg i mieć najwyżej 2 miejsca po przecinku.',
         minReps: 'Minimalna liczba powtórzeń musi być dodatnią liczbą całkowitą.', maxReps: 'Maksymalna liczba powtórzeń nie może być mniejsza od minimalnej.',
         rir: 'Wybierz prawidłową wartość RIR.', activeWorkingSets: 'Zakres aktywnych serii roboczych musi mieścić się w liczbie zapisanych serii roboczych.',
         setReference: 'Seria odniesienia musi istnieć, a seria względna nie może wskazywać samej siebie.',
@@ -100,6 +100,7 @@ export default {
       default: 'Ćwiczenie domyślne', fallback: 'Zamiennik {number}', fallbackExercise: 'Ćwiczenie zastępcze',
       moveUp: 'Przesuń zamiennik w górę', moveDown: 'Przesuń zamiennik w dół', remove: 'Usuń zamiennik',
       prescription: 'Zalecenie serii', addSet: '+ Dodaj serię',
+      loadStep: 'Krok obciążenia', loadStepPlaceholder: 'np. 2,5', loadStepHelp: 'Używany przez przyciski −/+ podczas układania zalecenia dla tego ćwiczenia.',
     },
     selector: {
       triggerTitle: 'Kliknij, aby wybrać ćwiczenie · Ctrl/Cmd+klik, aby otworzyć w Atlasie', emptyTriggerTitle: 'Kliknij, aby wybrać ćwiczenie',
