@@ -1,4 +1,5 @@
 import 'package:agonez/src/api/atlas_models.dart';
+import 'package:agonez/src/atlas/widgets/exercise_image.dart';
 import 'package:agonez/src/data/mobile_repository.dart';
 import 'package:agonez/src/design/design.dart';
 import 'package:agonez/src/features/atlas/atlas_data_source.dart';
@@ -36,6 +37,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Barbell Bench Press'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is ExerciseImage && widget.slug == 'barbell_bench_press',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Pause on the chest.'), findsOneWidget);
     expect(find.text('Setup'), findsOneWidget);
     expect(find.textContaining('Offline'), findsOneWidget);

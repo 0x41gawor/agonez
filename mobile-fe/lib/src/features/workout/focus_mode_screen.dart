@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../atlas/widgets/anatomy_heatmap.dart';
+import '../../atlas/widgets/exercise_image.dart';
 import '../../design/design.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/hold_to_confirm.dart';
@@ -2607,6 +2608,11 @@ class _AtlasQuickPeekSheet extends StatelessWidget {
               peek.exercise.fullName!,
               style: AgonezTypography.of(context).bodyMedium,
             ),
+          ExerciseImage(
+            slug: peek.exercise.slug,
+            semanticLabel: exercise.name,
+            margin: const EdgeInsets.only(top: 12),
+          ),
           const SizedBox(height: 14),
           for (final block in technique)
             if ((block.$2 ?? '').isNotEmpty)

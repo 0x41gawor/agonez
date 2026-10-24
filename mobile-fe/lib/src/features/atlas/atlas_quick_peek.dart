@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../api/atlas_models.dart';
 import '../../atlas/widgets/anatomy_heatmap.dart';
+import '../../atlas/widgets/exercise_image.dart';
 import '../../data/mobile_repository.dart';
 import '../../design/design.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -234,6 +235,11 @@ class _PeekBody extends StatelessWidget {
                         .toList(growable: false),
                   ),
                 ],
+                ExerciseImage(
+                  slug: peek.exercise.slug,
+                  semanticLabel: peek.exercise.name,
+                  margin: const EdgeInsets.only(top: 16),
+                ),
                 const SizedBox(height: 18),
                 for (final item in tldr) ...[
                   _TechniqueCue(label: item.$1, body: item.$2!),

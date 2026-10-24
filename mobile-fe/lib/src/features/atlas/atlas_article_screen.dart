@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../api/atlas_models.dart';
 import '../../atlas/widgets/anatomy_heatmap.dart';
+import '../../atlas/widgets/exercise_image.dart';
 import '../../data/mobile_repository.dart';
 import '../../design/design.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -430,6 +431,12 @@ class _ArticleHero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ExerciseImage(
+            slug: detail.slug,
+            semanticLabel: detail.name,
+            height: 280,
+            margin: const EdgeInsets.only(bottom: 18),
+          ),
           Row(
             children: [
               Expanded(
