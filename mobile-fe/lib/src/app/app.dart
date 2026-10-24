@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../design/design.dart';
@@ -43,16 +44,35 @@ class _AgonezAppState extends State<AgonezApp> with WidgetsBindingObserver {
       builder: (context, _) => MaterialApp.router(
         title: 'Agonez',
         debugShowCheckedModeBanner: false,
-        theme: AgonezTheme.dark,
+        theme: AgonezTheme.light,
         darkTheme: AgonezTheme.dark,
-        themeMode: ThemeMode.dark,
+        themeMode: widget.runtime.settings.themeMode,
         locale: widget.runtime.settings.locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         routerConfig: widget.router,
+        builder: _withSystemUiStyle,
       ),
     );
   }
+}
+
+Widget _withSystemUiStyle(BuildContext context, Widget? child) {
+  final light = Theme.of(context).brightness == Brightness.light;
+  final colors = context.agonezColors;
+  return AnnotatedRegion<SystemUiOverlayStyle>(
+    value: SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: light ? Brightness.dark : Brightness.light,
+      statusBarBrightness: light ? Brightness.light : Brightness.dark,
+      systemNavigationBarColor: colors.ground,
+      systemNavigationBarDividerColor: colors.lineSubtle,
+      systemNavigationBarIconBrightness: light
+          ? Brightness.dark
+          : Brightness.light,
+    ),
+    child: child ?? const SizedBox.shrink(),
+  );
 }
 
 class AppStartupError extends StatelessWidget {
@@ -63,9 +83,12 @@ class AppStartupError extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
-    theme: AgonezTheme.dark,
+    theme: AgonezTheme.light,
+    darkTheme: AgonezTheme.dark,
+    themeMode: ThemeMode.system,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
+    builder: _withSystemUiStyle,
     home: Builder(
       builder: (context) {
         final strings = AppLocalizations.of(context);

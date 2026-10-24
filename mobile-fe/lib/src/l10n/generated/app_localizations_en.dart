@@ -988,6 +988,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get youTheme => 'Theme';
 
   @override
+  String get youThemeSystem => 'System';
+
+  @override
+  String get youThemeLight => 'Light';
+
+  @override
   String get youThemeDark => 'Dark';
 
   @override

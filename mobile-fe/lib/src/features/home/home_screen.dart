@@ -747,7 +747,7 @@ class _RecentRow extends StatelessWidget {
       ),
       trailing: Text(
         '${item.performedSets}/${item.prescribedSets}',
-        style: AgonezTypography.monoSmall,
+        style: AgonezTypography.of(context).labelSmall,
       ),
     );
   }

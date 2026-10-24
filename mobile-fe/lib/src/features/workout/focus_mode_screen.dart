@@ -813,7 +813,7 @@ class _FocusTopBar extends StatelessWidget {
                   ),
                   Text(
                     l10n.workoutElapsed(_formatDuration(elapsed)),
-                    style: AgonezTypography.monoSmall,
+                    style: AgonezTypography.of(context).labelSmall,
                   ),
                 ],
               ),
@@ -988,7 +988,7 @@ class _ExerciseHeader extends StatelessWidget {
                   Expanded(
                     child: Text(
                       exercise.name,
-                      style: AgonezTypography.exerciseTitle,
+                      style: AgonezTypography.of(context).headlineLarge,
                     ),
                   ),
                   if (onTap != null)
@@ -1034,7 +1034,10 @@ class _ExerciseHeader extends StatelessWidget {
           ),
         ] else if (exercise.variantLabel != null) ...[
           const SizedBox(height: 3),
-          Text(exercise.variantLabel!, style: AgonezTypography.caption),
+          Text(
+            exercise.variantLabel!,
+            style: AgonezTypography.of(context).bodySmall,
+          ),
         ],
       ],
     );
@@ -1053,7 +1056,7 @@ class _LineageValue extends StatelessWidget {
     children: [
       AgonezEyebrow(label, color: context.agonezColors.caution),
       const SizedBox(height: 3),
-      Text(value, maxLines: 2, style: AgonezTypography.label),
+      Text(value, maxLines: 2, style: AgonezTypography.of(context).labelMedium),
     ],
   );
 }
@@ -1113,7 +1116,7 @@ class _SetPill extends StatelessWidget {
         : isCurrent
         ? colors.gold
         : set.isExtra
-        ? AgonezColors.goldLine
+        ? colors.goldLine
         : colors.control;
     final background = set.isRecorded
         ? colors.success.withValues(alpha: 0.12)
@@ -1188,7 +1191,7 @@ class _PrescriptionCard extends StatelessWidget {
     if (exercise.mode == FocusExerciseMode.unplanned || set.isExtra) {
       return AgonezPanel(
         backgroundColor: colors.alternative,
-        borderColor: AgonezColors.goldLine,
+        borderColor: colors.goldLine,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1199,7 +1202,10 @@ class _PrescriptionCard extends StatelessWidget {
               color: colors.goldText,
             ),
             const SizedBox(height: 8),
-            Text(l10n.workoutRecordWhatYouDo, style: AgonezTypography.body),
+            Text(
+              l10n.workoutRecordWhatYouDo,
+              style: AgonezTypography.of(context).bodyMedium,
+            ),
           ],
         ),
       );
@@ -1214,7 +1220,7 @@ class _PrescriptionCard extends StatelessWidget {
     final previous = exercise.previousSet;
     return AgonezPanel(
       backgroundColor: colors.prescriptionBackground,
-      borderColor: AgonezColors.prescriptionLine,
+      borderColor: colors.prescriptionLine,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1326,7 +1332,7 @@ class _RestCard extends StatelessWidget {
         backgroundColor: complete
             ? colors.success.withValues(alpha: 0.08)
             : colors.goldSoft,
-        borderColor: complete ? colors.success : AgonezColors.goldLine,
+        borderColor: complete ? colors.success : colors.goldLine,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1376,7 +1382,7 @@ class _RestCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 l10n.timerUpNextSet(set.ordinal),
-                style: AgonezTypography.caption,
+                style: AgonezTypography.of(context).bodySmall,
               ),
               if (prescription != null)
                 Text(
@@ -1414,7 +1420,7 @@ class _TimerButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
-        child: Text(label, style: AgonezTypography.monoSmall),
+        child: Text(label, style: AgonezTypography.of(context).labelSmall),
       ),
     ),
   );
@@ -1693,11 +1699,11 @@ class _LoadStepper extends StatelessWidget {
                       children: [
                         Text(
                           value == null ? '—' : '${_formatLoad(value!)} kg',
-                          style: AgonezTypography.inputNumber,
+                          style: AgonezTypography.inputNumberOf(context),
                         ),
                         Text(
                           l10n.setTapToType,
-                          style: AgonezTypography.caption,
+                          style: AgonezTypography.of(context).bodySmall,
                         ),
                       ],
                     ),
@@ -1989,7 +1995,7 @@ class _AuxChip extends StatelessWidget {
             : context.agonezColors.textSecondary,
         side: BorderSide(
           color: selected
-              ? AgonezColors.goldLine
+              ? context.agonezColors.goldLine
               : context.agonezColors.control,
         ),
         minimumSize: const Size(0, AgonezSizes.auxiliaryChipHeight),
@@ -2025,7 +2031,10 @@ class _ExerciseCompleteCard extends StatelessWidget {
             children: [
               Icon(Icons.check_circle, color: colors.successText, size: 20),
               const SizedBox(width: 8),
-              Text(l10n.workoutExerciseComplete, style: AgonezTypography.title),
+              Text(
+                l10n.workoutExerciseComplete,
+                style: AgonezTypography.of(context).titleLarge,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -2038,7 +2047,7 @@ class _ExerciseCompleteCard extends StatelessWidget {
                     set.isExtra
                         ? l10n.workoutExtraLabel
                         : l10n.workoutSetLabel(set.ordinal),
-                    style: AgonezTypography.caption,
+                    style: AgonezTypography.of(context).bodySmall,
                   ),
                 ),
                 Expanded(
@@ -2149,7 +2158,10 @@ class _SheetFrame extends StatelessWidget {
                         AgonezEyebrow(eyebrow!),
                         const SizedBox(height: 4),
                       ],
-                      Text(title, style: AgonezTypography.sheetTitle),
+                      Text(
+                        title,
+                        style: AgonezTypography.of(context).headlineMedium,
+                      ),
                     ],
                   ),
                 ),
@@ -2220,7 +2232,7 @@ class _OutlineSheet extends StatelessWidget {
                     ),
                     child: Text(
                       '${index + 1}',
-                      style: AgonezTypography.monoSmall,
+                      style: AgonezTypography.of(context).labelSmall,
                     ),
                   ),
                   const SizedBox(width: 11),
@@ -2242,7 +2254,7 @@ class _OutlineSheet extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           '$state · ${exercise.resolvedSetCount}/${exercise.sets.length}',
-                          style: AgonezTypography.caption,
+                          style: AgonezTypography.of(context).bodySmall,
                         ),
                       ],
                     ),
@@ -2384,10 +2396,10 @@ class _ActionTile extends StatelessWidget {
       enabled: onTap != null,
       minTileHeight: 54,
       leading: Icon(icon, size: 21),
-      title: Text(label, style: AgonezTypography.label),
+      title: Text(label, style: AgonezTypography.of(context).labelMedium),
       subtitle: supporting == null
           ? null
-          : Text(supporting!, style: AgonezTypography.caption),
+          : Text(supporting!, style: AgonezTypography.of(context).bodySmall),
       trailing: friction == null
           ? const Icon(Icons.chevron_right, size: 19)
           : Semantics(
@@ -2441,7 +2453,7 @@ class _HoldActionSheet extends StatelessWidget {
       maxHeightFactor: 0.62,
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-        child: Text(explanation, style: AgonezTypography.bodyLarge),
+        child: Text(explanation, style: AgonezTypography.of(context).bodyLarge),
       ),
       footer: HoldToConfirm(
         key: const Key('focus-hold-confirm'),
@@ -2488,7 +2500,7 @@ class _FinishSheet extends StatelessWidget {
             if (isIncomplete) ...[
               Text(
                 l10n.finishIncompleteExplanation(incomplete),
-                style: AgonezTypography.bodyLarge,
+                style: AgonezTypography.of(context).bodyLarge,
               ),
               const SizedBox(height: 16),
             ],
@@ -2551,8 +2563,10 @@ class _SummaryRow extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 6),
     child: Row(
       children: [
-        Expanded(child: Text(label, style: AgonezTypography.body)),
-        Text(value, style: AgonezTypography.monoSmall),
+        Expanded(
+          child: Text(label, style: AgonezTypography.of(context).bodyMedium),
+        ),
+        Text(value, style: AgonezTypography.of(context).labelSmall),
       ],
     ),
   );
@@ -2589,7 +2603,10 @@ class _AtlasQuickPeekSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
         children: [
           if ((peek.exercise.fullName ?? '').isNotEmpty)
-            Text(peek.exercise.fullName!, style: AgonezTypography.body),
+            Text(
+              peek.exercise.fullName!,
+              style: AgonezTypography.of(context).bodyMedium,
+            ),
           const SizedBox(height: 14),
           for (final block in technique)
             if ((block.$2 ?? '').isNotEmpty)
@@ -2600,7 +2617,10 @@ class _AtlasQuickPeekSheet extends StatelessWidget {
                   children: [
                     AgonezEyebrow(block.$1),
                     const SizedBox(height: 4),
-                    Text(block.$2!, style: AgonezTypography.bodyLarge),
+                    Text(
+                      block.$2!,
+                      style: AgonezTypography.of(context).bodyLarge,
+                    ),
                   ],
                 ),
               ),
@@ -2642,7 +2662,10 @@ class _AtlasQuickPeekSheet extends StatelessWidget {
             const Divider(height: 24),
             AgonezEyebrow(l10n.atlasPlanNoteThisWorkout),
             const SizedBox(height: 5),
-            Text(exercise.planNote!, style: AgonezTypography.body),
+            Text(
+              exercise.planNote!,
+              style: AgonezTypography.of(context).bodyMedium,
+            ),
           ],
         ],
       ),
@@ -2686,10 +2709,13 @@ class _MuscleExposureRow extends StatelessWidget {
                   name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AgonezTypography.caption,
+                  style: AgonezTypography.of(context).bodySmall,
                 ),
               ),
-              Text(etu.toStringAsFixed(1), style: AgonezTypography.monoSmall),
+              Text(
+                etu.toStringAsFixed(1),
+                style: AgonezTypography.of(context).labelSmall,
+              ),
             ],
           ),
           const SizedBox(height: 4),
@@ -2764,7 +2790,10 @@ class _NoteSheetState extends State<_NoteSheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (widget.supportingText != null) ...[
-                Text(widget.supportingText!, style: AgonezTypography.caption),
+                Text(
+                  widget.supportingText!,
+                  style: AgonezTypography.of(context).bodySmall,
+                ),
                 const SizedBox(height: 10),
               ],
               TextField(
@@ -2853,7 +2882,10 @@ class _MoreDataSheetState extends State<_MoreDataSheet> {
               ],
             ),
             const SizedBox(height: 12),
-            Text(l10n.moreDataFutureSensor, style: AgonezTypography.caption),
+            Text(
+              l10n.moreDataFutureSensor,
+              style: AgonezTypography.of(context).bodySmall,
+            ),
           ],
         ),
       ),
@@ -2933,7 +2965,7 @@ class _LoadKeypadSheetState extends State<_LoadKeypadSheet> {
               ),
               child: Text(
                 _value.isEmpty ? '— kg' : '$_value kg',
-                style: AgonezTypography.inputNumber,
+                style: AgonezTypography.inputNumberOf(context),
               ),
             ),
             const SizedBox(height: 8),
@@ -2996,7 +3028,10 @@ class _LoadKeypadSheetState extends State<_LoadKeypadSheet> {
                     onPressed: () => _press(key),
                     child: key == 'backspace'
                         ? const Icon(Icons.backspace_outlined, size: 20)
-                        : Text(key, style: AgonezTypography.inputNumber),
+                        : Text(
+                            key,
+                            style: AgonezTypography.inputNumberOf(context),
+                          ),
                   ),
               ],
             ),
@@ -3037,7 +3072,10 @@ class _RepGridSheet extends StatelessWidget {
             key: Key('focus-rep-grid-$value'),
             onPressed: () => Navigator.of(context).pop(value),
             style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
-            child: Text('$value', style: AgonezTypography.inputNumber),
+            child: Text(
+              '$value',
+              style: AgonezTypography.inputNumberOf(context),
+            ),
           );
         },
       ),

@@ -1000,6 +1000,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get youTheme => 'Motyw';
 
   @override
+  String get youThemeSystem => 'Systemowy';
+
+  @override
+  String get youThemeLight => 'Jasny';
+
+  @override
   String get youThemeDark => 'Ciemny';
 
   @override

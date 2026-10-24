@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../storage/app_database.dart';
 
@@ -9,13 +9,15 @@ class AppSettingsController extends ChangeNotifier {
   AppSettingsController._({
     required AppDatabase database,
     required Locale locale,
+    required ThemeMode themeMode,
     required this.hapticsEnabled,
     required this.restNotificationsEnabled,
     required this.restSoundEnabled,
     required this.compoundRestSeconds,
     required this.accessoryRestSeconds,
   }) : _database = database,
-       _locale = locale;
+       _locale = locale,
+       _themeMode = themeMode;
 
   static Future<AppSettingsController> load(AppDatabase database) async {
     final storedLocale = await database.readSetting('locale');
@@ -23,9 +25,16 @@ class AppSettingsController extends ChangeNotifier {
     final language = storedLocale == 'pl' || storedLocale == 'en'
         ? storedLocale!
         : (systemLanguage == 'pl' ? 'pl' : 'en');
+    final themeMode = switch (await database.readSetting('theme_mode')) {
+      'system' => ThemeMode.system,
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.dark,
+    };
     return AppSettingsController._(
       database: database,
       locale: Locale(language),
+      themeMode: themeMode,
       hapticsEnabled: await database.readSetting('haptics_enabled') != 'false',
       restNotificationsEnabled:
           await database.readSetting('rest_notifications_enabled') != 'false',
@@ -46,8 +55,10 @@ class AppSettingsController extends ChangeNotifier {
 
   final AppDatabase _database;
   Locale _locale;
+  ThemeMode _themeMode;
 
   Locale get locale => _locale;
+  ThemeMode get themeMode => _themeMode;
   bool hapticsEnabled;
   bool restNotificationsEnabled;
   bool restSoundEnabled;
@@ -60,6 +71,13 @@ class AppSettingsController extends ChangeNotifier {
     _locale = value;
     notifyListeners();
     await _database.writeSetting('locale', value.languageCode);
+  }
+
+  Future<void> setThemeMode(ThemeMode value) async {
+    if (_themeMode == value) return;
+    _themeMode = value;
+    notifyListeners();
+    await _database.writeSetting('theme_mode', value.name);
   }
 
   Future<void> setHaptics(bool value) async {

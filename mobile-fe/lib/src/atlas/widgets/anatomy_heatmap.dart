@@ -21,8 +21,8 @@ class AnatomyHeatmap extends StatefulWidget {
     this.assetPath = 'assets/anatomy.svg',
     this.height = 280,
     this.heatColor,
-    this.baseMuscleColor = const Color(0xFF2B333C),
-    this.outlineColor = const Color(0xFF505B66),
+    this.baseMuscleColor,
+    this.outlineColor,
     this.frontLabel = 'FRONT',
     this.rearLabel = 'REAR',
     this.semanticsLabel = 'Front and rear anatomy heat map',
@@ -40,8 +40,8 @@ class AnatomyHeatmap extends StatefulWidget {
   final String assetPath;
   final double height;
   final Color? heatColor;
-  final Color baseMuscleColor;
-  final Color outlineColor;
+  final Color? baseMuscleColor;
+  final Color? outlineColor;
   final String frontLabel;
   final String rearLabel;
   final String semanticsLabel;
@@ -125,6 +125,8 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
 
     final themeColors = context.agonezColors;
     final heatColor = widget.heatColor ?? themeColors.muscleHeat;
+    final baseMuscleColor = widget.baseMuscleColor ?? themeColors.anatomyBase;
+    final outlineColor = widget.outlineColor ?? themeColors.anatomyOutline;
     final key = Object.hash(
       identityHashCode(source),
       Object.hashAllUnordered(
@@ -133,8 +135,8 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
         ),
       ),
       heatColor,
-      widget.baseMuscleColor,
-      widget.outlineColor,
+      baseMuscleColor,
+      outlineColor,
     );
     if (_prepared == null || _preparedKey != key) {
       _prepared = _PreparedAnatomy(
@@ -143,16 +145,16 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
           view: AnatomyBodyView.front,
           regionIntensities: widget.regionIntensities,
           heatColor: heatColor,
-          baseMuscleColor: widget.baseMuscleColor,
-          outlineColor: widget.outlineColor,
+          baseMuscleColor: baseMuscleColor,
+          outlineColor: outlineColor,
         ),
         rear: AnatomySvgTransformer.transform(
           source,
           view: AnatomyBodyView.rear,
           regionIntensities: widget.regionIntensities,
           heatColor: heatColor,
-          baseMuscleColor: widget.baseMuscleColor,
-          outlineColor: widget.outlineColor,
+          baseMuscleColor: baseMuscleColor,
+          outlineColor: outlineColor,
         ),
       );
       _preparedKey = key;
