@@ -110,3 +110,9 @@ and the app looks them up as `assets/exercises/<exercise slug>.webp`. Copy only
 files whose stem is a catalog exercise slug; the `* copy` duplicates and
 misspelled stems in the media folder are not resolvable and stay out of the
 APK. An exercise without a bundled photo simply shows no image.
+
+Atlas demonstration videos are not bundled. They stream from YouTube through
+the official IFrame player (`youtube_player_iframe`, an Android WebView), need a
+connection, and need no API key. Fullscreen turns the screen to landscape even
+when system auto-rotate is off; "Open in YouTube" is the fallback for videos
+whose owners block embedding.

@@ -1523,12 +1523,6 @@ abstract class AppLocalizations {
   /// **'Anatomy'**
   String get atlasSectionAnatomy;
 
-  /// No description provided for @atlasSectionMuscles.
-  ///
-  /// In en, this message translates to:
-  /// **'Muscles'**
-  String get atlasSectionMuscles;
-
   /// No description provided for @atlasSectionData.
   ///
   /// In en, this message translates to:
@@ -1565,6 +1559,234 @@ abstract class AppLocalizations {
   /// **'Stop when'**
   String get atlasTechniqueStopWhen;
 
+  /// No description provided for @atlasTechniqueTldr.
+  ///
+  /// In en, this message translates to:
+  /// **'TL;DR'**
+  String get atlasTechniqueTldr;
+
+  /// No description provided for @atlasTechniqueTldrDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The shortest useful version before you start.'**
+  String get atlasTechniqueTldrDescription;
+
+  /// No description provided for @atlasTechniqueEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Canonical execution instructions have not been authored for this exercise yet.'**
+  String get atlasTechniqueEmpty;
+
+  /// No description provided for @atlasTechniqueMovementOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Movement overview'**
+  String get atlasTechniqueMovementOverview;
+
+  /// No description provided for @atlasTechniqueMovementOverviewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'What the movement is and how the joints travel.'**
+  String get atlasTechniqueMovementOverviewDescription;
+
+  /// No description provided for @atlasTechniqueOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get atlasTechniqueOverview;
+
+  /// No description provided for @atlasTechniquePlane.
+  ///
+  /// In en, this message translates to:
+  /// **'Plane of movement'**
+  String get atlasTechniquePlane;
+
+  /// No description provided for @atlasTechniqueJointActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary joint actions'**
+  String get atlasTechniqueJointActions;
+
+  /// No description provided for @atlasTechniquePreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation'**
+  String get atlasTechniquePreparation;
+
+  /// No description provided for @atlasTechniquePreparationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a repeatable base before the first repetition.'**
+  String get atlasTechniquePreparationDescription;
+
+  /// No description provided for @atlasTechniqueEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Equipment setup'**
+  String get atlasTechniqueEquipment;
+
+  /// No description provided for @atlasTechniqueStartingPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting position'**
+  String get atlasTechniqueStartingPosition;
+
+  /// No description provided for @atlasTechniqueGrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Grip'**
+  String get atlasTechniqueGrip;
+
+  /// No description provided for @atlasTechniqueStance.
+  ///
+  /// In en, this message translates to:
+  /// **'Stance'**
+  String get atlasTechniqueStance;
+
+  /// No description provided for @atlasTechniqueBracing.
+  ///
+  /// In en, this message translates to:
+  /// **'Bracing'**
+  String get atlasTechniqueBracing;
+
+  /// No description provided for @atlasTechniqueRepetition.
+  ///
+  /// In en, this message translates to:
+  /// **'The repetition'**
+  String get atlasTechniqueRepetition;
+
+  /// No description provided for @atlasTechniqueRepetitionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How to move through one complete, controlled repetition.'**
+  String get atlasTechniqueRepetitionDescription;
+
+  /// No description provided for @atlasTechniqueConcentric.
+  ///
+  /// In en, this message translates to:
+  /// **'Concentric'**
+  String get atlasTechniqueConcentric;
+
+  /// No description provided for @atlasTechniqueEccentric.
+  ///
+  /// In en, this message translates to:
+  /// **'Eccentric'**
+  String get atlasTechniqueEccentric;
+
+  /// No description provided for @atlasTechniqueEndPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'End position'**
+  String get atlasTechniqueEndPosition;
+
+  /// No description provided for @atlasTechniqueRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Range of motion'**
+  String get atlasTechniqueRange;
+
+  /// No description provided for @atlasTechniqueTempo.
+  ///
+  /// In en, this message translates to:
+  /// **'Tempo notes'**
+  String get atlasTechniqueTempo;
+
+  /// No description provided for @atlasTechniqueCues.
+  ///
+  /// In en, this message translates to:
+  /// **'Coaching cues'**
+  String get atlasTechniqueCues;
+
+  /// No description provided for @atlasTechniqueCuesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Short attention anchors for keeping the movement on track.'**
+  String get atlasTechniqueCuesDescription;
+
+  /// No description provided for @atlasTechniqueInternalCues.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal cues'**
+  String get atlasTechniqueInternalCues;
+
+  /// No description provided for @atlasTechniqueExternalCues.
+  ///
+  /// In en, this message translates to:
+  /// **'External cues'**
+  String get atlasTechniqueExternalCues;
+
+  /// No description provided for @atlasTechniqueEffort.
+  ///
+  /// In en, this message translates to:
+  /// **'Effort and failure'**
+  String get atlasTechniqueEffort;
+
+  /// No description provided for @atlasTechniqueEffortDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognize the boundary between a hard repetition and a changed exercise.'**
+  String get atlasTechniqueEffortDescription;
+
+  /// No description provided for @atlasTechniqueTechnicalFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical failure'**
+  String get atlasTechniqueTechnicalFailure;
+
+  /// No description provided for @atlasTechniqueRir1.
+  ///
+  /// In en, this message translates to:
+  /// **'RIR 1 indicators'**
+  String get atlasTechniqueRir1;
+
+  /// No description provided for @atlasTechniqueRir0.
+  ///
+  /// In en, this message translates to:
+  /// **'RIR 0 definition'**
+  String get atlasTechniqueRir0;
+
+  /// No description provided for @atlasTechniqueTroubleshooting.
+  ///
+  /// In en, this message translates to:
+  /// **'Troubleshooting'**
+  String get atlasTechniqueTroubleshooting;
+
+  /// No description provided for @atlasTechniqueTroubleshootingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Common corrections, safety boundaries, and acceptable variation.'**
+  String get atlasTechniqueTroubleshootingDescription;
+
+  /// No description provided for @atlasTechniqueCommonMistakes.
+  ///
+  /// In en, this message translates to:
+  /// **'Common mistakes'**
+  String get atlasTechniqueCommonMistakes;
+
+  /// No description provided for @atlasTechniqueSafetyNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety notes'**
+  String get atlasTechniqueSafetyNotes;
+
+  /// No description provided for @atlasTechniqueIndividualization.
+  ///
+  /// In en, this message translates to:
+  /// **'Individualization'**
+  String get atlasTechniqueIndividualization;
+
+  /// No description provided for @atlasTechniqueAdditional.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional notes'**
+  String get atlasTechniqueAdditional;
+
+  /// No description provided for @atlasTechniqueAdditionalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Further technique fields supplied by the exercise record.'**
+  String get atlasTechniqueAdditionalDescription;
+
   /// No description provided for @atlasEtu.
   ///
   /// In en, this message translates to:
@@ -1600,6 +1822,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Demonstration videos'**
   String get atlasVideos;
+
+  /// No description provided for @atlasVideoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Video {index}'**
+  String atlasVideoLabel(int index);
+
+  /// No description provided for @atlasVideoPlayA11y.
+  ///
+  /// In en, this message translates to:
+  /// **'Play video {index} of {count}'**
+  String atlasVideoPlayA11y(int index, int count);
+
+  /// No description provided for @atlasVideoOpenInYoutube.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in YouTube'**
+  String get atlasVideoOpenInYoutube;
+
+  /// No description provided for @atlasVideoNowPlaying.
+  ///
+  /// In en, this message translates to:
+  /// **'Now playing'**
+  String get atlasVideoNowPlaying;
+
+  /// No description provided for @atlasVideoOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos stream from YouTube and need an internet connection.'**
+  String get atlasVideoOffline;
+
+  /// No description provided for @atlasVideoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This video can\'t be played in the app.'**
+  String get atlasVideoUnavailable;
 
   /// No description provided for @atlasLoadCapacity.
   ///

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../api/atlas_models.dart';
 import '../../atlas/widgets/anatomy_heatmap.dart';
@@ -10,6 +11,8 @@ import '../../data/mobile_repository.dart';
 import '../../design/design.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'atlas_data_source.dart';
+import 'atlas_technique_guide.dart';
+import 'atlas_videos.dart';
 import 'atlas_workspace_controller.dart';
 
 class AtlasArticleScreen extends StatefulWidget {
@@ -41,8 +44,13 @@ class AtlasArticleScreen extends StatefulWidget {
 class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
   late ScrollController _scrollController;
   late Future<_ArticleBundle> _future;
-  final _sectionKeys = List.generate(5, (_) => GlobalKey());
+  final _sectionKeys = List.generate(4, (_) => GlobalKey());
   int _selectedSection = 0;
+
+  /// True while a section tap animates the scroll, so intermediate sections
+  /// do not flash in the section bar.
+  bool _jumping = false;
+  bool _spyScheduled = false;
   Timer? _saveDebounce;
   bool _showRecovery = false;
   String? _selectedMuscle;
@@ -79,6 +87,7 @@ class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
   }
 
   void _load() {
+    _spyScheduled = false;
     _future = _loadBundle();
   }
 
@@ -107,32 +116,50 @@ class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
     _updateScrollSpy();
   }
 
+  /// Highlights the last section whose top has reached the upper quarter of
+  /// the scroll viewport. At the end of the article the last section wins,
+  /// because a short final section can never scroll up that far.
   void _updateScrollSpy() {
+    if (_jumping || !mounted || !_scrollController.hasClients) return;
+    final position = _scrollController.position;
     var selected = 0;
-    for (var index = 0; index < _sectionKeys.length; index++) {
-      final context = _sectionKeys[index].currentContext;
-      final box = context?.findRenderObject() as RenderBox?;
-      if (box != null &&
-          box.attached &&
-          box.localToGlobal(Offset.zero).dy < 155) {
-        selected = index;
+    if (position.maxScrollExtent > 0 &&
+        position.pixels >= position.maxScrollExtent - 1) {
+      selected = _sectionKeys.length - 1;
+    } else {
+      // Compare scroll offsets from layout rather than painted positions:
+      // scroll notifications arrive before the next layout, so painted
+      // positions are a frame stale and the final event would leave the
+      // highlight one section behind.
+      final threshold = position.pixels + position.viewportDimension * .25;
+      for (var index = 0; index < _sectionKeys.length; index++) {
+        final box = _sectionKeys[index].currentContext?.findRenderObject();
+        if (box == null || !box.attached) continue;
+        final viewport = RenderAbstractViewport.maybeOf(box);
+        if (viewport == null) continue;
+        if (viewport.getOffsetToReveal(box, 0).offset <= threshold) {
+          selected = index;
+        }
       }
     }
-    if (selected != _selectedSection && mounted) {
+    if (selected != _selectedSection) {
       setState(() => _selectedSection = selected);
     }
   }
 
-  void _scrollTo(int section) {
+  Future<void> _scrollTo(int section) async {
     setState(() => _selectedSection = section);
     final target = _sectionKeys[section].currentContext;
-    if (target != null) {
-      Scrollable.ensureVisible(
+    if (target == null) return;
+    _jumping = true;
+    try {
+      await Scrollable.ensureVisible(
         target,
         duration: const Duration(milliseconds: 260),
         curve: Curves.easeOutCubic,
-        alignment: .08,
       );
+    } finally {
+      _jumping = false;
     }
   }
 
@@ -226,103 +253,128 @@ class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
     final sectionLabels = <String>[
       l10n.atlasSectionTechnique,
       l10n.atlasSectionAnatomy,
-      l10n.atlasSectionMuscles,
       l10n.atlasSectionData,
       l10n.atlasSectionVideo,
     ];
     final exposure = _exposureMap(detail, peek, recovery: _showRecovery);
+    final videos = AtlasVideo.fromLinks(detail.videoLinks);
+    if (!_spyScheduled) {
+      // A restored workspace opens mid-article without a scroll event.
+      _spyScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _updateScrollSpy());
+    }
 
-    return CustomScrollView(
-      controller: _scrollController,
-      slivers: [
-        SliverToBoxAdapter(
-          child: _AtlasArticleTopBar(
-            title: detail.name,
-            workspaceCount:
-                widget.workspaceCount + (widget.hasActiveWorkout ? 1 : 0),
-            onBack: widget.onBack,
-            onOpenWorkspaces: widget.onOpenWorkspaces,
-          ),
+    return Column(
+      children: [
+        _AtlasArticleTopBar(
+          title: detail.name,
+          workspaceCount:
+              widget.workspaceCount + (widget.hasActiveWorkout ? 1 : 0),
+          onBack: widget.onBack,
+          onOpenWorkspaces: widget.onOpenWorkspaces,
         ),
-        SliverToBoxAdapter(
-          child: _ArticleHero(
-            detail: detail,
-            peek: peek,
-            offline: bundle.article.offline,
-            inWorkout: widget.todayExerciseSlugs.contains(detail.slug),
-          ),
+        _SectionTabs(
+          labels: sectionLabels,
+          selected: _selectedSection,
+          onSelected: _scrollTo,
         ),
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _SectionHeaderDelegate(
-            labels: sectionLabels,
-            selected: _selectedSection,
-            onSelected: _scrollTo,
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: _ArticleSection(
-            key: _sectionKeys[0],
-            title: l10n.atlasSectionTechnique,
-            child: _TechniqueSection(detail: detail, peek: peek),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: _ArticleSection(
-            key: _sectionKeys[1],
-            title: l10n.atlasSectionAnatomy,
-            child: Column(
-              children: [
-                AnatomyHeatmap(
-                  regionIntensities: exposure,
-                  height: 320,
-                  semanticsLabel: l10n.atlasSectionAnatomy,
+        Expanded(
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverToBoxAdapter(
+                child: _ArticleHero(
+                  detail: detail,
+                  peek: peek,
+                  offline: bundle.article.offline,
+                  inWorkout: widget.todayExerciseSlugs.contains(detail.slug),
                 ),
-                const SizedBox(height: 12),
-                SegmentedButton<bool>(
-                  showSelectedIcon: false,
-                  segments: <ButtonSegment<bool>>[
-                    ButtonSegment(value: false, label: Text(l10n.atlasEtu)),
-                    ButtonSegment(value: true, label: Text(l10n.atlasRecovery)),
-                  ],
-                  selected: <bool>{_showRecovery},
-                  onSelectionChanged: (selection) {
-                    setState(() => _showRecovery = selection.first);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: _ArticleSection(
-            key: _sectionKeys[2],
-            title: l10n.atlasMuscleExposure,
-            child: _MuscleSection(
-              detail: detail,
-              peek: peek,
-              selected: _selectedMuscle,
-              onSelected: (value) => setState(
-                () => _selectedMuscle = _selectedMuscle == value ? null : value,
               ),
-            ),
+              SliverToBoxAdapter(
+                child: _ArticleSection(
+                  key: _sectionKeys[0],
+                  title: l10n.atlasSectionTechnique,
+                  child: _TechniqueSection(detail: detail),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _ArticleSection(
+                  key: _sectionKeys[1],
+                  title: l10n.atlasSectionAnatomy,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AnatomyHeatmap(
+                        regionIntensities: exposure,
+                        height: 320,
+                        semanticsLabel: l10n.atlasSectionAnatomy,
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: SegmentedButton<bool>(
+                          showSelectedIcon: false,
+                          segments: <ButtonSegment<bool>>[
+                            ButtonSegment(
+                              value: false,
+                              label: Text(l10n.atlasEtu),
+                            ),
+                            ButtonSegment(
+                              value: true,
+                              label: Text(l10n.atlasRecovery),
+                            ),
+                          ],
+                          selected: <bool>{_showRecovery},
+                          onSelectionChanged: (selection) {
+                            setState(() => _showRecovery = selection.first);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 26),
+                      Text(
+                        l10n.atlasMuscleExposure,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      _MuscleSection(
+                        detail: detail,
+                        peek: peek,
+                        selected: _selectedMuscle,
+                        onSelected: (value) => setState(
+                          () => _selectedMuscle = _selectedMuscle == value
+                              ? null
+                              : value,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _ArticleSection(
+                  key: _sectionKeys[2],
+                  title: l10n.atlasSectionData,
+                  child: _DataSection(detail: detail),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _ArticleSection(
+                  key: _sectionKeys[3],
+                  title: l10n.atlasVideos,
+                  child: AtlasVideoGallery(
+                    videos: videos,
+                    onOpen: (index) => openAtlasVideoPlayer(
+                      context,
+                      title: detail.name,
+                      videos: videos,
+                      initialIndex: index,
+                    ),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            ],
           ),
         ),
-        SliverToBoxAdapter(
-          child: _ArticleSection(
-            key: _sectionKeys[3],
-            title: l10n.atlasSectionData,
-            child: _DataSection(detail: detail),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: _ArticleSection(
-            key: _sectionKeys[4],
-            title: l10n.atlasVideos,
-            child: _VideoSection(urls: detail.videoLinks),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 32)),
       ],
     );
   }
@@ -574,8 +626,10 @@ class _Stat extends StatelessWidget {
   }
 }
 
-class _SectionHeaderDelegate extends SliverPersistentHeaderDelegate {
-  const _SectionHeaderDelegate({
+/// The article's section bar: one equal-width tab per section, always shown
+/// above the scrolling content so every section is one tap away.
+class _SectionTabs extends StatelessWidget {
+  const _SectionTabs({
     required this.labels,
     required this.selected,
     required this.onSelected,
@@ -586,51 +640,95 @@ class _SectionHeaderDelegate extends SliverPersistentHeaderDelegate {
   final ValueChanged<int> onSelected;
 
   @override
-  double get minExtent => 52;
-  @override
-  double get maxExtent => 52;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
+  Widget build(BuildContext context) {
+    final colors = context.agonezColors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.agonezColors.ground,
-        border: Border.symmetric(
-          horizontal: BorderSide(color: context.agonezColors.lineSubtle),
-        ),
+        color: colors.ground,
+        border: Border(bottom: BorderSide(color: colors.lineSubtle)),
       ),
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: labels.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 4),
-        itemBuilder: (context, index) => TextButton(
-          onPressed: () => onSelected(index),
-          style: TextButton.styleFrom(
-            foregroundColor: index == selected
-                ? context.agonezColors.goldText
-                : context.agonezColors.textDim,
-            shape: const RoundedRectangleBorder(),
-            side: BorderSide(
-              color: index == selected
-                  ? context.agonezColors.gold
-                  : Colors.transparent,
-              width: 0,
-            ),
-          ),
-          child: Text(labels[index].toUpperCase()),
+      child: SizedBox(
+        height: AgonezSizes.compactSelector,
+        child: Row(
+          children: [
+            for (var index = 0; index < labels.length; index++)
+              Expanded(
+                child: _SectionTab(
+                  label: labels[index],
+                  selected: index == selected,
+                  onTap: () => onSelected(index),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _SectionTab extends StatelessWidget {
+  const _SectionTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
-  bool shouldRebuild(covariant _SectionHeaderDelegate oldDelegate) =>
-      selected != oldDelegate.selected || labels != oldDelegate.labels;
+  Widget build(BuildContext context) {
+    final colors = context.agonezColors;
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        inMutuallyExclusiveGroup: true,
+        child: InkWell(
+          onTap: onTap,
+          child: Stack(
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label.toUpperCase(),
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: selected ? colors.goldText : colors.textDim,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        letterSpacing: .8,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 12,
+                right: 12,
+                bottom: 0,
+                child: AnimatedContainer(
+                  duration: AgonezDurations.standard,
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: selected ? colors.gold : Colors.transparent,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ArticleSection extends StatelessWidget {
@@ -656,68 +754,20 @@ class _ArticleSection extends StatelessWidget {
 }
 
 class _TechniqueSection extends StatelessWidget {
-  const _TechniqueSection({required this.detail, required this.peek});
+  const _TechniqueSection({required this.detail});
 
   final ExerciseDetail detail;
-  final AtlasPeek? peek;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final cues = peek == null
-        ? detail.technique.entries
-              .map(
-                (entry) => (_prettyKey(entry.key), _displayValue(entry.value)),
-              )
-              .where((entry) => entry.$2.isNotEmpty)
-              .toList(growable: false)
-        : <(String, String)>[
-            if (peek!.techniqueTldr.setup?.isNotEmpty ?? false)
-              (l10n.atlasTechniqueSetup, peek!.techniqueTldr.setup!),
-            if (peek!.techniqueTldr.execution?.isNotEmpty ?? false)
-              (l10n.atlasTechniqueExecution, peek!.techniqueTldr.execution!),
-            if (peek!.techniqueTldr.focus?.isNotEmpty ?? false)
-              (l10n.atlasTechniqueFocus, peek!.techniqueTldr.focus!),
-            if (peek!.techniqueTldr.stopWhen?.isNotEmpty ?? false)
-              (l10n.atlasTechniqueStopWhen, peek!.techniqueTldr.stopWhen!),
-          ];
     final comments = detail.comments.entries
         .map((entry) => _displayValue(entry.value))
         .where((value) => value.isNotEmpty)
         .toList(growable: false);
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final cue in cues)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 9),
-            child: AgonezPanel(
-              padding: const EdgeInsets.all(13),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 4,
-                    height: 18,
-                    margin: const EdgeInsets.only(right: 10, top: 1),
-                    color: context.agonezColors.gold,
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AgonezEyebrow(
-                          cue.$1,
-                          color: context.agonezColors.goldText,
-                        ),
-                        const SizedBox(height: 5),
-                        Text(cue.$2),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        AtlasTechniqueGuide(technique: detail.technique),
         for (final comment in comments)
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -913,49 +963,6 @@ class _KeyValue extends StatelessWidget {
           Text(value, style: const TextStyle(fontFamily: 'Geist Mono')),
         ],
       ),
-    );
-  }
-}
-
-class _VideoSection extends StatelessWidget {
-  const _VideoSection({required this.urls});
-
-  final List<String> urls;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    if (urls.isEmpty) {
-      return Text(
-        l10n.commonNotAvailableYet,
-        style: TextStyle(color: context.agonezColors.textMuted),
-      );
-    }
-    return Column(
-      children: urls
-          .map(
-            (url) => AgonezPanel(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.play_circle_outline,
-                    color: context.agonezColors.goldText,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      url,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-          .toList(growable: false),
     );
   }
 }

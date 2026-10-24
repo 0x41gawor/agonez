@@ -884,9 +884,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get atlasSectionAnatomy => 'Anatomia';
 
   @override
-  String get atlasSectionMuscles => 'Mięśnie';
-
-  @override
   String get atlasSectionData => 'Dane';
 
   @override
@@ -905,6 +902,129 @@ class AppLocalizationsPl extends AppLocalizations {
   String get atlasTechniqueStopWhen => 'Przerwij, gdy';
 
   @override
+  String get atlasTechniqueTldr => 'TL;DR';
+
+  @override
+  String get atlasTechniqueTldrDescription =>
+      'Najkrótsza użyteczna wersja przed rozpoczęciem.';
+
+  @override
+  String get atlasTechniqueEmpty =>
+      'Kanoniczna instrukcja wykonania nie została jeszcze przygotowana dla tego ćwiczenia.';
+
+  @override
+  String get atlasTechniqueMovementOverview => 'Opis ruchu';
+
+  @override
+  String get atlasTechniqueMovementOverviewDescription =>
+      'Czym jest ruch i jak przemieszczają się stawy.';
+
+  @override
+  String get atlasTechniqueOverview => 'Opis';
+
+  @override
+  String get atlasTechniquePlane => 'Płaszczyzna ruchu';
+
+  @override
+  String get atlasTechniqueJointActions => 'Główne działania stawów';
+
+  @override
+  String get atlasTechniquePreparation => 'Przygotowanie';
+
+  @override
+  String get atlasTechniquePreparationDescription =>
+      'Zbuduj powtarzalną bazę przed pierwszym powtórzeniem.';
+
+  @override
+  String get atlasTechniqueEquipment => 'Ustawienie sprzętu';
+
+  @override
+  String get atlasTechniqueStartingPosition => 'Pozycja początkowa';
+
+  @override
+  String get atlasTechniqueGrip => 'Chwyt';
+
+  @override
+  String get atlasTechniqueStance => 'Ustawienie nóg';
+
+  @override
+  String get atlasTechniqueBracing => 'Usztywnienie';
+
+  @override
+  String get atlasTechniqueRepetition => 'Powtórzenie';
+
+  @override
+  String get atlasTechniqueRepetitionDescription =>
+      'Jak wykonać jedno pełne, kontrolowane powtórzenie.';
+
+  @override
+  String get atlasTechniqueConcentric => 'Faza koncentryczna';
+
+  @override
+  String get atlasTechniqueEccentric => 'Faza ekscentryczna';
+
+  @override
+  String get atlasTechniqueEndPosition => 'Pozycja końcowa';
+
+  @override
+  String get atlasTechniqueRange => 'Zakres ruchu';
+
+  @override
+  String get atlasTechniqueTempo => 'Uwagi o tempie';
+
+  @override
+  String get atlasTechniqueCues => 'Wskazówki trenerskie';
+
+  @override
+  String get atlasTechniqueCuesDescription =>
+      'Krótkie kotwice uwagi pomagające utrzymać prawidłowy ruch.';
+
+  @override
+  String get atlasTechniqueInternalCues => 'Wskazówki wewnętrzne';
+
+  @override
+  String get atlasTechniqueExternalCues => 'Wskazówki zewnętrzne';
+
+  @override
+  String get atlasTechniqueEffort => 'Wysiłek i upadek';
+
+  @override
+  String get atlasTechniqueEffortDescription =>
+      'Rozpoznaj granicę między trudnym powtórzeniem a zmianą ćwiczenia.';
+
+  @override
+  String get atlasTechniqueTechnicalFailure => 'Upadek techniczny';
+
+  @override
+  String get atlasTechniqueRir1 => 'Oznaki RIR 1';
+
+  @override
+  String get atlasTechniqueRir0 => 'Definicja RIR 0';
+
+  @override
+  String get atlasTechniqueTroubleshooting => 'Rozwiązywanie problemów';
+
+  @override
+  String get atlasTechniqueTroubleshootingDescription =>
+      'Typowe korekty, granice bezpieczeństwa i dopuszczalne różnice.';
+
+  @override
+  String get atlasTechniqueCommonMistakes => 'Częste błędy';
+
+  @override
+  String get atlasTechniqueSafetyNotes => 'Uwagi bezpieczeństwa';
+
+  @override
+  String get atlasTechniqueIndividualization => 'Indywidualizacja';
+
+  @override
+  String get atlasTechniqueAdditional => 'Dodatkowe uwagi';
+
+  @override
+  String get atlasTechniqueAdditionalDescription =>
+      'Dalsze pola techniki dostarczone przez rekord ćwiczenia.';
+
+  @override
   String get atlasEtu => 'ETU';
 
   @override
@@ -921,6 +1041,30 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get atlasVideos => 'Filmy demonstracyjne';
+
+  @override
+  String atlasVideoLabel(int index) {
+    return 'Film $index';
+  }
+
+  @override
+  String atlasVideoPlayA11y(int index, int count) {
+    return 'Odtwórz film $index z $count';
+  }
+
+  @override
+  String get atlasVideoOpenInYoutube => 'Otwórz w YouTube';
+
+  @override
+  String get atlasVideoNowPlaying => 'Teraz odtwarzany';
+
+  @override
+  String get atlasVideoOffline =>
+      'Filmy są odtwarzane z YouTube i wymagają połączenia z internetem.';
+
+  @override
+  String get atlasVideoUnavailable =>
+      'Tego filmu nie można odtworzyć w aplikacji.';
 
   @override
   String get atlasLoadCapacity => 'Potencjał obciążenia';
