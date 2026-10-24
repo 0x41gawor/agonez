@@ -241,6 +241,12 @@ abstract class AppLocalizations {
   /// **'min'**
   String get homeMinutesLabel;
 
+  /// No description provided for @homeExerciseNoSets.
+  ///
+  /// In en, this message translates to:
+  /// **'no sets'**
+  String get homeExerciseNoSets;
+
   /// No description provided for @homeStartWorkout.
   ///
   /// In en, this message translates to:
@@ -463,12 +469,6 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get pickerToday;
 
-  /// No description provided for @pickerScheduledOn.
-  ///
-  /// In en, this message translates to:
-  /// **'Scheduled {date}'**
-  String pickerScheduledOn(String date);
-
   /// No description provided for @pickerDoneOn.
   ///
   /// In en, this message translates to:
@@ -487,12 +487,6 @@ abstract class AppLocalizations {
   /// **'Today\'s scheduled workout.'**
   String get pickerTodayExplanation;
 
-  /// No description provided for @pickerNotTodayExplanation.
-  ///
-  /// In en, this message translates to:
-  /// **'{workout} isn\'t scheduled for today. Training it now changes the planned order of exposures.'**
-  String pickerNotTodayExplanation(String workout);
-
   /// No description provided for @pickerStartInstead.
   ///
   /// In en, this message translates to:
@@ -505,11 +499,41 @@ abstract class AppLocalizations {
   /// **'Fallback workout-units are a future capability of the plan.'**
   String get pickerFallbackFuture;
 
-  /// No description provided for @pickerOffScheduleUnsupported.
+  /// No description provided for @pickerMissedOn.
   ///
   /// In en, this message translates to:
-  /// **'This workout-unit cannot be started off schedule yet.'**
-  String get pickerOffScheduleUnsupported;
+  /// **'Missed · {date}'**
+  String pickerMissedOn(String date);
+
+  /// No description provided for @pickerDoneExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Already trained in this microcycle.'**
+  String get pickerDoneExplanation;
+
+  /// No description provided for @pickerNotScheduledToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{workout} isn\'t scheduled for today.'**
+  String pickerNotScheduledToday(String workout);
+
+  /// No description provided for @pickerOffScheduleRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Training it now changes the planned order of exposures. How the plan run records this (early, replacement or extra exposure) is decided by the scheduling rules — the app will not guess.'**
+  String get pickerOffScheduleRules;
+
+  /// No description provided for @pickerStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start {workout}'**
+  String pickerStart(String workout);
+
+  /// No description provided for @pickerFallbackLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Fallback units arrive later'**
+  String get pickerFallbackLater;
 
   /// No description provided for @workoutMinimiseA11y.
   ///

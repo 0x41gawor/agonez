@@ -23,6 +23,8 @@ class WorkoutRepository {
   final WorkoutIds _ids;
   final void Function()? _requestSync;
 
+  /// Starts locally and queues the start request, so a scheduled workout can
+  /// begin offline.
   Future<String> start({
     required WorkoutPrescription prescription,
     int? planRunId,
@@ -30,18 +32,73 @@ class WorkoutRepository {
     OffSchedule? offSchedule,
     DateTime? startedAt,
   }) async {
-    final workoutId = _ids.newWorkoutId();
-    final started = (startedAt ?? DateTime.now()).toUtc();
-    final payload = StartWorkout(
-      workoutId: workoutId,
-      sessionId: prescription.sessionId,
-      prescriptionVersion: prescription.prescriptionVersion,
-      startedAt: started,
+    final payload = _startPayload(
+      prescription: prescription,
       allowMissingLoads: allowMissingLoads,
       offSchedule: offSchedule,
+      startedAt: startedAt,
     );
+    await _createLocalWorkout(prescription, planRunId, payload);
+    _requestSync?.call();
+    return payload.workoutId;
+  }
 
-    await _database.createLocalWorkout(
+  /// Starts a workout only once the server has accepted it.
+  ///
+  /// Off-schedule starts depend on scheduling rules that only the server
+  /// knows, and it may refuse them (`off_schedule_not_supported`). A queued
+  /// local-first start would leave a workout on the phone that can never
+  /// sync, so nothing is stored until the start is acknowledged; a refusal
+  /// simply throws from [send].
+  Future<String> startAfterServerAccepts({
+    required WorkoutPrescription prescription,
+    required Future<WorkoutSnapshot> Function(StartWorkout payload) send,
+    int? planRunId,
+    bool allowMissingLoads = false,
+    OffSchedule? offSchedule,
+    DateTime? startedAt,
+  }) async {
+    final payload = _startPayload(
+      prescription: prescription,
+      allowMissingLoads: allowMissingLoads,
+      offSchedule: offSchedule,
+      startedAt: startedAt,
+    );
+    final snapshot = await send(payload);
+    await _createLocalWorkout(prescription, planRunId, payload);
+    await _database.markStartAcknowledged(
+      workoutId: payload.workoutId,
+      leaseEpoch: snapshot.lease.epoch,
+      appliedSeq: snapshot.appliedSeq,
+      revision: snapshot.revision,
+      snapshot: snapshot.toJson(),
+    );
+    _requestSync?.call();
+    return payload.workoutId;
+  }
+
+  StartWorkout _startPayload({
+    required WorkoutPrescription prescription,
+    required bool allowMissingLoads,
+    required OffSchedule? offSchedule,
+    required DateTime? startedAt,
+  }) => StartWorkout(
+    workoutId: _ids.newWorkoutId(),
+    sessionId: prescription.sessionId,
+    prescriptionVersion: prescription.prescriptionVersion,
+    startedAt: (startedAt ?? DateTime.now()).toUtc(),
+    allowMissingLoads: allowMissingLoads,
+    offSchedule: offSchedule,
+  );
+
+  Future<void> _createLocalWorkout(
+    WorkoutPrescription prescription,
+    int? planRunId,
+    StartWorkout payload,
+  ) {
+    final workoutId = payload.workoutId;
+    final started = payload.startedAt;
+    return _database.createLocalWorkout(
       workout: LocalWorkoutsCompanion.insert(
         workoutId: workoutId,
         sessionId: prescription.sessionId,
@@ -69,8 +126,6 @@ class WorkoutRepository {
         );
       }),
     );
-    _requestSync?.call();
-    return workoutId;
   }
 
   Future<void> confirmSet({

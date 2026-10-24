@@ -98,9 +98,9 @@ English and Polish are the supported locales. Edit
 then run `flutter gen-l10n`. Runtime locale selection is saved locally and is
 also sent to the API.
 
-The offline anatomy surface is `assets/anatomy.svg`; the brand mark is
-`assets/brand/agonez-mark.png`. Both are declared in `pubspec.yaml` and ship in
-the APK. The app deliberately uses platform fonts: the web project's WOFF2
+The offline anatomy surface is `assets/anatomy.svg`; the in-app brand mark is
+the emblem in `assets/brand/emblem/` (see "Launch screen and app icon" below).
+Both are declared in `pubspec.yaml` and ship in the APK. The app deliberately uses platform fonts: the web project's WOFF2
 files are not suitable Flutter font bundles.
 
 Exercise photos for the Atlas quick view and full article ship offline in
@@ -139,9 +139,9 @@ launch, and Android 11 or older, follow the system theme.
 `test/brand/launch_colors_test.dart` keeps the Android splash colours equal to
 the Dart palette.
 
-The emblem, wordmark, splash drawables, launcher and notification icons are
-all generated from tile 1 of `media/logo-mark.png`. The script traces the
-tile to vectors, and the masters are written to `media/brand/`. Regenerate
+The emblem, wordmark, header mark, splash drawables, launcher and notification
+icons are all generated from tile 1 of `media/logo-mark.png`. The script traces
+the tile to vectors, and the masters are written to `media/brand/`. Regenerate
 everything with:
 
 ```powershell

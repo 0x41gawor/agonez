@@ -10,6 +10,7 @@ import '../../design/design.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/hold_to_confirm.dart';
 import '../../widgets/sync_status_pill.dart';
+import '../../workout/load_format.dart';
 import 'focus_workout_models.dart';
 
 /// The full-screen workout workspace.
@@ -194,7 +195,7 @@ class _FocusModeScreenState extends State<FocusModeScreen>
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 76),
         content: Text(
           '${l10n.setRecordedSnackbar(set.ordinal)} · '
-          '${_formatLoad(load)} × $reps @ RIR $rir',
+          '${formatLoad(load)} × $reps @ RIR $rir',
         ),
         action: widget.callbacks.onUndoSet == null
             ? null
@@ -427,7 +428,7 @@ class _FocusModeScreenState extends State<FocusModeScreen>
         : l10n.setConfirm(set!.ordinal);
     final summary = enabled
         ? l10n.setConfirmSummary(
-            _formatLoad(_draft.loadKg!),
+            formatLoad(_draft.loadKg!),
             _draft.repetitions!,
             _draft.rir == 5 ? '5+' : '${_draft.rir}',
             _formatDuration(Duration(seconds: exercise.defaultRestSeconds)),
@@ -749,13 +750,6 @@ enum _FocusAction {
   substitute,
   addUnplanned,
   finish,
-}
-
-String _formatLoad(double value) {
-  final fixed = value.toStringAsFixed(2);
-  return fixed
-      .replaceFirst(RegExp(r'\.00$'), '')
-      .replaceFirst(RegExp(r'0$'), '');
 }
 
 String _formatDuration(Duration value) {
@@ -1106,12 +1100,12 @@ class _SetPill extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.agonezColors;
     final label = set.isRecorded
-        ? '✓ ${_formatLoad(set.loadKg ?? 0)}×${set.repetitions} @${set.rir}'
+        ? '✓ ${formatLoad(set.loadKg ?? 0)}×${set.repetitions} @${set.rir}'
         : set.isSkipped
         ? l10n.workoutSkippedLabel
         : set.isExtra
         ? '${l10n.workoutExtraLabel} ${set.ordinal}'
-        : '${set.ordinal} · ${set.prescribedLoadKg == null ? '—' : _formatLoad(set.prescribedLoadKg!)}';
+        : '${set.ordinal} · ${set.prescribedLoadKg == null ? '—' : formatLoad(set.prescribedLoadKg!)}';
     final borderColor = set.isSkipped
         ? colors.caution
         : isCurrent
@@ -1213,7 +1207,7 @@ class _PrescriptionCard extends StatelessWidget {
     }
     final load = set.prescribedLoadKg == null
         ? '— kg'
-        : '${_formatLoad(set.prescribedLoadKg!)} kg';
+        : '${formatLoad(set.prescribedLoadKg!)} kg';
     final reps = set.repMin == set.repMax
         ? '${set.repMin}'
         : '${set.repMin}–${set.repMax}';
@@ -1259,7 +1253,7 @@ class _PrescriptionCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '${previous.loadKg == null ? '—' : _formatLoad(previous.loadKg!)} × '
+                    '${previous.loadKg == null ? '—' : formatLoad(previous.loadKg!)} × '
                     '${previous.repetitions ?? '—'} @${previous.rir ?? '—'}',
                     style: AgonezTypography.monoSmall.copyWith(
                       color: colors.textSecondary,
@@ -1320,7 +1314,7 @@ class _RestCard extends StatelessWidget {
     final set = nextSet;
     final prescription = set == null
         ? null
-        : '${set.prescribedLoadKg == null ? '—' : _formatLoad(set.prescribedLoadKg!)} kg × '
+        : '${set.prescribedLoadKg == null ? '—' : formatLoad(set.prescribedLoadKg!)} kg × '
               '${set.repMin == set.repMax ? set.repMin : '${set.repMin}–${set.repMax}'} '
               '@ RIR ${set.targetRir ?? '—'}';
     return Semantics(
@@ -1493,7 +1487,7 @@ class _EntryZone extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '• ${l10n.divergenceLoad('${loadDelta > 0 ? '+' : ''}${_formatLoad(loadDelta)}')}',
+                  '• ${l10n.divergenceLoad('${loadDelta > 0 ? '+' : ''}${formatLoad(loadDelta)}')}',
                   style: AgonezTypography.caption.copyWith(
                     color: colors.caution,
                   ),
@@ -1667,7 +1661,7 @@ class _LoadStepper extends StatelessWidget {
           _RepeatButton(
             key: const Key('focus-load-minus'),
             icon: Icons.remove,
-            semanticLabel: l10n.setMinusLoadA11y(_formatLoad(step)),
+            semanticLabel: l10n.setMinusLoadA11y(formatLoad(step)),
             enabled: enabled && value != null,
             enableHaptics: enableHaptics,
             onStep: () => onChanged(math.max(0, (value ?? 0) - step)),
@@ -1679,7 +1673,7 @@ class _LoadStepper extends StatelessWidget {
               enabled: enabled,
               label: value == null
                   ? l10n.setEnterLoad
-                  : l10n.setLoadValueA11y(_formatLoad(value!)),
+                  : l10n.setLoadValueA11y(formatLoad(value!)),
               excludeSemantics: true,
               child: Material(
                 color: colors.sunk,
@@ -1699,7 +1693,7 @@ class _LoadStepper extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          value == null ? '—' : '${_formatLoad(value!)} kg',
+                          value == null ? '—' : '${formatLoad(value!)} kg',
                           style: AgonezTypography.inputNumberOf(context),
                         ),
                         Text(
@@ -1717,7 +1711,7 @@ class _LoadStepper extends StatelessWidget {
           _RepeatButton(
             key: const Key('focus-load-plus'),
             icon: Icons.add,
-            semanticLabel: l10n.setPlusLoadA11y(_formatLoad(step)),
+            semanticLabel: l10n.setPlusLoadA11y(formatLoad(step)),
             enabled: enabled,
             enableHaptics: enableHaptics,
             onStep: () => onChanged((value ?? 0) + step),
@@ -2055,7 +2049,7 @@ class _ExerciseCompleteCard extends StatelessWidget {
                   child: Text(
                     set.isSkipped
                         ? l10n.workoutSkippedLabel
-                        : '${_formatLoad(set.loadKg ?? 0)} × ${set.repetitions} @${set.rir}',
+                        : '${formatLoad(set.loadKg ?? 0)} × ${set.repetitions} @${set.rir}',
                     style: AgonezTypography.monoSmall.copyWith(
                       color: set.isSkipped
                           ? colors.caution
@@ -2065,7 +2059,7 @@ class _ExerciseCompleteCard extends StatelessWidget {
                 ),
                 if (!set.isExtra && set.prescribedLoadKg != null)
                   Text(
-                    '${_formatLoad(set.prescribedLoadKg!)} × '
+                    '${formatLoad(set.prescribedLoadKg!)} × '
                     '${set.repMin == set.repMax ? set.repMin : '${set.repMin}–${set.repMax}'}',
                     style: AgonezTypography.monoSmall.copyWith(
                       color: colors.prescriptionText,
@@ -2931,7 +2925,7 @@ class _LoadKeypadSheetState extends State<_LoadKeypadSheet> {
   @override
   void initState() {
     super.initState();
-    _value = widget.current == null ? '' : _formatLoad(widget.current!);
+    _value = widget.current == null ? '' : formatLoad(widget.current!);
   }
 
   void _press(String value) {
@@ -2982,27 +2976,26 @@ class _LoadKeypadSheetState extends State<_LoadKeypadSheet> {
                 if (widget.prescribed != null)
                   ActionChip(
                     label: Text(
-                      '${l10n.workoutPrescribed} ${_formatLoad(widget.prescribed!)}',
+                      '${l10n.workoutPrescribed} ${formatLoad(widget.prescribed!)}',
                     ),
-                    onPressed: () => setState(
-                      () => _value = _formatLoad(widget.prescribed!),
-                    ),
+                    onPressed: () =>
+                        setState(() => _value = formatLoad(widget.prescribed!)),
                   ),
                 if (widget.previous != null)
                   ActionChip(
                     label: Text(
-                      '${l10n.workoutLastExposure('')} ${_formatLoad(widget.previous!)}',
+                      '${l10n.workoutLastExposure('')} ${formatLoad(widget.previous!)}',
                     ),
                     onPressed: () =>
-                        setState(() => _value = _formatLoad(widget.previous!)),
+                        setState(() => _value = formatLoad(widget.previous!)),
                   ),
                 if (widget.current != null)
                   ActionChip(
                     label: Text(
-                      '${l10n.setLoad} ${_formatLoad(widget.current!)}',
+                      '${l10n.setLoad} ${formatLoad(widget.current!)}',
                     ),
                     onPressed: () =>
-                        setState(() => _value = _formatLoad(widget.current!)),
+                        setState(() => _value = formatLoad(widget.current!)),
                   ),
               ],
             ),

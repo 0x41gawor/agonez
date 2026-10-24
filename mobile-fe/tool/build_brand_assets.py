@@ -23,6 +23,8 @@ Outputs (paths relative to the repository root):
 * ``mobile-fe/android/.../drawable/ic_stat_agonez.xml``: notification icon.
 * ``mobile-fe/assets/brand/boot/``: white alpha masks for the Flutter boot
   screen, tinted at runtime.
+* ``mobile-fe/assets/brand/emblem/``: tightly cropped masks for the in-app
+  header mark, tinted at runtime.
 
 Requires numpy, scipy, Pillow, matplotlib and potracer::
 
@@ -53,6 +55,7 @@ SHEET = REPO / "media" / "logo-mark.png"
 MASTERS = REPO / "media" / "brand"
 ANDROID_RES = REPO / "mobile-fe" / "android" / "app" / "src" / "main" / "res"
 BOOT_ASSETS = REPO / "mobile-fe" / "assets" / "brand" / "boot"
+HEADER_ASSETS = REPO / "mobile-fe" / "assets" / "brand" / "emblem"
 
 # Tile 1 of the 3x3 sheet: emblem and wordmark boxes with a small margin.
 EMBLEM_BOX = (88, 41, 414, 384)
@@ -76,6 +79,9 @@ NOTIFICATION_VIEWPORT = 240.0
 # Legacy (pre-Android 8) icons are a full rounded square, so the emblem
 # radius is a share of the icon size.
 LEGACY_RADIUS_RATIO = 0.36
+# In-app header mark: the emblem fills its square, less an antialiasing edge.
+HEADER_CANVAS_DP = 48.0
+HEADER_RADIUS_DP = 23.5
 # The boot screen's wordmark width in dp; its height follows the artwork.
 WORDMARK_WIDTH_DP = 120.0
 
@@ -457,6 +463,13 @@ def main() -> None:
             rasterize(word_shape, lambda x, y: (x * scale, y * scale), width, height),
             target / "wordmark.png",
         )
+        canvas = round(HEADER_CANVAS_DP * ratio)
+        header = HEADER_ASSETS / folder if folder else HEADER_ASSETS
+        for variant, name in (("ink", "emblem_ink.png"), ("relief", "emblem_relief.png")):
+            transform = fit(
+                shapes[variant], radius_px, canvas, HEADER_RADIUS_DP * ratio
+            )
+            save_mask(rasterize(shapes[variant], transform, canvas, canvas), header / name)
     print(f"Wordmark: {WORDMARK_WIDTH_DP:g} x {word_height_dp:.1f} dp")
     print("Done.")
 

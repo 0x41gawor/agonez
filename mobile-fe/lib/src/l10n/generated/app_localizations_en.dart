@@ -86,6 +86,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeMinutesLabel => 'min';
 
   @override
+  String get homeExerciseNoSets => 'no sets';
+
+  @override
   String get homeStartWorkout => 'Start workout';
 
   @override
@@ -215,11 +218,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickerToday => 'Today';
 
   @override
-  String pickerScheduledOn(String date) {
-    return 'Scheduled $date';
-  }
-
-  @override
   String pickerDoneOn(String date) {
     return 'Done · $date';
   }
@@ -231,11 +229,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickerTodayExplanation => 'Today\'s scheduled workout.';
 
   @override
-  String pickerNotTodayExplanation(String workout) {
-    return '$workout isn\'t scheduled for today. Training it now changes the planned order of exposures.';
-  }
-
-  @override
   String pickerStartInstead(String workout) {
     return 'Start $workout instead';
   }
@@ -245,8 +238,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'Fallback workout-units are a future capability of the plan.';
 
   @override
-  String get pickerOffScheduleUnsupported =>
-      'This workout-unit cannot be started off schedule yet.';
+  String pickerMissedOn(String date) {
+    return 'Missed · $date';
+  }
+
+  @override
+  String get pickerDoneExplanation => 'Already trained in this microcycle.';
+
+  @override
+  String pickerNotScheduledToday(String workout) {
+    return '$workout isn\'t scheduled for today.';
+  }
+
+  @override
+  String get pickerOffScheduleRules =>
+      'Training it now changes the planned order of exposures. How the plan run records this (early, replacement or extra exposure) is decided by the scheduling rules — the app will not guess.';
+
+  @override
+  String pickerStart(String workout) {
+    return 'Start $workout';
+  }
+
+  @override
+  String get pickerFallbackLater => 'Fallback units arrive later';
 
   @override
   String get workoutMinimiseA11y => 'Minimise workout; keeps it running';

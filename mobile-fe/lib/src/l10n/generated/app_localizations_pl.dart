@@ -86,6 +86,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get homeMinutesLabel => 'min';
 
   @override
+  String get homeExerciseNoSets => 'bez serii';
+
+  @override
   String get homeStartWorkout => 'Rozpocznij trening';
 
   @override
@@ -216,11 +219,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get pickerToday => 'Dzisiaj';
 
   @override
-  String pickerScheduledOn(String date) {
-    return 'Zaplanowano $date';
-  }
-
-  @override
   String pickerDoneOn(String date) {
     return 'Wykonano · $date';
   }
@@ -232,13 +230,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get pickerTodayExplanation => 'Dzisiejszy zaplanowany trening.';
 
   @override
-  String pickerNotTodayExplanation(String workout) {
-    return '$workout nie jest zaplanowany na dzisiaj. Wykonanie go teraz zmienia planowaną kolejność ekspozycji.';
-  }
-
-  @override
   String pickerStartInstead(String workout) {
-    return 'Rozpocznij zamiast tego: $workout';
+    return 'Zamiast tego: $workout';
   }
 
   @override
@@ -246,8 +239,29 @@ class AppLocalizationsPl extends AppLocalizations {
       'Zastępcze jednostki treningowe są przyszłą funkcją planu.';
 
   @override
-  String get pickerOffScheduleUnsupported =>
-      'Tej jednostki nie można jeszcze rozpocząć poza harmonogramem.';
+  String pickerMissedOn(String date) {
+    return 'Opuszczona · $date';
+  }
+
+  @override
+  String get pickerDoneExplanation => 'Już wykonana w tym mikrocyklu.';
+
+  @override
+  String pickerNotScheduledToday(String workout) {
+    return '$workout nie jest zaplanowany na dzisiaj.';
+  }
+
+  @override
+  String get pickerOffScheduleRules =>
+      'Wykonanie go teraz zmienia planowaną kolejność ekspozycji. To, jak realizacja planu to odnotuje (wcześniej, jako zastępstwo czy dodatkowa ekspozycja), rozstrzygają zasady harmonogramu — aplikacja nie zgaduje.';
+
+  @override
+  String pickerStart(String workout) {
+    return 'Rozpocznij: $workout';
+  }
+
+  @override
+  String get pickerFallbackLater => 'Jednostki zastępcze pojawią się później';
 
   @override
   String get workoutMinimiseA11y =>

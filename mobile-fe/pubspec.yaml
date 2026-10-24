@@ -74,7 +74,7 @@ flutter:
 
   assets:
     - assets/anatomy.svg
-    - assets/brand/agonez-mark.png
+    - assets/brand/emblem/
     - assets/brand/boot/
     - assets/exercises/
 

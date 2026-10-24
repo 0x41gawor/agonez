@@ -10,14 +10,18 @@ import '../../api/context_models.dart';
 import '../../api/json_support.dart';
 import '../../api/prescription_models.dart';
 import '../../api/wire_enums.dart';
+import '../../api/workout_models.dart';
 import '../../app/app_providers.dart';
 import '../../data/mobile_repository.dart';
 import '../../design/design.dart';
 import '../../errors/user_error_mapper.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../storage/app_database.dart';
+import '../../widgets/agonez_emblem.dart';
 import '../../widgets/hold_to_confirm.dart';
 import '../../widgets/rest_countdown_text.dart';
+import 'exercise_summary.dart';
+import 'workout_unit_picker.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -108,6 +112,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     } finally {
       if (mounted) setState(() => _startingSession = null);
     }
+  }
+
+  Future<void> _openPicker(MobileContext value) async {
+    final runtime = ref.read(appRuntimeProvider);
+    final expected = value.expectedSession;
+    final started = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => WorkoutUnitPickerSheet(
+        units: pickerUnits(value),
+        enableHaptics: runtime.settings.hapticsEnabled,
+        onStartToday: () {
+          Navigator.pop(sheetContext);
+          if (expected != null) unawaited(_startWorkout(expected));
+        },
+        startOffSchedule: (session) =>
+            _startOffSchedule(session, expected: expected),
+      ),
+    );
+    if (started == true && mounted) context.go('/focus');
+  }
+
+  /// Starts a unit other than today's. The server decides how the plan run
+  /// records it and may refuse; errors propagate to the picker, which shows
+  /// them and stays open.
+  Future<void> _startOffSchedule(
+    SessionSummary session, {
+    required SessionSummary? expected,
+  }) async {
+    final runtime = ref.read(appRuntimeProvider);
+    final loaded = await runtime.mobileRepository.loadPrescription(
+      session.sessionId,
+    );
+    final missingLoads = loaded.value.exercises.any(
+      (exercise) => exercise.sets.any((set) => set.prescribedLoadKg == null),
+    );
+    await runtime.workoutRepository.startAfterServerAccepts(
+      prescription: loaded.value,
+      send: runtime.api.startWorkout,
+      planRunId: await runtime.mobileRepository.selectedPlanRunId(),
+      allowMissingLoads:
+          missingLoads ||
+          session.prescription.readiness == PrescriptionReadinessStatus.missing,
+      offSchedule: OffSchedule(
+        acknowledged: true,
+        selectedFrom: 'picker',
+        expectedSessionId: expected?.sessionId,
+      ),
+    );
   }
 
   void _showError(String message) {
@@ -211,6 +264,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onStart: _startWorkout,
                       onClaim: _confirmClaim,
                       onRetry: _refresh,
+                      onOpenPicker: _openPicker,
                     ),
                     data: (workout) {
                       if (workout != null) {
@@ -223,6 +277,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         onStart: _startWorkout,
                         onClaim: _confirmClaim,
                         onRetry: _refresh,
+                        onOpenPicker: _openPicker,
                       );
                     },
                   ),
@@ -248,7 +303,7 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
       child: Row(
         children: [
-          Image.asset('assets/brand/agonez-mark.png', width: 34, height: 34),
+          const AgonezEmblem(),
           const SizedBox(width: 10),
           Text(strings.appName, style: Theme.of(context).textTheme.titleLarge),
           const Spacer(),
@@ -277,6 +332,7 @@ class _ContextBody extends StatelessWidget {
     required this.onStart,
     required this.onClaim,
     required this.onRetry,
+    required this.onOpenPicker,
   });
 
   final Future<LoadedValue<MobileContext>> future;
@@ -285,6 +341,7 @@ class _ContextBody extends StatelessWidget {
   final ValueChanged<SessionSummary> onStart;
   final ValueChanged<ActiveWorkoutSummary> onClaim;
   final VoidCallback onRetry;
+  final ValueChanged<MobileContext> onOpenPicker;
 
   @override
   Widget build(BuildContext context) {
@@ -326,13 +383,8 @@ class _ContextBody extends StatelessWidget {
               )
             else
               _EmptyToday(contextValue: value),
-            if (value.alternatives.isNotEmpty) ...[
-              const SizedBox(height: 22),
-              AgonezEyebrow(strings.homeOtherWorkoutUnit),
-              const SizedBox(height: 8),
-              for (final item in value.alternatives)
-                _AlternativeRow(session: item),
-            ],
+            if (value.activeWorkout == null && hasOtherWorkoutUnits(value))
+              _TrainAnotherLink(onPressed: () => onOpenPicker(value)),
             if (value.microcycleDays.isNotEmpty) ...[
               const SizedBox(height: 24),
               _MicrocycleStrip(contextValue: value),
@@ -425,6 +477,7 @@ class _TodayCard extends StatelessWidget {
             )
           else
             Text(strings.homePrescriptionNotReadyExplanation),
+          _ExerciseList(session: session),
           const SizedBox(height: 20),
           AgonezPrimaryButton(
             label: ready
@@ -621,43 +674,151 @@ class _EmptyToday extends StatelessWidget {
   }
 }
 
-class _AlternativeRow extends StatelessWidget {
-  const _AlternativeRow({required this.session});
+class _TrainAnotherLink extends StatelessWidget {
+  const _TrainAnotherLink({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 10),
+    child: Center(
+      child: TextButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.format_list_bulleted, size: 18),
+        label: Text(AppLocalizations.of(context).homeOtherWorkoutUnit),
+        style: TextButton.styleFrom(
+          foregroundColor: context.agonezColors.textMuted,
+          minimumSize: const Size(0, AgonezSizes.minimumTouchTarget),
+        ),
+      ),
+    ),
+  );
+}
+
+/// The Today card's exercise list, read from the session's prescription.
+///
+/// The cached copy is used while it matches the context's prescription
+/// version. Rows need only sets and reps, so they show whether or not loads
+/// are resolved yet; the list is left out when the server refuses to return
+/// the prescription (`prescription_missing`).
+class _ExerciseList extends ConsumerStatefulWidget {
+  const _ExerciseList({required this.session});
 
   final SessionSummary session;
 
   @override
+  ConsumerState<_ExerciseList> createState() => _ExerciseListState();
+}
+
+class _ExerciseListState extends ConsumerState<_ExerciseList> {
+  late Future<List<ExerciseSummary>?> _summaries = _load();
+
+  @override
+  void didUpdateWidget(covariant _ExerciseList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.session.sessionId != widget.session.sessionId ||
+        oldWidget.session.prescription.prescriptionVersion !=
+            widget.session.prescription.prescriptionVersion) {
+      _summaries = _load();
+    }
+  }
+
+  Future<List<ExerciseSummary>?> _load() async {
+    final repository = ref.read(appRuntimeProvider).mobileRepository;
+    final session = widget.session;
+    final version = session.prescription.prescriptionVersion;
+    try {
+      var loaded = await repository.loadPrescription(
+        session.sessionId,
+        preferCache: version != null,
+      );
+      if (version != null && loaded.value.prescriptionVersion != version) {
+        loaded = await repository.loadPrescription(session.sessionId);
+      }
+      return [
+        for (final exercise in loaded.value.exercises)
+          ExerciseSummary.of(exercise),
+      ];
+    } on Object {
+      // Not prescribed yet, or offline without a copy: the card's counts and
+      // explanation stand on their own.
+      return null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final strings = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: AgonezPanel(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    session.workoutUnitName,
-                    style: Theme.of(context).textTheme.titleMedium,
+    final colors = context.agonezColors;
+    final textTheme = Theme.of(context).textTheme;
+    return FutureBuilder<List<ExerciseSummary>?>(
+      future: _summaries,
+      builder: (context, snapshot) {
+        final rows = snapshot.data ?? const <ExerciseSummary>[];
+        return AnimatedSize(
+          duration: AgonezDurations.standard,
+          alignment: Alignment.topCenter,
+          child: rows.isEmpty
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Column(
+                    children: [
+                      for (final (index, row) in rows.indexed)
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 7),
+                          decoration: index == rows.length - 1
+                              ? null
+                              : BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: colors.lineSubtle,
+                                    ),
+                                  ),
+                                ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                child: Text(
+                                  '${index + 1}',
+                                  style: AgonezTypography.eyebrow.copyWith(
+                                    fontSize: 11,
+                                    color: colors.textDim,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  row.name,
+                                  style: textTheme.bodyMedium,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                row.prescriptionLabel ??
+                                    AppLocalizations.of(
+                                      context,
+                                    ).homeExerciseNoSets,
+                                style: AgonezTypography.eyebrow.copyWith(
+                                  fontSize: 12,
+                                  letterSpacing: .3,
+                                  color: row.prescriptionLabel == null
+                                      ? colors.textDim
+                                      : colors.prescriptionText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    strings.pickerScheduledOn(session.scheduledOn),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            Tooltip(
-              message: strings.pickerOffScheduleUnsupported,
-              child: const Icon(Icons.lock_clock_outlined, size: 20),
-            ),
-          ],
-        ),
-      ),
+                ),
+        );
+      },
     );
   }
 }

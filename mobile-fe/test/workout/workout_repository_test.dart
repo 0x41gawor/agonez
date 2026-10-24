@@ -116,4 +116,61 @@ void main() {
     expect(finalize.finishedAt, finishedAt);
     expect(finalize.acknowledgedIncomplete, isTrue);
   });
+
+  test('a server-first start stores nothing when the server refuses', () async {
+    final sent = <StartWorkout>[];
+
+    await expectLater(
+      repository.startAfterServerAccepts(
+        prescription: fixturePrescription,
+        offSchedule: const OffSchedule(
+          acknowledged: true,
+          selectedFrom: 'picker',
+          expectedSessionId: 40,
+        ),
+        send: (payload) async {
+          sent.add(payload);
+          throw StateError('off_schedule_not_supported');
+        },
+      ),
+      throwsStateError,
+    );
+
+    expect(sent.single.offSchedule?.selectedFrom, 'picker');
+    expect(sent.single.offSchedule?.expectedSessionId, 40);
+    expect(await database.activeWorkout(), isNull);
+    expect(syncRequests, 0);
+  });
+
+  test('a server-first start is stored already acknowledged', () async {
+    final startedAt = DateTime.utc(2026, 10, 24, 18);
+
+    final workoutId = await repository.startAfterServerAccepts(
+      prescription: fixturePrescription,
+      planRunId: 1,
+      startedAt: startedAt,
+      offSchedule: const OffSchedule(
+        acknowledged: true,
+        selectedFrom: 'picker',
+      ),
+      send: (payload) async => fixtureSnapshot(
+        workoutId: payload.workoutId,
+        startedAt: payload.startedAt,
+      ),
+    );
+
+    final workout = await database.activeWorkout();
+    expect(workout!.workoutId, workoutId);
+    expect(workout.planRunId, 1);
+    expect(workout.lifecycle, 'active');
+    // A stored snapshot tells the sync engine not to send the start again.
+    expect(workout.serverSnapshotJson, isNotNull);
+    expect(workout.leaseEpoch, 1);
+    final payload = StartWorkout.fromJson(
+      jsonDecode(workout.startPayloadJson) as Map<String, Object?>,
+    );
+    expect(payload.offSchedule?.acknowledged, isTrue);
+    expect(await database.workoutExercises(workoutId), isNotEmpty);
+    expect(syncRequests, 1);
+  });
 }
