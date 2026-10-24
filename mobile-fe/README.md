@@ -116,3 +116,35 @@ the official IFrame player (`youtube_player_iframe`, an Android WebView), need a
 connection, and need no API key. Fullscreen turns the screen to landscape even
 when system auto-rotate is off; "Open in YouTube" is the fallback for videos
 whose owners block embedding.
+
+### Launch screen and app icon
+
+The launch sequence has two stages that draw the same Agonez emblem in the
+same place:
+
+1. Android's own splash (`res/values-v31/styles.xml`; before Android 12,
+   `res/drawable/launch_background.xml`), shown before any Dart runs.
+2. The Flutter boot screen (`lib/src/app/agonez_boot.dart`). `main()` defers
+   Flutter's first frame until the emblem is decoded, so the hand-off is
+   invisible. The boot screen then builds the app runtime behind it and
+   crossfades into the app once it is ready. When startup is slow, the emblem
+   rises, the wordmark opens and a gold hairline appears.
+
+The light theme uses the original ink drawing; the dark theme uses a gold
+"relief" version that keeps the drawing's lighting. Android's splash cannot
+read the theme stored in the app database, so `SystemThemeBridge` reports
+every theme change to Android (`UiModeManager.setApplicationNightMode`,
+Android 12+), and the next splash opens in the app's theme. The very first
+launch, and Android 11 or older, follow the system theme.
+`test/brand/launch_colors_test.dart` keeps the Android splash colours equal to
+the Dart palette.
+
+The emblem, wordmark, splash drawables, launcher and notification icons are
+all generated from tile 1 of `media/logo-mark.png`. The script traces the
+tile to vectors, and the masters are written to `media/brand/`. Regenerate
+everything with:
+
+```powershell
+python -m pip install numpy scipy Pillow matplotlib potracer
+python tool/build_brand_assets.py
+```

@@ -75,6 +75,7 @@ flutter:
   assets:
     - assets/anatomy.svg
     - assets/brand/agonez-mark.png
+    - assets/brand/boot/
     - assets/exercises/
 
   # To add assets to your application, add an assets section, like this:

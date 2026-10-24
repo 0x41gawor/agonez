@@ -3,14 +3,24 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'src/app/agonez_boot.dart';
 import 'src/app/app.dart';
 import 'src/app/app_providers.dart';
 import 'src/app/app_router.dart';
 import 'src/app/app_runtime.dart';
 import 'src/config/app_config.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  // The native splash stays up until the boot screen has decoded the emblem,
+  // so Flutter's first frame lands exactly on it.
+  binding.deferFirstFrame();
+  runApp(
+    AgonezBoot(start: _startApp, onFirstFrameReady: binding.allowFirstFrame),
+  );
+}
+
+Future<Widget> _startApp() async {
   try {
     final runtime = await AppRuntime.create(AppConfig.fromEnvironment());
     final router = createAppRouter();
@@ -20,11 +30,9 @@ Future<void> main() async {
     if (runtime.settings.restNotificationsEnabled) {
       await runtime.notifications.requestPermission();
     }
-    runApp(
-      ProviderScope(
-        overrides: [appRuntimeProvider.overrideWithValue(runtime)],
-        child: AgonezApp(runtime: runtime, router: router),
-      ),
+    return ProviderScope(
+      overrides: [appRuntimeProvider.overrideWithValue(runtime)],
+      child: AgonezApp(runtime: runtime, router: router),
     );
   } on Object catch (error, stackTrace) {
     debugPrint('Agonez startup failed: $error\n$stackTrace');
@@ -34,6 +42,6 @@ Future<void> main() async {
       error: error,
       stackTrace: stackTrace,
     );
-    runApp(AppStartupError(message: error.toString()));
+    return AppStartupError(message: error.toString());
   }
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launch screen in the dark theme: AgonezColors.ground and goldText. -->
+    <color name="splash_background">#FF0D0F12</color>
+    <color name="splash_emblem">#FFE2C690</color>
+</resources>

@@ -7,6 +7,7 @@ import '../api/agonez_api_client.dart';
 import '../config/app_config.dart';
 import '../data/mobile_repository.dart';
 import '../platform/rest_notification_service.dart';
+import '../platform/system_theme_bridge.dart';
 import '../settings/app_settings_controller.dart';
 import '../storage/app_database.dart';
 import '../sync/workout_sync_engine.dart';
@@ -30,6 +31,9 @@ class AppRuntime {
   static Future<AppRuntime> create(AppConfig config) async {
     final database = AppDatabase();
     final settings = await AppSettingsController.load(database);
+    // Keeps the next system splash in the app's theme; the listener ends
+    // with settings.dispose().
+    const SystemThemeBridge().bind(settings);
     final deviceId = await database.installationId();
     final packageInfo = await PackageInfo.fromPlatform();
     final clientInfo =

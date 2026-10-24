@@ -17,7 +17,8 @@ class RestNotificationService {
     tz_data.initializeTimeZones();
     await _plugin.initialize(
       const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        // A white alpha silhouette: Android draws only the small icon's alpha.
+        android: AndroidInitializationSettings('@drawable/ic_stat_agonez'),
       ),
       onDidReceiveNotificationResponse: (response) {
         if (response.payload == _payload) onOpenWorkout?.call();
