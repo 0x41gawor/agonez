@@ -20,6 +20,7 @@ The projected application schema additionally applies the packaged migrations ab
 - `0008_mobile_execution_enum_values.sql` and `0009_mobile_workout_execution.sql` add the mobile execution/sync model.
 - `0010_load_step_kg.sql` adds editable plan load steps and immutable Execution snapshots.
 - `0011_resistance_source_load_defaults.sql` adds the resistance-family default mapping and backfills existing plan/snapshot values.
+- `0012_fallback_prescriptions.sql` records analysis/fallback prescription provenance and requires an explicit load on new performed-set facts.
 
 Documents use **physical snapshot** for exact dump state and **projected application schema** for the snapshot plus pending packaged migrations. Verify the target database migration ledger rather than assuming source files were applied.
 

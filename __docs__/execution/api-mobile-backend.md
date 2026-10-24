@@ -18,6 +18,7 @@ write-lease identity only and must not be treated as a user credential.
 | `GET` | `/api/v1/mobile/context` | Implemented | Selected run, today, week/microcycle days, expected session, alternatives, active workout, and recent results. |
 | `GET` | `/api/v1/mobile/plan-runs` | Implemented | Compact run selector. |
 | `GET` | `/api/v1/mobile/sessions/{session_id}/prescription` | Implemented | Immutable prescription plus history, alternatives, and offline Atlas peeks. |
+| `POST` | `/api/v1/mobile/sessions/{session_id}/prescription/fallback` | Implemented | Idempotently materialize a complete executable snapshot from plan targets when analysis is missing or partial. |
 | `POST` | `/api/v1/mobile/workouts` | Implemented | Idempotently start using a client-generated workout UUID. |
 | `GET` | `/api/v1/mobile/workouts/active` | Implemented | Find the one resumable workout in a plan run. |
 | `GET` | `/api/v1/mobile/workouts/{workout_id}` | Implemented | Authoritative prescription/performance snapshot. |
@@ -49,11 +50,34 @@ the existing database enum value `additional`; the API deliberately renders that
 `added`, matching the mobile contract without changing desktop semantics.
 
 `prescription_version` is a deterministic SHA-256 digest of the ordered relational
-prescription tree, including each exercise's effective load-step snapshot, not the timestamp
-of one row. Start locks the plan run, rechecks the version, and freezes the current
+prescription tree, including each exercise's generation source and effective load-step
+snapshot, not the timestamp of one row. Start locks the plan run, rechecks the version, and freezes the current
 prescription by linking the draft performance to it. A stale
 start returns `409 prescription_changed` with the fresh prescription embedded at
 `error.details.prescription`.
+
+### Plan-backed fallback prescription
+
+The fallback preparation endpoint is an explicit write; the ordinary prescription `GET`
+remains side-effect free. It locks the session and creates or completes the normalized
+workout/exercise/set snapshot from that session's effective plan revision. Existing
+Post-Workout-Analysis exercise rows are retained and only missing slots are generated. Each
+generated exercise has `generation_source = plan_fallback`, its planned set loads remain
+`NULL`, and `previous_exercise_performance_id` points to the latest finalized performance of
+the same run-scoped exercise trace that contains an explicit performed load. Skipped,
+not-performed, and loadless history is not used as a load-inheritance basis. First exposures
+therefore have no prior performance link.
+
+The API exposes exercise source and derives workout source as `analysis`, `plan_fallback`, or
+`hybrid`. Desktop prescription completeness counts only `analysis` rows. Saving analysis for
+a generated exercise promotes that row in place and replaces its fallback sets, preserving
+stable prescription identity before execution.
+
+Snapshot preparation deliberately does not apply the scheduled-date rule. It only requires a
+scheduled session and materializes its own plan source. Start continues to own the current
+on-schedule policy. A future reschedule/off-schedule feature can therefore select or create the
+appropriate session and reuse the same snapshot operation without coupling plan materialization
+to calendar policy.
 
 The existing full Atlas article remains `/api/atlas/exercises/{slug}`. Mobile payloads always
 carry both the stable catalog integer id and slug, so Flutter can reuse that route without a
@@ -61,7 +85,7 @@ second full-article implementation.
 
 ## Database extension
 
-Migrations `0008` and `0009` extend, rather than replace, the Execution schema:
+Migrations `0008`, `0009`, and `0012` extend, rather than replace, the Execution schema:
 
 - add `not_performed` to exercise and set enums;
 - add stable client UUIDs and entity revisions;
@@ -71,6 +95,8 @@ Migrations `0008` and `0009` extend, rather than replace, the Execution schema:
 - add an append-only `exec.mobile_sync_ops` operation/audit log;
 - enforce one draft/in-progress workout per plan run with a partial unique index;
 - enforce unique performed ordering and client identity constraints.
+- record analysis versus plan-fallback provenance on exercise prescriptions;
+- require an explicit performed load for new set facts (`0` means no external load).
 
 Existing rows are backfilled with UUIDs, revisions, timestamps, and a sentinel legacy lease.
 The lifecycle constraint is forced before columns become non-null, which keeps restoration and
@@ -111,8 +137,9 @@ their corresponding normalized fact or resume hint. Substitution after a perform
 consumed per-operation rejection named `substitution_after_sets`, allowing later sequence
 numbers to continue.
 
-Set operations accept and persist `heart_rate_bpm`. Decimal scale and timezone offsets are
-normalized before idempotent stale-state comparison.
+Set operations accept and persist `heart_rate_bpm`. A performed set without `load_kg` is a
+consumed `load_required` rejection; clients use `0` for no external load. Decimal scale and
+timezone offsets are normalized before idempotent stale-state comparison.
 
 ## Finalization semantics
 
@@ -140,6 +167,8 @@ future rule can be introduced explicitly.
 | `prescription_changed` | Implemented, `409` | Includes the fresh prescription payload. |
 | `session_not_startable` | Implemented, `409` | Includes the current session status. |
 | `prescription_missing` | Implemented, `409` on read / `422` on start | Start can opt into unresolved nullable loads. |
+| `prescription_incomplete` | Implemented, `422` on start | The snapshot omits plan exercises or sets; prepare the fallback before retrying. |
+| `fallback_unavailable` | Implemented, `422` on fallback preparation | The session cannot be mapped safely to its governing plan revision/tracks. |
 | `off_schedule_not_supported` | Implemented, `422` | Reserved DTO accepted; semantics intentionally absent. |
 | `seq_gap` | Implemented, `409` | Includes the authoritative next sequence. |
 | `seq_mismatch` | Implemented, `409` | Detects both sequence reuse and global op-id misuse. |
@@ -153,7 +182,7 @@ future rule can be introduced explicitly.
 Malformed request DTOs use the same stable `request_validation` envelope. Additional diagnostic
 codes cover missing plan/session/exercise resources, mismatched claim device ids, and a finish
 time before workout start. Structural field failures are consumed operation rejections with
-the contract codes (`load_out_of_range`, `reps_out_of_range`, `rir_out_of_range`,
+the contract codes (`load_required`, `load_out_of_range`, `reps_out_of_range`, `rir_out_of_range`,
 `heart_rate_out_of_range`, `ordinal_conflict`, `unknown_prescription_ref`,
 `prescription_ref_mismatch`, and `exercise_not_found`).
 
@@ -168,7 +197,7 @@ the contract codes (`load_out_of_range`, `reps_out_of_range`, `rir_out_of_range`
 | Full operation catalogue | Implemented | All ten discriminated operation types. |
 | Finalize and incomplete acknowledgement | Implemented | Missing facts become `not_performed`; no fabricated performance values. |
 | Atlas peek/search | Implemented | Reuses localized Atlas and engine muscle/ETU data. |
-| Prescription with unresolved loads | Adapted | The read remains `200` with nullable loads so the athlete can inspect it; start still returns `422 prescription_missing` unless explicitly allowed. |
+| Missing or partial prescription | Implemented | Explicit fallback preparation creates the complete frozen plan structure, preserves analyzed rows, and leaves generated loads nullable. Start requires `allow_missing_loads=true`. |
 | `human.svg` / body-map v2 name | Adapted | Returns the installed `/assets/anatomy.svg` asset and its existing region ids; no nonexistent asset URL is invented. |
 | API `added` execution mode | Adapted | Persisted as existing database value `additional`, rendered as `added`. |
 | Full Atlas article | Reused with documented limitation | Flutter opens the existing slug route. It is not duplicated under `/mobile`; project-wide ETag support for that older route remains future work. |

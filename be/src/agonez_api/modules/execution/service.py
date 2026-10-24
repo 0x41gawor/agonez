@@ -691,6 +691,10 @@ class ExecutionService:
         }
 
     @staticmethod
+    def _is_analysis_prescription(item: Row) -> bool:
+        return str(item.get("generation_source", "analysis")) == "analysis"
+
+    @staticmethod
     def _session(bundle: RunBundle, session_id: int) -> Row:
         session = next((item for item in bundle.sessions if item["id"] == session_id), None)
         if session is None:
@@ -721,6 +725,7 @@ class ExecutionService:
         )
         saved = sum(
             item["workout_session_id"] == session["id"]
+            and self._is_analysis_prescription(item)
             for item in bundle.exercise_prescriptions
         )
         return prescription_completeness(saved, total).value
@@ -861,6 +866,7 @@ class ExecutionService:
             and any(
                 item["workout_session_id"] == target["id"]
                 and item["exercise_unit_track_id"] == track["id"]
+                and self._is_analysis_prescription(item)
                 for item in bundle.exercise_prescriptions
             )
         )
@@ -988,6 +994,7 @@ class ExecutionService:
                     if target
                     and item["workout_session_id"] == target["id"]
                     and item["exercise_unit_track_id"] == track["id"]
+                    and self._is_analysis_prescription(item)
                 ),
                 None,
             )
@@ -1833,7 +1840,9 @@ class ExecutionService:
                         prescribed_sets=prescribed_sets,
                         performed_sets=performed_sets,
                     ),
-                    "next_prescription_saved": bool(prescription)
+                    "next_prescription_saved": bool(
+                        prescription and self._is_analysis_prescription(prescription)
+                    )
                     if session["status"] == "scheduled"
                     else None,
                 }

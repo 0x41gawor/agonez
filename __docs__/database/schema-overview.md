@@ -66,6 +66,8 @@ Migration `0005` additionally creates `set_role`, `rep_range_semantics`, and
 
 Migration `0011` adds no enum values. It seeds every existing `resistance_source_enum` value
 in `core.resistance_source_load_defaults`; see [Default load steps](load-step-defaults.md).
+Migration `0012` adds `exec.prescription_generation_source` with `analysis` and
+`plan_fallback` values.
 
 ## Relationship and constraint highlights
 
@@ -100,7 +102,7 @@ flowchart LR
     Dump["2026-09-23 physical dump\nledger: 0001-0004"]
     M5["0005\nprogression identity + set metadata"]
     M6["0006\nexec schema + trace views"]
-    Later["0007–0011\nAPI versions, mobile sync, load-step defaults"]
+    Later["0007–0012\nAPI versions, mobile sync, load-step defaults, fallback provenance"]
     Expected["Schema expected by current code"]
 
     Dump --> M5 --> M6 --> Later --> Expected
@@ -109,5 +111,6 @@ flowchart LR
 Without `0005`, current plan SQL and DTOs referencing progression/set metadata fail. `0006` is
 database-only, so the existing API can start without querying it, but the Execution read models
 do not exist until it is applied. Migrations `0010` and `0011` add the plan/snapshot step fields
-and the 12-row catalog mapping described in [Default load steps](load-step-defaults.md). The
-backend Docker command runs migrations before Uvicorn.
+and the 12-row catalog mapping described in [Default load steps](load-step-defaults.md).
+Migration `0012` adds fallback provenance and the performed-load constraint. The backend
+Docker command runs migrations before Uvicorn.

@@ -21,9 +21,12 @@ context. `DB trigger` means a deferred constraint trigger evaluated at transacti
 | A performance is attributable to exactly one workout prescription. | NOT NULL UNIQUE FK from performance to prescription. |
 | One session has at most one prescription and one performance. | UNIQUE session FK on prescription; UNIQUE prescription FK on performance. |
 | Historical prescription meaning survives plan mutation. | Normalized snapshots at workout/exercise/set levels plus restrictive source FKs. Rows are treated as immutable after exposure starts. |
+| A missing or partial analyzed prescription can still become executable. | Explicit fallback preparation fills the complete plan structure with nullable loads and marks generated exercise rows `plan_fallback`; analyzed rows are retained. |
+| Fallback preparation is independent from scheduling policy. | Preparation requires a scheduled session but does not decide whether that session may start today. The start transaction owns on/off-schedule validation. |
 | Historical performed facts survive plan mutation. | Performance rows reference execution snapshots/tracks and core exercise IDs, not mutable plan fields. |
 | Prescribed load is queryable per set. | Relational `set_prescriptions.prescribed_load_kg`. |
 | Actual load/reps/RIR are queryable per set. | Relational `set_performances` columns and range checks. |
+| Every newly written performed set has an explicit load. | Mobile operation validation plus a `NOT VALID` database CHECK enforced for new/updated rows; `0` represents no external load. Historical rows are not fabricated. |
 | Skipped performed sets contain no fabricated actual values. | CHECK on `performed_set_status`. |
 | Additional sets remain distinguishable. | Nullable `prescribed_set_id`; actual set ordinal remains unique inside exercise performance. |
 | Exercise substitution/addition/skip is explicit. | `exercise_execution_mode` plus mode-specific CHECKs for prescribed/actual exercise FKs. |
@@ -52,4 +55,3 @@ The following operations should be single transactions in the future backend:
 
 The deferred session/performance trigger permits temporary statement-order inconsistency within
 these transactions but rejects an invalid committed state.
-

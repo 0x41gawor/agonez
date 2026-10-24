@@ -82,6 +82,20 @@ Snapshots protect history even while today's only plan revision is a mutable `DR
 FKs remain `RESTRICT`, while deleting an entire Execution aggregate cascades only inside
 `exec`.
 
+When Post-Workout-Analysis has not produced a complete next prescription, mobile execution can
+explicitly prepare a plan-backed fallback snapshot. The operation retains analyzed exercise
+rows, fills missing plan slots and sets, leaves generated set loads unresolved, and links each
+generated exercise to the latest finalized load-bearing performance on the same exercise
+trace. Exercise
+rows record whether they came from analysis or fallback so generated structure does not count
+as completed analysis. Once execution starts, the resulting mixed or fallback snapshot is
+historical in exactly the same way as a fully analyzed prescription.
+
+Fallback snapshot preparation is intentionally separate from calendar start eligibility.
+Today, start still requires the session scheduled for the supplied start date; future
+rescheduling or off-schedule semantics can reuse the same snapshot materializer after choosing
+the appropriate session.
+
 ## Session lifecycle and in-progress synchronization
 
 Session status and completion mode are separate. `completion_mode` is non-null only for a

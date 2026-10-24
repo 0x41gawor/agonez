@@ -121,6 +121,7 @@ erDiagram
         integer prescribed_exercise_id FK
         integer previous_exercise_performance_id FK
         integer ordinal
+        prescription_generation_source generation_source
     }
     exec_set_prescriptions {
         integer id PK
@@ -173,4 +174,3 @@ erDiagram
 Additional cross-schema lineage FKs point to `plans.day_prescriptions`,
 `plans.workout_unit_prescriptions`, `plans.exercise_slots`, `plans.exercise_variants`,
 `plans.set_infra_prescriptions`, and `core.exercises`.
-

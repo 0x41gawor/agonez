@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
@@ -8,7 +9,11 @@ from pydantic import ValidationError
 from agonez_api.app import create_app
 from agonez_api.core.config import Settings
 from agonez_api.modules.execution.errors import ExecutionAPIError
-from agonez_api.modules.mobile_execution.repository import MobileExecutionRepository
+from agonez_api.modules.execution.service import ExecutionService
+from agonez_api.modules.mobile_execution.repository import (
+    MobileExecutionRepository,
+    _OperationRejected,
+)
 from agonez_api.modules.mobile_execution.schemas import OperationBatch, StartWorkout
 from agonez_api.modules.mobile_execution.service import MobileExecutionService, etag_for
 
@@ -144,6 +149,7 @@ def test_mobile_openapi_has_all_routes_headers_and_operation_discriminator(
         "/api/v1/mobile/context",
         "/api/v1/mobile/plan-runs",
         "/api/v1/mobile/sessions/{session_id}/prescription",
+        "/api/v1/mobile/sessions/{session_id}/prescription/fallback",
         "/api/v1/mobile/workouts",
         "/api/v1/mobile/workouts/active",
         "/api/v1/mobile/workouts/{workout_id}",
@@ -178,6 +184,194 @@ def test_mobile_openapi_has_all_routes_headers_and_operation_discriminator(
         "set_cursor",
         "set_workout_comment",
     }
+
+
+def test_prescription_source_distinguishes_analysis_fallback_and_hybrid() -> None:
+    service = MobileExecutionService(None)  # type: ignore[arg-type]
+
+    assert service._prescription_source([]) == "analysis"
+    assert service._prescription_source([{"generation_source": "analysis"}]) == "analysis"
+    assert (
+        service._prescription_source([{"generation_source": "plan_fallback"}])
+        == "plan_fallback"
+    )
+    assert (
+        service._prescription_source(
+            [
+                {"generation_source": "analysis"},
+                {"generation_source": "plan_fallback"},
+            ]
+        )
+        == "hybrid"
+    )
+
+
+def test_fallback_rows_do_not_count_as_saved_desktop_analysis() -> None:
+    bundle = SimpleNamespace(
+        exercise_tracks=[{"workout_unit_track_id": 4}, {"workout_unit_track_id": 4}],
+        exercise_prescriptions=[
+            {"workout_session_id": 7, "generation_source": "analysis"},
+            {"workout_session_id": 7, "generation_source": "plan_fallback"},
+        ],
+    )
+
+    assert ExecutionService._completeness(  # type: ignore[arg-type]
+        ExecutionService(None), bundle, {"id": 7, "workout_unit_track_id": 4}  # type: ignore[arg-type]
+    ) == "partial"
+
+
+def test_performed_set_requires_an_explicit_load() -> None:
+    with pytest.raises(_OperationRejected) as caught:
+        MobileExecutionRepository._validate_set_values(
+            load_kg=None,
+            repetitions=8,
+            rir=2,
+            heart_rate_bpm=None,
+        )
+
+    assert getattr(caught.value, "code", None) == "load_required"
+
+
+@pytest.mark.asyncio
+async def test_fallback_materialization_preserves_analysis_and_fills_missing_slots() -> None:
+    repository = MobileExecutionRepository(None)  # type: ignore[arg-type]
+    writes: list[tuple[str, tuple[object, ...] | None]] = []
+
+    async def fetch_optional(
+        connection: object,
+        query: str,
+        params: tuple[object, ...] | None = None,
+    ) -> dict[str, object] | None:
+        del connection, params
+        if "source_workout" in query:
+            return {
+                "id": 7,
+                "plan_run_id": 3,
+                "microcycle_id": 5,
+                "workout_unit_track_id": 4,
+                "source_plan_workout_unit_id": 40,
+                "scheduled_date": datetime(2026, 10, 10, tzinfo=timezone.utc).date(),
+                "session_status": "scheduled",
+                "plan_revision_id": 2,
+                "source_revision_id": 2,
+                "name": "Push A",
+                "description": None,
+                "warmup_notes": None,
+                "stretch_notes": None,
+            }
+        if "FROM exec.workout_unit_prescriptions" in query:
+            return {"id": 90}
+        raise AssertionError(query)
+
+    async def fetch_all(
+        connection: object,
+        query: str,
+        params: tuple[object, ...] | None = None,
+    ) -> list[dict[str, object]]:
+        del connection, params
+        if "FROM plans.exercise_slots AS slot" in query:
+            return [
+                {
+                    "slot_id": 41,
+                    "ordinal": 0,
+                    "slot_name": "Press",
+                    "slot_description": None,
+                    "slot_goal": None,
+                    "slot_role": "PRIMARY_PROGRESSIVE",
+                    "variant_id": 51,
+                    "progression_id": None,
+                    "exercise_id": 61,
+                    "progression_model_slug": None,
+                    "load_step_kg": Decimal("2.50"),
+                    "exercise_track_id": 71,
+                    "previous_exercise_performance_id": 801,
+                },
+                {
+                    "slot_id": 42,
+                    "ordinal": 1,
+                    "slot_name": "Fly",
+                    "slot_description": None,
+                    "slot_goal": None,
+                    "slot_role": "ACCESSORY",
+                    "variant_id": 52,
+                    "progression_id": None,
+                    "exercise_id": 62,
+                    "progression_model_slug": None,
+                    "load_step_kg": Decimal("2.50"),
+                    "exercise_track_id": 72,
+                    "previous_exercise_performance_id": 802,
+                },
+            ]
+        if "FROM plans.set_infra_prescriptions AS item" in query:
+            return [
+                {
+                    "id": 501,
+                    "exercise_variant_id": 51,
+                    "ordinal": 0,
+                    "role": "working",
+                    "rep_min": 5,
+                    "rep_max": 7,
+                    "target_rir": "RIR1",
+                },
+                {
+                    "id": 502,
+                    "exercise_variant_id": 52,
+                    "ordinal": 0,
+                    "role": "working",
+                    "rep_min": 8,
+                    "rep_max": 12,
+                    "target_rir": "RIR2",
+                },
+            ]
+        if "SELECT exercise.*" in query:
+            return [
+                {
+                    "id": 101,
+                    "exercise_unit_track_id": 71,
+                    "generation_source": "analysis",
+                    "source_plan_exercise_variant_id": 51,
+                }
+            ]
+        raise AssertionError(query)
+
+    async def fetch_one(
+        connection: object,
+        query: str,
+        params: tuple[object, ...] | None = None,
+    ) -> dict[str, object]:
+        del connection
+        if "INSERT INTO exec.exercise_unit_prescriptions" in query:
+            writes.append((query, params))
+            return {"id": 102}
+        if "SELECT count(DISTINCT exercise.id)" in query:
+            return {"exercise_count": 2, "set_count": 2}
+        raise AssertionError(query)
+
+    async def execute(
+        connection: object,
+        query: str,
+        params: tuple[object, ...] | None = None,
+    ) -> None:
+        del connection
+        writes.append((query, params))
+
+    repository._fetch_optional = fetch_optional  # type: ignore[method-assign]
+    repository._fetch_all = fetch_all  # type: ignore[method-assign]
+    repository._fetch_one = fetch_one  # type: ignore[method-assign]
+    repository._execute = execute  # type: ignore[method-assign]
+
+    await repository._ensure_fallback_prescription(object(), 7)
+
+    exercise_inserts = [
+        item for item in writes if "INSERT INTO exec.exercise_unit_prescriptions" in item[0]
+    ]
+    set_inserts = [item for item in writes if "INSERT INTO exec.set_prescriptions" in item[0]]
+    assert not any("DELETE FROM exec.exercise_unit_prescriptions" in query for query, _ in writes)
+    assert len(exercise_inserts) == 1
+    assert "'plan_fallback'" in exercise_inserts[0][0]
+    assert len(set_inserts) == 1
+    assert set_inserts[0][1] == (102, 0, 502, "working", 8, 12, "RIR2")
+    assert any("UPDATE exec.workout_unit_prescriptions" in query for query, _ in writes)
 
 
 def test_etag_ignores_context_generation_time() -> None:

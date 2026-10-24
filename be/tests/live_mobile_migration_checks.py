@@ -24,6 +24,7 @@ def main() -> None:
         for name in (
             "0008_mobile_execution_enum_values.sql",
             "0009_mobile_workout_execution.sql",
+            "0012_fallback_prescriptions.sql",
         )
     }
 
@@ -47,7 +48,11 @@ def main() -> None:
                 JOIN pg_namespace AS namespace ON namespace.oid = type.typnamespace
                 JOIN pg_enum AS enum ON enum.enumtypid = type.oid
                 WHERE namespace.nspname = 'exec'
-                  AND type.typname IN ('exercise_execution_mode', 'performed_set_status')
+                  AND type.typname IN (
+                    'exercise_execution_mode',
+                    'performed_set_status',
+                    'prescription_generation_source'
+                  )
                 """
             )
             enums: dict[str, set[str]] = {}
@@ -55,6 +60,7 @@ def main() -> None:
                 enums.setdefault(type_name, set()).add(label)
             assert "not_performed" in enums["exercise_execution_mode"]
             assert "not_performed" in enums["performed_set_status"]
+            assert enums["prescription_generation_source"] == {"analysis", "plan_fallback"}
 
             cursor.execute(
                 """
@@ -74,12 +80,13 @@ def main() -> None:
                     ('set_performances', 'performed_at'),
                     ('set_performances', 'received_at'),
                     ('set_performances', 'heart_rate_bpm'),
-                    ('set_performances', 'rev')
+                    ('set_performances', 'rev'),
+                    ('exercise_unit_prescriptions', 'generation_source')
                   )
                 """
             )
             columns = {(table, column): nullable for table, column, nullable in cursor.fetchall()}
-            assert len(columns) == 13
+            assert len(columns) == 14
             for key in (
                 ("workout_unit_performances", "client_uuid"),
                 ("workout_unit_performances", "lease_device_id"),
@@ -87,6 +94,7 @@ def main() -> None:
                 ("exercise_unit_performances", "performed_ordinal"),
                 ("set_performances", "client_uuid"),
                 ("set_performances", "received_at"),
+                ("exercise_unit_prescriptions", "generation_source"),
             ):
                 assert columns[key] == "NO"
 
@@ -127,6 +135,9 @@ def main() -> None:
             )
             assert "heart_rate_bpm >= 25" in constraints[
                 ("set_performances", "set_performances_heart_rate_valid")
+            ]
+            assert "load_kg IS NOT NULL" in constraints[
+                ("set_performances", "set_performances_performed_load_required")
             ]
             assert "PRIMARY KEY (workout_unit_performance_id, lease_epoch, seq)" in constraints[
                 ("mobile_sync_ops", "mobile_sync_ops_pkey")

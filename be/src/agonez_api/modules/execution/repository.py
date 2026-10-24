@@ -499,7 +499,8 @@ class ExecutionRepository:
         exercise_prescriptions = await self._fetch_all(
             connection,
             """
-            SELECT exercise.*, workout.workout_session_id,
+            SELECT exercise.*, exercise.generation_source::text AS generation_source,
+                   workout.workout_session_id,
                    prescribed.slug AS prescribed_exercise_slug,
                    prescribed.name AS prescribed_exercise_name,
                    prescribed.name_full AS prescribed_exercise_name_full
@@ -946,10 +947,10 @@ class ExecutionRepository:
                             plan_description_snapshot, plan_goal_snapshot,
                             slot_role_snapshot, progression_model_slug_snapshot,
                             load_step_kg_snapshot, prescription_comment,
-                            previous_exercise_performance_id
+                            previous_exercise_performance_id, generation_source
                         ) VALUES (
                             %s, %s, %s, %s, %s, %s, %s, %s,
-                            %s, %s, %s, %s, %s, %s, %s
+                            %s, %s, %s, %s, %s, %s, %s, 'analysis'
                         ) RETURNING id
                         """,
                         (
@@ -971,6 +972,56 @@ class ExecutionRepository:
                         ),
                     )
                     exercise_prescription_id = cast(int, inserted["id"])
+                elif current["generation_source"] == "plan_fallback":
+                    if payload.expected_version is not None:
+                        raise conflict(
+                            "version_conflict",
+                            "Fallback prescription no longer matches the unsaved state",
+                            {"current": None},
+                        )
+                    exercise_prescription_id = cast(int, current["id"])
+                    await self._execute(
+                        connection,
+                        """
+                        UPDATE exec.exercise_unit_prescriptions
+                        SET source_plan_exercise_slot_id = %s,
+                            source_plan_exercise_variant_id = %s,
+                            source_progression_id = %s,
+                            prescribed_exercise_id = %s,
+                            slot_name_snapshot = %s,
+                            plan_description_snapshot = %s,
+                            plan_goal_snapshot = %s,
+                            slot_role_snapshot = %s,
+                            progression_model_slug_snapshot = %s,
+                            load_step_kg_snapshot = %s,
+                            prescription_comment = %s,
+                            previous_exercise_performance_id = %s,
+                            generation_source = 'analysis',
+                            updated_at = clock_timestamp()
+                        WHERE id = %s
+                        """,
+                        (
+                            target_slot["id"],
+                            target_variant["id"],
+                            target_variant["progression_id"],
+                            target_variant["exercise_id"],
+                            target_slot["name"],
+                            target_slot["description"],
+                            target_slot["goal"],
+                            target_slot["role"],
+                            target_variant["progression_model_slug"],
+                            target_variant["load_step_kg"],
+                            payload.prescription_comment,
+                            current_basis_id,
+                            exercise_prescription_id,
+                        ),
+                    )
+                    await self._execute(
+                        connection,
+                        """DELETE FROM exec.set_prescriptions
+                           WHERE exercise_unit_prescription_id = %s""",
+                        (exercise_prescription_id,),
+                    )
                 else:
                     current_version = version_of(current["updated_at"])
                     if payload.expected_version != current_version:
