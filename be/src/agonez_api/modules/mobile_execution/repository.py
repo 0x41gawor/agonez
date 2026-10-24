@@ -130,6 +130,12 @@ class MobileExecutionRepository:
                            prescription.id AS prescription_id,
                            prescription.updated_at,
                            count(DISTINCT exercise.id)::integer AS exercise_count,
+                           count(DISTINCT exercise.id) FILTER (
+                               WHERE exercise.generation_source = 'analysis'
+                           )::integer AS analysis_exercise_count,
+                           count(DISTINCT exercise.id) FILTER (
+                               WHERE exercise.generation_source = 'plan_fallback'
+                           )::integer AS fallback_exercise_count,
                            count(sets.id)::integer AS set_count,
                            count(sets.id) FILTER (WHERE sets.prescribed_load_kg IS NULL)::integer
                                AS missing_load_count
@@ -206,6 +212,15 @@ class MobileExecutionRepository:
         async with self._pool.connection() as connection:
             return await self._load_prescription(connection, session_id, locale=locale)
 
+    async def prepare_fallback_prescription(
+        self, session_id: int, *, locale: str
+    ) -> dict[str, Any]:
+        """Materialize a complete plan-backed snapshot without deciding start schedule policy."""
+        async with self._pool.connection() as connection:
+            async with connection.transaction():
+                await self._ensure_fallback_prescription(connection, session_id)
+                return await self._load_prescription(connection, session_id, locale=locale)
+
     async def _load_prescription(
         self,
         connection: Any,
@@ -246,6 +261,7 @@ class MobileExecutionRepository:
             connection,
             """
             SELECT exercise.id AS exercise_prescription_id, exercise.ordinal,
+                   exercise.generation_source::text AS generation_source,
                    exercise.exercise_unit_track_id AS exercise_track_id,
                    exercise.source_plan_exercise_slot_id,
                    exercise.source_plan_exercise_variant_id,
@@ -367,6 +383,404 @@ class MobileExecutionRepository:
             "previous_sets": previous_sets,
             "peeks": peeks,
         }
+
+    async def _ensure_fallback_prescription(self, connection: Any, session_id: int) -> None:
+        session = await self._fetch_optional(
+            connection,
+            """
+            SELECT session.id, session.plan_run_id, session.microcycle_id,
+                   session.workout_unit_track_id, session.source_plan_workout_unit_id,
+                   session.scheduled_date, session.status::text AS session_status,
+                   mc.plan_revision_id,
+                   source_day.revision_id AS source_revision_id,
+                   source_workout.name, source_workout.description,
+                   source_workout.warmup_notes, source_workout.stretch_notes
+            FROM exec.workout_sessions AS session
+            JOIN exec.microcycles AS mc ON mc.id = session.microcycle_id
+            JOIN plans.workout_unit_prescriptions AS source_workout
+              ON source_workout.id = session.source_plan_workout_unit_id
+            JOIN plans.day_prescriptions AS source_day
+              ON source_day.id = source_workout.day_id
+            WHERE session.id = %s
+            FOR UPDATE OF session
+            """,
+            (session_id,),
+        )
+        if session is None:
+            raise not_found("session_not_found", "Workout session was not found")
+        if session["session_status"] != "scheduled":
+            raise conflict(
+                "session_not_startable",
+                "Fallback prescription can only be prepared for a scheduled session",
+                {"status": session["session_status"]},
+            )
+        if session["source_revision_id"] != session["plan_revision_id"]:
+            raise invalid(
+                "fallback_unavailable",
+                "The session plan source does not belong to its governing revision",
+                {"session_id": session_id},
+            )
+
+        workout = await self._fetch_optional(
+            connection,
+            """
+            SELECT *
+            FROM exec.workout_unit_prescriptions
+            WHERE workout_session_id = %s
+            FOR UPDATE
+            """,
+            (session_id,),
+        )
+        changed = False
+        if workout is None:
+            workout = await self._fetch_one(
+                connection,
+                """
+                INSERT INTO exec.workout_unit_prescriptions (
+                    workout_session_id, source_plan_revision_id,
+                    source_plan_workout_unit_id, name_snapshot,
+                    description_snapshot, warmup_notes_snapshot,
+                    stretch_notes_snapshot
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING *
+                """,
+                (
+                    session_id,
+                    session["plan_revision_id"],
+                    session["source_plan_workout_unit_id"],
+                    session["name"],
+                    session["description"],
+                    session["warmup_notes"],
+                    session["stretch_notes"],
+                ),
+            )
+            changed = True
+
+        plan_exercises = await self._fetch_all(
+            connection,
+            """
+            SELECT slot.id AS slot_id, slot.ordinal, slot.name AS slot_name,
+                   slot.description AS slot_description, slot.goal AS slot_goal,
+                   slot.role::text AS slot_role,
+                   variant.id AS variant_id, variant.progression_id,
+                   variant.exercise_id, variant.progression_model_slug,
+                   COALESCE(variant.load_step_kg, defaults.default_load_step_kg)
+                       AS load_step_kg,
+                   track.id AS exercise_track_id,
+                   previous.id AS previous_exercise_performance_id
+            FROM plans.exercise_slots AS slot
+            LEFT JOIN plans.exercise_variants AS variant
+              ON variant.slot_id = slot.id AND variant.variant_type = 'DEFAULT'
+            LEFT JOIN core.exercises AS exercise ON exercise.id = variant.exercise_id
+            LEFT JOIN core.resistance_source_load_defaults AS defaults
+              ON defaults.resistance_source = exercise.resistance_source
+            LEFT JOIN exec.exercise_unit_tracks AS track
+              ON track.plan_run_id = %s
+             AND track.workout_unit_track_id = %s
+             AND track.logical_key = 'slot:' || slot.ordinal::text
+            LEFT JOIN LATERAL (
+                SELECT exercise_performance.id
+                FROM exec.exercise_unit_performances AS exercise_performance
+                JOIN exec.workout_unit_performances AS workout_performance
+                  ON workout_performance.id = exercise_performance.workout_unit_performance_id
+                JOIN exec.workout_unit_prescriptions AS prior_prescription
+                  ON prior_prescription.id = workout_performance.workout_unit_prescription_id
+                JOIN exec.workout_sessions AS prior_session
+                  ON prior_session.id = prior_prescription.workout_session_id
+                WHERE exercise_performance.exercise_unit_track_id = track.id
+                  AND workout_performance.status = 'finalized'
+                  AND exercise_performance.actual_exercise_id IS NOT NULL
+                  AND EXISTS (
+                      SELECT 1
+                      FROM exec.set_performances AS performed_set
+                      WHERE performed_set.exercise_unit_performance_id = exercise_performance.id
+                        AND performed_set.status = 'performed'
+                        AND performed_set.load_kg IS NOT NULL
+                  )
+                  AND prior_session.plan_run_id = %s
+                  AND (prior_session.scheduled_date, prior_session.id)
+                      < (%s::date, %s::integer)
+                ORDER BY prior_session.scheduled_date DESC,
+                         workout_performance.completed_at DESC,
+                         exercise_performance.id DESC
+                LIMIT 1
+            ) AS previous ON TRUE
+            WHERE slot.workout_unit_id = %s
+            ORDER BY slot.ordinal, slot.id
+            """,
+            (
+                session["plan_run_id"],
+                session["workout_unit_track_id"],
+                session["plan_run_id"],
+                session["scheduled_date"],
+                session_id,
+                session["source_plan_workout_unit_id"],
+            ),
+        )
+        if not plan_exercises:
+            raise invalid(
+                "fallback_unavailable",
+                "The plan workout has no executable exercise slots",
+                {"session_id": session_id},
+            )
+        invalid_slots = [
+            item["ordinal"]
+            for item in plan_exercises
+            if item["variant_id"] is None
+            or item["exercise_track_id"] is None
+            or item["load_step_kg"] is None
+        ]
+        if invalid_slots:
+            raise invalid(
+                "fallback_unavailable",
+                "The plan workout cannot be mapped to executable exercise tracks",
+                {"session_id": session_id, "slot_ordinals": invalid_slots},
+            )
+
+        variant_ids = [item["variant_id"] for item in plan_exercises]
+        plan_sets = await self._fetch_all(
+            connection,
+            """
+            SELECT item.id, item.exercise_variant_id, item.ordinal,
+                   item.role::text AS role, item.rep_min, item.rep_max,
+                   item.rir::text AS target_rir
+            FROM plans.set_infra_prescriptions AS item
+            WHERE item.exercise_variant_id = ANY(%s)
+            ORDER BY item.exercise_variant_id, item.ordinal, item.id
+            """,
+            (variant_ids,),
+        )
+        sets_by_variant: dict[int, list[Row]] = {}
+        for item in plan_sets:
+            sets_by_variant.setdefault(item["exercise_variant_id"], []).append(item)
+
+        existing_exercises = await self._fetch_all(
+            connection,
+            """
+            SELECT exercise.*, exercise.generation_source::text AS generation_source
+            FROM exec.exercise_unit_prescriptions AS exercise
+            WHERE exercise.workout_unit_prescription_id = %s
+            ORDER BY exercise.ordinal, exercise.id
+            FOR UPDATE
+            """,
+            (workout["id"],),
+        )
+        existing_by_track = {
+            item["exercise_unit_track_id"]: item for item in existing_exercises
+        }
+        planned_track_ids = {item["exercise_track_id"] for item in plan_exercises}
+        for stale in existing_exercises:
+            if (
+                stale["generation_source"] == "plan_fallback"
+                and stale["exercise_unit_track_id"] not in planned_track_ids
+            ):
+                await self._execute(
+                    connection,
+                    "DELETE FROM exec.exercise_unit_prescriptions WHERE id = %s",
+                    (stale["id"],),
+                )
+                changed = True
+
+        for plan in plan_exercises:
+            source_sets = sets_by_variant.get(plan["variant_id"], [])
+            existing = existing_by_track.get(plan["exercise_track_id"])
+            if existing is not None and existing["generation_source"] == "analysis":
+                continue
+
+            replace_sets = existing is None or existing["source_plan_exercise_variant_id"] != plan[
+                "variant_id"
+            ]
+            snapshot_changed = existing is not None and any(
+                (
+                    existing["ordinal"] != plan["ordinal"],
+                    existing["source_plan_exercise_slot_id"] != plan["slot_id"],
+                    existing["source_plan_exercise_variant_id"] != plan["variant_id"],
+                    existing["source_progression_id"] != plan["progression_id"],
+                    existing["prescribed_exercise_id"] != plan["exercise_id"],
+                    existing["slot_name_snapshot"] != plan["slot_name"],
+                    existing["plan_description_snapshot"] != plan["slot_description"],
+                    existing["plan_goal_snapshot"] != plan["slot_goal"],
+                    str(existing["slot_role_snapshot"]) != plan["slot_role"],
+                    existing["progression_model_slug_snapshot"]
+                    != plan["progression_model_slug"],
+                    existing["load_step_kg_snapshot"] != plan["load_step_kg"],
+                )
+            )
+            if existing is None:
+                inserted = await self._fetch_one(
+                    connection,
+                    """
+                    INSERT INTO exec.exercise_unit_prescriptions (
+                        workout_unit_prescription_id, exercise_unit_track_id,
+                        ordinal, source_plan_exercise_slot_id,
+                        source_plan_exercise_variant_id, source_progression_id,
+                        prescribed_exercise_id, slot_name_snapshot,
+                        plan_description_snapshot, plan_goal_snapshot,
+                        slot_role_snapshot, progression_model_slug_snapshot,
+                        load_step_kg_snapshot, previous_exercise_performance_id,
+                        generation_source
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, 'plan_fallback'
+                    ) RETURNING id
+                    """,
+                    (
+                        workout["id"],
+                        plan["exercise_track_id"],
+                        plan["ordinal"],
+                        plan["slot_id"],
+                        plan["variant_id"],
+                        plan["progression_id"],
+                        plan["exercise_id"],
+                        plan["slot_name"],
+                        plan["slot_description"],
+                        plan["slot_goal"],
+                        plan["slot_role"],
+                        plan["progression_model_slug"],
+                        plan["load_step_kg"],
+                        plan["previous_exercise_performance_id"],
+                    ),
+                )
+                exercise_prescription_id = inserted["id"]
+                replace_sets = True
+                changed = True
+            else:
+                exercise_prescription_id = existing["id"]
+                if snapshot_changed or existing["previous_exercise_performance_id"] != plan[
+                    "previous_exercise_performance_id"
+                ]:
+                    await self._execute(
+                        connection,
+                        """
+                        UPDATE exec.exercise_unit_prescriptions
+                        SET ordinal = %s,
+                            source_plan_exercise_slot_id = %s,
+                            source_plan_exercise_variant_id = %s,
+                            source_progression_id = %s,
+                            prescribed_exercise_id = %s,
+                            slot_name_snapshot = %s,
+                            plan_description_snapshot = %s,
+                            plan_goal_snapshot = %s,
+                            slot_role_snapshot = %s,
+                            progression_model_slug_snapshot = %s,
+                            load_step_kg_snapshot = %s,
+                            previous_exercise_performance_id = %s,
+                            updated_at = clock_timestamp()
+                        WHERE id = %s
+                        """,
+                        (
+                            plan["ordinal"],
+                            plan["slot_id"],
+                            plan["variant_id"],
+                            plan["progression_id"],
+                            plan["exercise_id"],
+                            plan["slot_name"],
+                            plan["slot_description"],
+                            plan["slot_goal"],
+                            plan["slot_role"],
+                            plan["progression_model_slug"],
+                            plan["load_step_kg"],
+                            plan["previous_exercise_performance_id"],
+                            exercise_prescription_id,
+                        ),
+                    )
+                    changed = True
+
+            if not replace_sets:
+                existing_sets = await self._fetch_all(
+                    connection,
+                    """
+                    SELECT source_plan_set_infra_id AS id, ordinal,
+                           set_role_snapshot::text AS role, rep_min, rep_max,
+                           target_rir::text AS target_rir
+                    FROM exec.set_prescriptions
+                    WHERE exercise_unit_prescription_id = %s
+                    ORDER BY ordinal, id
+                    """,
+                    (exercise_prescription_id,),
+                )
+                replace_sets = self._set_structure(existing_sets) != self._set_structure(
+                    source_sets
+                )
+            if replace_sets:
+                await self._execute(
+                    connection,
+                    "DELETE FROM exec.set_prescriptions WHERE exercise_unit_prescription_id = %s",
+                    (exercise_prescription_id,),
+                )
+                for source_set in source_sets:
+                    await self._execute(
+                        connection,
+                        """
+                        INSERT INTO exec.set_prescriptions (
+                            exercise_unit_prescription_id, ordinal,
+                            source_plan_set_infra_id, set_role_snapshot,
+                            rep_min, rep_max, target_rir, prescribed_load_kg
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, NULL)
+                        """,
+                        (
+                            exercise_prescription_id,
+                            source_set["ordinal"],
+                            source_set["id"],
+                            source_set["role"],
+                            source_set["rep_min"],
+                            source_set["rep_max"],
+                            source_set["target_rir"],
+                        ),
+                    )
+                changed = True
+
+        if changed:
+            await self._execute(
+                connection,
+                """
+                UPDATE exec.workout_unit_prescriptions
+                SET updated_at = clock_timestamp()
+                WHERE id = %s
+                """,
+                (workout["id"],),
+            )
+
+        completeness = await self._fetch_one(
+            connection,
+            """
+            SELECT count(DISTINCT exercise.id)::integer AS exercise_count,
+                   count(sets.id)::integer AS set_count
+            FROM exec.exercise_unit_prescriptions AS exercise
+            LEFT JOIN exec.set_prescriptions AS sets
+              ON sets.exercise_unit_prescription_id = exercise.id
+            WHERE exercise.workout_unit_prescription_id = %s
+            """,
+            (workout["id"],),
+        )
+        if completeness["exercise_count"] != len(plan_exercises) or completeness[
+            "set_count"
+        ] != len(plan_sets):
+            raise invalid(
+                "fallback_unavailable",
+                "The resulting prescription does not match the complete plan structure",
+                {
+                    "session_id": session_id,
+                    "expected_exercises": len(plan_exercises),
+                    "actual_exercises": completeness["exercise_count"],
+                    "expected_sets": len(plan_sets),
+                    "actual_sets": completeness["set_count"],
+                },
+            )
+
+    @staticmethod
+    def _set_structure(rows: list[Row]) -> list[tuple[Any, ...]]:
+        return [
+            (
+                item["id"],
+                item["ordinal"],
+                item["role"],
+                item["rep_min"],
+                item["rep_max"],
+                item["target_rir"],
+            )
+            for item in rows
+        ]
 
     async def load_active(self, *, plan_run_id: int, locale: str = "en") -> dict[str, Any] | None:
         async with self._pool.connection() as connection:
@@ -710,7 +1124,21 @@ class MobileExecutionRepository:
                     SELECT count(DISTINCT exercise.id)::integer AS exercise_count,
                            count(sets.id)::integer AS set_count,
                            count(sets.id) FILTER
-                             (WHERE sets.prescribed_load_kg IS NULL)::integer AS missing_loads
+                             (WHERE sets.prescribed_load_kg IS NULL)::integer AS missing_loads,
+                           (
+                               SELECT count(*)::integer
+                               FROM plans.exercise_slots AS slot
+                               WHERE slot.workout_unit_id = %s
+                           ) AS expected_exercise_count,
+                           (
+                               SELECT count(*)::integer
+                               FROM plans.set_infra_prescriptions AS plan_set
+                               JOIN plans.exercise_variants AS variant
+                                 ON variant.id = plan_set.exercise_variant_id
+                                AND variant.variant_type = 'DEFAULT'
+                               JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id
+                               WHERE slot.workout_unit_id = %s
+                           ) AS expected_set_count
                     FROM exec.workout_unit_prescriptions AS workout
                     LEFT JOIN exec.exercise_unit_prescriptions AS exercise
                       ON exercise.workout_unit_prescription_id = workout.id
@@ -718,8 +1146,28 @@ class MobileExecutionRepository:
                       ON sets.exercise_unit_prescription_id = exercise.id
                     WHERE workout.id = %s
                     """,
-                    (session["prescription_id"],),
+                    (
+                        session["source_plan_workout_unit_id"],
+                        session["source_plan_workout_unit_id"],
+                        session["prescription_id"],
+                    ),
                 )
+                incomplete = (
+                    readiness["exercise_count"] != readiness["expected_exercise_count"]
+                    or readiness["set_count"] != readiness["expected_set_count"]
+                )
+                if incomplete:
+                    raise invalid(
+                        "prescription_incomplete",
+                        "The prescription does not contain the complete plan structure",
+                        {
+                            "session_id": payload.session_id,
+                            "exercise_count": readiness["exercise_count"],
+                            "expected_exercise_count": readiness["expected_exercise_count"],
+                            "set_count": readiness["set_count"],
+                            "expected_set_count": readiness["expected_set_count"],
+                        },
+                    )
                 missing = (
                     readiness["exercise_count"] == 0
                     or readiness["set_count"] == 0
@@ -1960,6 +2408,7 @@ class MobileExecutionRepository:
             SELECT workout.id AS workout_id, workout.updated_at AS workout_updated_at,
                    exercise.id AS exercise_id, exercise.updated_at AS exercise_updated_at,
                    exercise.ordinal AS exercise_ordinal,
+                   exercise.generation_source::text AS generation_source,
                    exercise.prescribed_exercise_id, exercise.load_step_kg_snapshot,
                    exercise.prescription_comment,
                    sets.id AS set_id, sets.ordinal AS set_ordinal,
@@ -1989,12 +2438,16 @@ class MobileExecutionRepository:
         rir: int | None,
         heart_rate_bpm: int | None,
     ) -> None:
-        if load_kg is not None:
-            exponent = load_kg.as_tuple().exponent
-            if load_kg < 0 or load_kg > 1000 or not isinstance(exponent, int) or exponent < -2:
-                raise _OperationRejected(
-                    "load_out_of_range", "Load must be 0..1000 kg with at most 2 decimals"
-                )
+        if load_kg is None:
+            raise _OperationRejected(
+                "load_required",
+                "Performed sets require an explicit load; use 0 for no external load",
+            )
+        exponent = load_kg.as_tuple().exponent
+        if load_kg < 0 or load_kg > 1000 or not isinstance(exponent, int) or exponent < -2:
+            raise _OperationRejected(
+                "load_out_of_range", "Load must be 0..1000 kg with at most 2 decimals"
+            )
         if repetitions < 0 or repetitions > 100:
             raise _OperationRejected("reps_out_of_range", "Repetitions must be 0..100")
         if rir is not None and not 0 <= rir <= 10:

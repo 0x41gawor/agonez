@@ -163,6 +163,12 @@ class MobileExecutionService:
         data = await self._repository.load_prescription(session_id, locale=locale)
         return self._prescription(data)
 
+    async def prepare_fallback_prescription(
+        self, session_id: int, *, locale: str
+    ) -> WorkoutPrescription:
+        data = await self._repository.prepare_fallback_prescription(session_id, locale=locale)
+        return self._prescription(data)
+
     async def get_active(
         self, *, plan_run_id: int, device_id: UUID, locale: str
     ) -> ActiveWorkoutSummary:
@@ -285,6 +291,7 @@ class MobileExecutionService:
 
     def _prescription(self, data: dict[str, Any]) -> WorkoutPrescription:
         session = data["session"]
+        source = self._prescription_source(data["exercises"])
         sets_by_exercise: dict[int, list[Row]] = {}
         for item in data["sets"]:
             sets_by_exercise.setdefault(item["exercise_unit_prescription_id"], []).append(item)
@@ -303,6 +310,7 @@ class MobileExecutionService:
             exercises.append(
                 {
                     "exercise_prescription_id": exercise_id,
+                    "source": item.get("generation_source", "analysis"),
                     "ordinal": item["ordinal"],
                     "exercise_track_id": item["exercise_track_id"],
                     "slot": {"goal": item["plan_goal_snapshot"], "role": role},
@@ -371,7 +379,9 @@ class MobileExecutionService:
                                     for set_item in previous_sets.get(exercise_id, [])
                                 ],
                             }
-                            if previous and previous["exercise_performance_id"] is not None
+                            if previous
+                            and previous["exercise_performance_id"] is not None
+                            and previous["actual_exercise_id"] is not None
                             else None
                         )
                     },
@@ -384,6 +394,7 @@ class MobileExecutionService:
             session_id=session["session_id"],
             prescription_id=session["prescription_id"],
             prescription_version=data["version"],
+            source=source,
             workout_unit_name=session["workout_unit_name"],
             workout_track_id=session["workout_track_id"],
             microcycle={
@@ -513,6 +524,7 @@ class MobileExecutionService:
             and row["exercise_count"] > 0
             and row["set_count"] > 0
             and row["missing_load_count"] == 0
+            and row["fallback_exercise_count"] == 0
         )
         return {
             "session_id": row["session_id"],
@@ -523,6 +535,9 @@ class MobileExecutionService:
             "relation": relation,
             "prescription": {
                 "readiness": "ready" if ready else "missing",
+                "source": self._prescription_source_from_counts(
+                    row["analysis_exercise_count"], row["fallback_exercise_count"]
+                ),
                 "prescription_version": row["prescription_version"],
                 "updated_at": row["updated_at"],
                 "exercise_count": row["exercise_count"],
@@ -532,6 +547,23 @@ class MobileExecutionService:
                 ),
             },
         }
+
+    @staticmethod
+    def _prescription_source(exercises: list[Row]) -> str:
+        return MobileExecutionService._prescription_source_from_counts(
+            sum(item.get("generation_source", "analysis") == "analysis" for item in exercises),
+            sum(item.get("generation_source") == "plan_fallback" for item in exercises),
+        ) or "analysis"
+
+    @staticmethod
+    def _prescription_source_from_counts(analysis: int, fallback: int) -> str | None:
+        if analysis and fallback:
+            return "hybrid"
+        if fallback:
+            return "plan_fallback"
+        if analysis:
+            return "analysis"
+        return None
 
     @staticmethod
     def _empty_context(*, selection_required: bool, target_date: date) -> MobileContext:

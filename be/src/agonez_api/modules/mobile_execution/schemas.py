@@ -99,6 +99,7 @@ class ExerciseHistory(APIModel):
 
 class PrescriptionExercise(APIModel):
     exercise_prescription_id: int
+    source: Literal["analysis", "plan_fallback"]
     ordinal: int
     exercise_track_id: int
     slot: PrescriptionSlot
@@ -123,6 +124,7 @@ class WorkoutPrescription(APIModel):
     session_id: int
     prescription_id: int
     prescription_version: str
+    source: Literal["analysis", "plan_fallback", "hybrid"]
     workout_unit_name: str
     workout_track_id: int
     microcycle: PrescriptionMicrocycle
@@ -243,6 +245,7 @@ class MicrocycleDay(APIModel):
 
 class PrescriptionReadiness(APIModel):
     readiness: Literal["ready", "missing", "not_applicable"]
+    source: Literal["analysis", "plan_fallback", "hybrid"] | None = None
     prescription_version: str | None = None
     updated_at: datetime | None = None
     exercise_count: int | None = None

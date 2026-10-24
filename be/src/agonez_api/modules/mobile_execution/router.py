@@ -106,6 +106,22 @@ async def get_prescription(
 
 
 @router.post(
+    "/sessions/{session_id}/prescription/fallback",
+    response_model=WorkoutPrescription,
+    responses=ERROR_RESPONSES,
+)
+async def prepare_fallback_prescription(
+    session_id: Annotated[int, Path(ge=1)],
+    service: MobileServiceDependency,
+    device_id: DeviceId,
+    locale: ContentLocaleDependency,
+    client: ClientInfo = None,
+) -> WorkoutPrescription:
+    del device_id, client
+    return await service.prepare_fallback_prescription(session_id, locale=locale)
+
+
+@router.post(
     "/workouts",
     response_model=WorkoutSnapshot,
     status_code=status.HTTP_201_CREATED,
