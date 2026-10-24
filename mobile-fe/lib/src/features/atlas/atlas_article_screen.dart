@@ -44,8 +44,11 @@ class AtlasArticleScreen extends StatefulWidget {
 class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
   late ScrollController _scrollController;
   late Future<_ArticleBundle> _future;
-  final _sectionKeys = List.generate(4, (_) => GlobalKey());
-  int _selectedSection = 0;
+  // Article sections, top to bottom: TL;DR, videos, anatomy, data and the
+  // full technique guide.
+  static const _fullGuideSection = 4;
+  final _sectionKeys = List.generate(5, (_) => GlobalKey());
+  int _selectedTab = 0;
 
   /// True while a section tap animates the scroll, so intermediate sections
   /// do not flash in the section bar.
@@ -79,7 +82,7 @@ class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
       _scrollController = ScrollController(
         initialScrollOffset: widget.workspace.scrollOffset,
       )..addListener(_onScroll);
-      _selectedSection = 0;
+      _selectedTab = 0;
       _selectedMuscle = null;
       _showRecovery = false;
       _load();
@@ -116,39 +119,41 @@ class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
     _updateScrollSpy();
   }
 
-  /// Highlights the last section whose top has reached the upper quarter of
-  /// the scroll viewport. At the end of the article the last section wins,
-  /// because a short final section can never scroll up that far.
+  /// The tabs follow the article order; the full guide at the end belongs to
+  /// the Technique tab, like the TL;DR at the top.
+  static int _tabOf(int section) => section == _fullGuideSection ? 0 : section;
+
+  /// Highlights the tab of the last section whose top has reached the upper
+  /// quarter of the scroll viewport.
   void _updateScrollSpy() {
     if (_jumping || !mounted || !_scrollController.hasClients) return;
     final position = _scrollController.position;
+    final atEnd =
+        position.maxScrollExtent > 0 &&
+        position.pixels >= position.maxScrollExtent - 1;
+    // Compare scroll offsets from layout rather than painted positions:
+    // scroll notifications arrive before the next layout, so painted
+    // positions are a frame stale and the final event would leave the
+    // highlight one section behind.
+    final threshold = position.pixels + position.viewportDimension * .25;
     var selected = 0;
-    if (position.maxScrollExtent > 0 &&
-        position.pixels >= position.maxScrollExtent - 1) {
-      selected = _sectionKeys.length - 1;
-    } else {
-      // Compare scroll offsets from layout rather than painted positions:
-      // scroll notifications arrive before the next layout, so painted
-      // positions are a frame stale and the final event would leave the
-      // highlight one section behind.
-      final threshold = position.pixels + position.viewportDimension * .25;
-      for (var index = 0; index < _sectionKeys.length; index++) {
-        final box = _sectionKeys[index].currentContext?.findRenderObject();
-        if (box == null || !box.attached) continue;
-        final viewport = RenderAbstractViewport.maybeOf(box);
-        if (viewport == null) continue;
-        if (viewport.getOffsetToReveal(box, 0).offset <= threshold) {
-          selected = index;
-        }
+    for (var index = 0; index < _sectionKeys.length; index++) {
+      final box = _sectionKeys[index].currentContext?.findRenderObject();
+      if (box == null || !box.attached) continue;
+      final viewport = RenderAbstractViewport.maybeOf(box);
+      if (viewport == null) continue;
+      // At the end of the article the last section wins, because a short
+      // final section can never scroll up to the threshold.
+      if (atEnd || viewport.getOffsetToReveal(box, 0).offset <= threshold) {
+        selected = index;
       }
     }
-    if (selected != _selectedSection) {
-      setState(() => _selectedSection = selected);
-    }
+    final tab = _tabOf(selected);
+    if (tab != _selectedTab) setState(() => _selectedTab = tab);
   }
 
   Future<void> _scrollTo(int section) async {
-    setState(() => _selectedSection = section);
+    setState(() => _selectedTab = _tabOf(section));
     final target = _sectionKeys[section].currentContext;
     if (target == null) return;
     _jumping = true;
@@ -250,12 +255,13 @@ class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
     final l10n = AppLocalizations.of(context);
     final detail = bundle.article.value;
     final peek = bundle.peek?.value;
-    final sectionLabels = <String>[
+    final tabLabels = <String>[
       l10n.atlasSectionTechnique,
+      l10n.atlasSectionVideo,
       l10n.atlasSectionAnatomy,
       l10n.atlasSectionData,
-      l10n.atlasSectionVideo,
     ];
+    final hasFullGuide = hasTechniqueDetails(detail.technique);
     final exposure = _exposureMap(detail, peek, recovery: _showRecovery);
     final videos = AtlasVideo.fromLinks(detail.videoLinks);
     if (!_spyScheduled) {
@@ -274,8 +280,8 @@ class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
           onOpenWorkspaces: widget.onOpenWorkspaces,
         ),
         _SectionTabs(
-          labels: sectionLabels,
-          selected: _selectedSection,
+          labels: tabLabels,
+          selected: _selectedTab,
           onSelected: _scrollTo,
         ),
         Expanded(
@@ -294,12 +300,43 @@ class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
                 child: _ArticleSection(
                   key: _sectionKeys[0],
                   title: l10n.atlasSectionTechnique,
-                  child: _TechniqueSection(detail: detail),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AtlasTechniqueGuide(
+                        technique: detail.technique,
+                        part: TechniqueGuidePart.tldr,
+                      ),
+                      if (hasFullGuide) ...[
+                        const SizedBox(height: 4),
+                        TextButton.icon(
+                          onPressed: () => _scrollTo(_fullGuideSection),
+                          icon: const Icon(Icons.arrow_downward),
+                          label: Text(l10n.atlasTechniqueFullGuide),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
               SliverToBoxAdapter(
                 child: _ArticleSection(
                   key: _sectionKeys[1],
+                  title: l10n.atlasVideos,
+                  child: AtlasVideoGallery(
+                    videos: videos,
+                    onOpen: (index) => openAtlasVideoPlayer(
+                      context,
+                      title: detail.name,
+                      videos: videos,
+                      initialIndex: index,
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _ArticleSection(
+                  key: _sectionKeys[2],
                   title: l10n.atlasSectionAnatomy,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -351,26 +388,19 @@ class _AtlasArticleScreenState extends State<AtlasArticleScreen> {
               ),
               SliverToBoxAdapter(
                 child: _ArticleSection(
-                  key: _sectionKeys[2],
+                  key: _sectionKeys[3],
                   title: l10n.atlasSectionData,
                   child: _DataSection(detail: detail),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: _ArticleSection(
-                  key: _sectionKeys[3],
-                  title: l10n.atlasVideos,
-                  child: AtlasVideoGallery(
-                    videos: videos,
-                    onOpen: (index) => openAtlasVideoPlayer(
-                      context,
-                      title: detail.name,
-                      videos: videos,
-                      initialIndex: index,
-                    ),
+              if (hasFullGuide)
+                SliverToBoxAdapter(
+                  child: _ArticleSection(
+                    key: _sectionKeys[_fullGuideSection],
+                    title: l10n.atlasTechniqueFullGuide,
+                    child: _TechniqueSection(detail: detail),
                   ),
                 ),
-              ),
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
           ),
@@ -767,7 +797,10 @@ class _TechniqueSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AtlasTechniqueGuide(technique: detail.technique),
+        AtlasTechniqueGuide(
+          technique: detail.technique,
+          part: TechniqueGuidePart.details,
+        ),
         for (final comment in comments)
           Padding(
             padding: const EdgeInsets.only(top: 8),

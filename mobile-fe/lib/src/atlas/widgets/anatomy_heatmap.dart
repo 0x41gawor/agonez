@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -61,6 +62,7 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
 
   _PreparedAnatomy? _prepared;
   int? _preparedKey;
+  int? _pendingKey;
 
   @override
   void didChangeDependencies() {
@@ -75,11 +77,14 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
   @override
   void didUpdateWidget(covariant AnatomyHeatmap oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Only a new asset invalidates everything. Other inputs are part of the
+    // cache key checked in build, so a parent rebuild with equal inputs must
+    // not re-run the transform: it rewrites a ~2 MB SVG twice on the UI
+    // thread (~200 ms), which froze the article scroll on every highlight
+    // change of its section bar.
     if (oldWidget.assetPath != widget.assetPath && _bundle != null) {
       _loadAsset(_bundle!);
     }
-    _prepared = null;
-    _preparedKey = null;
   }
 
   Future<void> _loadAsset(AssetBundle bundle) async {
@@ -89,6 +94,7 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
       _loadError = null;
       _prepared = null;
       _preparedKey = null;
+      _pendingKey = null;
     });
 
     try {
@@ -101,6 +107,34 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
     }
   }
 
+  /// Runs the transform on a background isolate. It rewrites a ~2 MB SVG
+  /// twice, which blocked the UI thread for ~200 ms on a mid-range phone.
+  Future<void> _prepare(int key, _AnatomyRequest request) async {
+    _pendingKey = key;
+    try {
+      final prepared = await compute(_prepareAnatomy, request);
+      if (!mounted || _pendingKey != key) return;
+      setState(() {
+        _prepared = prepared;
+        _preparedKey = key;
+        _pendingKey = null;
+      });
+    } catch (error) {
+      if (!mounted || _pendingKey != key) return;
+      setState(() => _loadError = error);
+    }
+  }
+
+  Widget _loading() => SizedBox(
+    height: widget.height,
+    child: const Center(
+      child: SizedBox.square(
+        dimension: 22,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     if (_loadError != null) {
@@ -111,17 +145,7 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
     }
 
     final source = _source;
-    if (source == null) {
-      return SizedBox(
-        height: widget.height,
-        child: const Center(
-          child: SizedBox.square(
-            dimension: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
+    if (source == null) return _loading();
 
     final themeColors = context.agonezColors;
     final heatColor = widget.heatColor ?? themeColors.muscleHeat;
@@ -138,27 +162,24 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
       baseMuscleColor,
       outlineColor,
     );
-    if (_prepared == null || _preparedKey != key) {
-      _prepared = _PreparedAnatomy(
-        front: AnatomySvgTransformer.transform(
-          source,
-          view: AnatomyBodyView.front,
-          regionIntensities: widget.regionIntensities,
-          heatColor: heatColor,
-          baseMuscleColor: baseMuscleColor,
-          outlineColor: outlineColor,
-        ),
-        rear: AnatomySvgTransformer.transform(
-          source,
-          view: AnatomyBodyView.rear,
-          regionIntensities: widget.regionIntensities,
+    if (key == _preparedKey) {
+      // Inputs went back to what is shown; drop any result still in flight.
+      _pendingKey = null;
+    } else if (key != _pendingKey) {
+      _prepare(
+        key,
+        _AnatomyRequest(
+          source: source,
+          regionIntensities: Map.of(widget.regionIntensities),
           heatColor: heatColor,
           baseMuscleColor: baseMuscleColor,
           outlineColor: outlineColor,
         ),
       );
-      _preparedKey = key;
     }
+    // While a new variant is prepared, the previous one stays on screen.
+    final prepared = _prepared;
+    if (prepared == null) return _loading();
 
     final labelStyle =
         widget.labelStyle ??
@@ -168,7 +189,6 @@ class _AnatomyHeatmapState extends State<AnatomyHeatmap> {
           fontSize: 9,
           letterSpacing: 1.8,
         );
-    final prepared = _prepared!;
 
     return Semantics(
       container: true,
@@ -273,6 +293,38 @@ class _PreparedAnatomy {
 
   final String front;
   final String rear;
+}
+
+/// Inputs for [_prepareAnatomy], sent to a background isolate.
+class _AnatomyRequest {
+  const _AnatomyRequest({
+    required this.source,
+    required this.regionIntensities,
+    required this.heatColor,
+    required this.baseMuscleColor,
+    required this.outlineColor,
+  });
+
+  final String source;
+  final Map<String, double> regionIntensities;
+  final Color heatColor;
+  final Color baseMuscleColor;
+  final Color outlineColor;
+}
+
+_PreparedAnatomy _prepareAnatomy(_AnatomyRequest request) {
+  String transform(AnatomyBodyView view) => AnatomySvgTransformer.transform(
+    request.source,
+    view: view,
+    regionIntensities: request.regionIntensities,
+    heatColor: request.heatColor,
+    baseMuscleColor: request.baseMuscleColor,
+    outlineColor: request.outlineColor,
+  );
+  return _PreparedAnatomy(
+    front: transform(AnatomyBodyView.front),
+    rear: transform(AnatomyBodyView.rear),
+  );
 }
 
 /// Pure canonical-SVG transformer kept public for focused regression tests.

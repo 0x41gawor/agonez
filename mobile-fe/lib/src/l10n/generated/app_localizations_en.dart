@@ -898,6 +898,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'The shortest useful version before you start.';
 
   @override
+  String get atlasTechniqueFullGuide => 'Full technique guide';
+
+  @override
   String get atlasTechniqueEmpty =>
       'Canonical execution instructions have not been authored for this exercise yet.';
 

@@ -1571,6 +1571,12 @@ abstract class AppLocalizations {
   /// **'The shortest useful version before you start.'**
   String get atlasTechniqueTldrDescription;
 
+  /// No description provided for @atlasTechniqueFullGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Full technique guide'**
+  String get atlasTechniqueFullGuide;
+
   /// No description provided for @atlasTechniqueEmpty.
   ///
   /// In en, this message translates to:

@@ -106,6 +106,13 @@ void main() {
     );
 
     await tester.pump();
+    // The SVG transform runs on a background isolate, which needs real time.
+    for (var i = 0; i < 200 && find.text('FRONT').evaluate().isEmpty; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 25)),
+      );
+      await tester.pump();
+    }
     await tester.pumpAndSettle(const Duration(milliseconds: 50));
 
     expect(find.text('FRONT'), findsOneWidget);

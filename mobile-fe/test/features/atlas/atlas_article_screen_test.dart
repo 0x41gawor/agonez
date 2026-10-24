@@ -11,13 +11,13 @@ import 'package:flutter_test/flutter_test.dart';
 const _width = 412.0;
 
 void main() {
-  testWidgets('section bar shows four equal tabs above the article', (
+  testWidgets('section bar shows four equal tabs in article order', (
     tester,
   ) async {
     await _pumpArticle(tester);
 
     expect(find.text('MUSCLES'), findsNothing);
-    final labels = ['TECHNIQUE', 'ANATOMY', 'DATA', 'VIDEO'];
+    final labels = ['TECHNIQUE', 'VIDEO', 'ANATOMY', 'DATA'];
     for (final (index, label) in labels.indexed) {
       expect(
         tester.getCenter(find.text(label)).dx,
@@ -30,23 +30,63 @@ void main() {
     );
   });
 
+  testWidgets('article runs TL;DR, videos, anatomy, data, full guide', (
+    tester,
+  ) async {
+    await _pumpArticle(tester);
+
+    final headings = [
+      'TL;DR',
+      'Demonstration videos',
+      'Anatomy',
+      'Data',
+      'Movement overview',
+    ];
+    final tops = [
+      for (final text in headings)
+        tester.getTopLeft(find.text(text, skipOffstage: false)).dy,
+    ];
+    expect(tops, orderedEquals([...tops]..sort()));
+  });
+
   testWidgets('tabs jump to their section and stay visible', (tester) async {
     await _pumpArticle(tester);
     final barBottom = tester.getBottomLeft(find.text('VIDEO')).dy;
 
-    await _tapTab(tester, 'VIDEO');
-    expect(_isSelected(tester, 'VIDEO'), isTrue);
-    expect(find.text('Demonstration videos').hitTestable(), findsOneWidget);
+    for (final (tab, heading) in [
+      ('VIDEO', 'Demonstration videos'),
+      ('DATA', 'Data'),
+      ('ANATOMY', 'Anatomy'),
+      ('TECHNIQUE', 'Technique'),
+    ]) {
+      await _tapTab(tester, tab);
+      expect(_isSelected(tester, tab), isTrue, reason: tab);
+      // The heading lands just under the bar, not hidden behind it.
+      final top = tester.getTopLeft(find.text(heading)).dy;
+      expect(top, greaterThan(barBottom), reason: heading);
+      expect(top, lessThan(barBottom + 60), reason: heading);
+    }
     expect(tester.getTopLeft(find.text('VIDEO')).dy, lessThan(barBottom));
+    expect(find.text('Muscle ETU exposure', skipOffstage: false), findsOne);
+  });
 
-    await _tapTab(tester, 'ANATOMY');
-    expect(_isSelected(tester, 'ANATOMY'), isTrue);
-    expect(_isSelected(tester, 'VIDEO'), isFalse);
-    // The section heading lands just under the bar, not hidden behind it.
-    final heading = tester.getTopLeft(find.text('Anatomy')).dy;
-    expect(heading, greaterThan(barBottom));
-    expect(heading, lessThan(barBottom + 60));
-    expect(find.text('Muscle ETU exposure'), findsOneWidget);
+  testWidgets('TL;DR links to the full guide, which belongs to Technique', (
+    tester,
+  ) async {
+    await _pumpArticle(tester);
+    await _tapTab(tester, 'DATA');
+    await _tapTab(tester, 'TECHNIQUE');
+
+    // The link under the TL;DR precedes the guide's own heading.
+    final link = find.text('Full technique guide').first;
+    await tester.ensureVisible(link);
+    await tester.pump();
+    await tester.tap(link);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(_isSelected(tester, 'TECHNIQUE'), isTrue);
+    expect(find.text('Movement overview').hitTestable(), findsOneWidget);
   });
 
   testWidgets('scrolling moves the highlight', (tester) async {
@@ -68,8 +108,8 @@ void main() {
       warnIfMissed: false,
     );
     await tester.pump(const Duration(milliseconds: 500));
-    // At the end of the article the short video section is current.
-    expect(_isSelected(tester, 'VIDEO'), isTrue);
+    // The full guide closes the article and belongs to Technique.
+    expect(_isSelected(tester, 'TECHNIQUE'), isTrue);
   });
 }
 

@@ -369,6 +369,7 @@
   "atlasTechniqueStopWhen": "Stop when",
   "atlasTechniqueTldr": "TL;DR",
   "atlasTechniqueTldrDescription": "The shortest useful version before you start.",
+  "atlasTechniqueFullGuide": "Full technique guide",
   "atlasTechniqueEmpty": "Canonical execution instructions have not been authored for this exercise yet.",
   "atlasTechniqueMovementOverview": "Movement overview",
   "atlasTechniqueMovementOverviewDescription": "What the movement is and how the joints travel.",

@@ -909,6 +909,9 @@ class AppLocalizationsPl extends AppLocalizations {
       'Najkrótsza użyteczna wersja przed rozpoczęciem.';
 
   @override
+  String get atlasTechniqueFullGuide => 'Pełny przewodnik techniki';
+
+  @override
   String get atlasTechniqueEmpty =>
       'Kanoniczna instrukcja wykonania nie została jeszcze przygotowana dla tego ćwiczenia.';
 

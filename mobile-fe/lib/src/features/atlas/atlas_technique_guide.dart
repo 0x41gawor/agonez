@@ -147,20 +147,43 @@ bool _hasContent(Object? value) => switch (value) {
   _ => true,
 };
 
-/// The full technique guide shown in the Atlas article.
+/// Which part of the guide to render. The article shows the TL;DR near the
+/// top and the detailed groups at the end.
+enum TechniqueGuidePart { all, tldr, details }
+
+/// Whether [technique] has anything beyond the TL;DR.
+bool hasTechniqueDetails(JsonMap technique) =>
+    orderTechnique(technique).any((section) => section.key != 'tldr');
+
+/// The technique guide shown in the Atlas article.
 class AtlasTechniqueGuide extends StatelessWidget {
-  const AtlasTechniqueGuide({required this.technique, super.key});
+  const AtlasTechniqueGuide({
+    required this.technique,
+    this.part = TechniqueGuidePart.all,
+    super.key,
+  });
 
   final JsonMap technique;
+  final TechniqueGuidePart part;
 
   @override
   Widget build(BuildContext context) {
-    final sections = orderTechnique(technique);
+    final sections = orderTechnique(technique)
+        .where(
+          (section) => switch (part) {
+            TechniqueGuidePart.all => true,
+            TechniqueGuidePart.tldr => section.key == 'tldr',
+            TechniqueGuidePart.details => section.key != 'tldr',
+          },
+        )
+        .toList(growable: false);
     if (sections.isEmpty) {
-      return Text(
-        AppLocalizations.of(context).atlasTechniqueEmpty,
-        style: TextStyle(color: context.agonezColors.textMuted),
-      );
+      return part == TechniqueGuidePart.details
+          ? const SizedBox.shrink()
+          : Text(
+              AppLocalizations.of(context).atlasTechniqueEmpty,
+              style: TextStyle(color: context.agonezColors.textMuted),
+            );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
