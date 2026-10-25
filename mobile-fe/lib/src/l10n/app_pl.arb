@@ -20,6 +20,7 @@
   "homePrescriptionReady": "Zalecenia gotowe",
   "homePrescriptionNotReady": "Zalecenia nie są gotowe",
   "homePrescriptionNotReadyExplanation": "Analiza po treningu nie wyznaczyła jeszcze obciążeń dla tej sesji.",
+  "homePrescriptionPartial": "Analiza po treningu obejmuje {analysed} z {planned} ćwiczeń. Pozostałe zaczną się od celów z planu.",
   "homePrescriptionChanged": "Zalecenia się zmieniły",
   "homePrescriptionChangedDetail": "{exercise}, seria {setNumber} · {before} → {after} kg",
   "homePrescriptionChangedMore": "(+{count} więcej)",
@@ -381,6 +382,8 @@
   "errorSubstitutionAfterSets": "Nie można zamienić ćwiczenia po zapisaniu jego serii.",
   "errorConflict": "Ta wartość została zmieniona gdzie indziej. Wybierz wartość z telefonu albo serwera.",
   "errorRejectedOperation": "Serwer nie mógł zastosować tej zmiany. Lokalny wpis zachowano do sprawdzenia.",
+  "errorPrescriptionIncomplete": "W zaleceniach tej sesji brakuje części planu, więc serwer nie przyjął treningu. Twoje wpisy pozostają na tym telefonie.",
+  "syncStartRefusedBySchedule": "Harmonogram na serwerze nie pozwala już na ten trening w czasie, w którym go rozpoczęto. Twoje wpisy pozostają na tym telefonie.",
   "errorNetworkUnavailable": "Nie można połączyć się z serwerem. Zapis treningu działa offline.",
   "errorInvalidResponse": "Serwer zwrócił nieoczekiwaną odpowiedź. Dane lokalne zostały zachowane.",
   "errorApiBaseUrlMissing": "W tej wersji deweloperskiej nie skonfigurowano API_BASE_URL."

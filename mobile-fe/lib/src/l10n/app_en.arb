@@ -20,6 +20,8 @@
   "homePrescriptionReady": "Prescription ready",
   "homePrescriptionNotReady": "Prescription not ready",
   "homePrescriptionNotReadyExplanation": "Post-Workout-Analysis has not produced this session's loads yet.",
+  "homePrescriptionPartial": "Post-Workout-Analysis covers {analysed} of {planned} exercises. The rest start from plan targets.",
+  "@homePrescriptionPartial": {"placeholders": {"analysed": {"type": "int"}, "planned": {"type": "int"}}},
   "homePrescriptionChanged": "Prescription changed",
   "homePrescriptionChangedDetail": "{exercise}, set {setNumber} · {before} → {after} kg",
   "@homePrescriptionChangedDetail": {
@@ -501,6 +503,8 @@
   "errorSubstitutionAfterSets": "An exercise cannot be substituted after its sets have been recorded.",
   "errorConflict": "This value changed elsewhere. Choose the phone or server value.",
   "errorRejectedOperation": "The server could not apply this change. Your local entry has been kept for review.",
+  "errorPrescriptionIncomplete": "This session's prescription is missing part of the plan, so the server did not accept the workout. Your entries are kept on this phone.",
+  "syncStartRefusedBySchedule": "The server's schedule no longer allows this workout for the time it was started. Your entries are kept on this phone.",
   "errorNetworkUnavailable": "The server cannot be reached. Recording continues offline.",
   "errorInvalidResponse": "The server returned an unexpected response. Local data has been kept.",
   "errorApiBaseUrlMissing": "API_BASE_URL is not configured for this development build."

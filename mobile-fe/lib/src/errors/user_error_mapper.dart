@@ -4,7 +4,17 @@ import '../l10n/generated/app_localizations.dart';
 String userFacingError(Object error, AppLocalizations strings) {
   if (error is AgonezApiException) {
     if (error.isTransportFailure) return strings.errorNetworkUnavailable;
-    return switch (error.error?.code) {
+    return messageForErrorCode(error.error?.code, strings) ??
+        strings.errorGenericBody;
+  }
+  if (error is FormatException) return strings.errorInvalidResponse;
+  return strings.errorGenericBody;
+}
+
+/// The athlete-facing message for a server error [code]; null for a code
+/// without one of its own.
+String? messageForErrorCode(String? code, AppLocalizations strings) =>
+    switch (code) {
       'active_workout_exists' => strings.errorActiveWorkoutExists,
       'prescription_changed' => strings.errorPrescriptionChanged,
       'session_not_startable' => strings.errorSessionNotStartable,
@@ -16,6 +26,7 @@ String userFacingError(Object error, AppLocalizations strings) {
       'off_schedule_not_applicable' => strings.errorOffScheduleNotApplicable,
       'not_next_track_exposure' => strings.errorNotNextTrackExposure,
       'fallback_unavailable' => strings.errorFallbackUnavailable,
+      'prescription_incomplete' => strings.errorPrescriptionIncomplete,
       'seq_gap' => strings.errorSequenceGap,
       'seq_mismatch' => strings.errorSequenceMismatch,
       'superseded' => strings.errorSuperseded,
@@ -26,9 +37,5 @@ String userFacingError(Object error, AppLocalizations strings) {
       'substitution_after_sets' => strings.errorSubstitutionAfterSets,
       'conflict' => strings.errorConflict,
       'rejected_operation' => strings.errorRejectedOperation,
-      _ => strings.errorGenericBody,
+      _ => null,
     };
-  }
-  if (error is FormatException) return strings.errorInvalidResponse;
-  return strings.errorGenericBody;
-}

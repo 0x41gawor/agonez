@@ -64,6 +64,11 @@ class AppLocalizationsPl extends AppLocalizations {
       'Analiza po treningu nie wyznaczyła jeszcze obciążeń dla tej sesji.';
 
   @override
+  String homePrescriptionPartial(int analysed, int planned) {
+    return 'Analiza po treningu obejmuje $analysed z $planned ćwiczeń. Pozostałe zaczną się od celów z planu.';
+  }
+
+  @override
   String get homePrescriptionChanged => 'Zalecenia się zmieniły';
 
   @override
@@ -1319,6 +1324,14 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get errorRejectedOperation =>
       'Serwer nie mógł zastosować tej zmiany. Lokalny wpis zachowano do sprawdzenia.';
+
+  @override
+  String get errorPrescriptionIncomplete =>
+      'W zaleceniach tej sesji brakuje części planu, więc serwer nie przyjął treningu. Twoje wpisy pozostają na tym telefonie.';
+
+  @override
+  String get syncStartRefusedBySchedule =>
+      'Harmonogram na serwerze nie pozwala już na ten trening w czasie, w którym go rozpoczęto. Twoje wpisy pozostają na tym telefonie.';
 
   @override
   String get errorNetworkUnavailable =>

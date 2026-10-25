@@ -14,6 +14,7 @@ import '../../api/workout_models.dart';
 import '../../app/app_providers.dart';
 import '../../app/app_runtime.dart';
 import '../../design/design.dart';
+import '../../errors/user_error_mapper.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../storage/app_database.dart';
 import '../../widgets/sync_status_pill.dart';
@@ -1167,7 +1168,14 @@ String _compactConflictValue(Object? value) {
   return encoded.length <= 180 ? encoded : '${encoded.substring(0, 177)}…';
 }
 
+/// Why the server refused this workout's sync. The picker's wording for
+/// schedule refusals ("close the list") does not fit here, so they share a
+/// message of their own.
 String _rejectedExplanation(AppLocalizations l10n, String? code) =>
-    code == 'substitution_after_sets'
-    ? l10n.errorSubstitutionAfterSets
-    : l10n.errorRejectedOperation;
+    switch (code) {
+      'off_schedule_acknowledgement_required' ||
+      'off_schedule_not_applicable' ||
+      'not_next_track_exposure' ||
+      'schedule_changed' => l10n.syncStartRefusedBySchedule,
+      _ => messageForErrorCode(code, l10n) ?? l10n.errorRejectedOperation,
+    };

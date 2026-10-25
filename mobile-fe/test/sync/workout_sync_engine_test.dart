@@ -233,6 +233,39 @@ void main() {
     },
   );
 
+  test(
+    'a start the server refuses for its content waits for the athlete',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      final api = _MockApi();
+      final repository = WorkoutRepository(database: database);
+      await repository.start(
+        prescription: fixturePrescription,
+        startedAt: DateTime.utc(2026, 10, 10, 17),
+      );
+      when(
+        () => api.startWorkout(any()),
+      ).thenThrow(_requestFailure('prescription_incomplete'));
+      final engine = WorkoutSyncEngine(
+        database: database,
+        api: api,
+        backoffForAttempt: (_) => Duration.zero,
+      );
+
+      await engine.syncNow();
+      await engine.syncNow();
+
+      final workout = await database.activeWorkout();
+      // Not a retryable failure: the same request would be refused again.
+      expect(workout!.syncState, 'recovery_required');
+      expect(workout.syncErrorCode, 'prescription_incomplete');
+      verify(() => api.startWorkout(any())).called(1);
+
+      await engine.dispose();
+      await database.close();
+    },
+  );
+
   test('lost response retries identical op and accepts duplicate', () async {
     final database = AppDatabase(NativeDatabase.memory());
     final api = _MockApi();

@@ -297,11 +297,19 @@ class WorkoutSyncEngine {
       case 'ops_pending':
         await _snapshotAndBlock(workout, 'ops_pending');
         return false;
+      // The server's answer to this exact request; retrying it as is
+      // cannot succeed, so the athlete is told instead.
       case 'active_workout_exists':
       case 'prescription_changed':
       case 'session_not_startable':
       case 'prescription_missing':
+      case 'prescription_incomplete':
+      case 'fallback_unavailable':
       case 'off_schedule_not_supported':
+      case 'off_schedule_acknowledgement_required':
+      case 'off_schedule_not_applicable':
+      case 'not_next_track_exposure':
+      case 'schedule_changed':
       case 'incomplete_not_acknowledged':
         await _database.markSyncIssue(
           workoutId: workout.workoutId,

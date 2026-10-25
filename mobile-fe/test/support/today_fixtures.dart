@@ -214,6 +214,7 @@ MobileContext workoutContext({
   List<MicrocycleDay> microcycleDays = const [],
   List<RecentWorkout> recent = const [],
   bool prescribed = true,
+  PrescriptionReadiness? readiness,
 }) => MobileContext(
   generatedAt: DateTime.utc(2026, 10, 19, 8, 1),
   contextVersion: 'run-2',
@@ -227,19 +228,21 @@ MobileContext workoutContext({
     workoutTrackId: 5,
     scheduledOn: '2026-10-19',
     status: 'scheduled',
-    prescription: prescribed
-        ? const PrescriptionReadiness(
-            readiness: PrescriptionReadinessStatus.ready,
-            prescriptionVersion: 'rx-41',
-            exerciseCount: 7,
-            setCount: 20,
-            estimatedDurationMin: 90,
-          )
-        : const PrescriptionReadiness(
-            readiness: PrescriptionReadinessStatus.missing,
-            exerciseCount: 0,
-            setCount: 0,
-          ),
+    prescription:
+        readiness ??
+        (prescribed
+            ? const PrescriptionReadiness(
+                readiness: PrescriptionReadinessStatus.ready,
+                prescriptionVersion: 'rx-41',
+                exerciseCount: 7,
+                setCount: 20,
+                estimatedDurationMin: 90,
+              )
+            : const PrescriptionReadiness(
+                readiness: PrescriptionReadinessStatus.missing,
+                exerciseCount: 0,
+                setCount: 0,
+              )),
   ),
   alternatives: alternatives,
   fallbacks: const [],

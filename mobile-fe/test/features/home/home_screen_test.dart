@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:agonez/src/api/context_models.dart';
 import 'package:agonez/src/api/prescription_models.dart';
+import 'package:agonez/src/api/wire_enums.dart';
 import 'package:agonez/src/data/mobile_repository.dart';
 import 'package:agonez/src/features/home/home_screen.dart';
 import 'package:agonez/src/features/home/today_overview.dart';
@@ -231,6 +232,36 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('a partly analysed session says how much is analysed', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    harness.stubContext(
+      (_) => workoutContext(
+        readiness: const PrescriptionReadiness(
+          readiness: PrescriptionReadinessStatus.missing,
+          exerciseCount: 4,
+          setCount: 8,
+          expectedExerciseCount: 8,
+          expectedSetCount: 11,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(harness.app(const HomeScreen()));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Post-Workout-Analysis covers 4 of 8 exercises. The rest start from '
+        'plan targets.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Start with plan targets'), findsOneWidget);
   });
 
   testWidgets('without a plan run the card offers to choose one', (

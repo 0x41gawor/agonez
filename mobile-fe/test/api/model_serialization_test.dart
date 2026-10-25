@@ -105,6 +105,24 @@ void main() {
     expect(decoded.offSchedule?.mode, OffScheduleMode.nextTrackExposure);
   });
 
+  test('readiness carries the plan structure when the server sends it', () {
+    final readiness = PrescriptionReadiness.fromJson(<String, Object?>{
+      'readiness': 'missing',
+      'exercise_count': 4,
+      'set_count': 8,
+      'expected_exercise_count': 8,
+      'expected_set_count': 11,
+    });
+    final older = PrescriptionReadiness.fromJson(<String, Object?>{
+      'readiness': 'ready',
+    });
+
+    expect(readiness.expectedExerciseCount, 8);
+    expect(readiness.expectedSetCount, 11);
+    expect(readiness.toJson()['expected_exercise_count'], 8);
+    expect(older.expectedExerciseCount, isNull);
+  });
+
   test('error envelope preserves stable code and arbitrary details', () {
     final envelope = ApiErrorEnvelope.fromJson(<String, Object?>{
       'error': <String, Object?>{

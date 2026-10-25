@@ -64,6 +64,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Post-Workout-Analysis has not produced this session\'s loads yet.';
 
   @override
+  String homePrescriptionPartial(int analysed, int planned) {
+    return 'Post-Workout-Analysis covers $analysed of $planned exercises. The rest start from plan targets.';
+  }
+
+  @override
   String get homePrescriptionChanged => 'Prescription changed';
 
   @override
@@ -1305,6 +1310,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorRejectedOperation =>
       'The server could not apply this change. Your local entry has been kept for review.';
+
+  @override
+  String get errorPrescriptionIncomplete =>
+      'This session\'s prescription is missing part of the plan, so the server did not accept the workout. Your entries are kept on this phone.';
+
+  @override
+  String get syncStartRefusedBySchedule =>
+      'The server\'s schedule no longer allows this workout for the time it was started. Your entries are kept on this phone.';
 
   @override
   String get errorNetworkUnavailable =>

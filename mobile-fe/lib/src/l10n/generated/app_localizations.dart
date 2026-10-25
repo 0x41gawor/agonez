@@ -206,6 +206,12 @@ abstract class AppLocalizations {
   /// **'Post-Workout-Analysis has not produced this session\'s loads yet.'**
   String get homePrescriptionNotReadyExplanation;
 
+  /// No description provided for @homePrescriptionPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Post-Workout-Analysis covers {analysed} of {planned} exercises. The rest start from plan targets.'**
+  String homePrescriptionPartial(int analysed, int planned);
+
   /// No description provided for @homePrescriptionChanged.
   ///
   /// In en, this message translates to:
@@ -2290,6 +2296,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The server could not apply this change. Your local entry has been kept for review.'**
   String get errorRejectedOperation;
+
+  /// No description provided for @errorPrescriptionIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'This session\'s prescription is missing part of the plan, so the server did not accept the workout. Your entries are kept on this phone.'**
+  String get errorPrescriptionIncomplete;
+
+  /// No description provided for @syncStartRefusedBySchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'The server\'s schedule no longer allows this workout for the time it was started. Your entries are kept on this phone.'**
+  String get syncStartRefusedBySchedule;
 
   /// No description provided for @errorNetworkUnavailable.
   ///

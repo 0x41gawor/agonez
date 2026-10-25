@@ -337,6 +337,8 @@ class PrescriptionReadiness {
     this.updatedAt,
     this.exerciseCount,
     this.setCount,
+    this.expectedExerciseCount,
+    this.expectedSetCount,
     this.estimatedDurationMin,
   });
 
@@ -349,6 +351,14 @@ class PrescriptionReadiness {
     updatedAt: asNullableDateTime(json['updated_at'], 'updated_at'),
     exerciseCount: asNullableInt(json['exercise_count'], 'exercise_count'),
     setCount: asNullableInt(json['set_count'], 'set_count'),
+    expectedExerciseCount: asNullableInt(
+      json['expected_exercise_count'],
+      'expected_exercise_count',
+    ),
+    expectedSetCount: asNullableInt(
+      json['expected_set_count'],
+      'expected_set_count',
+    ),
     estimatedDurationMin: asNullableInt(
       json['estimated_duration_min'],
       'estimated_duration_min',
@@ -360,6 +370,11 @@ class PrescriptionReadiness {
   final DateTime? updatedAt;
   final int? exerciseCount;
   final int? setCount;
+
+  /// The plan structure the counts are measured against; `ready` requires
+  /// the counts to match it. Absent from servers before 2026-10-25.
+  final int? expectedExerciseCount;
+  final int? expectedSetCount;
   final int? estimatedDurationMin;
 
   JsonMap toJson() => <String, Object?>{
@@ -368,6 +383,8 @@ class PrescriptionReadiness {
     'updated_at': updatedAt == null ? null : encodeDateTime(updatedAt!),
     'exercise_count': exerciseCount,
     'set_count': setCount,
+    'expected_exercise_count': expectedExerciseCount,
+    'expected_set_count': expectedSetCount,
     'estimated_duration_min': estimatedDurationMin,
   };
 }

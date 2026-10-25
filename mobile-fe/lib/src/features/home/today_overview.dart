@@ -508,7 +508,7 @@ class _TodayCard extends StatelessWidget {
               ],
             )
           else
-            Text(strings.homePrescriptionNotReadyExplanation),
+            Text(_notReadyExplanation(session.prescription, strings)),
           _ExerciseList(session: session),
           const SizedBox(height: 20),
           AgonezPrimaryButton(
@@ -527,6 +527,21 @@ class _TodayCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Why the session is not ready. Analysis saved for only some exercises
+/// is named as such: those exercises keep their analysed loads and the rest
+/// start from plan targets.
+String _notReadyExplanation(
+  PrescriptionReadiness readiness,
+  AppLocalizations strings,
+) {
+  final analysed = readiness.exerciseCount ?? 0;
+  final planned = readiness.expectedExerciseCount;
+  if (planned != null && analysed > 0 && analysed < planned) {
+    return strings.homePrescriptionPartial(analysed, planned);
+  }
+  return strings.homePrescriptionNotReadyExplanation;
 }
 
 class _Metric extends StatelessWidget {
