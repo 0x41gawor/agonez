@@ -133,6 +133,7 @@ WorkoutPrescription prescriptionWith(
   String version = 'prescription-v1',
   int? exercisePrescriptionId,
   ExerciseIdentity? exercise,
+  ExerciseHistory? history,
 }) {
   final base = fixturePrescriptionExercise;
   return WorkoutPrescription(
@@ -159,7 +160,7 @@ WorkoutPrescription prescriptionWith(
         defaultRestS: base.defaultRestS,
         sets: sets,
         alternatives: const [],
-        history: base.history,
+        history: history ?? base.history,
         atlasPeek: base.atlasPeek,
       ),
     ],

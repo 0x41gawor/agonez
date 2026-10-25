@@ -7,15 +7,15 @@ import '../../api/prescription_models.dart';
 class LoadChange {
   const LoadChange({
     required this.exerciseName,
-    required this.setNumber,
+    required this.setIndex,
     required this.before,
     required this.after,
   });
 
   final String exerciseName;
 
-  /// The set's position within its exercise, counting from 1.
-  final int setNumber;
+  /// The set's position within its exercise, counting from 0.
+  final int setIndex;
   final double? before;
   final double? after;
 }
@@ -59,7 +59,7 @@ class PrescriptionChanges {
           loads.add(
             LoadChange(
               exerciseName: exercise.exercise.name,
-              setNumber: index + 1,
+              setIndex: index,
               before: a.prescribedLoadKg,
               after: b.prescribedLoadKg,
             ),

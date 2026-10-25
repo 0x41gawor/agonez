@@ -345,8 +345,8 @@ class _SetPill extends StatelessWidget {
         : set.isSkipped
         ? l10n.workoutSkippedLabel
         : set.isExtra
-        ? '${l10n.workoutExtraLabel} ${set.ordinal}'
-        : '${set.ordinal} · ${set.prescribedLoadKg == null ? '—' : formatLoad(set.prescribedLoadKg!)}';
+        ? '${l10n.workoutExtraLabel} ${set.number}'
+        : '${set.number} · ${set.prescribedLoadKg == null ? '—' : formatLoad(set.prescribedLoadKg!)}';
     final borderColor = set.isSkipped
         ? colors.caution
         : isCurrent
@@ -363,7 +363,7 @@ class _SetPill extends StatelessWidget {
       button: onTap != null,
       selected: isCurrent,
       label:
-          '${l10n.workoutSetLabel(set.ordinal)}, $label'
+          '${l10n.workoutSetLabel(set.number)}, $label'
           '${set.differsFromPrescription ? ', ${l10n.divergenceDiffersA11y}' : ''}',
       excludeSemantics: true,
       child: Material(

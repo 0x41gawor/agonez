@@ -15,6 +15,7 @@ class AppSettingsController extends ChangeNotifier {
     required this.restSoundEnabled,
     required this.compoundRestSeconds,
     required this.accessoryRestSeconds,
+    required this.setNumberingStart,
   }) : _database = database,
        _locale = locale,
        _themeMode = themeMode;
@@ -50,6 +51,8 @@ class AppSettingsController extends ChangeNotifier {
             await database.readSetting('accessory_rest_seconds') ?? '',
           ) ??
           90,
+      setNumberingStart:
+          await database.readSetting('set_numbering_start') == '0' ? 0 : 1,
     );
   }
 
@@ -64,6 +67,11 @@ class AppSettingsController extends ChangeNotifier {
   bool restSoundEnabled;
   int compoundRestSeconds;
   int accessoryRestSeconds;
+
+  /// The number the first set of an exercise is shown with: 1 by default,
+  /// or 0 for athletes who count from zero. Display only; stored and synced
+  /// set ordinals never change.
+  int setNumberingStart;
 
   Future<void> setLocale(Locale value) async {
     if (value.languageCode != 'en' && value.languageCode != 'pl') return;
@@ -108,6 +116,13 @@ class AppSettingsController extends ChangeNotifier {
       'compound_rest_seconds',
       compoundRestSeconds.toString(),
     );
+  }
+
+  Future<void> setSetNumberingStart(int value) async {
+    if (value != 0 && value != 1) return;
+    setNumberingStart = value;
+    notifyListeners();
+    await _database.writeSetting('set_numbering_start', value.toString());
   }
 
   Future<void> setAccessoryRestSeconds(int value) async {

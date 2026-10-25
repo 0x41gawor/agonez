@@ -14,7 +14,7 @@ void main() {
 
     expect(changes.other, 0);
     expect(changes.loads.single.exerciseName, 'Barbell squat');
-    expect(changes.loads.single.setNumber, 3);
+    expect(changes.loads.single.setIndex, 2);
     expect(changes.loads.single.before, 65);
     expect(changes.loads.single.after, 67.5);
   });

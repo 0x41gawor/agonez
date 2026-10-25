@@ -183,7 +183,7 @@ class _ActionsSheet extends StatelessWidget {
             ),
           _ActionTile(
             icon: Icons.notes_rounded,
-            label: l10n.noteSetTitle(workout.currentSet?.ordinal ?? 1),
+            label: l10n.noteSetTitle(workout.currentSet?.number ?? 1),
             onTap: workout.currentSet == null
                 ? null
                 : () => Navigator.pop(context, _FocusAction.setNote),
@@ -207,7 +207,7 @@ class _ActionsSheet extends StatelessWidget {
           ),
           _ActionTile(
             icon: Icons.skip_next_outlined,
-            label: l10n.deviationSkipSet(workout.currentSet?.ordinal ?? 1),
+            label: l10n.deviationSkipSet(workout.currentSet?.number ?? 1),
             friction: 1,
             onTap: !canSkipSet
                 ? null

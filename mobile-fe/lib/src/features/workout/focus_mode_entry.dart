@@ -170,7 +170,7 @@ class _EntryZone extends StatelessWidget {
           children: [
             _AuxChip(
               icon: Icons.notes_rounded,
-              label: l10n.noteSetTitle(set.ordinal),
+              label: l10n.noteSetTitle(set.number),
               selected: (draft.comment ?? '').isNotEmpty,
               onPressed: enabled ? onSetNote : null,
             ),

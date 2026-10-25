@@ -2111,6 +2111,12 @@ abstract class AppLocalizations {
   /// **'Haptics'**
   String get youHaptics;
 
+  /// No description provided for @youSetNumbering.
+  ///
+  /// In en, this message translates to:
+  /// **'Number sets from'**
+  String get youSetNumbering;
+
   /// No description provided for @youUnits.
   ///
   /// In en, this message translates to:

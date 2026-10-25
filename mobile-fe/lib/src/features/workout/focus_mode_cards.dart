@@ -47,7 +47,7 @@ class _PrescriptionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AgonezEyebrow(
-            l10n.workoutPrescribedSet(set.ordinal),
+            l10n.workoutPrescribedSet(set.number),
             color: colors.prescriptionText,
           ),
           const SizedBox(height: 8),
@@ -203,7 +203,7 @@ class _RestCard extends StatelessWidget {
             if (set != null) ...[
               const SizedBox(height: 10),
               Text(
-                l10n.timerUpNextSet(set.ordinal),
+                l10n.timerUpNextSet(set.number),
                 style: AgonezTypography.of(context).bodySmall,
               ),
               if (prescription != null)
@@ -287,7 +287,7 @@ class _ExerciseCompleteCard extends StatelessWidget {
                   child: Text(
                     set.isExtra
                         ? l10n.workoutExtraLabel
-                        : l10n.workoutSetLabel(set.ordinal),
+                        : l10n.workoutSetLabel(set.number),
                     style: AgonezTypography.of(context).bodySmall,
                   ),
                 ),

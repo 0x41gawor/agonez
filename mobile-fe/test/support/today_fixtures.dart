@@ -44,6 +44,7 @@ class TodayHarness {
     when(() => runtime.contextRefreshes).thenReturn(contextRefreshes);
     when(() => settings.locale).thenReturn(const Locale('en'));
     when(() => settings.hapticsEnabled).thenReturn(false);
+    when(() => settings.setNumberingStart).thenAnswer((_) => setNumberingStart);
     when(() => database.watchActiveWorkout()).thenAnswer((_) async* {
       yield _streamedWorkout;
       yield* _activeWorkouts.stream;
@@ -76,6 +77,9 @@ class TodayHarness {
   final api = MockApiClient();
   final contextRefreshes = StreamController<int>.broadcast();
   int? selectedPlanRunId = 2;
+
+  /// The athlete's set-numbering choice; 1 unless a test says otherwise.
+  int setNumberingStart = 1;
 
   final _activeWorkouts = StreamController<LocalWorkout?>.broadcast();
   LocalWorkout? _streamedWorkout;

@@ -69,6 +69,20 @@ class YouScreen extends ConsumerWidget {
                       value: settings.hapticsEnabled,
                       onChanged: settings.setHaptics,
                     ),
+                    const Divider(),
+                    ListTile(
+                      title: Text(strings.youSetNumbering),
+                      trailing: SegmentedButton<int>(
+                        segments: const [
+                          ButtonSegment(value: 0, label: Text('0')),
+                          ButtonSegment(value: 1, label: Text('1')),
+                        ],
+                        selected: {settings.setNumberingStart},
+                        showSelectedIcon: false,
+                        onSelectionChanged: (selection) =>
+                            settings.setSetNumberingStart(selection.single),
+                      ),
+                    ),
                   ],
                 ),
               ),

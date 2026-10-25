@@ -376,7 +376,7 @@ class _EditSetSheetState extends State<_EditSetSheet> {
     final l10n = AppLocalizations.of(context);
     final repStart = math.max(1, _reps - 2);
     return _SheetFrame(
-      title: l10n.setEditTitle(widget.set.ordinal),
+      title: l10n.setEditTitle(widget.set.number),
       eyebrow: l10n.setEditingNormal,
       maxHeightFactor: 0.88,
       body: SingleChildScrollView(
@@ -461,7 +461,7 @@ class _EditSetSheetState extends State<_EditSetSheet> {
         ),
       ),
       footer: AgonezPrimaryButton(
-        label: l10n.setSave(widget.set.ordinal),
+        label: l10n.setSave(widget.set.number),
         onPressed: () => Navigator.of(context).pop(
           FocusSetEdit(
             exercise: widget.exercise,

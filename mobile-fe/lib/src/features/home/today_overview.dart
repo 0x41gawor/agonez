@@ -830,7 +830,13 @@ class _ExerciseListState extends ConsumerState<_ExerciseList> {
                   child: Column(
                     children: [
                       if (changes != null) ...[
-                        _ChangedBanner(changes: changes),
+                        _ChangedBanner(
+                          changes: changes,
+                          numberingStart: ref
+                              .read(appRuntimeProvider)
+                              .settings
+                              .setNumberingStart,
+                        ),
                         const SizedBox(height: 8),
                       ],
                       for (final (index, row) in rows.indexed)
@@ -900,9 +906,12 @@ typedef _Preview = ({List<ExerciseSummary> rows, PrescriptionChanges? changes});
 /// new version will be used." Shown once a newer version replaces the one
 /// the athlete last saw on this card.
 class _ChangedBanner extends StatelessWidget {
-  const _ChangedBanner({required this.changes});
+  const _ChangedBanner({required this.changes, required this.numberingStart});
 
   final PrescriptionChanges changes;
+
+  /// The number shown for an exercise's first set (see settings).
+  final int numberingStart;
 
   @override
   Widget build(BuildContext context) {
@@ -948,7 +957,7 @@ class _ChangedBanner extends StatelessWidget {
                     TextSpan(
                       text: strings.homePrescriptionChangedDetail(
                         first.exerciseName,
-                        first.setNumber,
+                        numberingStart + first.setIndex,
                         load(first.before),
                         load(first.after),
                       ),

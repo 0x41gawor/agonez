@@ -201,7 +201,7 @@ class _FocusModeScreenState extends State<FocusModeScreen>
         duration: AgonezDurations.snackbarUndo,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 76),
         content: Text(
-          '${l10n.setRecordedSnackbar(set.ordinal)} · '
+          '${l10n.setRecordedSnackbar(set.number)} · '
           '${formatLoad(load)} × $reps @ RIR $rir',
         ),
         action: widget.callbacks.onUndoSet == null
@@ -432,7 +432,7 @@ class _FocusModeScreenState extends State<FocusModeScreen>
         ? l10n.setEnterLoad
         : missingObservation
         ? l10n.setSelectRepsRir
-        : l10n.setConfirm(set!.ordinal);
+        : l10n.setConfirm(set!.number);
     final summary = enabled
         ? l10n.setConfirmSummary(
             formatLoad(_draft.loadKg!),
@@ -493,7 +493,7 @@ class _FocusModeScreenState extends State<FocusModeScreen>
       case _FocusAction.skipSet:
         if (set == null) return;
         await _showHoldFor(
-          title: l10n.deviationSkipSet(set.ordinal),
+          title: l10n.deviationSkipSet(set.number),
           explanation: l10n.deviationSkipSetExplanation,
           label: l10n.deviationHoldSkipSet,
           duration: const Duration(milliseconds: 600),
@@ -629,7 +629,7 @@ class _FocusModeScreenState extends State<FocusModeScreen>
     final value = await _showNoteSheet(
       title: AppLocalizations.of(
         context,
-      ).noteSetTitle(widget.workout.currentSet?.ordinal ?? 1),
+      ).noteSetTitle(widget.workout.currentSet?.number ?? 1),
       hint: AppLocalizations.of(context).noteSetPlaceholder,
       initialValue: _draft.comment,
       suggestions: _noteSuggestions,

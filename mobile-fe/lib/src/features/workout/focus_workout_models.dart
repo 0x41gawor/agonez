@@ -16,6 +16,7 @@ class FocusSetViewModel {
   const FocusSetViewModel({
     required this.id,
     required this.ordinal,
+    required this.number,
     required this.status,
     this.prescribedSetId,
     this.prescribedLoadKg,
@@ -33,7 +34,13 @@ class FocusSetViewModel {
   });
 
   final String id;
+
+  /// The set's ordinal as stored and synced; prescribed sets count from 0.
   final int ordinal;
+
+  /// What the athlete sees: the set's position within its exercise,
+  /// counted from the start they chose in settings.
+  final int number;
   final FocusSetStatus status;
   final int? prescribedSetId;
   final double? prescribedLoadKg;

@@ -108,6 +108,7 @@ FocusWorkoutViewModel _workout({AtlasPeek? atlasPeek}) => FocusWorkoutViewModel(
         FocusSetViewModel(
           id: 'set-id',
           ordinal: 1,
+          number: 1,
           status: FocusSetStatus.planned,
           prescribedSetId: 477,
           prescribedLoadKg: 80,

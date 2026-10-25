@@ -1201,6 +1201,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get youHaptics => 'Haptics';
 
   @override
+  String get youSetNumbering => 'Number sets from';
+
+  @override
   String get youUnits => 'Units';
 
   @override

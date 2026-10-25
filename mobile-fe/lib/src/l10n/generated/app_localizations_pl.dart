@@ -1214,6 +1214,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get youHaptics => 'Wibracje dotykowe';
 
   @override
+  String get youSetNumbering => 'Numeruj serie od';
+
+  @override
   String get youUnits => 'Jednostki';
 
   @override

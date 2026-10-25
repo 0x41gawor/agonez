@@ -69,6 +69,10 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
             prescription,
             localExercises,
             localSets,
+            numberingStart: ref
+                .read(appRuntimeProvider)
+                .settings
+                .setNumberingStart,
           );
           final runtime = ref.watch(appRuntimeProvider);
           return FocusModeScreen(
@@ -320,9 +324,13 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
           ifRev: set.localRevision,
         );
         await runtime.notifications.cancel();
+        // Back to the undone set itself.
         await moveCursor(
           exerciseIndex: model.currentExerciseIndex,
-          setIndex: math.max(0, set.ordinal - 1),
+          setIndex: math.max(
+            0,
+            exercise.sets.indexWhere((item) => item.id == set.id),
+          ),
           phase: PositionPhase.set,
         );
       },
@@ -473,8 +481,9 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
     LocalWorkout workout,
     WorkoutPrescription prescription,
     List<LocalExercise> localExercises,
-    List<LocalSet> localSets,
-  ) {
+    List<LocalSet> localSets, {
+    required int numberingStart,
+  }) {
     final l10n = AppLocalizations.of(context);
     final ordered = [...localExercises]
       ..sort((a, b) => a.performedOrdinal.compareTo(b.performedOrdinal));
@@ -505,14 +514,21 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
               .where((set) => set.prescribedSetId == target.setPrescriptionId)
               .firstOrNull;
           sets.add(
-            _mapSet(observed, target: target, forceSkipped: skippedExercise),
+            _mapSet(
+              observed,
+              number: numberingStart + sets.length,
+              target: target,
+              forceSkipped: skippedExercise,
+            ),
           );
         }
       }
       for (final observed in performanceSets.where(
         (set) => set.prescribedSetId == null,
       )) {
-        sets.add(_mapSet(observed, extra: true));
+        sets.add(
+          _mapSet(observed, number: numberingStart + sets.length, extra: true),
+        );
       }
       final isCurrent = index == workout.currentExercise;
       if (prescribed == null && sets.isEmpty) {
@@ -520,6 +536,7 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
           FocusSetViewModel(
             id: 'draft:${local.exercisePerformanceId}:1',
             ordinal: 1,
+            number: numberingStart,
             status: FocusSetStatus.planned,
             isExtra: true,
           ),
@@ -531,13 +548,19 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
           FocusSetViewModel(
             id: 'draft:${local.exercisePerformanceId}:${sets.length + 1}',
             ordinal: sets.length + 1,
+            number: numberingStart + sets.length,
             status: FocusSetStatus.planned,
             isExtra: true,
           ),
         );
       }
+      // Last time's set for the set at the cursor, matched by ordinal: the
+      // plan numbers both from 0. An exercise prescribed without sets has
+      // nothing to match.
       final previous = prescribed?.history.previousExposure;
-      final previousOrdinal = workout.currentSet.clamp(0, sets.length - 1) + 1;
+      final previousOrdinal = sets.isEmpty
+          ? null
+          : sets[workout.currentSet.clamp(0, sets.length - 1)].ordinal;
       final previousSet = previous?.sets
           .where((item) => item.ordinal == previousOrdinal)
           .firstOrNull;
@@ -612,6 +635,7 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
 
   FocusSetViewModel _mapSet(
     LocalSet? observed, {
+    required int number,
     PrescriptionSet? target,
     bool extra = false,
     bool forceSkipped = false,
@@ -626,6 +650,7 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
           observed?.setPerformanceId ??
           'prescribed:${target!.setPrescriptionId}',
       ordinal: observed?.ordinal ?? target!.ordinal,
+      number: number,
       status: status,
       prescribedSetId: target?.setPrescriptionId,
       prescribedLoadKg: target?.prescribedLoadKg,
@@ -790,10 +815,10 @@ Future<void> _scheduleRestNotification(
   await runtime.notifications.schedule(
     endsAt: endsAt,
     exerciseName: exercise.name,
-    setOrdinal: set.ordinal,
+    setOrdinal: set.number,
     prescription: prescription,
     title: l10n.timerNotificationTitle,
-    body: l10n.timerNotificationBody(exercise.name, set.ordinal, prescription),
+    body: l10n.timerNotificationBody(exercise.name, set.number, prescription),
     playSound: runtime.settings.restSoundEnabled,
   );
 }
