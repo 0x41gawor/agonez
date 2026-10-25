@@ -7,6 +7,7 @@ import '../api/conditional_response.dart';
 import '../api/context_models.dart';
 import '../api/json_support.dart';
 import '../api/prescription_models.dart';
+import '../api/prescription_preview.dart';
 import '../storage/app_database.dart';
 
 class LoadedValue<T> {
@@ -162,6 +163,12 @@ class MobileRepository {
     sessionId,
     fetch: () => _api.prepareFallbackPrescription(sessionId),
   );
+
+  /// What a not-ready session would be prescribed, for listing it before
+  /// the start. Read fresh each time and not cached: inherited loads change
+  /// whenever another workout is finalized.
+  Future<PrescriptionPreview> previewFallbackPrescription(int sessionId) =>
+      _api.previewFallbackPrescription(sessionId);
 
   Future<LoadedValue<WorkoutPrescription>> _prescription(
     int sessionId, {

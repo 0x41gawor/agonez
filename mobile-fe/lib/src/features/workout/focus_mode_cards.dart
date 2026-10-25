@@ -58,6 +58,15 @@ class _PrescriptionCard extends StatelessWidget {
               fontSize: 23,
             ),
           ),
+          if (set.loadFromLastSession) ...[
+            const SizedBox(height: 4),
+            Text(
+              l10n.workoutLoadFromLastSession,
+              style: AgonezTypography.caption.copyWith(
+                color: colors.prescriptionText,
+              ),
+            ),
+          ],
           if (exercise.mode == FocusExerciseMode.substituted) ...[
             const SizedBox(height: 6),
             Text(

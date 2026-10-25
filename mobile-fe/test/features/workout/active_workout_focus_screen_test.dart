@@ -74,16 +74,18 @@ void main() {
   });
 
   group('a running workout', () {
-    PrescriptionSet planned(int ordinal) => PrescriptionSet(
-      setPrescriptionId: 500 + ordinal,
-      ordinal: ordinal,
-      role: 'working',
-      prescribedLoadKg: 24,
-      repMin: 6,
-      repMax: 8,
-      targetRir: 2,
-      comment: null,
-    );
+    PrescriptionSet planned(int ordinal, {String? loadSource}) =>
+        PrescriptionSet(
+          setPrescriptionId: 500 + ordinal,
+          ordinal: ordinal,
+          role: 'working',
+          prescribedLoadKg: 24,
+          repMin: 6,
+          repMax: 8,
+          targetRir: 2,
+          comment: null,
+          loadSource: loadSource,
+        );
     PreviousSet lastTime(int ordinal, int reps) => PreviousSet(
       ordinal: ordinal,
       status: PerformedSetStatus.performed,
@@ -92,12 +94,18 @@ void main() {
       rir: 2,
     );
 
-    Future<void> openWorkout(WidgetTester tester) async {
+    Future<void> openWorkout(
+      WidgetTester tester, {
+      String? loadSource = 'analysis',
+    }) async {
       await tester.binding.setSurfaceSize(const Size(412, 915));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       // Both the plan and last time number the sets from 0.
       final prescription = prescriptionWith(
-        [planned(0), planned(1)],
+        [
+          planned(0, loadSource: loadSource),
+          planned(1, loadSource: loadSource),
+        ],
         history: ExerciseHistory(
           previousExposure: PreviousExposure(
             microcycleOrdinal: 1,
@@ -150,6 +158,18 @@ void main() {
 
       expect(find.text('0 · 24'), findsOneWidget);
       expect(find.text('PRESCRIBED · SET 0'), findsOneWidget);
+    });
+
+    testWidgets('a load repeated from last session says so', (tester) async {
+      await openWorkout(tester, loadSource: 'last_exposure');
+
+      expect(find.text('Load from last session'), findsOneWidget);
+    });
+
+    testWidgets('an analysed load carries no such note', (tester) async {
+      await openWorkout(tester);
+
+      expect(find.text('Load from last session'), findsNothing);
     });
 
     testWidgets('last time shows the same set, not the next one', (

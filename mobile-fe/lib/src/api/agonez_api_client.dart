@@ -8,6 +8,7 @@ import 'context_models.dart';
 import 'json_support.dart';
 import 'operation_models.dart';
 import 'prescription_models.dart';
+import 'prescription_preview.dart';
 import 'workout_models.dart';
 
 class AgonezApiClient {
@@ -83,6 +84,20 @@ class AgonezApiClient {
     );
     return WorkoutPrescription.fromJson(
       asJsonMap(response.data, 'prescription'),
+    );
+  }
+
+  /// The complete prescription the session would get from plan targets,
+  /// without writing anything; for display only (see
+  /// [PrescriptionPreview]).
+  Future<PrescriptionPreview> previewFallbackPrescription(int sessionId) async {
+    final response = await _perform(
+      () => _dio.get<Object?>(
+        '/api/v1/mobile/sessions/$sessionId/prescription/fallback',
+      ),
+    );
+    return PrescriptionPreview.fromJson(
+      asJsonMap(response.data, 'prescription preview'),
     );
   }
 

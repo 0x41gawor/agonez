@@ -265,6 +265,18 @@ abstract class AppLocalizations {
   /// **'no sets'**
   String get homeExerciseNoSets;
 
+  /// No description provided for @homeExerciseLoadsFromLastSession.
+  ///
+  /// In en, this message translates to:
+  /// **'loads from last session'**
+  String get homeExerciseLoadsFromLastSession;
+
+  /// No description provided for @homeExerciseNoLoadsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'no loads yet'**
+  String get homeExerciseNoLoadsYet;
+
   /// No description provided for @homeStartWorkout.
   ///
   /// In en, this message translates to:
@@ -696,6 +708,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Prescribed · set {setNumber}'**
   String workoutPrescribedSet(int setNumber);
+
+  /// No description provided for @workoutLoadFromLastSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Load from last session'**
+  String get workoutLoadFromLastSession;
 
   /// No description provided for @workoutLastExposure.
   ///

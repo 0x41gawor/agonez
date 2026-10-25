@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:agonez/src/api/context_models.dart';
 import 'package:agonez/src/api/prescription_models.dart';
+import 'package:agonez/src/api/prescription_preview.dart';
 import 'package:agonez/src/api/wire_enums.dart';
 import 'package:agonez/src/data/mobile_repository.dart';
 import 'package:agonez/src/features/home/home_screen.dart';
@@ -262,6 +263,85 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Start with plan targets'), findsOneWidget);
+  });
+
+  group('a session that is not ready', () {
+    MobileContext partlyAnalysed() => workoutContext(
+      readiness: const PrescriptionReadiness(
+        readiness: PrescriptionReadinessStatus.missing,
+        exerciseCount: 1,
+        setCount: 3,
+        expectedExerciseCount: 3,
+        expectedSetCount: 8,
+      ),
+    );
+    PreviewSet previewSet(double? load, String? source) => PreviewSet(
+      role: 'working',
+      repMin: 8,
+      repMax: 10,
+      loadKg: load,
+      loadSource: source,
+    );
+
+    testWidgets('lists every exercise it would be prescribed', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 1100));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      harness.stubContext((_) => partlyAnalysed());
+      when(() => harness.repository.previewFallbackPrescription(41)).thenAnswer(
+        (_) async => PrescriptionPreview(
+          exercises: [
+            PreviewExercise(
+              ordinal: 0,
+              name: 'Bench Press',
+              generated: false,
+              sets: [for (var i = 0; i < 3; i++) previewSet(68, 'analysis')],
+            ),
+            PreviewExercise(
+              ordinal: 1,
+              name: 'Cable Lateral Raise',
+              generated: true,
+              sets: [
+                for (var i = 0; i < 2; i++) previewSet(19, 'last_exposure'),
+              ],
+            ),
+            PreviewExercise(
+              ordinal: 2,
+              name: 'Barbell Curl',
+              generated: true,
+              sets: [for (var i = 0; i < 3; i++) previewSet(null, null)],
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(harness.app(const HomeScreen()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Bench Press'), findsOneWidget);
+      expect(find.text('Cable Lateral Raise'), findsOneWidget);
+      expect(find.text('loads from last session'), findsOneWidget);
+      expect(find.text('Barbell Curl'), findsOneWidget);
+      expect(find.text('no loads yet'), findsOneWidget);
+      // Listing is read-only; the plan targets are prepared only on Start.
+      verifyNever(() => harness.repository.prepareFallbackPrescription(any()));
+    });
+
+    testWidgets('falls back to what the server holds without a preview', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(430, 1100));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      harness.stubContext((_) => partlyAnalysed());
+      when(
+        () => harness.repository.previewFallbackPrescription(41),
+      ).thenThrow(StateError('offline'));
+
+      await tester.pumpWidget(harness.app(const HomeScreen()));
+      await tester.pumpAndSettle();
+
+      // The analysed part, from the ordinary prescription read.
+      expect(find.text('Barbell squat'), findsOneWidget);
+    });
   });
 
   testWidgets('without a plan run the card offers to choose one', (

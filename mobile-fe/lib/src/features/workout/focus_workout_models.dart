@@ -31,6 +31,7 @@ class FocusSetViewModel {
     this.heartRateBpm,
     this.localRevision = 0,
     this.isExtra = false,
+    this.loadFromLastSession = false,
   });
 
   final String id;
@@ -55,6 +56,9 @@ class FocusSetViewModel {
   final int? heartRateBpm;
   final int localRevision;
   final bool isExtra;
+
+  /// The prescribed load repeats the last session rather than analysis.
+  final bool loadFromLastSession;
 
   bool get isRecorded => status == FocusSetStatus.recorded;
   bool get isSkipped => status == FocusSetStatus.skipped;

@@ -12,6 +12,7 @@ class PrescriptionSet {
     required this.repMax,
     required this.targetRir,
     required this.comment,
+    this.loadSource,
   });
 
   factory PrescriptionSet.fromJson(JsonMap json) => PrescriptionSet(
@@ -29,6 +30,7 @@ class PrescriptionSet {
     repMax: asInt(requiredJson(json, 'rep_max'), 'rep_max'),
     targetRir: asNullableInt(requiredJson(json, 'target_rir'), 'target_rir'),
     comment: asNullableString(requiredJson(json, 'comment'), 'comment'),
+    loadSource: asNullableString(json['load_source'], 'load_source'),
   );
 
   final int setPrescriptionId;
@@ -40,6 +42,13 @@ class PrescriptionSet {
   final int? targetRir;
   final String? comment;
 
+  /// Who decided [prescribedLoadKg]: `analysis` (desktop), `last_exposure`
+  /// (repeated from the last session), or null when no load is prescribed.
+  /// Servers before 2026-10-25 do not send it.
+  final String? loadSource;
+
+  bool get loadFromLastSession => loadSource == 'last_exposure';
+
   JsonMap toJson() => <String, Object?>{
     'set_prescription_id': setPrescriptionId,
     'ordinal': ordinal,
@@ -49,6 +58,7 @@ class PrescriptionSet {
     'rep_max': repMax,
     'target_rir': targetRir,
     'comment': comment,
+    'load_source': loadSource,
   };
 }
 

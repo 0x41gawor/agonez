@@ -654,6 +654,7 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
       status: status,
       prescribedSetId: target?.setPrescriptionId,
       prescribedLoadKg: target?.prescribedLoadKg,
+      loadFromLastSession: target?.loadFromLastSession ?? false,
       repMin: target?.repMin,
       repMax: target?.repMax,
       targetRir: target?.targetRir,

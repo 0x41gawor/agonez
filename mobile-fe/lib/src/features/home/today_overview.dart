@@ -783,6 +783,25 @@ class _ExerciseListState extends ConsumerState<_ExerciseList> {
     final repository = ref.read(appRuntimeProvider).mobileRepository;
     final session = widget.session;
     final version = session.prescription.prescriptionVersion;
+    // A session that is not ready lists what it would be prescribed: the
+    // analysed exercises and the plan's others, which the start completes.
+    if (session.prescription.readiness == PrescriptionReadinessStatus.missing) {
+      try {
+        final preview = await repository.previewFallbackPrescription(
+          session.sessionId,
+        );
+        return (
+          rows: [
+            for (final exercise in preview.exercises)
+              ExerciseSummary.ofPreview(exercise),
+          ],
+          changes: null,
+        );
+      } on Object {
+        // Offline, or the plan cannot be previewed: list what the server
+        // already holds for the session, as before.
+      }
+    }
     try {
       var loaded = await repository.loadPrescription(
         session.sessionId,
@@ -867,9 +886,27 @@ class _ExerciseListState extends ConsumerState<_ExerciseList> {
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: Text(
-                                  row.name,
-                                  style: textTheme.bodyMedium,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(row.name, style: textTheme.bodyMedium),
+                                    if (row.loads case final loads?)
+                                      Text(
+                                        switch (loads) {
+                                          PlannedLoads.lastSession =>
+                                            AppLocalizations.of(
+                                              context,
+                                            ).homeExerciseLoadsFromLastSession,
+                                          PlannedLoads.notYet =>
+                                            AppLocalizations.of(
+                                              context,
+                                            ).homeExerciseNoLoadsYet,
+                                        },
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: colors.textDim,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(width: 8),

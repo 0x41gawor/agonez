@@ -102,6 +102,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeExerciseNoSets => 'no sets';
 
   @override
+  String get homeExerciseLoadsFromLastSession => 'loads from last session';
+
+  @override
+  String get homeExerciseNoLoadsYet => 'no loads yet';
+
+  @override
   String get homeStartWorkout => 'Start workout';
 
   @override
@@ -361,6 +367,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String workoutPrescribedSet(int setNumber) {
     return 'Prescribed · set $setNumber';
   }
+
+  @override
+  String get workoutLoadFromLastSession => 'Load from last session';
 
   @override
   String workoutLastExposure(String microcycle) {

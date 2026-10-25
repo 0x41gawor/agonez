@@ -123,6 +123,23 @@ void main() {
     expect(older.expectedExerciseCount, isNull);
   });
 
+  test('a set keeps who decided its load when stored and read back', () {
+    final set = PrescriptionSet.fromJson(<String, Object?>{
+      'set_prescription_id': 788,
+      'ordinal': 0,
+      'role': 'working',
+      'prescribed_load_kg': 19.0,
+      'rep_min': 12,
+      'rep_max': 15,
+      'target_rir': 2,
+      'comment': null,
+      'load_source': 'last_exposure',
+    });
+
+    expect(set.loadFromLastSession, isTrue);
+    expect(PrescriptionSet.fromJson(set.toJson()).loadSource, 'last_exposure');
+  });
+
   test('error envelope preserves stable code and arbitrary details', () {
     final envelope = ApiErrorEnvelope.fromJson(<String, Object?>{
       'error': <String, Object?>{

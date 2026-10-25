@@ -1,0 +1,360 @@
+{
+ "session_id": 31,
+ "prescription_id": 31,
+ "prescription_version": null,
+ "preview": true,
+ "source": "hybrid",
+ "workout_unit_name": "Push A",
+ "workout_track_id": 1,
+ "microcycle": {
+  "ordinal": 7,
+  "classification": "normal"
+ },
+ "plan_comment": null,
+ "prescription_comment": null,
+ "exercises": [
+  {
+   "exercise_prescription_id": 248,
+   "source": "analysis",
+   "ordinal": 0,
+   "exercise_track_id": 1,
+   "slot": {
+    "goal": "To jest kolega mocny",
+    "role": "primary_progressive"
+   },
+   "exercise": {
+    "id": 1,
+    "slug": "barbell_bench_press",
+    "name": "Bench Press",
+    "full_name": "Flat Bench Barbell Press"
+   },
+   "variant_label": "Primary heavy chest stimulus",
+   "plan_comment": "Tutaj progresujemy AU\nExecution demo revision: preserve the trace and use a controlled reload after deload.",
+   "prescription_comment": null,
+   "load_step_kg": 2.5,
+   "default_rest_s": 180,
+   "sets": [
+    {
+     "set_prescription_id": 471,
+     "ordinal": 0,
+     "role": "working",
+     "prescribed_load_kg": 68.0,
+     "load_source": "analysis",
+     "rep_min": 5,
+     "rep_max": 7,
+     "target_rir": 1,
+     "comment": null
+    },
+    {
+     "set_prescription_id": 472,
+     "ordinal": 1,
+     "role": "working",
+     "prescribed_load_kg": 68.0,
+     "load_source": "analysis",
+     "rep_min": 5,
+     "rep_max": 7,
+     "target_rir": 0,
+     "comment": null
+    },
+    {
+     "set_prescription_id": 473,
+     "ordinal": 2,
+     "role": "working",
+     "prescribed_load_kg": 68.0,
+     "load_source": "analysis",
+     "rep_min": 5,
+     "rep_max": 7,
+     "target_rir": 0,
+     "comment": null
+    }
+   ],
+   "alternatives": [],
+   "history": {
+    "previous_exposure": null
+   },
+   "atlas_peek": null
+  },
+  {
+   "exercise_prescription_id": 249,
+   "source": "analysis",
+   "ordinal": 1,
+   "exercise_track_id": 2,
+   "slot": {
+    "goal": "Dojebka na klatę z naciskiem na clavicular.",
+    "role": "secondary_progressive"
+   },
+   "exercise": {
+    "id": 2,
+    "slug": "plate_loaded_converging_incline_chest_press",
+    "name": "Converging Incline Chest Press",
+    "full_name": "Plate-Loaded Converging Incline Chest Press"
+   },
+   "variant_label": "Secondary heavy chest stimulus",
+   "plan_comment": null,
+   "prescription_comment": null,
+   "load_step_kg": 2.5,
+   "default_rest_s": 180,
+   "sets": [
+    {
+     "set_prescription_id": 474,
+     "ordinal": 0,
+     "role": "working",
+     "prescribed_load_kg": 71.0,
+     "load_source": "analysis",
+     "rep_min": 8,
+     "rep_max": 10,
+     "target_rir": 1,
+     "comment": null
+    },
+    {
+     "set_prescription_id": 475,
+     "ordinal": 1,
+     "role": "working",
+     "prescribed_load_kg": 71.0,
+     "load_source": "analysis",
+     "rep_min": 8,
+     "rep_max": 10,
+     "target_rir": 0,
+     "comment": null
+    }
+   ],
+   "alternatives": [],
+   "history": {
+    "previous_exposure": null
+   },
+   "atlas_peek": null
+  },
+  {
+   "exercise_prescription_id": 250,
+   "source": "analysis",
+   "ordinal": 2,
+   "exercise_track_id": 3,
+   "slot": {
+    "goal": "Dobitka volume małym kosztem OUN.",
+    "role": "volume_accumulation"
+   },
+   "exercise": {
+    "id": 3,
+    "slug": "single_arm_low_to_high_cable_fly",
+    "name": "Low-to-High Cable Fly",
+    "full_name": "Single-Arm Low-to-High Cable Fly"
+   },
+   "variant_label": "Dobitka na anterior delt i clavicular head.",
+   "plan_comment": null,
+   "prescription_comment": null,
+   "load_step_kg": 2.5,
+   "default_rest_s": 90,
+   "sets": [
+    {
+     "set_prescription_id": 476,
+     "ordinal": 0,
+     "role": "working",
+     "prescribed_load_kg": null,
+     "load_source": null,
+     "rep_min": 12,
+     "rep_max": 15,
+     "target_rir": 0,
+     "comment": null
+    }
+   ],
+   "alternatives": [],
+   "history": {
+    "previous_exposure": null
+   },
+   "atlas_peek": null
+  },
+  {
+   "exercise_prescription_id": 247,
+   "source": "analysis",
+   "ordinal": 3,
+   "exercise_track_id": 4,
+   "slot": {
+    "goal": null,
+    "role": "volume_accumulation"
+   },
+   "exercise": {
+    "id": 4,
+    "slug": "seated_dumbbell_overhead_press",
+    "name": "Dumbbell Overhead Press",
+    "full_name": "Seated Dumbbell Overhead Press"
+   },
+   "variant_label": "Dobitka volume na anterior delt",
+   "plan_comment": null,
+   "prescription_comment": null,
+   "load_step_kg": 2.0,
+   "default_rest_s": 90,
+   "sets": [
+    {
+     "set_prescription_id": 469,
+     "ordinal": 0,
+     "role": "working",
+     "prescribed_load_kg": 17.5,
+     "load_source": "analysis",
+     "rep_min": 8,
+     "rep_max": 10,
+     "target_rir": 2,
+     "comment": null
+    },
+    {
+     "set_prescription_id": 470,
+     "ordinal": 1,
+     "role": "working",
+     "prescribed_load_kg": 17.5,
+     "load_source": "analysis",
+     "rep_min": 8,
+     "rep_max": 10,
+     "target_rir": 2,
+     "comment": null
+    }
+   ],
+   "alternatives": [],
+   "history": {
+    "previous_exposure": null
+   },
+   "atlas_peek": null
+  },
+  {
+   "exercise_prescription_id": null,
+   "source": "plan_fallback",
+   "ordinal": 4,
+   "exercise_track_id": 5,
+   "slot": {
+    "goal": null,
+    "role": "primary_progressive"
+   },
+   "exercise": {
+    "id": 5,
+    "slug": "single_arm_cable_lateral_raise",
+    "name": "Cable Lateral Raise",
+    "full_name": "Single-Arm Cable Lateral Raise"
+   },
+   "variant_label": "Primary volume na lateral raise.",
+   "plan_comment": "Tu progres raczej będzie powolny.",
+   "prescription_comment": null,
+   "load_step_kg": 2.5,
+   "default_rest_s": 180,
+   "sets": [
+    {
+     "set_prescription_id": null,
+     "ordinal": 0,
+     "role": "working",
+     "prescribed_load_kg": 19.0,
+     "load_source": "last_exposure",
+     "rep_min": 8,
+     "rep_max": 10,
+     "target_rir": 0,
+     "comment": null
+    },
+    {
+     "set_prescription_id": null,
+     "ordinal": 1,
+     "role": "working",
+     "prescribed_load_kg": 19.0,
+     "load_source": "last_exposure",
+     "rep_min": 8,
+     "rep_max": 10,
+     "target_rir": 0,
+     "comment": null
+    }
+   ],
+   "alternatives": [],
+   "history": {
+    "previous_exposure": null
+   },
+   "atlas_peek": null
+  },
+  {
+   "exercise_prescription_id": null,
+   "source": "plan_fallback",
+   "ordinal": 5,
+   "exercise_track_id": 6,
+   "slot": {
+    "goal": "Triceps volume",
+    "role": "volume_accumulation"
+   },
+   "exercise": {
+    "id": 6,
+    "slug": "barbell_california_press",
+    "name": "California Press",
+    "full_name": "Flat Bench Barbell California Press"
+   },
+   "variant_label": "Triceps volume",
+   "plan_comment": null,
+   "prescription_comment": null,
+   "load_step_kg": 2.5,
+   "default_rest_s": 90,
+   "sets": [
+    {
+     "set_prescription_id": null,
+     "ordinal": 0,
+     "role": "working",
+     "prescribed_load_kg": 20.0,
+     "load_source": "last_exposure",
+     "rep_min": 8,
+     "rep_max": 10,
+     "target_rir": 1,
+     "comment": null
+    }
+   ],
+   "alternatives": [],
+   "history": {
+    "previous_exposure": null
+   },
+   "atlas_peek": null
+  },
+  {
+   "exercise_prescription_id": null,
+   "source": "plan_fallback",
+   "ordinal": 6,
+   "exercise_track_id": 7,
+   "slot": {
+    "goal": "Szyja, to już na mocnej masie dopiero wlatuje.",
+    "role": "accessory"
+   },
+   "exercise": {
+    "id": 7,
+    "slug": "bodyweight_neck_curl",
+    "name": "Neck Curl",
+    "full_name": "Supine Bench Bodyweight Neck Curl"
+   },
+   "variant_label": "Volume na szyje",
+   "plan_comment": null,
+   "prescription_comment": null,
+   "load_step_kg": 2.5,
+   "default_rest_s": 90,
+   "sets": [],
+   "alternatives": [],
+   "history": {
+    "previous_exposure": null
+   },
+   "atlas_peek": null
+  },
+  {
+   "exercise_prescription_id": null,
+   "source": "plan_fallback",
+   "ordinal": 7,
+   "exercise_track_id": 8,
+   "slot": {
+    "goal": "To też raczej na mocnej masie.",
+    "role": "accessory"
+   },
+   "exercise": {
+    "id": 8,
+    "slug": "dead_hang",
+    "name": "Dead Hang",
+    "full_name": "Pronated-Grip Bar Dead Hang"
+   },
+   "variant_label": "Volume na grip",
+   "plan_comment": "Raczej 60s nie zrobi kuku przed pull-day'em.",
+   "prescription_comment": null,
+   "load_step_kg": 2.5,
+   "default_rest_s": 90,
+   "sets": [],
+   "alternatives": [],
+   "history": {
+    "previous_exposure": null
+   },
+   "atlas_peek": null
+  }
+ ]
+}

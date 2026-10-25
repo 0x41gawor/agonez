@@ -7,5 +7,6 @@ export 'context_models.dart';
 export 'json_support.dart' show JsonMap, encodeDateTime;
 export 'operation_models.dart';
 export 'prescription_models.dart';
+export 'prescription_preview.dart';
 export 'wire_enums.dart';
 export 'workout_models.dart';
