@@ -17,6 +17,7 @@ import '../../design/design.dart';
 import '../../errors/user_error_mapper.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/hold_to_confirm.dart';
+import 'done_today.dart';
 import 'exercise_summary.dart';
 import 'microcycle_strip.dart';
 import 'workout_unit_picker.dart';
@@ -403,6 +404,8 @@ class _ContextBody extends StatelessWidget {
             busy: startingSession == value.expectedSession!.sessionId,
             onStart: () => onStart(value.expectedSession!),
           )
+        else if (DoneToday.of(value) case final done?)
+          _DoneTodayCard(done: done, today: value.today!.date)
         else
           _EmptyToday(contextValue: value),
         if (value.activeWorkout == null && hasOtherWorkoutUnits(value))
@@ -579,6 +582,89 @@ class _ServerActiveCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Today's training is finished: what was trained, how it went and what
+/// comes next, instead of calling the day a rest day.
+class _DoneTodayCard extends StatelessWidget {
+  const _DoneTodayCard({required this.done, required this.today});
+
+  final DoneToday done;
+
+  /// Today, `yyyy-MM-dd`.
+  final String today;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final colors = context.agonezColors;
+    final textTheme = Theme.of(context).textTheme;
+    final language = Localizations.localeOf(context).languageCode;
+    final result = done.result;
+    final details = [
+      if (result != null) ...[
+        strings.homeDoneSets(result.performedSets, result.prescribedSets),
+        strings.homeDoneFinishedAt(
+          DateFormat.Hm(language).format(result.completedAt.toLocal()),
+        ),
+      ],
+    ].join(' · ');
+    final next = done.next;
+    return AgonezPanel(
+      borderColor: colors.success.withValues(alpha: .5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              AgonezEyebrow(strings.homeDoneTitle, color: colors.successText),
+              const Spacer(),
+              Icon(Icons.check_circle_rounded, size: 20, color: colors.success),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(done.workoutUnitName, style: textTheme.displaySmall),
+          if (details.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              details,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colors.textSecondary,
+              ),
+            ),
+          ],
+          if (next != null) ...[
+            const SizedBox(height: 16),
+            Divider(height: 1, color: colors.lineSubtle),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                AgonezEyebrow(strings.homeNextUp),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '${next.workoutUnitName} · ${_when(next.date, strings, language)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// "tomorrow", or the date for anything later.
+  String _when(String date, AppLocalizations strings, String language) {
+    final day = DateTime.tryParse(date);
+    final now = DateTime.tryParse(today);
+    if (day == null || now == null) return date;
+    if (day.difference(now).inDays == 1) return strings.homeNextTomorrow;
+    return DateFormat.MMMEd(language).format(day);
   }
 }
 

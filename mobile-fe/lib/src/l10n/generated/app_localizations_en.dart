@@ -176,6 +176,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeRestDayExplanation => 'No workout-unit is scheduled today.';
 
   @override
+  String get homeDoneTitle => 'Done for today';
+
+  @override
+  String homeDoneSets(int performed, int prescribed) {
+    return '$performed of $prescribed sets';
+  }
+
+  @override
+  String homeDoneFinishedAt(String time) {
+    return 'finished $time';
+  }
+
+  @override
+  String get homeNextUp => 'Next';
+
+  @override
+  String get homeNextTomorrow => 'tomorrow';
+
+  @override
   String homeNextWorkout(String date) {
     return 'Next · $date';
   }

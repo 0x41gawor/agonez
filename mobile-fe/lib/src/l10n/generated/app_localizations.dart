@@ -403,6 +403,36 @@ abstract class AppLocalizations {
   /// **'No workout-unit is scheduled today.'**
   String get homeRestDayExplanation;
 
+  /// No description provided for @homeDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Done for today'**
+  String get homeDoneTitle;
+
+  /// No description provided for @homeDoneSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{performed} of {prescribed} sets'**
+  String homeDoneSets(int performed, int prescribed);
+
+  /// No description provided for @homeDoneFinishedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'finished {time}'**
+  String homeDoneFinishedAt(String time);
+
+  /// No description provided for @homeNextUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get homeNextUp;
+
+  /// No description provided for @homeNextTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'tomorrow'**
+  String get homeNextTomorrow;
+
   /// No description provided for @homeNextWorkout.
   ///
   /// In en, this message translates to:

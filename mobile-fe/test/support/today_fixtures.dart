@@ -193,6 +193,24 @@ MobileContext restDayContext() => MobileContext(
   recent: const [],
 );
 
+/// Plan run 2 on 2026-10-19 with nothing left to start today.
+MobileContext doneTodayContext({
+  required List<MicrocycleDay> days,
+  required List<RecentWorkout> recent,
+}) => MobileContext(
+  generatedAt: DateTime.utc(2026, 10, 19, 18),
+  contextVersion: 'run-2-done',
+  planRun: contextPlanRun(id: 2, name: 'Filip Majka'),
+  selectionRequired: false,
+  today: const TodayPosition(date: '2026-10-19', microcycle: null),
+  microcycleDays: days,
+  expectedSession: null,
+  alternatives: const [],
+  fallbacks: const [],
+  activeWorkout: null,
+  recent: recent,
+);
+
 /// Plan run 2 with LEGS expected today, prescribed unless [prescribed] is
 /// false.
 MobileContext workoutContext({

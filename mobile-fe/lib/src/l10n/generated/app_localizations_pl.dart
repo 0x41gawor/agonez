@@ -177,6 +177,25 @@ class AppLocalizationsPl extends AppLocalizations {
       'Na dzisiaj nie zaplanowano jednostki treningowej.';
 
   @override
+  String get homeDoneTitle => 'Na dziś zrobione';
+
+  @override
+  String homeDoneSets(int performed, int prescribed) {
+    return '$performed z $prescribed serii';
+  }
+
+  @override
+  String homeDoneFinishedAt(String time) {
+    return 'zakończono $time';
+  }
+
+  @override
+  String get homeNextUp => 'Dalej';
+
+  @override
+  String get homeNextTomorrow => 'jutro';
+
+  @override
   String homeNextWorkout(String date) {
     return 'Następny · $date';
   }

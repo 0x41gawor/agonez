@@ -135,6 +135,51 @@ void main() {
     expect(find.text('REST DAY'), findsOneWidget);
   });
 
+  testWidgets('a finished day says so instead of calling it a rest day', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(430, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    harness.stubContext(
+      (_) => doneTodayContext(
+        days: const [
+          MicrocycleDay(
+            date: '2026-10-19',
+            dayOrdinal: 1,
+            sessionId: 41,
+            workoutUnitName: 'LEGS',
+            status: 'completed',
+          ),
+          MicrocycleDay(
+            date: '2026-10-20',
+            dayOrdinal: 2,
+            sessionId: 42,
+            workoutUnitName: 'Chest + Back',
+            status: 'scheduled',
+          ),
+        ],
+        recent: [
+          RecentWorkout(
+            sessionId: 41,
+            workoutUnitName: 'LEGS',
+            completedAt: DateTime.utc(2026, 10, 19, 12),
+            performedSets: 18,
+            prescribedSets: 20,
+            skippedSets: 2,
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpWidget(harness.app(const HomeScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('DONE FOR TODAY'), findsOneWidget);
+    expect(find.textContaining('18 of 20 sets · finished'), findsOneWidget);
+    expect(find.text('Chest + Back · tomorrow'), findsOneWidget);
+    expect(find.text('REST DAY'), findsNothing);
+  });
+
   testWidgets('the header names the run and the sheet marks it', (
     tester,
   ) async {
