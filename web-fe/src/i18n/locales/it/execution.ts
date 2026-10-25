@@ -8,6 +8,7 @@ export default {
       metaWeek: '{start} → {end} · {count} × settimane di allenamento di 7 giorni',
       eyebrow: 'Esecuzione del piano', from: 'Da {plan}', all: 'Tutte le esecuzioni ({count})', new: 'Nuova esecuzione', meta: '{start} → {end} · {count} × microcicli di {days} giorni',
       status: { scheduled: 'Pianificata', active: 'Attiva', cancelled: 'Annullata', completed: 'Completata' }, emptyTitle: 'Nessuna esecuzione del piano', emptyBody: 'Un’esecuzione colloca un piano di allenamento nel calendario reale.', loadError: 'Impossibile caricare l’esecuzione', listError: 'Impossibile caricare le esecuzioni.',
+      manage: { action: 'Gestisci esecuzioni', title: 'Gestisci le esecuzioni del piano', lead: 'Eliminare un’esecuzione la cancella insieme a tutto ciò che vi è stato registrato.', current: 'Attuale', delete: 'Elimina {name}', impact: '{sessions} sedute · {recorded} con risultati registrati', irreversible: 'L’operazione non è reversibile.', typeName: 'Digita il nome dell’esecuzione per confermare: {name}', confirm: 'Elimina esecuzione', deleting: 'Eliminazione…', cancelInstead: 'Annulla invece l’esecuzione', inProgress: 'Un allenamento di questa esecuzione è ancora in corso. Completalo o annullalo prima.' },
     },
     status: { scheduled: 'Pianificata', in_progress: 'In corso', completed: 'Completata', cancelled: 'Annullata', missed: 'Saltata', today: 'Oggi' }, completion: { as_prescribed: 'Come prescritto', fallback: 'Alternativa' }, classification: { normal: 'Normale', deload: 'Deload', reload: 'Reload' },
     blocked: {

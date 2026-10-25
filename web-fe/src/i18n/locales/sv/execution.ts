@@ -8,6 +8,7 @@ export default {
       metaWeek: '{start} → {end} · {count} × 7-dagars träningsveckor',
       eyebrow: 'Plankörning', from: 'Från {plan}', all: 'Alla körningar ({count})', new: 'Ny plankörning', meta: '{start} → {end} · {count} × mikrocykler på {days} dagar',
       status: { scheduled: 'Planerad', active: 'Aktiv', cancelled: 'Avbruten', completed: 'Slutförd' }, emptyTitle: 'Inga plankörningar ännu', emptyBody: 'En plankörning placerar en träningsplan i verklig kalendertid.', loadError: 'Plankörningen kunde inte läsas in', listError: 'Plankörningarna kunde inte läsas in.',
+      manage: { action: 'Hantera körningar', title: 'Hantera plankörningar', lead: 'Att ta bort en körning raderar den med allt som registrerats i den.', current: 'Aktuell', delete: 'Ta bort {name}', impact: '{sessions} pass · {recorded} med registrerade resultat', irreversible: 'Detta går inte att ångra.', typeName: 'Skriv körningens namn för att bekräfta: {name}', confirm: 'Ta bort körning', deleting: 'Tar bort…', cancelInstead: 'Avbryt körningen i stället', inProgress: 'Ett pass i den här körningen pågår fortfarande. Avsluta eller avbryt det först.' },
     },
     status: { scheduled: 'Planerad', in_progress: 'Pågår', completed: 'Slutförd', cancelled: 'Avbruten', missed: 'Missad', today: 'I dag' }, completion: { as_prescribed: 'Enligt ordination', fallback: 'Alternativ' }, classification: { normal: 'Normal', deload: 'Nedtrappning', reload: 'Återtrappning' },
     blocked: {

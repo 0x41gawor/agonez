@@ -1,14 +1,16 @@
-import { describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
+import { ApiError } from '@/api/client'
 import { executionApi } from '@/api/execution'
-import type { AnalysisQueue as AnalysisQueueDTO, ExerciseTraceResponse, LoadSeriesResponse } from '@/api/execution-types'
+import type { AnalysisQueue as AnalysisQueueDTO, ExerciseTraceResponse, LoadSeriesResponse, PlanRunListItem, PlanRunOverview, SessionStatus } from '@/api/execution-types'
 import AnalysisQueue from '@/components/execution/AnalysisQueue.vue'
 import ExerciseTraceTable from '@/components/execution/ExerciseTraceTable.vue'
 import LoadsChart from '@/components/execution/LoadsChart.vue'
 import PrescriptionEditor from '@/components/execution/PrescriptionEditor.vue'
+import RunManagerDialog from '@/components/execution/RunManagerDialog.vue'
 import SessionStatusMark from '@/components/execution/SessionStatusMark.vue'
 import AppShell from '@/components/shell/AppShell.vue'
 import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
@@ -44,7 +46,21 @@ const queue: AnalysisQueueDTO = {
   workouts: [{ workout_trace_id: 2, workout_name: 'Push A', day_ordinal: 0, target_session: { session_id: 7, scheduled_date: '2026-10-13', status: 'scheduled' }, basis_session: { session_id: 6, scheduled_date: '2026-10-06', microcycle_ordinal: 6 }, state: 'editable', blocked_reason: null, blocked_detail: null, prescription_completeness: 'partial', exercises: [{ exercise_trace_id: 41, slot_ordinal: 0, name: 'Bench Press', prescription_saved: false, last_summary: { microcycle_ordinal: 6, execution_mode: 'as_prescribed', top_load_kg: 67.5, reps: [7, 6, 5] } }] }],
 }
 
+const runList: PlanRunListItem[] = [
+  { plan_run_id: 3, name: 'Test a', status: 'active', plan: { plan_id: 6, code: 'P006', name: 'PPL' }, starts_on: '2026-10-25', ends_on: '2026-12-19', microcycle_count: 8, microcycle_duration_days: 7, current_microcycle_ordinal: 1 },
+  { plan_run_id: 4, name: 'Logged run', status: 'active', plan: { plan_id: 6, code: 'P006', name: 'PPL' }, starts_on: '2026-09-01', ends_on: '2026-10-26', microcycle_count: 8, microcycle_duration_days: 7, current_microcycle_ordinal: 8 },
+]
+
+function overviewWithSessions(runId: number, statuses: SessionStatus[]): PlanRunOverview {
+  return {
+    run: { plan_run_id: runId, version: 'v1' },
+    microcycles: [{ sessions: statuses.map((status, index) => ({ session_id: index + 1, status })) }],
+  } as unknown as PlanRunOverview
+}
+
 describe('Execution critical workflows', () => {
+  afterEach(() => vi.restoreAllMocks())
+
   it('uses localized week labels only for seven-day plan runs', async () => {
     const CycleProbe = defineComponent({
       props: { duration: { type: Number, required: true } },
@@ -216,6 +232,87 @@ describe('Execution critical workflows', () => {
     await expect(executionApi.savePrescription(3, 7, 41, payload)).rejects.toMatchObject({ status: 409, code: 'stale_basis' })
     expect(fetchMock.mock.calls[0]?.[0]).toContain('/api/v1/exec/plan-runs/3/sessions/7/exercise-prescriptions/41')
     expect(JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body))).toEqual(payload)
+    vi.unstubAllGlobals()
+  })
+it('deletes a plan run without recorded results after a single confirmation', async () => {
+    const overviewSpy = vi.spyOn(executionApi, 'overview').mockResolvedValue(overviewWithSessions(3, ['scheduled', 'missed']))
+    const deleteSpy = vi.spyOn(executionApi, 'deleteRun').mockResolvedValue(undefined)
+    const wrapper = mount(RunManagerDialog, { props: { runs: runList, currentRunId: 3 } })
+
+    await wrapper.findAll('.exec-run-delete')[0]?.trigger('click')
+    await flushPromises()
+
+    expect(overviewSpy).toHaveBeenCalledWith(3)
+    expect(wrapper.get('.exec-run-impact').text()).toBe('2 sessions · 0 with recorded results')
+    expect(wrapper.find('.exec-run-typed').exists()).toBe(false)
+    await wrapper.get('.exec-danger').trigger('click')
+    await flushPromises()
+
+    expect(deleteSpy).toHaveBeenCalledWith(3)
+    expect(wrapper.emitted('deleted')).toEqual([[3]])
+  })
+
+  it('requires the typed run name before deleting a run that holds recorded results', async () => {
+    vi.spyOn(executionApi, 'overview').mockResolvedValue(overviewWithSessions(4, ['completed', 'completed', 'scheduled']))
+    const deleteSpy = vi.spyOn(executionApi, 'deleteRun').mockResolvedValue(undefined)
+    const wrapper = mount(RunManagerDialog, { props: { runs: runList, currentRunId: 3 } })
+
+    await wrapper.findAll('.exec-run-delete')[1]?.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.exec-run-impact').text()).toContain('3 sessions · 2 with recorded results')
+    const confirm = wrapper.get('.exec-danger')
+    expect(confirm.attributes('disabled')).toBeDefined()
+
+    await wrapper.get('.exec-run-typed input').setValue('Logged run but wrong')
+    expect(wrapper.get('.exec-danger').attributes('disabled')).toBeDefined()
+
+    await wrapper.get('.exec-run-typed input').setValue('Logged run')
+    await wrapper.get('.exec-danger').trigger('click')
+    await flushPromises()
+
+    expect(deleteSpy).toHaveBeenCalledWith(4)
+  })
+
+  it('explains a refused delete when a workout of the run is still in progress', async () => {
+    vi.spyOn(executionApi, 'overview').mockResolvedValue(overviewWithSessions(3, ['scheduled']))
+    vi.spyOn(executionApi, 'deleteRun').mockRejectedValue(
+      new ApiError('conflict', 409, { error: { code: 'plan_run_session_in_progress', message: 'conflict', details: {} } }),
+    )
+    const wrapper = mount(RunManagerDialog, { props: { runs: runList, currentRunId: 3 } })
+
+    await wrapper.findAll('.exec-run-delete')[0]?.trigger('click')
+    await flushPromises()
+    await wrapper.get('.exec-danger').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.exec-run-error').text()).toBe('A workout of this run is still in progress. Finish or cancel it first.')
+    expect(wrapper.emitted('deleted')).toBeUndefined()
+  })
+
+  it('offers cancelling the run as the non-destructive alternative', async () => {
+    vi.spyOn(executionApi, 'overview').mockResolvedValue(overviewWithSessions(3, ['completed']))
+    const patchSpy = vi.spyOn(executionApi, 'updateRun').mockResolvedValue({} as PlanRunOverview)
+    const wrapper = mount(RunManagerDialog, { props: { runs: runList, currentRunId: 3 } })
+
+    await wrapper.findAll('.exec-run-delete')[0]?.trigger('click')
+    await flushPromises()
+    await wrapper.findAll('.exec-run-confirm-actions .button')[1]?.trigger('click')
+    await flushPromises()
+
+    expect(patchSpy).toHaveBeenCalledWith(3, { status: 'cancelled', expected_version: 'v1' })
+    expect(wrapper.emitted('cancelled')).toEqual([[3]])
+  })
+
+  it('sends the delete to the run path and only forces when asked', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
+    await executionApi.deleteRun(9)
+    await executionApi.deleteRun(9, true)
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/api/v1/exec/plan-runs/9')
+    expect(String(fetchMock.mock.calls[0]?.[0])).not.toContain('force')
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('/api/v1/exec/plan-runs/9?force=true')
+    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).method).toBe('DELETE')
     vi.unstubAllGlobals()
   })
 })

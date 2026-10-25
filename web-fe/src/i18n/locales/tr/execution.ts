@@ -8,6 +8,7 @@ export default {
       metaWeek: '{start} → {end} · {count} × 7 günlük antrenman haftası',
       eyebrow: 'Plan uygulaması', from: '{plan} planından', all: 'Tüm uygulamalar ({count})', new: 'Yeni plan uygulaması', meta: '{start} → {end} · {count} × {days} günlük mikro döngü',
       status: { scheduled: 'Planlandı', active: 'Aktif', cancelled: 'İptal edildi', completed: 'Tamamlandı' }, emptyTitle: 'Henüz plan uygulaması yok', emptyBody: 'Plan uygulaması, antrenman planını gerçek takvim zamanına yerleştirir.', loadError: 'Plan uygulaması yüklenemedi', listError: 'Plan uygulamaları yüklenemedi.',
+      manage: { action: 'Uygulamaları yönet', title: 'Plan uygulamalarını yönet', lead: 'Bir plan uygulamasını silmek, içinde kayıtlı olan her şeyi de siler.', current: 'Geçerli', delete: '{name} sil', impact: '{sessions} seans · {recorded} tanesi kayıtlı sonuçlu', irreversible: 'Bu işlem geri alınamaz.', typeName: 'Onaylamak için uygulamanın adını yazın: {name}', confirm: 'Uygulamayı sil', deleting: 'Siliniyor…', cancelInstead: 'Bunun yerine uygulamayı iptal et', inProgress: 'Bu uygulamada süren bir antrenman var. Önce onu bitirin veya iptal edin.' },
     },
     status: { scheduled: 'Planlandı', in_progress: 'Devam ediyor', completed: 'Tamamlandı', cancelled: 'İptal edildi', missed: 'Kaçırıldı', today: 'Bugün' }, completion: { as_prescribed: 'Öngörüldüğü gibi', fallback: 'Alternatif' }, classification: { normal: 'Normal', deload: 'Yük azaltma', reload: 'Yük artırma' },
     blocked: {

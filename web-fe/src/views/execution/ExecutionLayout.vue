@@ -6,6 +6,7 @@ import { executionApi } from '@/api/execution'
 import type { PlanRunListItem, PlanRunOverview } from '@/api/execution-types'
 import ErrorState from '@/components/common/ErrorState.vue'
 import ExecutionSkeleton from '@/components/execution/ExecutionSkeleton.vue'
+import RunManagerDialog from '@/components/execution/RunManagerDialog.vue'
 import { executionContextKey } from '@/features/execution/context'
 import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { executionDate } from '@/features/execution/format'
@@ -20,6 +21,7 @@ const cycle = useExecutionCycleLabels(() => overview.value?.run.microcycle_durat
 const runs = ref<PlanRunListItem[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+const managerOpen = ref(false)
 
 const activeTab = computed(() => {
   if (route.name === 'execution-overview') return 'overview'
@@ -50,6 +52,21 @@ function selectRun(event: Event): void {
   if (id && id !== numericRunId.value) void router.push({ name: 'execution-overview', params: { runId: id } })
 }
 
+async function runDeleted(deletedId: number): Promise<void> {
+  runs.value = runs.value.filter((run) => run.plan_run_id !== deletedId)
+  if (deletedId !== numericRunId.value) {
+    await load()
+    return
+  }
+  managerOpen.value = false
+  const fallback = runs.value.find((run) => run.status === 'active')
+    ?? runs.value.find((run) => run.status === 'scheduled')
+    ?? runs.value[0]
+  await router.replace(fallback
+    ? { name: 'execution-overview', params: { runId: fallback.plan_run_id } }
+    : { name: 'execution' })
+}
+
 provide(executionContextKey, { runId: runIdRef, overview, runs, loading, error, reload: load })
 onMounted(() => void load())
 watch(numericRunId, (value) => { runIdRef.value = value; void load() })
@@ -72,6 +89,7 @@ watch(numericRunId, (value) => { runIdRef.value = value; void load() })
           <select id="execution-run-select" class="exec-select" :value="numericRunId" @change="selectRun">
             <option v-for="run in runs" :key="run.plan_run_id" :value="run.plan_run_id">{{ run.name }} · {{ $t(`execution.run.status.${run.status}`) }}</option>
           </select>
+          <button class="button" type="button" :disabled="loading || !runs.length" @click="managerOpen = true">{{ $t('execution.run.manage.action') }}</button>
           <RouterLink class="button primary" :to="{ name: 'execution-new-run' }">+ {{ $t('execution.run.new') }}</RouterLink>
         </div>
       </div>
@@ -85,5 +103,13 @@ watch(numericRunId, (value) => { runIdRef.value = value; void load() })
     <ExecutionSkeleton v-if="loading" class="page-wrap" />
     <ErrorState v-else-if="error || !overview" class="page-wrap" :title="$t('execution.run.loadError')" :message="error || $t('execution.run.listError')" @retry="load" />
     <RouterView v-else />
+    <RunManagerDialog
+      v-if="managerOpen"
+      :runs="runs"
+      :current-run-id="numericRunId"
+      @close="managerOpen = false"
+      @deleted="runDeleted"
+      @cancelled="load"
+    />
   </div>
 </template>

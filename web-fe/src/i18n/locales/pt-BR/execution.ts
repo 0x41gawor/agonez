@@ -8,6 +8,7 @@ export default {
       metaWeek: '{start} → {end} · {count} × semanas de treino de 7 dias',
       eyebrow: 'Execução do plano', from: 'A partir de {plan}', all: 'Todas as execuções ({count})', new: 'Nova execução', meta: '{start} → {end} · {count} × microciclos de {days} dias',
       status: { scheduled: 'Agendada', active: 'Ativa', cancelled: 'Cancelada', completed: 'Concluída' }, emptyTitle: 'Nenhuma execução de plano', emptyBody: 'Uma execução coloca um plano de treino no calendário real.', loadError: 'Não foi possível carregar a execução', listError: 'Não foi possível carregar as execuções.',
+      manage: { action: 'Gerenciar execuções', title: 'Gerenciar execuções do plano', lead: 'Excluir uma execução apaga tudo o que foi registrado nela.', current: 'Atual', delete: 'Excluir {name}', impact: '{sessions} sessões · {recorded} com resultados registrados', irreversible: 'Isso não pode ser desfeito.', typeName: 'Digite o nome da execução para confirmar: {name}', confirm: 'Excluir execução', deleting: 'Excluindo…', cancelInstead: 'Cancelar a execução em vez disso', inProgress: 'Um treino desta execução ainda está em andamento. Conclua ou cancele primeiro.' },
     },
     status: { scheduled: 'Agendada', in_progress: 'Em andamento', completed: 'Concluída', cancelled: 'Cancelada', missed: 'Perdida', today: 'Hoje' }, completion: { as_prescribed: 'Como prescrito', fallback: 'Alternativa' }, classification: { normal: 'Normal', deload: 'Deload', reload: 'Reload' },
     blocked: {

@@ -11,6 +11,7 @@ export default {
       status: { scheduled: 'Scheduled', active: 'Active', cancelled: 'Cancelled', completed: 'Completed' },
       emptyTitle: 'No plan runs yet', emptyBody: 'A plan run puts a workout plan into real calendar time.',
       loadError: 'The plan run could not be loaded', listError: 'Plan runs could not be loaded.',
+      manage: { action: 'Manage runs', title: 'Manage plan runs', lead: 'Deleting a plan run removes it together with everything recorded in it.', current: 'Current', delete: 'Delete {name}', impact: '{sessions} sessions · {recorded} with recorded results', irreversible: 'This cannot be undone.', typeName: 'Type the run name to confirm: {name}', confirm: 'Delete run', deleting: 'Deleting…', cancelInstead: 'Cancel the run instead', inProgress: 'A workout of this run is still in progress. Finish or cancel it first.' },
     },
     status: { scheduled: 'Scheduled', in_progress: 'In progress', completed: 'Completed', cancelled: 'Cancelled', missed: 'Missed', today: 'Today' },
     completion: { as_prescribed: 'As prescribed', fallback: 'Fallback' },

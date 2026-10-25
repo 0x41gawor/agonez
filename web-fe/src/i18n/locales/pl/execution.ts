@@ -8,6 +8,7 @@ export default {
       eyebrow: 'Realizacja planu', from: 'Na podstawie {plan}', all: 'Wszystkie realizacje ({count})', new: 'Nowa realizacja planu', meta: '{start} → {end} · {count} × mikrocykl {days}-dniowy', metaWeek: '{start} → {end} · {count} × 7-dniowy tydzień treningowy',
       status: { scheduled: 'Zaplanowana', active: 'Aktywna', cancelled: 'Anulowana', completed: 'Zakończona' },
       emptyTitle: 'Brak realizacji planu', emptyBody: 'Realizacja planu umieszcza plan treningowy w konkretnym czasie kalendarzowym.', loadError: 'Nie udało się załadować realizacji planu', listError: 'Nie udało się załadować realizacji planów.',
+      manage: { action: 'Zarządzaj realizacjami', title: 'Zarządzaj realizacjami planu', lead: 'Usunięcie realizacji kasuje ją wraz ze wszystkim, co w niej zapisano.', current: 'Bieżąca', delete: 'Usuń {name}', impact: '{sessions} sesji · {recorded} z zapisanymi wynikami', irreversible: 'Tego nie można cofnąć.', typeName: 'Wpisz nazwę realizacji, aby potwierdzić: {name}', confirm: 'Usuń realizację', deleting: 'Usuwanie…', cancelInstead: 'Zamiast tego anuluj realizację', inProgress: 'Trening w tej realizacji jest wciąż w toku. Najpierw go zakończ lub anuluj.' },
     },
     status: { scheduled: 'Zaplanowana', in_progress: 'W toku', completed: 'Ukończona', cancelled: 'Anulowana', missed: 'Opuszczona', today: 'Dzisiaj' },
     completion: { as_prescribed: 'Zgodnie z zaleceniem', fallback: 'Wariant zastępczy' },

@@ -8,6 +8,7 @@ export default {
       metaWeek: '{start} → {end} · {count} × trainingsweken van 7 dagen',
       eyebrow: 'Planuitvoering', from: 'Van {plan}', all: 'Alle uitvoeringen ({count})', new: 'Nieuwe planuitvoering', meta: '{start} → {end} · {count} × microcycli van {days} dagen',
       status: { scheduled: 'Gepland', active: 'Actief', cancelled: 'Geannuleerd', completed: 'Voltooid' }, emptyTitle: 'Nog geen planuitvoeringen', emptyBody: 'Een planuitvoering plaatst een trainingsplan in concrete kalendertijd.', loadError: 'De planuitvoering kon niet worden geladen', listError: 'De planuitvoeringen konden niet worden geladen.',
+      manage: { action: 'Uitvoeringen beheren', title: 'Planuitvoeringen beheren', lead: 'Een uitvoering verwijderen wist deze met alles wat erin is vastgelegd.', current: 'Huidige', delete: '{name} verwijderen', impact: '{sessions} sessies · {recorded} met vastgelegde resultaten', irreversible: 'Dit kan niet ongedaan worden gemaakt.', typeName: 'Typ de naam van de uitvoering om te bevestigen: {name}', confirm: 'Uitvoering verwijderen', deleting: 'Verwijderen…', cancelInstead: 'Annuleer de uitvoering in plaats daarvan', inProgress: 'Een training van deze uitvoering is nog bezig. Rond die eerst af of annuleer die.' },
     },
     status: { scheduled: 'Gepland', in_progress: 'Bezig', completed: 'Voltooid', cancelled: 'Geannuleerd', missed: 'Gemist', today: 'Vandaag' }, completion: { as_prescribed: 'Zoals voorgeschreven', fallback: 'Alternatief' }, classification: { normal: 'Normaal', deload: 'Deload', reload: 'Reload' },
     blocked: {

@@ -8,6 +8,7 @@ export default {
       metaWeek: '{start} → {end} · {count} × semaines d’entraînement de 7 jours',
       eyebrow: 'Exécution du plan', from: 'D’après {plan}', all: 'Toutes les exécutions ({count})', new: 'Nouvelle exécution', meta: '{start} → {end} · {count} × microcycles de {days} jours',
       status: { scheduled: 'Planifiée', active: 'Active', cancelled: 'Annulée', completed: 'Terminée' }, emptyTitle: 'Aucune exécution de plan', emptyBody: 'Une exécution place un plan d’entraînement dans un calendrier réel.', loadError: 'Impossible de charger l’exécution du plan', listError: 'Impossible de charger les exécutions.',
+      manage: { action: 'Gérer les exécutions', title: 'Gérer les exécutions du plan', lead: 'Supprimer une exécution l’efface avec tout ce qui y a été enregistré.', current: 'Actuelle', delete: 'Supprimer {name}', impact: '{sessions} séances · {recorded} avec résultats enregistrés', irreversible: 'Cette action est irréversible.', typeName: 'Saisissez le nom de l’exécution pour confirmer : {name}', confirm: 'Supprimer l’exécution', deleting: 'Suppression…', cancelInstead: 'Annuler l’exécution à la place', inProgress: 'Une séance de cette exécution est encore en cours. Terminez-la ou annulez-la d’abord.' },
     },
     status: { scheduled: 'Planifiée', in_progress: 'En cours', completed: 'Terminée', cancelled: 'Annulée', missed: 'Manquée', today: 'Aujourd’hui' },
     completion: { as_prescribed: 'Comme prescrit', fallback: 'Variante de secours' }, classification: { normal: 'Normal', deload: 'Décharge', reload: 'Recharge' },
