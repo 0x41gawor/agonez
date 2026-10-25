@@ -208,6 +208,11 @@ class AppLocalizationsPl extends AppLocalizations {
   String get runSheetTitle => 'Realizacja planu';
 
   @override
+  String runChipMicrocycle(int current, int total) {
+    return 'MC $current/$total';
+  }
+
+  @override
   String get runContext => 'Kontekst';
 
   @override
@@ -273,8 +278,12 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get pickerOffScheduleRules =>
-      'Wykonanie go teraz zmienia planowaną kolejność ekspozycji. To, jak realizacja planu to odnotuje (wcześniej, jako zastępstwo czy dodatkowa ekspozycja), rozstrzygają zasady harmonogramu — aplikacja nie zgaduje.';
+  String get pickerOffScheduleEarly =>
+      'Wykonanie jej teraz realizuje wcześniej jej następną zaplanowaną ekspozycję. Ekspozycja zachowuje swoje miejsce w planie; zapisany zostanie faktyczny czas treningu.';
+
+  @override
+  String get pickerOffScheduleMissed =>
+      'Wykonanie jej teraz nadrabia tę opuszczoną ekspozycję. Ekspozycja zachowuje swoje miejsce w planie; zapisany zostanie faktyczny czas treningu.';
 
   @override
   String pickerStart(String workout) {
@@ -1228,6 +1237,22 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get errorOffScheduleNotSupported =>
       'Wykonywanie treningu poza harmonogramem nie jest jeszcze dostępne.';
+
+  @override
+  String get errorScheduleChanged =>
+      'Harmonogram zmienił się od otwarcia tej listy. Zamknij ją i wybierz ponownie.';
+
+  @override
+  String get errorOffScheduleNotApplicable =>
+      'To jest teraz dzisiejsza zaplanowana jednostka treningowa. Zamknij listę i rozpocznij ją z ekranu głównego.';
+
+  @override
+  String get errorNotNextTrackExposure =>
+      'Wcześniejsza sesja tej jednostki treningowej wciąż czeka na wykonanie. Zamknij listę i najpierw rozpocznij tamtą.';
+
+  @override
+  String get errorFallbackUnavailable =>
+      'Nie można przygotować celów z planu dla tej jednostki treningowej. Sprawdź jej plan na komputerze.';
 
   @override
   String get errorSequenceGap =>

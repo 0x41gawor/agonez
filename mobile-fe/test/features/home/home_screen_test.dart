@@ -116,7 +116,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('LEGS'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.layers_outlined));
+    await tester.tap(find.byKey(const Key('home-plan-run')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Execution Demo'));
     await tester.pumpAndSettle();
@@ -125,11 +125,90 @@ void main() {
     expect(find.byType(TodaySkeleton), findsOneWidget);
     expect(find.text('LEGS'), findsNothing);
     expect(find.text('Start workout'), findsNothing);
+    // The header already names the chosen run.
+    expect(find.text('Execution Demo'), findsOneWidget);
+    expect(find.text('Filip Majka'), findsNothing);
 
     demoContext.complete(restDayContext());
     await tester.pumpAndSettle();
 
     expect(find.text('REST DAY'), findsOneWidget);
+  });
+
+  testWidgets('the header names the run and the sheet marks it', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    harness.stubContext((_) => workoutContext());
+    when(harness.repository.listPlanRuns).thenAnswer(
+      (_) async => const [
+        PlanRunCompact(
+          id: 1,
+          name: 'Execution Demo',
+          status: 'active',
+          startsOn: '2026-09-01',
+          endsOn: '2026-10-26',
+          microcycleCount: 8,
+          currentMicrocycleOrdinal: 8,
+        ),
+        PlanRunCompact(
+          id: 2,
+          name: 'Filip Majka',
+          status: 'active',
+          startsOn: '2026-10-19',
+          endsOn: '2026-12-13',
+          microcycleCount: 8,
+          currentMicrocycleOrdinal: 1,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(harness.app(const HomeScreen()));
+    await tester.pumpAndSettle();
+
+    final chip = find.byKey(const Key('home-plan-run'));
+    expect(
+      find.descendant(of: chip, matching: find.text('Filip Majka')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: chip, matching: find.text('MC 1/8')),
+      findsOneWidget,
+    );
+
+    await tester.tap(chip);
+    await tester.pumpAndSettle();
+
+    ListTile row(String name) => tester.widget<ListTile>(
+      find.ancestor(
+        of: find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text(name),
+        ),
+        matching: find.byType(ListTile),
+      ),
+    );
+    expect(row('Filip Majka').selected, isTrue);
+    expect(row('Execution Demo').selected, isFalse);
+    expect(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byIcon(Icons.check_rounded),
+      ),
+      findsOneWidget,
+    );
+
+    // Choosing the current run again changes nothing.
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.text('Filip Majka'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsNothing);
+    verifyNever(() => harness.repository.selectPlanRun(any()));
   });
 
   testWidgets('a session without a prescription starts from plan targets', (

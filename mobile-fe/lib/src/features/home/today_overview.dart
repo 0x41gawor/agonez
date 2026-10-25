@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../api/api_error.dart';
 import '../../api/context_models.dart';
 import '../../api/prescription_models.dart';
 import '../../api/wire_enums.dart';
@@ -176,19 +177,24 @@ class _TodayOverviewState extends ConsumerState<TodayOverview> {
     if (started == true) router.go('/focus');
   }
 
-  /// Starts a unit other than today's. The server decides how the plan run
-  /// records it and may refuse; errors propagate to the picker, which shows
-  /// them and stays open.
+  /// Starts a unit other than today's as its track's next exposure: the
+  /// session keeps its planned microcycle and date, and the server accepts
+  /// only the earliest unresolved occurrence of that workout track. Errors
+  /// propagate to the picker, which shows them and stays open.
   Future<void> _startOffSchedule(
     SessionSummary session, {
     required SessionSummary? expected,
   }) async {
     final runtime = ref.read(appRuntimeProvider);
     final container = ProviderScope.containerOf(context, listen: false);
+    final language = Localizations.localeOf(context).languageCode;
     _beginLaunch();
-    try {
-      final start = await _prescriptionToStart(session);
-      final workoutId = await runtime.workoutRepository.startAfterServerAccepts(
+    Future<String> send({required bool completeFromPlan}) async {
+      final start = await _prescriptionToStart(
+        session,
+        completeFromPlan: completeFromPlan,
+      );
+      return runtime.workoutRepository.startAfterServerAccepts(
         prescription: start.prescription,
         send: runtime.api.startWorkout,
         planRunId: await runtime.mobileRepository.selectedPlanRunId(),
@@ -199,23 +205,53 @@ class _TodayOverviewState extends ConsumerState<TodayOverview> {
           expectedSessionId: expected?.sessionId,
         ),
       );
+    }
+
+    try {
+      String workoutId;
+      try {
+        workoutId = await send(completeFromPlan: false);
+      } on AgonezApiException catch (error) {
+        if (error.error?.code != 'prescription_incomplete') rethrow;
+        // Analysis covers only part of the plan, which readiness does not
+        // reveal. Nothing was stored, so complete it from plan targets and
+        // start once more.
+        workoutId = await send(completeFromPlan: true);
+      }
       await _untilShowable(container, workoutId);
-    } on Object {
+    } on Object catch (error) {
       _endLaunch();
+      if (error is AgonezApiException &&
+          _staleScheduleCodes.contains(error.error?.code)) {
+        // The picker was built from an outdated context; Home refreshes so
+        // reopening it offers the current choices.
+        container.invalidate(mobileContextProvider(language));
+      }
       rethrow;
     }
   }
 
+  /// Refusals meaning the context the choice was made from is out of date.
+  static const _staleScheduleCodes = {
+    'off_schedule_acknowledgement_required',
+    'off_schedule_not_applicable',
+    'not_next_track_exposure',
+    'schedule_changed',
+  };
+
   /// The prescription a start sends, and whether the server must accept it
-  /// without resolved loads. A session whose prescription is not ready is
-  /// first completed from plan targets on the server; the athlete then
-  /// enters the loads during the workout.
+  /// without resolved loads. A session whose prescription is not ready, or
+  /// one to [completeFromPlan], is first completed from plan targets on the
+  /// server; the athlete then enters the loads during the workout.
   Future<({WorkoutPrescription prescription, bool allowMissingLoads})>
-  _prescriptionToStart(SessionSummary session) async {
+  _prescriptionToStart(
+    SessionSummary session, {
+    bool completeFromPlan = false,
+  }) async {
     final repository = ref.read(appRuntimeProvider).mobileRepository;
     final ready =
         session.prescription.readiness == PrescriptionReadinessStatus.ready;
-    final loaded = ready
+    final loaded = ready && !completeFromPlan
         ? await repository.loadPrescription(session.sessionId)
         : await repository.prepareFallbackPrescription(session.sessionId);
     final missingLoads = loaded.value.exercises.any(

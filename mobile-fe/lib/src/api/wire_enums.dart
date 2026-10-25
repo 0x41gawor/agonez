@@ -24,6 +24,11 @@ enum OperationResultStatus { applied, duplicate, conflict, rejected }
 
 enum SubstitutionSource { planVariant, atlas }
 
+/// How an off-schedule start relates to the plan. The only mode so far:
+/// execute the earliest unresolved occurrence of the chosen workout track,
+/// which keeps its planned microcycle and date.
+enum OffScheduleMode { nextTrackExposure }
+
 extension PrescriptionReadinessStatusWire on PrescriptionReadinessStatus {
   String get wireName => switch (this) {
     PrescriptionReadinessStatus.ready => 'ready',
@@ -168,3 +173,15 @@ SubstitutionSource decodeSubstitutionSource(Object? value) => switch (asString(
   'atlas' => SubstitutionSource.atlas,
   final value => throw FormatException('Unknown substitution source "$value"'),
 };
+
+extension OffScheduleModeWire on OffScheduleMode {
+  String get wireName => switch (this) {
+    OffScheduleMode.nextTrackExposure => 'next_track_exposure',
+  };
+}
+
+OffScheduleMode decodeOffScheduleMode(Object? value) =>
+    switch (asString(value, 'mode')) {
+      'next_track_exposure' => OffScheduleMode.nextTrackExposure,
+      final value => throw FormatException('Unknown off-schedule mode: $value'),
+    };

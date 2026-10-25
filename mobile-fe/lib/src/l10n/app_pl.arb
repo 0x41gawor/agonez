@@ -61,6 +61,7 @@
   "homeCompletedAt": "Ukończono {time}",
 
   "runSheetTitle": "Realizacja planu",
+  "runChipMicrocycle": "MC {current}/{total}",
   "runContext": "Kontekst",
   "runPlan": "Plan",
   "runMicrocyclePosition": "Mikrocykl",
@@ -80,7 +81,8 @@
   "pickerMissedOn": "Opuszczona · {date}",
   "pickerDoneExplanation": "Już wykonana w tym mikrocyklu.",
   "pickerNotScheduledToday": "{workout} nie jest zaplanowany na dzisiaj.",
-  "pickerOffScheduleRules": "Wykonanie go teraz zmienia planowaną kolejność ekspozycji. To, jak realizacja planu to odnotuje (wcześniej, jako zastępstwo czy dodatkowa ekspozycja), rozstrzygają zasady harmonogramu — aplikacja nie zgaduje.",
+  "pickerOffScheduleEarly": "Wykonanie jej teraz realizuje wcześniej jej następną zaplanowaną ekspozycję. Ekspozycja zachowuje swoje miejsce w planie; zapisany zostanie faktyczny czas treningu.",
+  "pickerOffScheduleMissed": "Wykonanie jej teraz nadrabia tę opuszczoną ekspozycję. Ekspozycja zachowuje swoje miejsce w planie; zapisany zostanie faktyczny czas treningu.",
   "pickerStart": "Rozpocznij: {workout}",
   "pickerFallbackLater": "Jednostki zastępcze pojawią się później",
 
@@ -358,6 +360,10 @@
   "errorSessionNotStartable": "Tej jednostki treningowej nie można rozpocząć w obecnym stanie.",
   "errorPrescriptionMissing": "Brak prawidłowych zaleceń dla tej jednostki treningowej.",
   "errorOffScheduleNotSupported": "Wykonywanie treningu poza harmonogramem nie jest jeszcze dostępne.",
+  "errorScheduleChanged": "Harmonogram zmienił się od otwarcia tej listy. Zamknij ją i wybierz ponownie.",
+  "errorOffScheduleNotApplicable": "To jest teraz dzisiejsza zaplanowana jednostka treningowa. Zamknij listę i rozpocznij ją z ekranu głównego.",
+  "errorNotNextTrackExposure": "Wcześniejsza sesja tej jednostki treningowej wciąż czeka na wykonanie. Zamknij listę i najpierw rozpocznij tamtą.",
+  "errorFallbackUnavailable": "Nie można przygotować celów z planu dla tej jednostki treningowej. Sprawdź jej plan na komputerze.",
   "errorSequenceGap": "Niektóre wcześniejsze zmiany nie dotarły jeszcze do serwera. Agonez uzgadnia kolejkę.",
   "errorSequenceMismatch": "Lokalna i serwerowa historia treningu są niespójne. Wysyłanie zatrzymano, aby chronić dane.",
   "errorSuperseded": "Ten trening był kontynuowany na innym urządzeniu.",

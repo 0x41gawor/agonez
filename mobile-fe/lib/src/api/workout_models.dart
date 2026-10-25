@@ -232,10 +232,12 @@ class OffSchedule {
   const OffSchedule({
     required this.acknowledged,
     required this.selectedFrom,
+    this.mode = OffScheduleMode.nextTrackExposure,
     this.expectedSessionId,
   });
 
   factory OffSchedule.fromJson(JsonMap json) => OffSchedule(
+    mode: decodeOffScheduleMode(requiredJson(json, 'mode')),
     acknowledged: asBool(requiredJson(json, 'acknowledged'), 'acknowledged'),
     selectedFrom: asString(
       requiredJson(json, 'selected_from'),
@@ -247,11 +249,15 @@ class OffSchedule {
     ),
   );
 
+  final OffScheduleMode mode;
   final bool acknowledged;
   final String selectedFrom;
+
+  /// Today's expected session when the choice was made; null on a rest day.
   final int? expectedSessionId;
 
   JsonMap toJson() => <String, Object?>{
+    'mode': mode.wireName,
     'acknowledged': acknowledged,
     'selected_from': selectedFrom,
     'expected_session_id': expectedSessionId,

@@ -451,6 +451,12 @@ abstract class AppLocalizations {
   /// **'Plan run'**
   String get runSheetTitle;
 
+  /// No description provided for @runChipMicrocycle.
+  ///
+  /// In en, this message translates to:
+  /// **'MC {current}/{total}'**
+  String runChipMicrocycle(int current, int total);
+
   /// No description provided for @runContext.
   ///
   /// In en, this message translates to:
@@ -559,11 +565,17 @@ abstract class AppLocalizations {
   /// **'{workout} isn\'t scheduled for today.'**
   String pickerNotScheduledToday(String workout);
 
-  /// No description provided for @pickerOffScheduleRules.
+  /// No description provided for @pickerOffScheduleEarly.
   ///
   /// In en, this message translates to:
-  /// **'Training it now changes the planned order of exposures. How the plan run records this (early, replacement or extra exposure) is decided by the scheduling rules — the app will not guess.'**
-  String get pickerOffScheduleRules;
+  /// **'Training it now does its next planned exposure early. The exposure keeps its place in the plan; the time you actually train is recorded.'**
+  String get pickerOffScheduleEarly;
+
+  /// No description provided for @pickerOffScheduleMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Training it now makes up this missed exposure. The exposure keeps its place in the plan; the time you actually train is recorded.'**
+  String get pickerOffScheduleMissed;
 
   /// No description provided for @pickerStart.
   ///
@@ -2152,6 +2164,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Off-schedule workout execution is not available yet.'**
   String get errorOffScheduleNotSupported;
+
+  /// No description provided for @errorScheduleChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The schedule changed since this list was opened. Close it and choose again.'**
+  String get errorScheduleChanged;
+
+  /// No description provided for @errorOffScheduleNotApplicable.
+  ///
+  /// In en, this message translates to:
+  /// **'This is now today\'s scheduled workout-unit. Close the list and start it from Home.'**
+  String get errorOffScheduleNotApplicable;
+
+  /// No description provided for @errorNotNextTrackExposure.
+  ///
+  /// In en, this message translates to:
+  /// **'An earlier session of this workout-unit is still pending. Close the list and start that one first.'**
+  String get errorNotNextTrackExposure;
+
+  /// No description provided for @errorFallbackUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan targets can\'t be prepared for this workout-unit. Check its plan on desktop.'**
+  String get errorFallbackUnavailable;
 
   /// No description provided for @errorSequenceGap.
   ///

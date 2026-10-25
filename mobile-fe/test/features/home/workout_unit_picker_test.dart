@@ -60,6 +60,7 @@ void main() {
 
     await _selectRowAbove(tester);
     expect(find.textContaining("Push A isn't scheduled for today."), findsOne);
+    expect(find.textContaining('makes up this missed exposure'), findsOne);
     expect(find.textContaining('MISSED'), findsOneWidget);
     // A plain tap is not enough for an off-schedule start.
     await tester.tap(find.byType(HoldToConfirm));
@@ -69,10 +70,7 @@ void main() {
     await _hold(tester);
 
     expect(started, [36]);
-    expect(
-      find.text('Off-schedule workout execution is not available yet.'),
-      findsOneWidget,
-    );
+    expect(find.text(_refusalMessage), findsOneWidget);
     expect(find.byType(WorkoutUnitPickerSheet), findsOneWidget);
   });
 
@@ -96,10 +94,7 @@ void main() {
 
     // A refusal takes the explanation's place.
     await _hold(tester);
-    expect(
-      find.text('Off-schedule workout execution is not available yet.'),
-      findsOneWidget,
-    );
+    expect(find.text(_refusalMessage), findsOneWidget);
     expect(wheel(), wheelAtToday);
     expect(sheet(), sheetAtToday);
 
@@ -188,12 +183,16 @@ Future<void> _hold(WidgetTester tester) async {
   await tester.pump();
 }
 
+const _refusalMessage =
+    'An earlier session of this workout-unit is still pending. Close the list '
+    'and start that one first.';
+
 AgonezApiException _offScheduleRefused() => AgonezApiException(
-  statusCode: 422,
+  statusCode: 409,
   error: const ApiErrorBody(
-    code: 'off_schedule_not_supported',
-    message: 'Off-schedule starts are not supported',
-    details: {},
+    code: 'not_next_track_exposure',
+    message: 'An earlier occurrence of this workout track is unresolved',
+    details: {'next_session_id': 30},
   ),
   responseData: null,
   cause: DioException(

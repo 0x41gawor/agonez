@@ -24,15 +24,20 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  Future<void> _selectRun() async {
+  /// The run just chosen in the sheet, named in the header while its
+  /// context loads.
+  PlanRunCompact? _switchingTo;
+
+  Future<void> _selectRun(int? currentRunId) async {
     final runtime = ref.read(appRuntimeProvider);
     if (await runtime.database.activeWorkout() != null || !mounted) return;
     final selected = await showModalBottomSheet<PlanRunCompact>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => const _PlanRunSheet(),
+      builder: (context) => _PlanRunSheet(selectedId: currentRunId),
     );
-    if (selected == null) return;
+    if (selected == null || selected.id == currentRunId || !mounted) return;
+    setState(() => _switchingTo = selected);
     await runtime.mobileRepository.selectPlanRun(selected.id);
     ref.invalidate(planRunsProvider);
     ref.invalidate(mobileContextProvider, asReload: true);
@@ -43,6 +48,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final active = ref.watch(activeWorkoutProvider);
     // A launch leaves Home as it was when the workout was started.
     final workout = ref.watch(workoutLaunchProvider) ? null : active.value;
+    final shown = ref
+        .watch(
+          mobileContextProvider(Localizations.localeOf(context).languageCode),
+        )
+        .value
+        ?.value;
+    final switchingTo = _switchingTo;
+    final switching =
+        switchingTo != null && shown?.planRun?.id != switchingTo.id;
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
@@ -52,7 +66,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: _Header(
-                  onPlanRunPressed: workout == null ? _selectRun : null,
+                  runName: switching ? switchingTo.name : shown?.planRun?.name,
+                  contextValue: switching ? null : shown,
+                  onPlanRunPressed: workout == null
+                      ? () => _selectRun(shown?.planRun?.id)
+                      : null,
                 ),
               ),
               SliverPadding(
@@ -76,33 +94,126 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.onPlanRunPressed});
+  const _Header({
+    required this.runName,
+    required this.contextValue,
+    required this.onPlanRunPressed,
+  });
 
+  final String? runName;
+
+  /// Where the run stands; null while it is unknown or loading.
+  final MobileContext? contextValue;
   final VoidCallback? onPlanRunPressed;
 
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
+      padding: const EdgeInsets.fromLTRB(20, 14, 16, 8),
       child: Row(
         children: [
           const AgonezEmblem(),
           const SizedBox(width: 10),
           Text(strings.appName, style: Theme.of(context).textTheme.titleLarge),
-          const Spacer(),
-          Semantics(
-            button: true,
-            label: strings.runSheetTitle,
-            child: IconButton(
-              onPressed: onPlanRunPressed,
-              tooltip: onPlanRunPressed == null
-                  ? strings.runLockedDuringWorkout
-                  : strings.runSheetTitle,
-              icon: const Icon(Icons.layers_outlined),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: _RunChip(
+                name: runName,
+                contextValue: contextValue,
+                onPressed: onPlanRunPressed,
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The selected plan run and its microcycle, opening the run sheet. During a
+/// workout the run cannot change, so the chip is locked.
+class _RunChip extends StatelessWidget {
+  const _RunChip({
+    required this.name,
+    required this.contextValue,
+    required this.onPressed,
+  });
+
+  final String? name;
+  final MobileContext? contextValue;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final colors = context.agonezColors;
+    final run = contextValue?.planRun;
+    final current =
+        contextValue?.today?.microcycle?.ordinal ??
+        run?.currentMicrocycleOrdinal;
+    final total = run?.microcycleCount;
+    final hasPosition = current != null && total != null && total > 0;
+    final locked = onPressed == null;
+    return Tooltip(
+      message: locked ? strings.runLockedDuringWorkout : strings.runSheetTitle,
+      child: Semantics(
+        button: true,
+        enabled: !locked,
+        label: [
+          strings.runSheetTitle,
+          ?name,
+          if (hasPosition) strings.homeMicrocycle(current, total),
+        ].join(', '),
+        excludeSemantics: true,
+        child: OutlinedButton(
+          key: const Key('home-plan-run'),
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 36),
+            padding: const EdgeInsets.fromLTRB(12, 0, 8, 0),
+            tapTargetSize: MaterialTapTargetSize.padded,
+            foregroundColor: colors.textSecondary,
+            side: BorderSide(color: colors.line),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  name ?? strings.runSheetTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 12,
+                    color: locked ? colors.textMuted : colors.textSecondary,
+                  ),
+                ),
+              ),
+              if (hasPosition) ...[
+                const SizedBox(width: 6),
+                Text(
+                  strings.runChipMicrocycle(current, total),
+                  style: AgonezTypography.monoSmall.copyWith(
+                    fontSize: 11,
+                    color: colors.textMuted,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 2),
+              Icon(
+                locked ? Icons.lock_outline_rounded : Icons.expand_more_rounded,
+                size: 18,
+                color: colors.textMuted,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -195,7 +306,10 @@ class _LocalActiveCard extends ConsumerWidget {
 }
 
 class _PlanRunSheet extends ConsumerWidget {
-  const _PlanRunSheet();
+  const _PlanRunSheet({required this.selectedId});
+
+  /// The run Home currently shows; picking it again just closes the sheet.
+  final int? selectedId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -226,16 +340,13 @@ class _PlanRunSheet extends ConsumerWidget {
                       shrinkWrap: true,
                       children: [
                         for (final run in runs)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(run.name),
-                            subtitle: Text('${run.startsOn} — ${run.endsOn}'),
-                            trailing: AgonezTag(
-                              label: run.status == 'active'
-                                  ? strings.runActive
-                                  : strings.runCompleted,
+                          _PlanRunRow(
+                            run: run,
+                            selected: run.id == selectedId,
+                            onTap: () => Navigator.pop(
+                              context,
+                              run.id == selectedId ? null : run,
                             ),
-                            onTap: () => Navigator.pop(context, run),
                           ),
                         const SizedBox(height: 8),
                         Text(
@@ -249,6 +360,55 @@ class _PlanRunSheet extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// One run in the sheet. The selected run is tinted gold and checked, as in
+/// the design, so the current choice is clear before changing it.
+class _PlanRunRow extends StatelessWidget {
+  const _PlanRunRow({
+    required this.run,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final PlanRunCompact run;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final colors = context.agonezColors;
+    return ListTile(
+      selected: selected,
+      selectedTileColor: colors.goldSoft,
+      selectedColor: colors.goldText,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      shape: const RoundedRectangleBorder(
+        borderRadius: AgonezRadii.controlBorder,
+      ),
+      title: Text(run.name),
+      subtitle: Text(
+        '${run.startsOn} — ${run.endsOn}',
+        style: TextStyle(color: colors.textMuted),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (selected) ...[
+            Icon(Icons.check_rounded, size: 20, color: colors.goldText),
+            const SizedBox(width: 8),
+          ],
+          AgonezTag(
+            label: run.status == 'active'
+                ? strings.runActive
+                : strings.runCompleted,
+          ),
+        ],
+      ),
+      onTap: onTap,
     );
   }
 }
