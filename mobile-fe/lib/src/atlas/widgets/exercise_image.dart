@@ -10,6 +10,58 @@ import '../../design/design.dart';
 /// are the exercise slugs, so the lookup works offline and needs no API field.
 String exerciseImageAsset(String slug) => 'assets/exercises/$slug.webp';
 
+/// Square, cover-cropped exercise photo for list rows, framed like the Atlas
+/// design's thumbnail. Exercises without a bundled photo keep the frame and
+/// show the generic exercise icon.
+class ExerciseThumbnail extends StatelessWidget {
+  const ExerciseThumbnail({required this.slug, this.size = 48, super.key});
+
+  final String slug;
+  final double size;
+
+  static const _radius = BorderRadius.all(Radius.circular(9));
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.agonezColors;
+    // Decoded into a box twice the frame, so after cover-cropping the photo's
+    // shorter side still has full resolution for crops up to 2:1, which spans
+    // every bundled photo. Full-size decodes would hold ~3 MB per row.
+    final decodeSize = (size * MediaQuery.devicePixelRatioOf(context) * 2)
+        .round();
+    return Container(
+      width: size,
+      height: size,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(color: colors.raised, borderRadius: _radius),
+      foregroundDecoration: BoxDecoration(
+        border: Border.all(color: colors.line),
+        borderRadius: _radius,
+      ),
+      child: Image(
+        image: ResizeImage(
+          AssetImage(exerciseImageAsset(slug)),
+          width: decodeSize,
+          height: decodeSize,
+          policy: ResizeImagePolicy.fit,
+        ),
+        fit: BoxFit.cover,
+        excludeFromSemantics: true,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) =>
+            AnimatedOpacity(
+              opacity: frame == null ? 0 : 1,
+              duration: wasSynchronouslyLoaded
+                  ? Duration.zero
+                  : AgonezDurations.standard,
+              child: child,
+            ),
+        errorBuilder: (_, _, _) =>
+            Icon(Icons.fitness_center, size: 20, color: colors.textMuted),
+      ),
+    );
+  }
+}
+
 /// Offline exercise photo in a fixed-height frame.
 ///
 /// Source photos mix portrait and landscape crops. The photo is contained so

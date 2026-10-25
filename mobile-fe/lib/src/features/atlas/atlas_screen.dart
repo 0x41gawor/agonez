@@ -9,6 +9,7 @@ import '../../api/atlas_models.dart';
 import '../../api/json_support.dart';
 import '../../api/prescription_models.dart';
 import '../../app/app_providers.dart';
+import '../../atlas/widgets/exercise_image.dart';
 import '../../design/design.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../storage/app_database.dart';
@@ -472,19 +473,7 @@ class _SearchResultRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: context.agonezColors.raised,
-                borderRadius: AgonezRadii.controlBorder,
-              ),
-              child: Icon(
-                Icons.fitness_center,
-                size: 20,
-                color: context.agonezColors.textMuted,
-              ),
-            ),
+            ExerciseThumbnail(slug: item.slug),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

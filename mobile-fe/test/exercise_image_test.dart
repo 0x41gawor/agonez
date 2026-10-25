@@ -55,6 +55,46 @@ void main() {
     expect(tester.getSize(find.byType(ExerciseImage)), Size.zero);
     expect(find.bySemanticsLabel('Missing'), findsNothing);
   });
+
+  testWidgets('thumbnails decode the photo at thumbnail size', (tester) async {
+    await tester.pumpWidget(
+      _host(const ExerciseThumbnail(slug: 'barbell_bench_press')),
+    );
+    await _settleThumbnail(tester);
+
+    expect(tester.getSize(find.byType(ExerciseThumbnail)), const Size(48, 48));
+    expect(find.byIcon(Icons.fitness_center), findsNothing);
+    final decoded = tester.widget<RawImage>(find.byType(RawImage)).image!;
+    // 1024 × 819 source, fitted into twice the 48 dp frame at 3× density.
+    expect([decoded.width, decoded.height], [288, 230]);
+  });
+
+  testWidgets('a thumbnail without a photo keeps its frame', (tester) async {
+    await tester.pumpWidget(
+      _host(const ExerciseThumbnail(slug: 'not_installed')),
+    );
+    await _settleThumbnail(tester);
+
+    expect(tester.getSize(find.byType(ExerciseThumbnail)), const Size(48, 48));
+    expect(find.byIcon(Icons.fitness_center), findsOneWidget);
+  });
+}
+
+Future<void> _settleThumbnail(WidgetTester tester) async {
+  final image = tester.widget<Image>(
+    find.descendant(
+      of: find.byType(ExerciseThumbnail),
+      matching: find.byType(Image),
+    ),
+  );
+  await tester.runAsync(
+    () => precacheImage(
+      image.image,
+      tester.element(find.byType(ExerciseThumbnail)),
+      onError: (_, _) {},
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 Widget _host(Widget child) => MaterialApp(
