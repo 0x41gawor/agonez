@@ -15,6 +15,7 @@ import '../../errors/user_error_mapper.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/hold_to_confirm.dart';
 import 'exercise_summary.dart';
+import 'microcycle_strip.dart';
 import 'workout_unit_picker.dart';
 
 /// What can be trained today: the active or expected session with its start
@@ -274,7 +275,7 @@ class _ContextBody extends StatelessWidget {
         if (showRunOverview) ...[
           if (value.microcycleDays.isNotEmpty) ...[
             const SizedBox(height: 24),
-            _MicrocycleStrip(contextValue: value),
+            MicrocycleStrip(contextValue: value),
           ],
           if (value.recent.isNotEmpty) ...[
             const SizedBox(height: 24),
@@ -619,71 +620,6 @@ class _ExerciseListState extends ConsumerState<_ExerciseList> {
                 ),
         );
       },
-    );
-  }
-}
-
-class _MicrocycleStrip extends StatelessWidget {
-  const _MicrocycleStrip({required this.contextValue});
-
-  final MobileContext contextValue;
-
-  @override
-  Widget build(BuildContext context) {
-    final strings = AppLocalizations.of(context);
-    final current =
-        contextValue.today?.microcycle?.ordinal ??
-        contextValue.planRun?.currentMicrocycleOrdinal ??
-        0;
-    final total = contextValue.planRun?.microcycleCount ?? 0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AgonezEyebrow(strings.homeMicrocycle(current, total)),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 72,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: contextValue.microcycleDays.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 7),
-            itemBuilder: (context, index) {
-              final day = contextValue.microcycleDays[index];
-              final today = day.date == contextValue.today?.date;
-              return Container(
-                width: 62,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: today
-                      ? context.agonezColors.goldSoft
-                      : context.agonezColors.panel,
-                  border: Border.all(
-                    color: today
-                        ? context.agonezColors.gold
-                        : context.agonezColors.line,
-                  ),
-                  borderRadius: AgonezRadii.buttonBorder,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${day.dayOrdinal}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Text(
-                      day.workoutUnitName ?? '—',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }

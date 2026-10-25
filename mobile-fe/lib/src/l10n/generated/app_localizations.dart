@@ -271,6 +271,48 @@ abstract class AppLocalizations {
   /// **'Microcycle {current} / {total}'**
   String homeMicrocycle(int current, int total);
 
+  /// No description provided for @homeDayRest.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest'**
+  String get homeDayRest;
+
+  /// No description provided for @homeDayToday.
+  ///
+  /// In en, this message translates to:
+  /// **'today'**
+  String get homeDayToday;
+
+  /// No description provided for @homeDayPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'planned'**
+  String get homeDayPlanned;
+
+  /// No description provided for @homeDayInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'in progress'**
+  String get homeDayInProgress;
+
+  /// No description provided for @homeDayCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'done'**
+  String get homeDayCompleted;
+
+  /// No description provided for @homeDayMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'missed'**
+  String get homeDayMissed;
+
+  /// No description provided for @homeDayCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'cancelled'**
+  String get homeDayCancelled;
+
   /// No description provided for @homeRecent.
   ///
   /// In en, this message translates to:

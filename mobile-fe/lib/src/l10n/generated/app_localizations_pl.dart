@@ -103,6 +103,27 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get homeDayRest => 'Wolne';
+
+  @override
+  String get homeDayToday => 'dziś';
+
+  @override
+  String get homeDayPlanned => 'zaplanowany';
+
+  @override
+  String get homeDayInProgress => 'w trakcie';
+
+  @override
+  String get homeDayCompleted => 'wykonany';
+
+  @override
+  String get homeDayMissed => 'pominięty';
+
+  @override
+  String get homeDayCancelled => 'odwołany';
+
+  @override
   String get homeRecent => 'Ostatnie';
 
   @override
