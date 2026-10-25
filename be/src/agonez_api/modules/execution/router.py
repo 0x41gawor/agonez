@@ -118,6 +118,20 @@ async def update_plan_run(
     return await service.update_plan_run(plan_run_id, payload)
 
 
+@router.delete(
+    "/plan-runs/{plan_run_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=ERROR_RESPONSES,
+)
+async def delete_plan_run(
+    plan_run_id: Identifier,
+    service: Annotated[ExecutionService, Depends(get_execution_service)],
+    force: Annotated[bool, Query()] = False,
+) -> Response:
+    await service.delete_plan_run(plan_run_id, force=force)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get(
     "/plan-runs/{plan_run_id}/analysis/queue",
     response_model=AnalysisQueue,

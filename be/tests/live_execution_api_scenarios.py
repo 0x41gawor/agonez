@@ -9,6 +9,7 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import date, timedelta
 from typing import Any
 
 BASE_URL = os.getenv("EXEC_API_BASE_URL", "http://127.0.0.1:8000")
@@ -117,6 +118,25 @@ def main() -> None:
         f"{base}/load-series?{urllib.parse.urlencode({'metric': 'top_set_load'})}",
         200,
     )
+    created = expect(
+        "POST",
+        "/api/v1/exec/plan-runs",
+        201,
+        {
+            "plan_revision_id": overview["run"]["initial_revision"]["plan_revision_id"],
+            "name": "Live delete scenario run",
+            "starts_on": str(date.fromisoformat(runs["as_of"]) + timedelta(days=400)),
+            "microcycle_count": 2,
+        },
+    )
+    throwaway_id = created["run"]["plan_run_id"]
+    expect("DELETE", f"/api/v1/exec/plan-runs/{throwaway_id}", 204)
+    missing = expect("DELETE", f"/api/v1/exec/plan-runs/{throwaway_id}", 404)
+    assert missing["error"]["code"] == "plan_run_not_found"
+    remaining = expect("GET", "/api/v1/exec/plan-runs", 200)
+    assert all(item["plan_run_id"] != throwaway_id for item in remaining["items"])
+    assert any(item["plan_run_id"] == run_id for item in remaining["items"])
+
     print("Execution desktop API acceptance scenario passed")
 
 

@@ -113,7 +113,8 @@ and automated progression remain `null`/unimplemented.
   above.
 - Obvious resource-not-found and malformed-filter failures add stable codes such as
   `plan_run_not_found`, `workout_trace_not_found`, `microcycle_not_found`, `event_not_found`,
-  `invalid_limit`, and `request_validation`; documented contract codes remain unchanged.
+  `invalid_limit`, `plan_run_session_in_progress`, and `request_validation`; documented contract
+  codes remain unchanged.
 - Plan revision transition authoring, mobile start/finalize, fallback authoring, identity,
   MARKER.X, and automated progression remain outside this release.
 
@@ -126,6 +127,7 @@ and automated progression remain `null`/unimplemented.
 | `POST /plan-runs` | implemented; optional seed-load field omitted |
 | `GET /plan-runs/{id}/overview` | implemented |
 | `PATCH /plan-runs/{id}` | implemented |
+| `DELETE /plan-runs/{id}` | implemented; refuses a run with an in-progress workout unless `force=true` |
 | `GET /plan-runs/{id}/analysis/queue` | implemented |
 | `GET /plan-runs/{id}/exercise-traces/{trace}` | implemented |
 | `GET /plan-runs/{id}/exercise-traces/{trace}/next` | implemented |

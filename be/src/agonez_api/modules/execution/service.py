@@ -210,6 +210,9 @@ class ExecutionService:
         await self._repository.update_plan_run(plan_run_id, payload)
         return await self.get_overview(plan_run_id)
 
+    async def delete_plan_run(self, plan_run_id: int, *, force: bool) -> None:
+        await self._repository.delete_plan_run(plan_run_id, force=force)
+
     async def get_analysis_queue(
         self,
         plan_run_id: int,

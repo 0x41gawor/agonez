@@ -762,6 +762,48 @@ class ExecutionRepository:
                     (payload.name.strip() if payload.name else None, requested, plan_run_id),
                 )
 
+    async def delete_plan_run(self, plan_run_id: int, *, force: bool) -> None:
+        async with self._pool.connection() as connection:
+            async with connection.transaction():
+                current = await self._fetch_optional(
+                    connection,
+                    "SELECT id FROM exec.plan_runs WHERE id = %s FOR UPDATE",
+                    (plan_run_id,),
+                )
+                if current is None:
+                    raise not_found("plan_run_not_found", "Plan run was not found")
+                if not force:
+                    started = await self._fetch_optional(
+                        connection,
+                        """
+                        SELECT id, scheduled_date FROM exec.workout_sessions
+                        WHERE plan_run_id = %s AND status = 'in_progress'
+                        """,
+                        (plan_run_id,),
+                    )
+                    if started is not None:
+                        raise conflict(
+                            "plan_run_session_in_progress",
+                            "A workout of this plan run is still in progress",
+                            {
+                                "session_id": started["id"],
+                                "scheduled_date": str(started["scheduled_date"]),
+                            },
+                        )
+                # Sessions reference workout unit tracks with ON DELETE RESTRICT, and
+                # both hang off the run; removing them first keeps the cascade from
+                # depending on the order the database fires its foreign keys.
+                await self._execute(
+                    connection,
+                    "DELETE FROM exec.workout_sessions WHERE plan_run_id = %s",
+                    (plan_run_id,),
+                )
+                await self._execute(
+                    connection,
+                    "DELETE FROM exec.plan_runs WHERE id = %s",
+                    (plan_run_id,),
+                )
+
     async def save_exercise_prescription(
         self,
         *,

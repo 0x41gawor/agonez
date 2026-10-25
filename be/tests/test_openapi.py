@@ -40,7 +40,7 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     execution_methods = {
         "/api/v1/exec/plan-runs": {"get", "post"},
         "/api/v1/exec/plan-runs/preview": {"get"},
-        "/api/v1/exec/plan-runs/{plan_run_id}": {"patch"},
+        "/api/v1/exec/plan-runs/{plan_run_id}": {"patch", "delete"},
         "/api/v1/exec/plan-runs/{plan_run_id}/overview": {"get"},
         "/api/v1/exec/plan-runs/{plan_run_id}/analysis/queue": {"get"},
         "/api/v1/exec/plan-runs/{plan_run_id}/exercise-traces/{exercise_trace_id}": {

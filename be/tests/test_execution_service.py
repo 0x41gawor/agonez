@@ -173,3 +173,19 @@ def test_user_event_validation(
         ExecutionRepository._validate_user_event(event_type, exercise_id, metadata)
 
     assert caught.value.code == code
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("force", [False, True])
+async def test_delete_plan_run_forwards_the_in_progress_override(force: bool) -> None:
+    calls: list[tuple[int, bool]] = []
+
+    class Recorder:
+        async def delete_plan_run(self, plan_run_id: int, *, force: bool) -> None:
+            calls.append((plan_run_id, force))
+
+    service = ExecutionService(cast(Any, Recorder()))
+
+    await service.delete_plan_run(7, force=force)
+
+    assert calls == [(7, force)]

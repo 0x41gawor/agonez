@@ -953,6 +953,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      tags:
+      - Execution
+      summary: Delete Plan Run
+      operationId: delete_plan_run_api_v1_exec_plan_runs__plan_run_id__delete
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: force
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Force
+      responses:
+        '204':
+          description: Successful Response
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/v1/exec/plan-runs/{plan_run_id}/analysis/queue:
     get:
       tags:
