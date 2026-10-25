@@ -32,6 +32,16 @@ DB_TO_SVG = {
 }
 
 
+def next_pending_session_ids(sessions: list[Row]) -> set[int]:
+    """Return only the earliest unresolved occurrence of each stable workout track."""
+    pending = [item for item in sessions if item["status"] in {"scheduled", "missed"}]
+    pending.sort(key=lambda item: (item["microcycle_ordinal"], item["session_id"]))
+    by_track: dict[int, int] = {}
+    for item in pending:
+        by_track.setdefault(item["workout_track_id"], item["session_id"])
+    return set(by_track.values())
+
+
 class MobileExecutionService:
     """Mobile-oriented aggregation over the existing Execution and Atlas facts."""
 
@@ -74,6 +84,7 @@ class MobileExecutionService:
             ),
             None,
         )
+        selectable_ids = next_pending_session_ids(sessions)
         alternatives = [
             self._session_summary(
                 item,
@@ -84,7 +95,7 @@ class MobileExecutionService:
                 ),
             )
             for item in sessions
-            if item is not expected_row and item["status"] in {"scheduled", "missed"}
+            if item is not expected_row and item["session_id"] in selectable_ids
         ]
         days: list[dict[str, Any]] = []
         today: dict[str, Any] | None = None
@@ -422,6 +433,7 @@ class MobileExecutionService:
             status=("completed" if workout["performance_status"] == "finalized" else "in_progress"),
             started_at=workout["started_at"],
             finished_at=workout["completed_at"],
+            start_context=self._start_context(workout),
             lease=self._lease(workout, device_id),
             applied_seq=workout["applied_seq"],
             revision=workout["revision"],
@@ -481,12 +493,23 @@ class MobileExecutionService:
             session_id=workout["session_id"],
             workout_unit_name=workout["workout_unit_name"],
             started_at=workout["started_at"],
+            start_context=self._start_context(workout),
             lease=self._lease(workout, device_id),
             applied_seq=workout["applied_seq"],
             revision=workout["revision"],
             position_hint=self._position_hint(workout),
             counts=data["counts"],
         )
+
+    @staticmethod
+    def _start_context(workout: Row) -> dict[str, Any]:
+        return {
+            "scheduled_on": workout["scheduled_date"],
+            "microcycle_ordinal": workout["microcycle_ordinal"],
+            "mode": workout["start_mode"],
+            "selected_from": workout["off_schedule_selected_from"],
+            "expected_session_id": workout["off_schedule_expected_session_id"],
+        }
 
     @staticmethod
     def _lease(workout: Row, device_id: UUID) -> dict[str, Any]:
@@ -530,6 +553,7 @@ class MobileExecutionService:
             "session_id": row["session_id"],
             "workout_unit_name": row["workout_unit_name"],
             "workout_track_id": row["workout_track_id"],
+            "microcycle_ordinal": row["microcycle_ordinal"],
             "scheduled_on": row["scheduled_date"],
             "status": row["status"],
             "relation": relation,

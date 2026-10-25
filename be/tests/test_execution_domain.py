@@ -21,6 +21,7 @@ def session(
 ) -> dict[str, Any]:
     return {
         "id": identifier,
+        "microcycle_ordinal": identifier,
         "scheduled_date": scheduled_date,
         "status": status,
         "workout_unit_track_id": track_id,
@@ -108,17 +109,45 @@ def test_in_progress_intervening_exposure_blocks() -> None:
     assert result.blocking_session is not None and result.blocking_session["id"] == 2
 
 
-@pytest.mark.parametrize("status", ["missed", "cancelled"])
-def test_missed_and_cancelled_intervening_exposures_do_not_block(status: str) -> None:
+def test_missed_exposure_remains_the_next_resolvable_target() -> None:
     result = resolve(
         [
-            session(2, date(2026, 10, 7), status),
+            session(2, date(2026, 10, 7), "missed"),
             session(3, date(2026, 10, 13), "scheduled"),
         ],
         performances=[performance(1, date(2026, 10, 6))],
     )
 
     assert result.state.value == "editable"
+    assert result.target is not None and result.target["id"] == 2
+
+
+def test_cancelled_exposure_is_resolved_and_does_not_block() -> None:
+    result = resolve(
+        [
+            session(2, date(2026, 10, 7), "cancelled"),
+            session(3, date(2026, 10, 13), "scheduled"),
+        ],
+        performances=[performance(1, date(2026, 10, 6))],
+    )
+
+    assert result.state.value == "editable"
+    assert result.target is not None and result.target["id"] == 3
+
+
+def test_exposure_order_uses_microcycle_not_actual_completion_time() -> None:
+    first = performance(1, date(2026, 10, 6))
+    second = performance(2, date(2026, 10, 13))
+    first["workout_completed_at"] = datetime(2026, 10, 20, 18, tzinfo=timezone.utc)
+    second["workout_completed_at"] = datetime(2026, 10, 14, 18, tzinfo=timezone.utc)
+
+    result = resolve(
+        [session(3, date(2026, 10, 20), "scheduled")],
+        performances=[second, first],
+    )
+
+    assert result.basis_performance is not None
+    assert result.basis_performance["id"] == 2
     assert result.target is not None and result.target["id"] == 3
 
 

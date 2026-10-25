@@ -13,9 +13,14 @@ from agonez_api.modules.execution.service import ExecutionService
 from agonez_api.modules.mobile_execution.repository import (
     MobileExecutionRepository,
     _OperationRejected,
+    resolve_start_mode,
 )
 from agonez_api.modules.mobile_execution.schemas import OperationBatch, StartWorkout
-from agonez_api.modules.mobile_execution.service import MobileExecutionService, etag_for
+from agonez_api.modules.mobile_execution.service import (
+    MobileExecutionService,
+    etag_for,
+    next_pending_session_ids,
+)
 
 
 def operation(seq: int, op_id: str) -> dict[str, object]:
@@ -26,6 +31,158 @@ def operation(seq: int, op_id: str) -> dict[str, object]:
         "type": "set_workout_comment",
         "data": {"comment": "offline"},
     }
+
+
+def start_payload(
+    *,
+    session_id: int = 9,
+    off_schedule: dict[str, object] | None = None,
+) -> StartWorkout:
+    return StartWorkout.model_validate(
+        {
+            "workout_id": "10000000-0000-4000-8000-000000000001",
+            "session_id": session_id,
+            "prescription_version": "rx-9-current",
+            "started_at": "2026-10-10T17:00:00+02:00",
+            "off_schedule": off_schedule,
+        }
+    )
+
+
+def test_on_schedule_start_uses_on_schedule_mode() -> None:
+    payload = start_payload()
+
+    assert (
+        resolve_start_mode(
+            payload,
+            session_status="scheduled",
+            expected_session_id=9,
+            next_track_session_id=9,
+        )
+        == "on_schedule"
+    )
+
+
+def test_off_schedule_start_requires_explicit_acknowledgement() -> None:
+    with pytest.raises(ExecutionAPIError) as caught:
+        resolve_start_mode(
+            start_payload(),
+            session_status="scheduled",
+            expected_session_id=8,
+            next_track_session_id=9,
+        )
+
+    assert caught.value.code == "off_schedule_acknowledgement_required"
+
+
+def test_missed_next_track_exposure_can_start_off_schedule() -> None:
+    payload = start_payload(
+        off_schedule={
+            "mode": "next_track_exposure",
+            "acknowledged": True,
+            "selected_from": "picker",
+            "expected_session_id": 8,
+        }
+    )
+
+    assert (
+        resolve_start_mode(
+            payload,
+            session_status="missed",
+            expected_session_id=8,
+            next_track_session_id=9,
+        )
+        == "next_track_exposure"
+    )
+
+
+def test_later_occurrence_cannot_skip_an_unresolved_track_exposure() -> None:
+    payload = start_payload(
+        off_schedule={
+            "mode": "next_track_exposure",
+            "acknowledged": True,
+            "selected_from": "picker",
+            "expected_session_id": 8,
+        }
+    )
+
+    with pytest.raises(ExecutionAPIError) as caught:
+        resolve_start_mode(
+            payload,
+            session_status="scheduled",
+            expected_session_id=8,
+            next_track_session_id=7,
+        )
+
+    assert caught.value.code == "not_next_track_exposure"
+    assert caught.value.details["next_session_id"] == 7
+
+
+def test_off_schedule_acknowledgement_detects_expected_session_change() -> None:
+    payload = start_payload(
+        off_schedule={
+            "mode": "next_track_exposure",
+            "acknowledged": True,
+            "selected_from": "picker",
+            "expected_session_id": 8,
+        }
+    )
+
+    with pytest.raises(ExecutionAPIError) as caught:
+        resolve_start_mode(
+            payload,
+            session_status="scheduled",
+            expected_session_id=6,
+            next_track_session_id=9,
+        )
+
+    assert caught.value.code == "schedule_changed"
+    assert caught.value.details["expected_session_id"] == 6
+
+
+@pytest.mark.parametrize(
+    "off_schedule",
+    [
+        {"acknowledged": True, "selected_from": "picker"},
+        {
+            "mode": "next_track_exposure",
+            "acknowledged": False,
+            "selected_from": "picker",
+        },
+    ],
+)
+def test_off_schedule_contract_requires_mode_and_true_acknowledgement(
+    off_schedule: dict[str, object],
+) -> None:
+    with pytest.raises(ValidationError):
+        start_payload(off_schedule=off_schedule)
+
+
+def test_context_offers_only_the_next_unresolved_occurrence_per_track() -> None:
+    sessions = [
+        {"session_id": 31, "workout_track_id": 1, "microcycle_ordinal": 7, "status": "missed"},
+        {
+            "session_id": 36,
+            "workout_track_id": 1,
+            "microcycle_ordinal": 8,
+            "status": "scheduled",
+        },
+        {"session_id": 32, "workout_track_id": 2, "microcycle_ordinal": 7, "status": "missed"},
+        {
+            "session_id": 27,
+            "workout_track_id": 3,
+            "microcycle_ordinal": 6,
+            "status": "completed",
+        },
+        {
+            "session_id": 38,
+            "workout_track_id": 3,
+            "microcycle_ordinal": 8,
+            "status": "scheduled",
+        },
+    ]
+
+    assert next_pending_session_ids(sessions) == {31, 32, 38}
 
 
 def test_operation_batch_requires_contiguous_sequence() -> None:
@@ -251,9 +408,10 @@ async def test_fallback_materialization_preserves_analysis_and_fills_missing_slo
                 "workout_unit_track_id": 4,
                 "source_plan_workout_unit_id": 40,
                 "scheduled_date": datetime(2026, 10, 10, tzinfo=timezone.utc).date(),
-                "session_status": "scheduled",
-                "plan_revision_id": 2,
-                "source_revision_id": 2,
+                    "session_status": "scheduled",
+                    "plan_revision_id": 2,
+                    "microcycle_ordinal": 4,
+                    "source_revision_id": 2,
                 "name": "Push A",
                 "description": None,
                 "warmup_notes": None,

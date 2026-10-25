@@ -32,6 +32,59 @@ from agonez_api.modules.mobile_execution.schemas import (
 Row = dict[str, Any]
 
 
+def resolve_start_mode(
+    payload: StartWorkout,
+    *,
+    session_status: str,
+    expected_session_id: int | None,
+    next_track_session_id: int | None,
+) -> str:
+    """Validate the selected occurrence and return its persisted start mode."""
+    if session_status not in {"scheduled", "missed"}:
+        raise conflict(
+            "session_not_startable",
+            "The workout session cannot be started",
+            {"status": session_status},
+        )
+    if next_track_session_id != payload.session_id:
+        raise conflict(
+            "not_next_track_exposure",
+            "The selected session is not the next unresolved exposure of this workout type",
+            {
+                "selected_session_id": payload.session_id,
+                "next_session_id": next_track_session_id,
+            },
+        )
+
+    is_off_schedule = expected_session_id != payload.session_id or session_status == "missed"
+    if not is_off_schedule:
+        if payload.off_schedule is not None:
+            raise invalid(
+                "off_schedule_not_applicable",
+                "The selected session is already the expected scheduled workout",
+                {"expected_session_id": expected_session_id},
+            )
+        return "on_schedule"
+
+    acknowledgement = payload.off_schedule
+    if acknowledgement is None:
+        raise invalid(
+            "off_schedule_acknowledgement_required",
+            "Starting the next workout-type exposure off schedule requires acknowledgement",
+            {
+                "expected_session_id": expected_session_id,
+                "next_session_id": next_track_session_id,
+            },
+        )
+    if acknowledgement.expected_session_id != expected_session_id:
+        raise conflict(
+            "schedule_changed",
+            "The expected scheduled workout changed before start",
+            {"expected_session_id": expected_session_id},
+        )
+    return acknowledgement.mode
+
+
 class MobileExecutionRepository:
     """PostgreSQL persistence boundary for mobile reads and ordered writes."""
 
@@ -118,14 +171,14 @@ class MobileExecutionRepository:
                 """,
                 (plan_run_id, as_of),
             )
-            sessions: list[Row] = []
-            if microcycle is not None:
-                sessions = await self._fetch_all(
-                    connection,
-                    """
+            current_microcycle_id = microcycle["id"] if microcycle is not None else None
+            sessions = await self._fetch_all(
+                connection,
+                """
                     SELECT session.id AS session_id, session.scheduled_date,
                            session.status::text AS status,
                            session.workout_unit_track_id AS workout_track_id,
+                           session_mc.ordinal AS microcycle_ordinal,
                            track.name AS workout_unit_name,
                            prescription.id AS prescription_id,
                            prescription.updated_at,
@@ -140,6 +193,7 @@ class MobileExecutionRepository:
                            count(sets.id) FILTER (WHERE sets.prescribed_load_kg IS NULL)::integer
                                AS missing_load_count
                     FROM exec.workout_sessions AS session
+                    JOIN exec.microcycles AS session_mc ON session_mc.id = session.microcycle_id
                     JOIN exec.workout_unit_tracks AS track
                       ON track.id = session.workout_unit_track_id
                     LEFT JOIN exec.workout_unit_prescriptions AS prescription
@@ -148,18 +202,24 @@ class MobileExecutionRepository:
                       ON exercise.workout_unit_prescription_id = prescription.id
                     LEFT JOIN exec.set_prescriptions AS sets
                       ON sets.exercise_unit_prescription_id = exercise.id
-                    WHERE session.microcycle_id = %s
-                    GROUP BY session.id, track.name, prescription.id, prescription.updated_at
-                    ORDER BY session.scheduled_date, session.id
-                    """,
-                    (microcycle["id"],),
+                    WHERE (%s::integer IS NOT NULL AND session.microcycle_id = %s)
+                       OR (
+                           session.plan_run_id = %s
+                           AND session.status = 'missed'
+                           AND session.scheduled_date < %s
+                       )
+                    GROUP BY session.id, session_mc.ordinal, track.name,
+                             prescription.id, prescription.updated_at
+                    ORDER BY session_mc.ordinal, session.scheduled_date, session.id
+                """,
+                (current_microcycle_id, current_microcycle_id, plan_run_id, as_of),
+            )
+            for session in sessions:
+                session["prescription_version"] = (
+                    await self._prescription_version(connection, session["session_id"])
+                    if session["prescription_id"] is not None
+                    else None
                 )
-                for session in sessions:
-                    session["prescription_version"] = (
-                        await self._prescription_version(connection, session["session_id"])
-                        if session["prescription_id"] is not None
-                        else None
-                    )
             recent = await self._fetch_all(
                 connection,
                 """
@@ -391,7 +451,7 @@ class MobileExecutionRepository:
             SELECT session.id, session.plan_run_id, session.microcycle_id,
                    session.workout_unit_track_id, session.source_plan_workout_unit_id,
                    session.scheduled_date, session.status::text AS session_status,
-                   mc.plan_revision_id,
+                   mc.plan_revision_id, mc.ordinal AS microcycle_ordinal,
                    source_day.revision_id AS source_revision_id,
                    source_workout.name, source_workout.description,
                    source_workout.warmup_notes, source_workout.stretch_notes
@@ -408,10 +468,10 @@ class MobileExecutionRepository:
         )
         if session is None:
             raise not_found("session_not_found", "Workout session was not found")
-        if session["session_status"] != "scheduled":
+        if session["session_status"] not in {"scheduled", "missed"}:
             raise conflict(
                 "session_not_startable",
-                "Fallback prescription can only be prepared for a scheduled session",
+                "Fallback prescription can only be prepared for a pending session",
                 {"status": session["session_status"]},
             )
         if session["source_revision_id"] != session["plan_revision_id"]:
@@ -487,6 +547,7 @@ class MobileExecutionRepository:
                   ON prior_prescription.id = workout_performance.workout_unit_prescription_id
                 JOIN exec.workout_sessions AS prior_session
                   ON prior_session.id = prior_prescription.workout_session_id
+                JOIN exec.microcycles AS prior_mc ON prior_mc.id = prior_session.microcycle_id
                 WHERE exercise_performance.exercise_unit_track_id = track.id
                   AND workout_performance.status = 'finalized'
                   AND exercise_performance.actual_exercise_id IS NOT NULL
@@ -498,9 +559,8 @@ class MobileExecutionRepository:
                         AND performed_set.load_kg IS NOT NULL
                   )
                   AND prior_session.plan_run_id = %s
-                  AND (prior_session.scheduled_date, prior_session.id)
-                      < (%s::date, %s::integer)
-                ORDER BY prior_session.scheduled_date DESC,
+                  AND prior_mc.ordinal < %s
+                ORDER BY prior_mc.ordinal DESC,
                          workout_performance.completed_at DESC,
                          exercise_performance.id DESC
                 LIMIT 1
@@ -512,8 +572,7 @@ class MobileExecutionRepository:
                 session["plan_run_id"],
                 session["workout_unit_track_id"],
                 session["plan_run_id"],
-                session["scheduled_date"],
-                session_id,
+                session["microcycle_ordinal"],
                 session["source_plan_workout_unit_id"],
             ),
         )
@@ -815,12 +874,17 @@ class MobileExecutionRepository:
             SELECT performance.*, performance.status::text AS performance_status,
                    session.id AS session_id, session.status::text AS session_status,
                    session.plan_run_id, session.completion_mode::text AS completion_mode,
+                   session.scheduled_date, session.start_mode::text AS start_mode,
+                   session.off_schedule_selected_from,
+                   session.off_schedule_expected_session_id,
+                   mc.ordinal AS microcycle_ordinal,
                    track.name AS workout_unit_name
             FROM exec.workout_unit_performances AS performance
             JOIN exec.workout_unit_prescriptions AS prescription
               ON prescription.id = performance.workout_unit_prescription_id
             JOIN exec.workout_sessions AS session
               ON session.id = prescription.workout_session_id
+            JOIN exec.microcycles AS mc ON mc.id = session.microcycle_id
             JOIN exec.workout_unit_tracks AS track
               ON track.id = session.workout_unit_track_id
             WHERE performance.client_uuid = %s
@@ -1037,6 +1101,22 @@ class MobileExecutionRepository:
                 if existing is not None:
                     return cast(UUID, existing["client_uuid"]), False
 
+                session_scope = await self._fetch_optional(
+                    connection,
+                    """
+                    SELECT plan_run_id
+                    FROM exec.workout_sessions
+                    WHERE id = %s
+                    """,
+                    (payload.session_id,),
+                )
+                if session_scope is None:
+                    raise not_found("session_not_found", "Workout session was not found")
+                await self._execute(
+                    connection,
+                    "SELECT pg_advisory_xact_lock(674202114, %s)",
+                    (session_scope["plan_run_id"],),
+                )
                 session = await self._fetch_optional(
                     connection,
                     """
@@ -1045,18 +1125,13 @@ class MobileExecutionRepository:
                     FROM exec.workout_sessions AS session
                     LEFT JOIN exec.workout_unit_prescriptions AS workout
                       ON workout.workout_session_id = session.id
-                    WHERE session.id = %s
+                    WHERE session.id = %s AND session.plan_run_id = %s
                     FOR UPDATE OF session
                     """,
-                    (payload.session_id,),
+                    (payload.session_id, session_scope["plan_run_id"]),
                 )
                 if session is None:
                     raise not_found("session_not_found", "Workout session was not found")
-                await self._execute(
-                    connection,
-                    "SELECT pg_advisory_xact_lock(674202114, %s)",
-                    (session["plan_run_id"],),
-                )
 
                 active = await self._fetch_optional(
                     connection,
@@ -1079,36 +1154,43 @@ class MobileExecutionRepository:
                         "A workout is already active in this plan run",
                         {"workout_id": str(active["workout_id"])},
                     )
-                if session["session_status"] != "scheduled":
-                    raise conflict(
-                        "session_not_startable",
-                        "The workout session cannot be started",
-                        {"status": session["session_status"]},
-                    )
-
                 expected = await self._fetch_optional(
                     connection,
                     """
                     SELECT id
                     FROM exec.workout_sessions
-                    WHERE microcycle_id = %s AND scheduled_date = %s
+                    WHERE plan_run_id = %s AND scheduled_date = %s
                       AND status = 'scheduled'
                     ORDER BY id
                     LIMIT 1
+                    FOR UPDATE
                     """,
-                    (session["microcycle_id"], payload.started_at.date()),
+                    (session["plan_run_id"], payload.started_at.date()),
                 )
-                if expected is None or expected["id"] != payload.session_id:
-                    raise invalid(
-                        "off_schedule_not_supported",
-                        "Off-schedule workout execution is not supported",
-                        {"expected_session_id": expected["id"] if expected else None},
-                    )
-                if payload.off_schedule is not None:
-                    raise invalid(
-                        "off_schedule_not_supported",
-                        "Off-schedule workout execution is not supported",
-                    )
+                next_track = await self._fetch_optional(
+                    connection,
+                    """
+                    SELECT candidate.id
+                    FROM exec.workout_sessions AS candidate
+                    JOIN exec.microcycles AS candidate_mc
+                      ON candidate_mc.id = candidate.microcycle_id
+                    WHERE candidate.plan_run_id = %s
+                      AND candidate.workout_unit_track_id = %s
+                      AND candidate.status IN ('scheduled', 'missed')
+                    ORDER BY candidate_mc.ordinal, candidate.id
+                    LIMIT 1
+                    FOR UPDATE OF candidate
+                    """,
+                    (session["plan_run_id"], session["workout_unit_track_id"]),
+                )
+                expected_session_id = cast(int, expected["id"]) if expected else None
+                next_track_session_id = cast(int, next_track["id"]) if next_track else None
+                start_mode = resolve_start_mode(
+                    payload,
+                    session_status=cast(str, session["session_status"]),
+                    expected_session_id=expected_session_id,
+                    next_track_session_id=next_track_session_id,
+                )
                 if session["prescription_id"] is None:
                     raise invalid("prescription_missing", "The workout prescription is not ready")
                 current_version = await self._prescription_version(connection, payload.session_id)
@@ -1185,10 +1267,22 @@ class MobileExecutionRepository:
                     """
                     UPDATE exec.workout_sessions
                     SET status = 'in_progress', started_at = %s,
+                        start_mode = %s, off_schedule_selected_from = %s,
+                        off_schedule_expected_session_id = %s,
                         updated_at = clock_timestamp()
                     WHERE id = %s
                     """,
-                    (payload.started_at, payload.session_id),
+                    (
+                        payload.started_at,
+                        start_mode,
+                        payload.off_schedule.selected_from if payload.off_schedule else None,
+                        (
+                            payload.off_schedule.expected_session_id
+                            if payload.off_schedule
+                            else None
+                        ),
+                        payload.session_id,
+                    ),
                 )
                 performance = await self._fetch_one(
                     connection,

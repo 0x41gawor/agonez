@@ -1,10 +1,9 @@
 openapi: 3.1.0
 info:
   title: Agonez Atlas API
-  description: REST API for the Agonez exercise and muscle Atlas and the relational
-    PlanCreator draft editor and the desktop Execution workflow API. It also provides
-    the offline-first mobile workout execution API. Authentication and ownership are
-    intentionally deferred.
+  description: REST API for the Agonez exercise and muscle Atlas and the relational PlanCreator draft
+    editor and the desktop Execution workflow API. It also provides the offline-first mobile workout execution
+    API. Authentication and ownership are intentionally deferred.
   version: 0.1.0
 paths:
   /assets/anatomy.svg:
@@ -2054,6 +2053,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/mobile/sessions/{session_id}/prescription/fallback:
+    post:
+      tags:
+      - Mobile Execution
+      summary: Prepare Fallback Prescription
+      operationId: prepare_fallback_prescription_api_v1_mobile_sessions__session_id__prescription_fallback_post
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Session Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutPrescription'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/v1/mobile/workouts:
     post:
       tags:
@@ -2660,6 +2721,8 @@ components:
           type: string
           format: date-time
           title: Started At
+        start_context:
+          $ref: '#/components/schemas/WorkoutStartContext'
         lease:
           $ref: '#/components/schemas/Lease'
         applied_seq:
@@ -2681,6 +2744,7 @@ components:
       - session_id
       - workout_unit_name
       - started_at
+      - start_context
       - lease
       - applied_seq
       - revision
@@ -3333,6 +3397,22 @@ components:
           anyOf:
           - $ref: '#/components/schemas/CompletionMode'
           - type: 'null'
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        start_mode:
+          anyOf:
+          - $ref: '#/components/schemas/WorkoutStartMode'
+          - type: 'null'
         prescription_completeness:
           $ref: '#/components/schemas/PrescriptionCompleteness'
         performance_status:
@@ -3355,6 +3435,9 @@ components:
       - workout_name
       - status
       - completion_mode
+      - started_at
+      - completed_at
+      - start_mode
       - prescription_completeness
       - performance_status
       - fallback_workout_name
@@ -3585,6 +3668,10 @@ components:
             format: date-time
           - type: 'null'
           title: Completed At
+        start_mode:
+          anyOf:
+          - $ref: '#/components/schemas/WorkoutStartMode'
+          - type: 'null'
         prescription_completeness:
           $ref: '#/components/schemas/PrescriptionCompleteness'
         exercise_count:
@@ -3603,6 +3690,7 @@ components:
       - status
       - started_at
       - completed_at
+      - start_mode
       - prescription_completeness
       - exercise_count
       - performance
@@ -4036,6 +4124,11 @@ components:
         resistance_source:
           type: string
           title: Resistance Source
+        default_load_step_kg:
+          type: number
+          maximum: 1000.0
+          exclusiveMinimum: 0.0
+          title: Default Load Step Kg
         systemic_propulsive_fcsa_demand:
           anyOf:
           - type: number
@@ -4057,6 +4150,7 @@ components:
       - target_category
       - mechanics_tier
       - resistance_source
+      - default_load_step_kg
       - systemic_propulsive_fcsa_demand
       - recommended_rep_profile
       - image_url
@@ -4100,6 +4194,11 @@ components:
         resistance_source:
           type: string
           title: Resistance Source
+        default_load_step_kg:
+          type: number
+          maximum: 1000.0
+          exclusiveMinimum: 0.0
+          title: Default Load Step Kg
         execution_pattern:
           type: string
           title: Execution Pattern
@@ -4162,6 +4261,7 @@ components:
       - target_category
       - mechanics_tier
       - resistance_source
+      - default_load_step_kg
       - execution_pattern
       - load_capacity
       - systemic_propulsive_fcsa_demand
@@ -4332,6 +4432,11 @@ components:
         resistance_source:
           type: string
           title: Resistance Source
+        default_load_step_kg:
+          type: number
+          maximum: 1000.0
+          exclusiveMinimum: 0.0
+          title: Default Load Step Kg
         execution_pattern:
           type: string
           title: Execution Pattern
@@ -4373,6 +4478,7 @@ components:
       - target_category
       - mechanics_tier
       - resistance_source
+      - default_load_step_kg
       - execution_pattern
       - load_capacity
       - systemic_propulsive_fcsa_demand
@@ -4701,6 +4807,13 @@ components:
           type: string
           format: uuid
           title: Progression Id
+        load_step_kg:
+          anyOf:
+          - type: number
+            maximum: 1000.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Load Step Kg
         active_working_sets:
           anyOf:
           - $ref: '#/components/schemas/ActiveWorkingSets'
@@ -4751,6 +4864,13 @@ components:
           type: string
           format: uuid
           title: Progression Id
+        load_step_kg:
+          anyOf:
+          - type: number
+            maximum: 1000.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Load Step Kg
         active_working_sets:
           anyOf:
           - $ref: '#/components/schemas/ActiveWorkingSets'
@@ -4881,6 +5001,22 @@ components:
           anyOf:
           - $ref: '#/components/schemas/CompletionMode'
           - type: 'null'
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        start_mode:
+          anyOf:
+          - $ref: '#/components/schemas/WorkoutStartMode'
+          - type: 'null'
       additionalProperties: false
       type: object
       required:
@@ -4888,6 +5024,9 @@ components:
       - scheduled_date
       - status
       - completion_mode
+      - started_at
+      - completed_at
+      - start_mode
       title: ExposureSession
     FinalizeResponse:
       properties:
@@ -5161,6 +5300,18 @@ components:
           type: string
           format: date
           title: Scheduled Date
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        start_mode:
+          $ref: '#/components/schemas/WorkoutStartMode'
         exercises:
           items:
             $ref: '#/components/schemas/LatestExposureExercise'
@@ -5173,6 +5324,9 @@ components:
       - workout_trace_id
       - workout_name
       - scheduled_date
+      - started_at
+      - completed_at
+      - start_mode
       - exercises
       title: LatestExposure
     LatestExposureExercise:
@@ -5254,6 +5408,18 @@ components:
           type: string
           format: date
           title: Date
+        performed_at:
+          type: string
+          format: date-time
+          title: Performed At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        start_mode:
+          $ref: '#/components/schemas/WorkoutStartMode'
         value:
           anyOf:
           - type: number
@@ -5278,6 +5444,9 @@ components:
       required:
       - microcycle_ordinal
       - date
+      - performed_at
+      - completed_at
+      - start_mode
       - value
       - set_count
       - reps
@@ -5401,6 +5570,10 @@ components:
             format: date-time
           - type: 'null'
           title: Completed At
+        start_mode:
+          anyOf:
+          - $ref: '#/components/schemas/WorkoutStartMode'
+          - type: 'null'
       additionalProperties: false
       type: object
       required:
@@ -5410,6 +5583,7 @@ components:
       - completion_mode
       - started_at
       - completed_at
+      - start_mode
       title: MatrixSession
     MicrocycleBound:
       properties:
@@ -6032,6 +6206,16 @@ components:
           type: string
           format: date
           title: Scheduled Date
+        performed_at:
+          type: string
+          format: date-time
+          title: Performed At
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
         status:
           $ref: '#/components/schemas/PerformanceStatus'
         execution_mode:
@@ -6042,6 +6226,8 @@ components:
       - exercise_performance_id
       - microcycle_ordinal
       - scheduled_date
+      - performed_at
+      - completed_at
       - status
       - execution_mode
       title: NextBasis
@@ -6159,20 +6345,29 @@ components:
       title: NextTarget
     OffSchedule:
       properties:
+        mode:
+          type: string
+          const: next_track_exposure
+          title: Mode
         acknowledged:
           type: boolean
+          const: true
           title: Acknowledged
         selected_from:
           type: string
+          maxLength: 40
+          minLength: 1
           title: Selected From
         expected_session_id:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           title: Expected Session Id
       additionalProperties: false
       type: object
       required:
+      - mode
       - acknowledged
       - selected_from
       title: OffSchedule
@@ -6503,6 +6698,13 @@ components:
           type: string
           format: uuid
           title: Progression Id
+        load_step_kg:
+          anyOf:
+          - type: number
+            maximum: 1000.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Load Step Kg
         active_working_sets:
           anyOf:
           - $ref: '#/components/schemas/ActiveWorkingSets'
@@ -6680,6 +6882,13 @@ components:
           type: string
           format: uuid
           title: Progression Id
+        load_step_kg:
+          anyOf:
+          - type: number
+            maximum: 1000.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Load Step Kg
         active_working_sets:
           anyOf:
           - $ref: '#/components/schemas/ActiveWorkingSets'
@@ -7460,6 +7669,12 @@ components:
         exercise_prescription_id:
           type: integer
           title: Exercise Prescription Id
+        source:
+          type: string
+          enum:
+          - analysis
+          - plan_fallback
+          title: Source
         ordinal:
           type: integer
           title: Ordinal
@@ -7509,6 +7724,7 @@ components:
       type: object
       required:
       - exercise_prescription_id
+      - source
       - ordinal
       - exercise_track_id
       - slot
@@ -7550,6 +7766,15 @@ components:
           - missing
           - not_applicable
           title: Readiness
+        source:
+          anyOf:
+          - type: string
+            enum:
+            - analysis
+            - plan_fallback
+            - hybrid
+          - type: 'null'
+          title: Source
         prescription_version:
           anyOf:
           - type: string
@@ -8504,6 +8729,9 @@ components:
         workout_track_id:
           type: integer
           title: Workout Track Id
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
         scheduled_on:
           type: string
           format: date
@@ -8527,6 +8755,7 @@ components:
       - session_id
       - workout_unit_name
       - workout_track_id
+      - microcycle_ordinal
       - scheduled_on
       - status
       - prescription
@@ -9622,6 +9851,13 @@ components:
         prescription_version:
           type: string
           title: Prescription Version
+        source:
+          type: string
+          enum:
+          - analysis
+          - plan_fallback
+          - hybrid
+          title: Source
         workout_unit_name:
           type: string
           title: Workout Unit Name
@@ -9651,6 +9887,7 @@ components:
       - session_id
       - prescription_id
       - prescription_version
+      - source
       - workout_unit_name
       - workout_track_id
       - microcycle
@@ -9755,6 +9992,8 @@ components:
             format: date-time
           - type: 'null'
           title: Finished At
+        start_context:
+          $ref: '#/components/schemas/WorkoutStartContext'
         lease:
           $ref: '#/components/schemas/Lease'
         applied_seq:
@@ -9779,6 +10018,7 @@ components:
       - status
       - started_at
       - finished_at
+      - start_context
       - lease
       - applied_seq
       - revision
@@ -9786,6 +10026,44 @@ components:
       - prescription
       - performance
       title: WorkoutSnapshot
+    WorkoutStartContext:
+      properties:
+        scheduled_on:
+          type: string
+          format: date
+          title: Scheduled On
+        microcycle_ordinal:
+          type: integer
+          title: Microcycle Ordinal
+        mode:
+          type: string
+          enum:
+          - on_schedule
+          - next_track_exposure
+          title: Mode
+        selected_from:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Selected From
+        expected_session_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Expected Session Id
+      additionalProperties: false
+      type: object
+      required:
+      - scheduled_on
+      - microcycle_ordinal
+      - mode
+      title: WorkoutStartContext
+    WorkoutStartMode:
+      type: string
+      enum:
+      - on_schedule
+      - next_track_exposure
+      title: WorkoutStartMode
     WorkoutStimulus:
       properties:
         total_etu_scalar:

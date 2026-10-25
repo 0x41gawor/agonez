@@ -477,6 +477,7 @@ BEGIN
                 completion_mode,
                 started_at,
                 completed_at,
+                start_mode,
                 notes
             )
             VALUES (
@@ -495,6 +496,11 @@ BEGIN
                 END,
                 session_started_at,
                 session_completed_at,
+                CASE
+                    WHEN session_status IN ('completed', 'in_progress')
+                        THEN 'on_schedule'::exec.workout_start_mode
+                    ELSE NULL
+                END,
                 CASE
                     WHEN session_status = 'missed' THEN 'Short training break; not performed.'
                     WHEN session_status = 'cancelled' THEN 'Cancelled in advance to protect recovery during deload.'

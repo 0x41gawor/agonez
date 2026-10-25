@@ -119,3 +119,11 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     }
     assert "error" in schemas["ErrorEnvelope"]["properties"]
     assert "expected_version" in schemas["ExercisePrescriptionPut"]["properties"]
+    assert schemas["OffSchedule"]["properties"]["mode"]["const"] == "next_track_exposure"
+    assert schemas["OffSchedule"]["properties"]["acknowledged"]["const"] is True
+    assert set(schemas["WorkoutStartContext"]["properties"]["mode"]["enum"]) == {
+        "on_schedule",
+        "next_track_exposure",
+    }
+    assert "start_context" in schemas["ActiveWorkoutSummary"]["required"]
+    assert "start_context" in schemas["WorkoutSnapshot"]["required"]

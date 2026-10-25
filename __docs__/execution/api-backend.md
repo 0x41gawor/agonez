@@ -52,20 +52,21 @@ the system `run_created` observation.
 The prescription PUT is one transaction. It locks the target session, reloads current
 state, calls the shared readiness resolver, checks target and basis, validates set ordinals
 and loads, lazily creates the workout snapshot, upserts the exercise snapshot, and replaces
-its set rows from the target revision. All prescription mutations first require the session
-to remain `scheduled`.
+its set rows from the target revision. Prescription mutations require the session to remain
+pending (`scheduled` or `missed`); they lock once execution starts.
 
 ## Readiness resolver
 
 `domain.resolve_next()` is the sole implementation used by queue reads, exercise-trace
 reads, the standalone `next` read, and the prescription transaction. It selects the latest
-finalized exercise performance as basis, then the earliest later scheduled occurrence of
-the same workout track as target. Run state and intervening in-progress state are evaluated
-in contract order. Missed and cancelled occurrences do not block. A started saved final
-occurrence is exposed as `locked` when no later scheduled target exists.
+finalized exercise performance by stable microcycle exposure order as basis, then the earliest
+later unresolved (`scheduled` or `missed`) occurrence of the same workout track as target. Run
+state and intervening in-progress state are evaluated in contract order. A cancelled occurrence
+is resolved; a missed occurrence remains executable. A started saved final occurrence is exposed
+as `locked` when no later pending target exists.
 
 The contract's `previous_exposure_not_performed` condition is retained in the resolver.
-Under the literal target definition, the earliest scheduled prescribed occurrence is itself
+Under the literal target definition, the earliest pending prescribed occurrence is itself
 the target, so it is editable rather than an intervening occurrence; the reason becomes
 observable only if target selection is later extended to a requested future occurrence.
 

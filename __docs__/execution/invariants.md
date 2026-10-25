@@ -22,7 +22,10 @@ context. `DB trigger` means a deferred constraint trigger evaluated at transacti
 | One session has at most one prescription and one performance. | UNIQUE session FK on prescription; UNIQUE prescription FK on performance. |
 | Historical prescription meaning survives plan mutation. | Normalized snapshots at workout/exercise/set levels plus restrictive source FKs. Rows are treated as immutable after exposure starts. |
 | A missing or partial analyzed prescription can still become executable. | Explicit fallback preparation fills the complete plan structure with nullable loads and marks generated exercise rows `plan_fallback`; analyzed rows are retained. |
-| Fallback preparation is independent from scheduling policy. | Preparation requires a scheduled session but does not decide whether that session may start today. The start transaction owns on/off-schedule validation. |
+| Fallback preparation is independent from scheduling policy. | Preparation accepts a scheduled or missed pending session but does not decide whether it may start now. The start transaction owns on/off-schedule validation. |
+| Off-schedule execution cannot skip an unresolved occurrence of the same workout track. | Under the plan-run advisory lock, start selects the earliest `scheduled` or `missed` session by microcycle ordinal and rejects any later selected occurrence. Cancelled occurrences are resolved. |
+| Execution time does not redefine exposure order. | The session's run-scoped workout track and microcycle ordinal define progression order. `scheduled_date` remains the plan position; `started_at`/`completed_at` are actual-time metadata. |
+| Off-schedule intent is explicit and auditable. | `workout_start_mode`, selection source, and acknowledged expected-session id are written atomically with `scheduled|missed → in_progress`. |
 | Historical performed facts survive plan mutation. | Performance rows reference execution snapshots/tracks and core exercise IDs, not mutable plan fields. |
 | Prescribed load is queryable per set. | Relational `set_prescriptions.prescribed_load_kg`. |
 | Actual load/reps/RIR are queryable per set. | Relational `set_performances` columns and range checks. |

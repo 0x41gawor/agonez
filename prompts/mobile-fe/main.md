@@ -581,7 +581,8 @@ In particular:
 * body maps use the installed `anatomy.svg`,
 * API execution mode `added` maps to existing backend/domain `additional`,
 * full Atlas article uses the existing Atlas endpoint rather than a duplicated mobile route,
-* off-schedule/fallback execution remains unsupported,
+* a missing/partial prescription is prepared explicitly from plan targets before start,
+* off-schedule execution uses the backend's explicit `next_track_exposure` acknowledgement,
 * authentication remains deferred.
 
 Do not accidentally code against obsolete assumptions from the original proposal.
@@ -684,24 +685,19 @@ Implement the selector designed by Claude.
 
 The scheduled workout remains the primary recommendation.
 
-Other current-microcycle sessions may be browsed.
+Other current-microcycle sessions and unresolved earlier missed sessions may be browsed.
 
-However, off-schedule execution is intentionally not implemented backend-side.
+For an alternative, send the explicit `next_track_exposure` acknowledgement defined by the
+API contract. The backend will start only the earliest unresolved occurrence of that stable
+workout track. Its planned week/date remains unchanged; actual execution time is metadata.
 
-If start returns:
+If the chosen occurrence has no complete analyzed prescription, call its fallback-preparation
+endpoint first and let the athlete enter required loads during execution.
 
-```text
-off_schedule_not_supported
-```
-
-show the designed "not available yet" / equivalent product state.
-
-Do not invent client semantics for:
-
-* executing early,
-* replacing sessions,
-* extra exposure,
-* fallback.
+Handle `off_schedule_acknowledgement_required`, `off_schedule_not_applicable`,
+`not_next_track_exposure`, and `schedule_changed` by refreshing context and showing the
+appropriate confirmation or next available occurrence. Do not model an off-schedule start as a
+replacement, extra exposure, or calendar move.
 
 ---
 
@@ -1847,7 +1843,12 @@ active_workout_exists
 prescription_changed
 session_not_startable
 prescription_missing
-off_schedule_not_supported
+prescription_incomplete
+fallback_unavailable
+off_schedule_acknowledgement_required
+off_schedule_not_applicable
+not_next_track_exposure
+schedule_changed
 seq_gap
 seq_mismatch
 superseded

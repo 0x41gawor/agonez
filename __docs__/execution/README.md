@@ -91,10 +91,13 @@ rows record whether they came from analysis or fallback so generated structure d
 as completed analysis. Once execution starts, the resulting mixed or fallback snapshot is
 historical in exactly the same way as a fully analyzed prescription.
 
-Fallback snapshot preparation is intentionally separate from calendar start eligibility.
-Today, start still requires the session scheduled for the supplied start date; future
-rescheduling or off-schedule semantics can reuse the same snapshot materializer after choosing
-the appropriate session.
+Fallback snapshot preparation is intentionally separate from calendar start eligibility and is
+available for both scheduled and missed pending sessions. A normal start uses the session expected
+for the supplied start date. An acknowledged `next_track_exposure` start may instead select the
+earliest unresolved occurrence of another workout track, or recover a missed occurrence. The
+transaction never permits a later occurrence of that same track to skip an earlier unresolved one.
+The original microcycle and scheduled date remain the exposure's plan position; actual start and
+completion timestamps are execution metadata.
 
 ## Session lifecycle and in-progress synchronization
 

@@ -156,22 +156,25 @@ def resolve_next(
     ]
     relevant_performances.sort(
         key=lambda item: (
-            item["scheduled_date"],
-            item.get("workout_completed_at") or item["scheduled_date"],
+            item["microcycle_ordinal"],
+            item["workout_session_id"],
             item["id"],
         )
     )
     basis = relevant_performances[-1] if relevant_performances else None
-    basis_date = basis["scheduled_date"] if basis else None
+    basis_ordinal = basis["microcycle_ordinal"] if basis else None
 
     track_sessions = [
         item
         for item in sessions
         if item["workout_unit_track_id"] == workout_track_id
-        and (basis_date is None or item["scheduled_date"] > basis_date)
+        and (basis_ordinal is None or item["microcycle_ordinal"] > basis_ordinal)
     ]
-    track_sessions.sort(key=lambda item: (item["scheduled_date"], item["id"]))
-    target = next((item for item in track_sessions if item["status"] == "scheduled"), None)
+    track_sessions.sort(key=lambda item: (item["microcycle_ordinal"], item["id"]))
+    target = next(
+        (item for item in track_sessions if item["status"] in {"scheduled", "missed"}),
+        None,
+    )
 
     if run["status"] not in {"active", "scheduled"}:
         return NextResolution(
@@ -214,7 +217,7 @@ def resolve_next(
     intervening = [
         item
         for item in track_sessions
-        if item["scheduled_date"] < target["scheduled_date"]
+        if item["microcycle_ordinal"] < target["microcycle_ordinal"]
     ]
     in_progress = next((item for item in intervening if item["status"] == "in_progress"), None)
     if in_progress is not None:
@@ -234,7 +237,8 @@ def resolve_next(
         (
             item
             for item in intervening
-            if item["status"] == "scheduled" and item["id"] in prescribed_session_ids
+            if item["status"] in {"scheduled", "missed"}
+            and item["id"] in prescribed_session_ids
         ),
         None,
     )

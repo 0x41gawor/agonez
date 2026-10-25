@@ -73,6 +73,11 @@ erDiagram
         date scheduled_date
         workout_session_status status
         completion_mode completion_mode
+        timestamptz started_at
+        timestamptz completed_at
+        workout_start_mode start_mode
+        varchar off_schedule_selected_from
+        integer off_schedule_expected_session_id FK
     }
     exec_plan_run_events {
         integer id PK

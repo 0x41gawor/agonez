@@ -8,6 +8,7 @@
 | `exec.microcycle_classification` | `normal`, `deload`, `reload` |
 | `exec.workout_session_status` | `scheduled`, `in_progress`, `completed`, `cancelled`, `missed` |
 | `exec.completion_mode` | `as_prescribed`, `fallback` |
+| `exec.workout_start_mode` | `on_schedule`, `next_track_exposure` |
 | `exec.performance_status` | `draft`, `finalized` |
 | `exec.exercise_execution_mode` | `as_prescribed`, `substituted`, `skipped`, `additional` |
 | `exec.performed_set_status` | `performed`, `skipped` |
@@ -21,7 +22,7 @@
 | `exec.microcycles` | Concrete run occurrence with ordinal, date range, effective revision, classification, notes. | PK `id`; unique run+ordinal; FK run/revision. | Projection facts; revision changes affect future rows only. Microcycle trace/list. |
 | `exec.workout_unit_tracks` | Stable logical workout-unit identity within a run. | PK `id`; unique run+logical key; FK run. | Stable for run lifetime. Workout traces and session projection. |
 | `exec.exercise_unit_tracks` | Stable logical exercise-unit identity inside workout track; optional plan `progression_id` evidence. | PK `id`; composite FK ensures workout track is in same run; unique workout track+logical key. | Stable for run lifetime. Exercise traces, Post-Workout-Analysis, charts. |
-| `exec.workout_sessions` | Calendar occurrence; source day/unit, scheduled date, status, completion mode, timestamps, fallback hook. | PK `id`; composite run/microcycle and run/track FKs; unique occurrence. | State transitions from scheduled to in-progress/completed or cancelled/missed. Calendar and attendance. |
+| `exec.workout_sessions` | Calendar occurrence; source day/unit, scheduled date, status, completion mode, actual timestamps, fallback hook, and auditable start mode/selection context. | PK `id`; composite run/microcycle and run/track FKs; unique occurrence; optional self-FK to the expected session acknowledged during an off-schedule start. | State transitions from scheduled or missed to in-progress/completed, or scheduled to cancelled/missed. Calendar, attendance, and stable exposure ordering. |
 | `exec.workout_unit_prescriptions` | Immutable workout-level snapshot and exposure comment. | PK `id`; unique FK session; restrictive plan revision/unit FKs. | Created before an exposure; immutable after start. Mobile input and historical display. |
 | `exec.exercise_unit_prescriptions` | Immutable slot/variant/exercise snapshot, track link, plan and prescription comments, previous-performance link, and `generation_source` (`analysis` or `plan_fallback`). | PK `id`; unique workout prescription+ordinal/track; restrictive plan/core FKs. | Independent progression-chain node. Generated rows remain distinguishable from saved Post-Workout-Analysis and may be promoted before start. |
 | `exec.set_prescriptions` | Resolved set role, rep range, target RIR, per-set load, and comment. | PK `id`; unique exercise prescription+ordinal; restrictive source set FK. | Immutable exposure instruction. Exercise trace/mobile workout. |

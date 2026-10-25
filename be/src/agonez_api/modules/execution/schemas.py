@@ -38,6 +38,11 @@ class CompletionMode(str, Enum):
     FALLBACK = "fallback"
 
 
+class WorkoutStartMode(str, Enum):
+    ON_SCHEDULE = "on_schedule"
+    NEXT_TRACK_EXPOSURE = "next_track_exposure"
+
+
 class PerformanceStatus(str, Enum):
     DRAFT = "draft"
     FINALIZED = "finalized"
@@ -291,6 +296,7 @@ class CurrentMicrocycleSession(APIModel):
     status: WorkoutSessionStatus
     started_at: datetime | None
     completed_at: datetime | None
+    start_mode: WorkoutStartMode | None
     prescription_completeness: PrescriptionCompleteness
     exercise_count: int
     performance: PerformanceBrief | None
@@ -334,6 +340,9 @@ class LatestExposure(APIModel):
     workout_trace_id: int
     workout_name: str
     scheduled_date: Date
+    started_at: datetime
+    completed_at: datetime | None
+    start_mode: WorkoutStartMode
     exercises: list[LatestExposureExercise]
 
 
@@ -491,6 +500,9 @@ class ExposureSession(APIModel):
     scheduled_date: Date
     status: WorkoutSessionStatus
     completion_mode: CompletionMode | None
+    started_at: datetime | None
+    completed_at: datetime | None
+    start_mode: WorkoutStartMode | None
 
 
 class ExposurePrescription(APIModel):
@@ -536,6 +548,8 @@ class NextBasis(APIModel):
     exercise_performance_id: int
     microcycle_ordinal: int
     scheduled_date: Date
+    performed_at: datetime
+    completed_at: datetime | None
     status: PerformanceStatus
     execution_mode: ExerciseExecutionMode
 
@@ -654,6 +668,7 @@ class MatrixSession(APIModel):
     completion_mode: CompletionMode | None
     started_at: datetime | None
     completed_at: datetime | None
+    start_mode: WorkoutStartMode | None
 
 
 class WorkoutTraceCell(APIModel):
@@ -756,6 +771,9 @@ class CalendarSession(APIModel):
     workout_name: str
     status: WorkoutSessionStatus
     completion_mode: CompletionMode | None
+    started_at: datetime | None
+    completed_at: datetime | None
+    start_mode: WorkoutStartMode | None
     prescription_completeness: PrescriptionCompleteness
     performance_status: PerformanceStatus | None
     fallback_workout_name: str | None
@@ -812,6 +830,9 @@ class EventPatch(APIModel):
 class LoadPoint(APIModel):
     microcycle_ordinal: int
     date: Date
+    performed_at: datetime
+    completed_at: datetime | None
+    start_mode: WorkoutStartMode
     value: float | None
     set_count: int
     reps: list[int | None]

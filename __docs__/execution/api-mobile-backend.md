@@ -73,11 +73,9 @@ The API exposes exercise source and derives workout source as `analysis`, `plan_
 a generated exercise promotes that row in place and replaces its fallback sets, preserving
 stable prescription identity before execution.
 
-Snapshot preparation deliberately does not apply the scheduled-date rule. It only requires a
-scheduled session and materializes its own plan source. Start continues to own the current
-on-schedule policy. A future reschedule/off-schedule feature can therefore select or create the
-appropriate session and reuse the same snapshot operation without coupling plan materialization
-to calendar policy.
+Snapshot preparation deliberately does not apply the scheduled-date rule. It accepts a scheduled
+or missed pending session and materializes that session's own plan source. Start separately owns
+the transactional on/off-schedule policy.
 
 The existing full Atlas article remains `/api/atlas/exercises/{slug}`. Mobile payloads always
 carry both the stable catalog integer id and slug, so Flutter can reuse that route without a
@@ -85,7 +83,7 @@ second full-article implementation.
 
 ## Database extension
 
-Migrations `0008`, `0009`, and `0012` extend, rather than replace, the Execution schema:
+Migrations `0008`, `0009`, `0012`, and `0013` extend, rather than replace, the Execution schema:
 
 - add `not_performed` to exercise and set enums;
 - add stable client UUIDs and entity revisions;
@@ -97,6 +95,8 @@ Migrations `0008`, `0009`, and `0012` extend, rather than replace, the Execution
 - enforce unique performed ordering and client identity constraints.
 - record analysis versus plan-fallback provenance on exercise prescriptions;
 - require an explicit performed load for new set facts (`0` means no external load).
+- persist `on_schedule` versus `next_track_exposure` selection and the acknowledgement context on
+  the concrete workout session.
 
 Existing rows are backfilled with UUIDs, revisions, timestamps, and a sentinel legacy lease.
 The lifecycle constraint is forced before columns become non-null, which keeps restoration and
@@ -141,6 +141,38 @@ Set operations accept and persist `heart_rate_bpm`. A performed set without `loa
 consumed `load_required` rejection; clients use `0` for no external load. Decimal scale and
 timezone offsets are normalized before idempotent stale-state comparison.
 
+## Off-schedule start semantics
+
+The ordinary start remains unchanged: when `session_id` is the currently scheduled session for
+`started_at`, `off_schedule` must be `null`. A deliberate alternative uses:
+
+```json
+{
+  "mode": "next_track_exposure",
+  "acknowledged": true,
+  "selected_from": "picker",
+  "expected_session_id": 414
+}
+```
+
+The start transaction serializes the plan run and validates that the selected session is the
+earliest unresolved (`scheduled` or `missed`) occurrence of its stable workout track, ordered by
+microcycle ordinal. Tracks remain independent: choosing an early Pull workout does not require
+finishing a pending Push workout, but Week 8 Pull cannot skip unresolved Week 7 Pull. A cancelled
+occurrence is resolved and does not block. A missed occurrence can transition directly to
+`in_progress`; clients may prepare its plan-backed fallback before starting when analysis is
+missing.
+
+Mobile context exposes only that earliest unresolved occurrence per workout track, including
+earlier missed candidates after the run's final calendar microcycle. The start transaction still
+revalidates the choice so a stale picker cannot skip an exposure.
+
+The selected session is not moved. Its microcycle and `scheduled_date` remain the authoritative
+exposure sequence, while `started_at` and `completed_at` record when it was actually executed.
+Session `start_mode`, picker source, and the acknowledged expected-session id provide durable
+audit context. Workout snapshots, active summaries, exercise traces, calendars, and load points
+expose the start mode and actual timestamps where applicable.
+
 ## Finalization semantics
 
 Finalization locks the workout, validates its lease and `final_seq`, and rejects pending ops.
@@ -155,9 +187,7 @@ any untouched prescribed exercise rows and every missing prescribed set as expli
    substitutions, skipped/added exercises, and reordered state.
 
 Retrying the same finalization is idempotent. A different `final_seq` after completion is a
-conflict. Off-schedule starts remain intentionally unsupported and return
-`422 off_schedule_not_supported`; the reserved acknowledgement shape is accepted only so this
-future rule can be introduced explicitly.
+conflict. Finalization does not move an off-schedule exposure or change its persisted start mode.
 
 ## Request-level error audit
 
@@ -169,7 +199,10 @@ future rule can be introduced explicitly.
 | `prescription_missing` | Implemented, `409` on read / `422` on start | Start can opt into unresolved nullable loads. |
 | `prescription_incomplete` | Implemented, `422` on start | The snapshot omits plan exercises or sets; prepare the fallback before retrying. |
 | `fallback_unavailable` | Implemented, `422` on fallback preparation | The session cannot be mapped safely to its governing plan revision/tracks. |
-| `off_schedule_not_supported` | Implemented, `422` | Reserved DTO accepted; semantics intentionally absent. |
+| `off_schedule_acknowledgement_required` | Implemented, `422` | The selected next-track exposure is not today's expected session. |
+| `off_schedule_not_applicable` | Implemented, `422` | An acknowledgement was supplied for the expected on-schedule session. |
+| `not_next_track_exposure` | Implemented, `409` | An earlier unresolved occurrence of the selected workout track must be executed or cancelled first. |
+| `schedule_changed` | Implemented, `409` | The acknowledged expected session no longer matches current server state. |
 | `seq_gap` | Implemented, `409` | Includes the authoritative next sequence. |
 | `seq_mismatch` | Implemented, `409` | Detects both sequence reuse and global op-id misuse. |
 | `superseded` | Implemented, `409` | Includes current epoch and device id. |
@@ -201,7 +234,7 @@ the contract codes (`load_required`, `load_out_of_range`, `reps_out_of_range`, `
 | `human.svg` / body-map v2 name | Adapted | Returns the installed `/assets/anatomy.svg` asset and its existing region ids; no nonexistent asset URL is invented. |
 | API `added` execution mode | Adapted | Persisted as existing database value `additional`, rendered as `added`. |
 | Full Atlas article | Reused with documented limitation | Flutter opens the existing slug route. It is not duplicated under `/mobile`; project-wide ETag support for that older route remains future work. |
-| Off-schedule/fallback execution | Reserved | Context shape exists; start is rejected until product semantics are defined. |
+| Off-schedule execution | Implemented | Explicit `next_track_exposure` acknowledgement; earliest unresolved occurrence per stable workout track; actual timestamps remain metadata. |
 | Authentication/athlete ownership | Deferred | Network restriction remains required. Device id is not authentication. |
 | Server rest timer | Not applicable | Client-only by contract; `performed_at` preserves reconstructible intervals. |
 

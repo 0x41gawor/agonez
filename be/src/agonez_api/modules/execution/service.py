@@ -405,6 +405,9 @@ class ExecutionService:
                         "workout_name": item["workout_name"],
                         "status": item["status"],
                         "completion_mode": item["completion_mode"],
+                        "started_at": item["started_at"],
+                        "completed_at": item["completed_at"],
+                        "start_mode": item["start_mode"],
                         "prescription_completeness": self._completeness(bundle, item),
                         "performance_status": self._workout_performance_status(bundle, item["id"]),
                         "fallback_workout_name": item["fallback_workout_name"],
@@ -681,6 +684,7 @@ class ExecutionService:
             "status": session["status"],
             "started_at": session["started_at"],
             "completed_at": session["completed_at"],
+            "start_mode": session["start_mode"],
             "prescription_completeness": self._completeness(bundle, session),
             "exercise_count": exercise_count,
             "performance": (
@@ -1040,6 +1044,8 @@ class ExecutionService:
                     "exercise_performance_id": basis["id"],
                     "microcycle_ordinal": basis["microcycle_ordinal"],
                     "scheduled_date": basis["scheduled_date"],
+                    "performed_at": basis["workout_started_at"],
+                    "completed_at": basis["workout_completed_at"],
                     "status": basis["workout_performance_status"],
                     "execution_mode": basis["execution_mode"],
                 }
@@ -1119,6 +1125,9 @@ class ExecutionService:
                         "scheduled_date": session["scheduled_date"],
                         "status": session["status"],
                         "completion_mode": session["completion_mode"],
+                        "started_at": session["started_at"],
+                        "completed_at": session["completed_at"],
+                        "start_mode": session["start_mode"],
                     },
                     "prescription": {
                         "exercise_prescription_id": prescription["id"],
@@ -1142,7 +1151,12 @@ class ExecutionService:
                     ),
                 }
             )
-        exposures.sort(key=lambda item: item["session"]["scheduled_date"])
+        exposures.sort(
+            key=lambda item: (
+                item["microcycle"]["ordinal"],
+                item["session"]["session_id"],
+            )
+        )
         structure = self._target_structure(bundle, track, None)
         revision_nos = sorted(
             {item["microcycle"]["plan_revision_no"] for item in exposures}
@@ -1403,7 +1417,11 @@ class ExecutionService:
             if item["exercise_unit_track_id"] == exercise_track_id
             and item["workout_performance_status"] == "finalized"
         ]
-        return max(rows, key=lambda item: (item["scheduled_date"], item["id"])) if rows else None
+        return (
+            max(rows, key=lambda item: (item["microcycle_ordinal"], item["id"]))
+            if rows
+            else None
+        )
 
     @staticmethod
     def _top_load(sets: list[Row]) -> float | None:
@@ -1510,7 +1528,7 @@ class ExecutionService:
         latest = max(
             bundle.workout_performances,
             key=lambda item: (
-                self._session(bundle, item["workout_session_id"])["scheduled_date"],
+                self._session(bundle, item["workout_session_id"])["microcycle_ordinal"],
                 item["id"],
             ),
         )
@@ -1594,6 +1612,9 @@ class ExecutionService:
             "workout_trace_id": session["workout_unit_track_id"],
             "workout_name": session["workout_name"],
             "scheduled_date": session["scheduled_date"],
+            "started_at": session["started_at"],
+            "completed_at": session["completed_at"],
+            "start_mode": session["start_mode"],
             "exercises": exercises,
         }
 
@@ -1843,7 +1864,7 @@ class ExecutionService:
                     "next_prescription_saved": bool(
                         prescription and self._is_analysis_prescription(prescription)
                     )
-                    if session["status"] == "scheduled"
+                    if session["status"] in {"scheduled", "missed"}
                     else None,
                 }
             )
@@ -1856,6 +1877,7 @@ class ExecutionService:
                 "completion_mode": session["completion_mode"],
                 "started_at": session["started_at"],
                 "completed_at": session["completed_at"],
+                "start_mode": session["start_mode"],
             },
             "prescription_completeness": self._completeness(bundle, session),
             "performance_comment": (
@@ -2019,7 +2041,7 @@ class ExecutionService:
                 if item["exercise_unit_track_id"] == track["id"]
                 and (include_draft or item["workout_performance_status"] == "finalized")
             ]
-            performances.sort(key=lambda item: (item["scheduled_date"], item["id"]))
+            performances.sort(key=lambda item: (item["microcycle_ordinal"], item["id"]))
             raw_points: list[dict[str, Any]] = []
             for performance in performances:
                 sets = self._performed_sets(bundle, performance["id"])
@@ -2047,6 +2069,9 @@ class ExecutionService:
                     {
                         "microcycle_ordinal": performance["microcycle_ordinal"],
                         "date": performance["scheduled_date"],
+                        "performed_at": performance["workout_started_at"],
+                        "completed_at": performance["workout_completed_at"],
+                        "start_mode": performance["start_mode"],
                         "value": value,
                         "set_count": len(sets),
                         "reps": [

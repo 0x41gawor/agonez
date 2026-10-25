@@ -25,6 +25,7 @@ def main() -> None:
             "0008_mobile_execution_enum_values.sql",
             "0009_mobile_workout_execution.sql",
             "0012_fallback_prescriptions.sql",
+            "0013_off_schedule_execution.sql",
         )
     }
 
@@ -51,7 +52,8 @@ def main() -> None:
                   AND type.typname IN (
                     'exercise_execution_mode',
                     'performed_set_status',
-                    'prescription_generation_source'
+                    'prescription_generation_source',
+                    'workout_start_mode'
                   )
                 """
             )
@@ -61,6 +63,10 @@ def main() -> None:
             assert "not_performed" in enums["exercise_execution_mode"]
             assert "not_performed" in enums["performed_set_status"]
             assert enums["prescription_generation_source"] == {"analysis", "plan_fallback"}
+            assert enums["workout_start_mode"] == {
+                "on_schedule",
+                "next_track_exposure",
+            }
 
             cursor.execute(
                 """
@@ -81,12 +87,15 @@ def main() -> None:
                     ('set_performances', 'received_at'),
                     ('set_performances', 'heart_rate_bpm'),
                     ('set_performances', 'rev'),
-                    ('exercise_unit_prescriptions', 'generation_source')
+                    ('exercise_unit_prescriptions', 'generation_source'),
+                    ('workout_sessions', 'start_mode'),
+                    ('workout_sessions', 'off_schedule_selected_from'),
+                    ('workout_sessions', 'off_schedule_expected_session_id')
                   )
                 """
             )
             columns = {(table, column): nullable for table, column, nullable in cursor.fetchall()}
-            assert len(columns) == 14
+            assert len(columns) == 17
             for key in (
                 ("workout_unit_performances", "client_uuid"),
                 ("workout_unit_performances", "lease_device_id"),
@@ -110,7 +119,8 @@ def main() -> None:
                     'workout_unit_performances',
                     'exercise_unit_performances',
                     'set_performances',
-                    'mobile_sync_ops'
+                    'mobile_sync_ops',
+                    'workout_sessions'
                   )
                 """
             )
@@ -138,6 +148,9 @@ def main() -> None:
             ]
             assert "load_kg IS NOT NULL" in constraints[
                 ("set_performances", "set_performances_performed_load_required")
+            ]
+            assert "start_mode IS NOT NULL" in constraints[
+                ("workout_sessions", "workout_sessions_start_mode_valid")
             ]
             assert "PRIMARY KEY (workout_unit_performance_id, lease_epoch, seq)" in constraints[
                 ("mobile_sync_ops", "mobile_sync_ops_pkey")

@@ -151,11 +151,20 @@ class WorkoutCounts(APIModel):
     skipped_sets: int
 
 
+class WorkoutStartContext(APIModel):
+    scheduled_on: date
+    microcycle_ordinal: int
+    mode: Literal["on_schedule", "next_track_exposure"]
+    selected_from: str | None = None
+    expected_session_id: int | None = None
+
+
 class ActiveWorkoutSummary(APIModel):
     workout_id: UUID
     session_id: int
     workout_unit_name: str
     started_at: datetime
+    start_context: WorkoutStartContext
     lease: Lease
     applied_seq: int
     revision: int
@@ -200,6 +209,7 @@ class WorkoutSnapshot(APIModel):
     status: Literal["in_progress", "completed"]
     started_at: datetime
     finished_at: datetime | None
+    start_context: WorkoutStartContext
     lease: Lease
     applied_seq: int
     revision: int
@@ -257,6 +267,7 @@ class SessionSummary(APIModel):
     session_id: int
     workout_unit_name: str
     workout_track_id: int
+    microcycle_ordinal: int
     scheduled_on: date
     status: str
     prescription: PrescriptionReadiness
@@ -287,9 +298,10 @@ class MobileContext(APIModel):
 
 
 class OffSchedule(APIModel):
-    acknowledged: bool
-    selected_from: str
-    expected_session_id: int | None = None
+    mode: Literal["next_track_exposure"]
+    acknowledged: Literal[True]
+    selected_from: str = Field(min_length=1, max_length=40)
+    expected_session_id: int | None = Field(default=None, ge=1)
 
 
 class StartWorkout(APIModel):

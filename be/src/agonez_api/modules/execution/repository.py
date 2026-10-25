@@ -464,6 +464,7 @@ class ExecutionRepository:
             """
             SELECT session.*, session.status::text AS status,
                    session.completion_mode::text AS completion_mode,
+                   session.start_mode::text AS start_mode,
                    mc.ordinal AS microcycle_ordinal,
                    mc.plan_revision_id, revision.revision_no AS plan_revision_no,
                    track.name AS workout_name, track.logical_key AS workout_logical_key,
@@ -549,9 +550,11 @@ class ExecutionRepository:
             """
             SELECT exercise.*, exercise.execution_mode::text AS execution_mode,
                    workout.status::text AS workout_performance_status,
+                   workout.started_at AS workout_started_at,
                    workout.completed_at AS workout_completed_at,
                    prescription.workout_session_id,
-                   session.scheduled_date, mc.ordinal AS microcycle_ordinal,
+                   session.scheduled_date, session.start_mode::text AS start_mode,
+                   mc.ordinal AS microcycle_ordinal,
                    actual.slug AS actual_exercise_slug,
                    actual.name AS actual_exercise_name,
                    actual.name_full AS actual_exercise_name_full
@@ -780,7 +783,7 @@ class ExecutionRepository:
                 )
                 if locked_session is None:
                     raise not_found("session_not_found", "Workout session was not found")
-                if str(locked_session["status"]) != "scheduled":
+                if str(locked_session["status"]) not in {"scheduled", "missed"}:
                     raise conflict("session_locked", "Session prescription is historical")
 
                 bundle = await self._load_bundle(connection, plan_run_id)
@@ -1113,7 +1116,7 @@ class ExecutionRepository:
                 )
                 if session is None:
                     raise not_found("session_not_found", "Workout session was not found")
-                if str(session["status"]) != "scheduled":
+                if str(session["status"]) not in {"scheduled", "missed"}:
                     raise conflict("session_locked", "Session prescription is historical")
                 row = await self._fetch_optional(
                     connection,
@@ -1162,7 +1165,7 @@ class ExecutionRepository:
                 )
                 if session is None:
                     raise not_found("session_not_found", "Workout session was not found")
-                if session["session_status"] != "scheduled":
+                if session["session_status"] not in {"scheduled", "missed"}:
                     raise conflict("session_locked", "Session prescription is historical")
                 row = await self._fetch_optional(
                     connection,

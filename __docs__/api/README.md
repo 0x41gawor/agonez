@@ -4,7 +4,7 @@
 
 The API is FastAPI. [openapi.yaml](openapi.yaml) was generated from
 `agonez_api.app.create_app()` with inert documentation settings; no database connection is
-opened during schema generation. It is OpenAPI 3.1 and contains 47 paths / 54 operations.
+opened during schema generation. It is OpenAPI 3.1 and contains 48 paths / 55 operations.
 
 Health routes, the `/media` static mount, Swagger UI (`/docs`), ReDoc (`/redoc`), and the JSON schema endpoint (`/openapi.json`) are reachable but are not all represented as application operations in OpenAPI.
 
