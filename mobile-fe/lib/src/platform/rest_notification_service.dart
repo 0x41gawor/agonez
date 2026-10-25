@@ -16,7 +16,7 @@ class RestNotificationService {
   Future<void> initialize({void Function()? onOpenWorkout}) async {
     tz_data.initializeTimeZones();
     await _plugin.initialize(
-      const InitializationSettings(
+      settings: const InitializationSettings(
         // A white alpha silhouette: Android draws only the small icon's alpha.
         android: AndroidInitializationSettings('@drawable/ic_stat_agonez'),
       ),
@@ -51,11 +51,11 @@ class RestNotificationService {
   }) async {
     if (!endsAt.isAfter(DateTime.now())) return;
     await _plugin.zonedSchedule(
-      _notificationId,
-      title ?? 'Rest complete',
-      body ?? '$exerciseName · set $setOrdinal · $prescription',
-      tz.TZDateTime.from(endsAt.toUtc(), tz.UTC),
-      NotificationDetails(
+      id: _notificationId,
+      title: title ?? 'Rest complete',
+      body: body ?? '$exerciseName · set $setOrdinal · $prescription',
+      scheduledDate: tz.TZDateTime.from(endsAt.toUtc(), tz.UTC),
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           playSound ? _soundChannelId : _silentChannelId,
           'Rest timer',
@@ -72,5 +72,5 @@ class RestNotificationService {
     );
   }
 
-  Future<void> cancel() => _plugin.cancel(_notificationId);
+  Future<void> cancel() => _plugin.cancel(id: _notificationId);
 }

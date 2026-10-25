@@ -45,9 +45,6 @@ class WorkoutRecordedScreen extends ConsumerWidget {
               final performed = sets
                   .where((set) => set.status == 'performed')
                   .length;
-              final skipped = sets
-                  .where((set) => set.status == 'skipped')
-                  .length;
               final prescription = _prescription(value.prescriptionJson);
               final prescribed =
                   prescription?.exercises.fold(
@@ -55,7 +52,16 @@ class WorkoutRecordedScreen extends ConsumerWidget {
                     (sum, exercise) => sum + exercise.sets.length,
                   ) ??
                   0;
-              final notDone = (prescribed - performed - skipped).clamp(
+              // Planned sets left undone, skipped ones included. Extra sets
+              // and unplanned exercises do not make up for them.
+              final performedPlanned = sets
+                  .where(
+                    (set) =>
+                        set.status == 'performed' &&
+                        set.prescribedSetId != null,
+                  )
+                  .length;
+              final notDone = (prescribed - performedPlanned).clamp(
                 0,
                 prescribed,
               );

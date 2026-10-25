@@ -118,9 +118,20 @@ void main() {
           ),
           workoutSetsProvider(workout.workoutId).overrideWith(
             (ref) => Stream.value([
-              _set('bench', 0, 80, 8),
-              _set('bench', 1, 82.5, 6),
-              _set('bench', 2, 82.5, 6),
+              _set('bench', 0, 80, 8, planned: 10),
+              _set('bench', 1, 82.5, 6, planned: 11),
+              _set('bench', 2, 82.5, 6, planned: 12),
+              // An extra set does not make up for a planned one.
+              _set('bench', 3, 82.5, 5),
+              for (var ordinal = 0; ordinal < 3; ordinal++)
+                _set(
+                  'row',
+                  ordinal,
+                  0,
+                  0,
+                  planned: 20 + ordinal,
+                  status: 'skipped',
+                ),
             ]),
           ),
         ],
@@ -135,8 +146,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // 12 planned sets, 3 of them performed: the skipped Row counts as not
+    // done and the extra set changes nothing.
+    expect(_metric(tester, 'sets done'), '4');
+    expect(_metric(tester, 'not done'), '9');
     expect(find.text('Bench'), findsOneWidget);
-    expect(find.text('80×8 / 82.5×6 / 82.5×6'), findsOneWidget);
+    expect(find.text('80×8 / 82.5×6 / 82.5×6 / 82.5×5'), findsOneWidget);
     expect(find.text('Row'), findsOneWidget);
     expect(find.text('SKIPPED'), findsOneWidget);
   });
@@ -218,12 +233,28 @@ LocalExercise _exercise(
   updatedAt: DateTime.utc(2026, 10, 19, 18),
 );
 
-LocalSet _set(String exercise, int ordinal, double load, int reps) => LocalSet(
+/// The value shown above a summary metric's [label].
+String? _metric(WidgetTester tester, String label) {
+  final column = tester.widget<Column>(
+    find.ancestor(of: find.text(label), matching: find.byType(Column)).first,
+  );
+  return (column.children.first as Text).data;
+}
+
+LocalSet _set(
+  String exercise,
+  int ordinal,
+  double load,
+  int reps, {
+  int? planned,
+  String status = 'performed',
+}) => LocalSet(
   setPerformanceId: '$exercise-$ordinal',
   workoutId: 'workout-1',
   exercisePerformanceId: exercise,
+  prescribedSetId: planned,
   ordinal: ordinal,
-  status: 'performed',
+  status: status,
   loadKg: load,
   repetitions: reps,
   rir: 2,
