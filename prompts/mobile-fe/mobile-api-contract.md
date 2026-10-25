@@ -266,7 +266,19 @@ Rules:
 - `atlas_peek` is embedded for every prescribed exercise **and** every `alternatives[].exercise` (see §7.1), so Quick Peek works offline.
 - Nothing here exposes revision/day/slot integer FKs beyond what the client needs to address writes.
 
-Errors: `404 session_not_found`, `409 prescription_missing` (readiness `missing`; body carries the plan targets without loads so the athlete can still *Start with plan targets* — see §5.1 `allow_missing_loads`).
+- `sets[].load_source` says who decided `prescribed_load_kg`: `analysis` for a manual Post-Workout-Analysis save, `last_exposure` for the default progression agent repeating the athlete's previous exposure, `null` when no load is prescribed. Label an inherited load as coming from the last session; a `null` load means a first exposure for that set role.
+
+Errors: `404 session_not_found`, `409 prescription_missing` (readiness `missing`; body carries the plan targets so the athlete can still *Start with plan targets* — see §5.1 `allow_missing_loads`).
+
+### 4.3a `GET /sessions/{session_id}/prescription/fallback` — preview (read-only)
+
+Returns the **complete** snapshot the session would get: analysed exercises as they stand, plus the exercises the plan prescribes that analysis has not covered, with their loads already decided from the athlete's last exposure. Use it to render the whole session on Home before the athlete starts.
+
+It writes nothing. The payload is marked `preview: true` with `prescription_version: null`, and rows that would be generated carry `exercise_prescription_id: null` and `set_prescription_id: null` — **never start from a preview**. Call `POST .../prescription/fallback` to materialise it; the loads come back identical, with real ids and a version.
+
+Loads are decided by the progression agent registered for each exercise's progression model. Today that is always "repeat the last exposure": the matching set of the last finalized exposure of the same exercise, matched within its set role, never progressed or rounded. A load is `null` only for a first exposure, or a set role with no usable history. A substituted exposure is skipped — the loads of a different exercise are never inherited.
+
+Errors as for `4.3`, plus `409 session_not_startable` for a session that is not `scheduled` or `missed`, and `422 fallback_unavailable` when the plan cannot be mapped to executable tracks.
 
 ### 4.4 `GET /workouts/active`
 

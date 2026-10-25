@@ -184,6 +184,33 @@ class MobileExecutionService:
         data = await self._repository.prepare_fallback_prescription(session_id, locale=locale)
         return self._prescription(data)
 
+    async def preview_fallback_prescription(
+        self, session_id: int, *, locale: str
+    ) -> WorkoutPrescription:
+        """The complete snapshot a session would get, built but never persisted."""
+        data = await self._repository.preview_fallback_prescription(session_id, locale=locale)
+        model = self._prescription(data)
+        return model.model_copy(
+            update={
+                "preview": True,
+                "prescription_version": None,
+                "exercises": [
+                    exercise
+                    if exercise.source == "analysis"
+                    else exercise.model_copy(
+                        update={
+                            "exercise_prescription_id": None,
+                            "sets": [
+                                item.model_copy(update={"set_prescription_id": None})
+                                for item in exercise.sets
+                            ],
+                        }
+                    )
+                    for exercise in model.exercises
+                ],
+            }
+        )
+
     async def get_active(
         self, *, plan_run_id: int, device_id: UUID, locale: str
     ) -> ActiveWorkoutSummary:
@@ -348,6 +375,7 @@ class MobileExecutionService:
                             "ordinal": set_item["ordinal"],
                             "role": set_item["role"],
                             "prescribed_load_kg": self._number(set_item["prescribed_load_kg"]),
+                            "load_source": set_item.get("load_source"),
                             "rep_min": set_item["rep_min"],
                             "rep_max": set_item["rep_max"],
                             "target_rir": self._target_rir(set_item["target_rir"]),

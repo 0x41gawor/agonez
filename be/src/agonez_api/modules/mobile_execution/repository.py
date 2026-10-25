@@ -11,6 +11,13 @@ from psycopg.types.json import Jsonb
 
 from agonez_api.core.database import DatabasePool
 from agonez_api.modules.execution.errors import conflict, invalid, not_found
+from agonez_api.modules.execution.progression import (
+    PerformedSet,
+    PlannedSet,
+    ProgressionRequest,
+    ResolvedLoad,
+    resolve_loads,
+)
 from agonez_api.modules.mobile_execution.schemas import (
     AddUnplannedExerciseOperation,
     ClaimWorkout,
@@ -317,6 +324,23 @@ class MobileExecutionRepository:
                 await self._ensure_fallback_prescription(connection, session_id)
                 return await self._load_prescription(connection, session_id, locale=locale)
 
+    async def preview_fallback_prescription(
+        self, session_id: int, *, locale: str
+    ) -> dict[str, Any]:
+        """Return the snapshot preparation *would* produce, without writing anything.
+
+        This runs the very same materialization as
+        :meth:`prepare_fallback_prescription` and then rolls the transaction back, so a
+        preview can never disagree with what a later ``POST`` persists. Nothing is
+        committed: the rows it builds exist only for the lifetime of the transaction,
+        which is why the caller marks the payload as a preview and the app must still
+        prepare explicitly before starting.
+        """
+        async with self._pool.connection() as connection:
+            async with connection.transaction(force_rollback=True):
+                await self._ensure_fallback_prescription(connection, session_id)
+                return await self._load_prescription(connection, session_id, locale=locale)
+
     async def _load_prescription(
         self,
         connection: Any,
@@ -391,7 +415,8 @@ class MobileExecutionRepository:
             SELECT sets.id AS set_prescription_id, sets.exercise_unit_prescription_id,
                    sets.ordinal, sets.set_role_snapshot::text AS role,
                    sets.prescribed_load_kg, sets.rep_min, sets.rep_max,
-                   sets.target_rir::text AS target_rir, sets.prescription_comment
+                   sets.target_rir::text AS target_rir, sets.prescription_comment,
+                   sets.load_source::text AS load_source
             FROM exec.set_prescriptions AS sets
             JOIN exec.exercise_unit_prescriptions AS exercise
               ON exercise.id = sets.exercise_unit_prescription_id
@@ -583,10 +608,9 @@ class MobileExecutionRepository:
                   ON prior_prescription.id = workout_performance.workout_unit_prescription_id
                 JOIN exec.workout_sessions AS prior_session
                   ON prior_session.id = prior_prescription.workout_session_id
-                JOIN exec.microcycles AS prior_mc ON prior_mc.id = prior_session.microcycle_id
                 WHERE exercise_performance.exercise_unit_track_id = track.id
                   AND workout_performance.status = 'finalized'
-                  AND exercise_performance.actual_exercise_id IS NOT NULL
+                  AND exercise_performance.actual_exercise_id = variant.exercise_id
                   AND EXISTS (
                       SELECT 1
                       FROM exec.set_performances AS performed_set
@@ -595,9 +619,8 @@ class MobileExecutionRepository:
                         AND performed_set.load_kg IS NOT NULL
                   )
                   AND prior_session.plan_run_id = %s
-                  AND prior_mc.ordinal < %s
-                ORDER BY prior_mc.ordinal DESC,
-                         workout_performance.completed_at DESC,
+                  AND prior_session.id <> %s
+                ORDER BY workout_performance.completed_at DESC,
                          exercise_performance.id DESC
                 LIMIT 1
             ) AS previous ON TRUE
@@ -608,7 +631,7 @@ class MobileExecutionRepository:
                 session["plan_run_id"],
                 session["workout_unit_track_id"],
                 session["plan_run_id"],
-                session["microcycle_ordinal"],
+                session["id"],
                 session["source_plan_workout_unit_id"],
             ),
         )
@@ -648,6 +671,10 @@ class MobileExecutionRepository:
         sets_by_variant: dict[int, list[Row]] = {}
         for item in plan_sets:
             sets_by_variant.setdefault(item["exercise_variant_id"], []).append(item)
+
+        loads_by_track = await self._resolve_fallback_loads(
+            connection, plan_exercises, sets_by_variant
+        )
 
         existing_exercises = await self._fetch_all(
             connection,
@@ -797,6 +824,7 @@ class MobileExecutionRepository:
                 replace_sets = self._set_structure(existing_sets) != self._set_structure(
                     source_sets
                 )
+            decided = loads_by_track.get(plan["exercise_track_id"], {})
             if replace_sets:
                 await self._execute(
                     connection,
@@ -804,14 +832,16 @@ class MobileExecutionRepository:
                     (exercise_prescription_id,),
                 )
                 for source_set in source_sets:
+                    load = decided.get(source_set["ordinal"])
                     await self._execute(
                         connection,
                         """
                         INSERT INTO exec.set_prescriptions (
                             exercise_unit_prescription_id, ordinal,
                             source_plan_set_infra_id, set_role_snapshot,
-                            rep_min, rep_max, target_rir, prescribed_load_kg
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, NULL)
+                            rep_min, rep_max, target_rir,
+                            prescribed_load_kg, load_source
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """,
                         (
                             exercise_prescription_id,
@@ -821,8 +851,14 @@ class MobileExecutionRepository:
                             source_set["rep_min"],
                             source_set["rep_max"],
                             source_set["target_rir"],
+                            load.load_kg if load else None,
+                            load.source if load and load.load_kg is not None else None,
                         ),
                     )
+                changed = True
+            elif await self._fill_missing_fallback_loads(
+                connection, exercise_prescription_id, decided
+            ):
                 changed = True
 
         if changed:
@@ -865,6 +901,112 @@ class MobileExecutionRepository:
                     "actual_sets": completeness["set_count"],
                 },
             )
+
+    async def _fill_missing_fallback_loads(
+        self,
+        connection: Any,
+        exercise_prescription_id: int,
+        decided: dict[int, ResolvedLoad],
+    ) -> bool:
+        """Fill loads that are still empty on an already generated exercise.
+
+        Repeating the preparation before the session starts picks up history that
+        appeared since — a session performed in the meantime. Only empty loads are
+        written, so a load the agent decided earlier is never silently revised, and the
+        set rows keep their ids.
+        """
+        filled = False
+        for ordinal, load in sorted(decided.items()):
+            if load.load_kg is None:
+                continue
+            updated = await self._fetch_optional(
+                connection,
+                """
+                UPDATE exec.set_prescriptions
+                SET prescribed_load_kg = %s, load_source = %s
+                WHERE exercise_unit_prescription_id = %s AND ordinal = %s
+                  AND prescribed_load_kg IS NULL
+                RETURNING id
+                """,
+                (load.load_kg, load.source, exercise_prescription_id, ordinal),
+            )
+            filled = filled or updated is not None
+        return filled
+
+    async def _resolve_fallback_loads(
+        self,
+        connection: Any,
+        plan_exercises: list[Row],
+        sets_by_variant: dict[int, list[Row]],
+    ) -> dict[int, dict[int, ResolvedLoad]]:
+        """Decide the load of every generated set through its progression agent.
+
+        The athlete's last exposure of each exercise was already resolved by the
+        ``plan_exercises`` query; this reads all of those exposures in one statement and
+        hands each exercise to the agent registered for its progression model. Returns
+        the decided loads keyed by exercise track id, then by set ordinal.
+        """
+        performance_ids = [
+            item["previous_exercise_performance_id"]
+            for item in plan_exercises
+            if item["previous_exercise_performance_id"] is not None
+        ]
+        exposures: dict[int, list[PerformedSet]] = {}
+        if performance_ids:
+            performed = await self._fetch_all(
+                connection,
+                """
+                SELECT performed.exercise_unit_performance_id AS performance_id,
+                       performed.ordinal, performed.load_kg,
+                       performed.repetitions, performed.rir,
+                       prescribed.set_role_snapshot::text AS role
+                FROM exec.set_performances AS performed
+                LEFT JOIN exec.set_prescriptions AS prescribed
+                  ON prescribed.id = performed.prescribed_set_id
+                WHERE performed.exercise_unit_performance_id = ANY(%s)
+                  AND performed.status = 'performed'
+                  AND performed.load_kg IS NOT NULL
+                ORDER BY performed.exercise_unit_performance_id, performed.ordinal
+                """,
+                (performance_ids,),
+            )
+            for item in performed:
+                exposures.setdefault(item["performance_id"], []).append(
+                    PerformedSet(
+                        ordinal=item["ordinal"],
+                        role=item["role"],
+                        load_kg=item["load_kg"],
+                        repetitions=item["repetitions"],
+                        rir=item["rir"],
+                    )
+                )
+
+        resolved: dict[int, dict[int, ResolvedLoad]] = {}
+        for plan in plan_exercises:
+            planned = tuple(
+                PlannedSet(
+                    ordinal=item["ordinal"],
+                    role=item["role"],
+                    rep_min=item["rep_min"],
+                    rep_max=item["rep_max"],
+                    target_rir=item["target_rir"],
+                )
+                for item in sets_by_variant.get(plan["variant_id"], [])
+            )
+            decisions = resolve_loads(
+                ProgressionRequest(
+                    progression_model_slug=plan["progression_model_slug"],
+                    planned_sets=planned,
+                    last_exposure=tuple(
+                        exposures.get(plan["previous_exercise_performance_id"], [])
+                    ),
+                    load_step_kg=plan["load_step_kg"],
+                )
+            )
+            resolved[plan["exercise_track_id"]] = {
+                item.ordinal: item for item in decisions
+            }
+        return resolved
 
     @staticmethod
     def _set_structure(rows: list[Row]) -> list[tuple[Any, ...]]:

@@ -320,6 +320,8 @@ def test_mobile_openapi_has_all_routes_headers_and_operation_discriminator(
         "/api/v1/mobile/atlas/exercises",
     }
     assert expected <= set(paths)
+    fallback_methods = set(paths["/api/v1/mobile/sessions/{session_id}/prescription/fallback"])
+    assert {"get", "post"} <= fallback_methods
     context_headers = {
         item["name"] for item in paths["/api/v1/mobile/context"]["get"]["parameters"]
     }
@@ -424,12 +426,15 @@ async def test_fallback_materialization_preserves_analysis_and_fills_missing_slo
             return {"id": 90}
         raise AssertionError(query)
 
+    queries: list[str] = []
+
     async def fetch_all(
         connection: object,
         query: str,
         params: tuple[object, ...] | None = None,
     ) -> list[dict[str, object]]:
         del connection, params
+        queries.append(query)
         if "FROM plans.exercise_slots AS slot" in query:
             return [
                 {
@@ -484,6 +489,17 @@ async def test_fallback_materialization_preserves_analysis_and_fills_missing_slo
                     "target_rir": "RIR2",
                 },
             ]
+        if "FROM exec.set_performances AS performed" in query:
+            return [
+                {
+                    "performance_id": 802,
+                    "ordinal": 0,
+                    "load_kg": Decimal("32.500"),
+                    "repetitions": 11,
+                    "rir": 2,
+                    "role": "working",
+                },
+            ]
         if "SELECT exercise.*" in query:
             return [
                 {
@@ -536,8 +552,32 @@ async def test_fallback_materialization_preserves_analysis_and_fills_missing_slo
     assert len(exercise_inserts) == 1
     assert "'plan_fallback'" in exercise_inserts[0][0]
     assert len(set_inserts) == 1
-    assert set_inserts[0][1] == (102, 0, 502, "working", 8, 12, "RIR2")
+    assert set_inserts[0][1] == (
+        102,
+        0,
+        502,
+        "working",
+        8,
+        12,
+        "RIR2",
+        Decimal("32.500"),
+        "last_exposure",
+    )
     assert any("UPDATE exec.workout_unit_prescriptions" in query for query, _ in writes)
+
+    history = next(item for item in queries if "FROM plans.exercise_slots AS slot" in item)
+    # C2: a substituted exposure is skipped, so the loads of a different exercise are
+    # never inherited; the search simply falls through to an earlier matching exposure.
+    assert "exercise_performance.actual_exercise_id = variant.exercise_id" in history
+    # C1: "last" is the most recent finalized exposure by when it was actually
+    # performed, not the last one in an earlier microcycle.
+    assert "ORDER BY workout_performance.completed_at DESC" in history
+    assert "prior_mc.ordinal" not in history
+    # C6: one statement reads every matched exposure, never one per exercise.
+    exposure_reads = [
+        item for item in queries if "performed.exercise_unit_performance_id = ANY" in item
+    ]
+    assert len(exposure_reads) == 1
 
 
 def test_etag_ignores_context_generation_time() -> None:

@@ -56,10 +56,18 @@ class AtlasPeek(APIModel):
 
 
 class PrescriptionSet(APIModel):
-    set_prescription_id: int
+    set_prescription_id: int | None = None
     ordinal: int
     role: str
     prescribed_load_kg: float | None
+    load_source: Literal["analysis", "last_exposure"] | None = Field(
+        default=None,
+        description=(
+            "Which agent decided this load: 'analysis' for a manual Post-Workout-Analysis "
+            "save, 'last_exposure' for the default progression agent repeating the "
+            "athlete's previous exposure. Null when no load is prescribed."
+        ),
+    )
     rep_min: int
     rep_max: int
     target_rir: int | None
@@ -98,7 +106,7 @@ class ExerciseHistory(APIModel):
 
 
 class PrescriptionExercise(APIModel):
-    exercise_prescription_id: int
+    exercise_prescription_id: int | None = None
     source: Literal["analysis", "plan_fallback"]
     ordinal: int
     exercise_track_id: int
@@ -123,7 +131,20 @@ class PrescriptionMicrocycle(APIModel):
 class WorkoutPrescription(APIModel):
     session_id: int
     prescription_id: int
-    prescription_version: str
+    prescription_version: str | None = Field(
+        default=None,
+        description=(
+            "Null on a preview, which is not startable; prepare the snapshot with "
+            "POST .../prescription/fallback to obtain a version."
+        ),
+    )
+    preview: bool = Field(
+        default=False,
+        description=(
+            "True when this snapshot was built read-only and not persisted. Preview rows "
+            "that would be generated carry no ids yet."
+        ),
+    )
     source: Literal["analysis", "plan_fallback", "hybrid"]
     workout_unit_name: str
     workout_track_id: int

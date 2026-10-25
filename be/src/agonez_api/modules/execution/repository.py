@@ -1125,8 +1125,11 @@ class ExecutionRepository:
                             exercise_unit_prescription_id, ordinal,
                             source_plan_set_infra_id, set_role_snapshot,
                             rep_min, rep_max, target_rir,
-                            prescribed_load_kg, prescription_comment
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            prescribed_load_kg, prescription_comment, load_source
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                            CASE WHEN %s IS NULL THEN NULL ELSE 'analysis' END
+                        )
                         """,
                         (
                             exercise_prescription_id,
@@ -1138,6 +1141,7 @@ class ExecutionRepository:
                             source["target_rir"],
                             submitted.load_kg,
                             submitted.comment,
+                            submitted.load_kg,
                         ),
                     )
 

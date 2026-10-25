@@ -2095,6 +2095,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
   /api/v1/mobile/sessions/{session_id}/prescription/fallback:
+    get:
+      tags:
+      - Mobile Execution
+      summary: Preview Fallback Prescription
+      description: Preview the complete snapshot this session would get. Writes nothing.
+      operationId: preview_fallback_prescription_api_v1_mobile_sessions__session_id__prescription_fallback_get
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Session Id
+      - name: X-Agonez-Device-Id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: X-Agonez-Device-Id
+      - name: X-Agonez-Client
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Agonez-Client
+      - name: Accept-Language
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Accept-Language
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutPrescription'
+        '404':
+          description: Mobile execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Mobile execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Mobile execution validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
     post:
       tags:
       - Mobile Execution
@@ -7708,7 +7770,9 @@ components:
     PrescriptionExercise:
       properties:
         exercise_prescription_id:
-          type: integer
+          anyOf:
+          - type: integer
+          - type: 'null'
           title: Exercise Prescription Id
         source:
           type: string
@@ -7764,7 +7828,6 @@ components:
       additionalProperties: false
       type: object
       required:
-      - exercise_prescription_id
       - source
       - ordinal
       - exercise_track_id
@@ -7863,7 +7926,9 @@ components:
     PrescriptionSet:
       properties:
         set_prescription_id:
-          type: integer
+          anyOf:
+          - type: integer
+          - type: 'null'
           title: Set Prescription Id
         ordinal:
           type: integer
@@ -7876,6 +7941,17 @@ components:
           - type: number
           - type: 'null'
           title: Prescribed Load Kg
+        load_source:
+          anyOf:
+          - type: string
+            enum:
+            - analysis
+            - last_exposure
+          - type: 'null'
+          title: Load Source
+          description: 'Which agent decided this load: ''analysis'' for a manual Post-Workout-Analysis
+            save, ''last_exposure'' for the default progression agent repeating the athlete''s previous
+            exposure. Null when no load is prescribed.'
         rep_min:
           type: integer
           title: Rep Min
@@ -7895,7 +7971,6 @@ components:
       additionalProperties: false
       type: object
       required:
-      - set_prescription_id
       - ordinal
       - role
       - prescribed_load_kg
@@ -9903,8 +9978,18 @@ components:
           type: integer
           title: Prescription Id
         prescription_version:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Prescription Version
+          description: Null on a preview, which is not startable; prepare the snapshot with POST .../prescription/fallback
+            to obtain a version.
+        preview:
+          type: boolean
+          title: Preview
+          description: True when this snapshot was built read-only and not persisted. Preview rows that
+            would be generated carry no ids yet.
+          default: false
         source:
           type: string
           enum:
@@ -9940,7 +10025,6 @@ components:
       required:
       - session_id
       - prescription_id
-      - prescription_version
       - source
       - workout_unit_name
       - workout_track_id

@@ -19,6 +19,7 @@ write-lease identity only and must not be treated as a user credential.
 | `GET` | `/api/v1/mobile/plan-runs` | Implemented | Compact run selector. |
 | `GET` | `/api/v1/mobile/sessions/{session_id}/prescription` | Implemented | Immutable prescription plus history, alternatives, and offline Atlas peeks. |
 | `POST` | `/api/v1/mobile/sessions/{session_id}/prescription/fallback` | Implemented | Idempotently materialize a complete executable snapshot from plan targets when analysis is missing or partial. |
+| `GET` | `/api/v1/mobile/sessions/{session_id}/prescription/fallback` | Implemented | Preview that same snapshot read-only, including loads inherited from the last exposure. Writes nothing. |
 | `POST` | `/api/v1/mobile/workouts` | Implemented | Idempotently start using a client-generated workout UUID. |
 | `GET` | `/api/v1/mobile/workouts/active` | Implemented | Find the one resumable workout in a plan run. |
 | `GET` | `/api/v1/mobile/workouts/{workout_id}` | Implemented | Authoritative prescription/performance snapshot. |
@@ -62,11 +63,32 @@ The fallback preparation endpoint is an explicit write; the ordinary prescriptio
 remains side-effect free. It locks the session and creates or completes the normalized
 workout/exercise/set snapshot from that session's effective plan revision. Existing
 Post-Workout-Analysis exercise rows are retained and only missing slots are generated. Each
-generated exercise has `generation_source = plan_fallback`, its planned set loads remain
-`NULL`, and `previous_exercise_performance_id` points to the latest finalized performance of
-the same run-scoped exercise trace that contains an explicit performed load. Skipped,
-not-performed, and loadless history is not used as a load-inheritance basis. First exposures
-therefore have no prior performance link.
+generated exercise has `generation_source = plan_fallback`, and
+`previous_exercise_performance_id` points to the athlete's last exposure of that exercise:
+the most recent finalized performance of the same run-scoped exercise trace, ordered by when
+it was actually completed, whose performed exercise matches the slot's DEFAULT variant and
+which contains at least one explicit performed load. Skipped, not-performed and loadless
+history is never a basis, and a substituted exposure is skipped in favour of an earlier
+matching one.
+
+**Generated loads are decided by a progression agent, not left `NULL`.** Each generated set
+is handed to the agent registered for the exercise's `progression_model_slug`; today every
+model resolves to the default agent, which repeats the load of the matching set at the last
+exposure without progressing or rounding it. Matching is role-aware, so a ramp-up never
+inherits a working-set load. A load stays `NULL` only for a first exposure or a set role the
+athlete has no usable history for. `exec.set_prescriptions.load_source` — published as
+`load_source` on every prescription set — records the decider: `analysis` for a manual save,
+`last_exposure` for the default agent. Repeating the preparation before the start fills loads
+that are still empty from history that appeared meanwhile; it never revises a load already
+decided, never touches `analysis` rows, and keeps prescription ids stable.
+
+`GET /sessions/{session_id}/prescription/fallback` previews the very same snapshot without
+writing anything: it runs the materialization in a rolled-back transaction, so preview and
+`POST` cannot disagree. The payload carries `preview: true`, `prescription_version: null`,
+and `null` ids on the rows that would be generated, so a client cannot start from it.
+
+The whole flow, the agent contract and the rules that must not be broken are documented in
+`__docs__/execution/progression-agents.md`. Read it before changing load decisions.
 
 The API exposes exercise source and derives workout source as `analysis`, `plan_fallback`, or
 `hybrid`. Desktop prescription completeness counts only `analysis` rows. Saving analysis for

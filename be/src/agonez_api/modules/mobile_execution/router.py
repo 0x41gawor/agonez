@@ -105,6 +105,23 @@ async def get_prescription(
     return await service.get_prescription(session_id, locale=locale)
 
 
+@router.get(
+    "/sessions/{session_id}/prescription/fallback",
+    response_model=WorkoutPrescription,
+    responses=ERROR_RESPONSES,
+)
+async def preview_fallback_prescription(
+    session_id: Annotated[int, Path(ge=1)],
+    service: MobileServiceDependency,
+    device_id: DeviceId,
+    locale: ContentLocaleDependency,
+    client: ClientInfo = None,
+) -> WorkoutPrescription:
+    """Preview the complete snapshot this session would get. Writes nothing."""
+    del device_id, client
+    return await service.preview_fallback_prescription(session_id, locale=locale)
+
+
 @router.post(
     "/sessions/{session_id}/prescription/fallback",
     response_model=WorkoutPrescription,
