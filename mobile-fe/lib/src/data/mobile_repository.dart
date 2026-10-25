@@ -111,6 +111,26 @@ class MobileRepository {
   Future<LoadedValue<WorkoutPrescription>> loadPrescription(
     int sessionId, {
     bool preferCache = false,
+  }) => _prescription(
+    sessionId,
+    preferCache: preferCache,
+    fetch: () => _api.getPrescription(sessionId),
+  );
+
+  /// The session's prescription completed from plan targets, for starting a
+  /// session whose prescription is not ready. Cached like [loadPrescription];
+  /// offline, a copy prepared earlier is used.
+  Future<LoadedValue<WorkoutPrescription>> prepareFallbackPrescription(
+    int sessionId,
+  ) => _prescription(
+    sessionId,
+    fetch: () => _api.prepareFallbackPrescription(sessionId),
+  );
+
+  Future<LoadedValue<WorkoutPrescription>> _prescription(
+    int sessionId, {
+    required Future<WorkoutPrescription> Function() fetch,
+    bool preferCache = false,
   }) async {
     final key = 'prescription:$sessionId';
     final cached = await _database.cachedDocument(key);
@@ -128,7 +148,7 @@ class MobileRepository {
       return LoadedValue(value: cachedValue, fromCache: true);
     }
     try {
-      final value = await _api.getPrescription(sessionId);
+      final value = await fetch();
       await _database.putCachedDocument(
         key: key,
         json: jsonEncode(value.toJson()),

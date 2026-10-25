@@ -5,12 +5,15 @@ import 'package:agonez/src/api/wire_enums.dart';
 import 'package:agonez/src/app/app_providers.dart';
 import 'package:agonez/src/app/app_runtime.dart';
 import 'package:agonez/src/data/mobile_repository.dart';
+import 'package:agonez/src/features/workout/end_workout_launch.dart';
 import 'package:agonez/src/design/design.dart';
 import 'package:agonez/src/l10n/generated/app_localizations.dart';
 import 'package:agonez/src/settings/app_settings_controller.dart';
 import 'package:agonez/src/storage/app_database.dart';
+import 'package:agonez/src/workout/workout_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'workout_fixtures.dart';
@@ -23,6 +26,8 @@ class MockAppDatabase extends Mock implements AppDatabase {}
 
 class MockAppSettingsController extends Mock implements AppSettingsController {}
 
+class MockWorkoutRepository extends Mock implements WorkoutRepository {}
+
 /// A runtime for screens built on today's context: no active workout, plan
 /// run 2 selected and [fixturePrescription] behind every session. Tests
 /// stub `loadContext` themselves through [stubContext].
@@ -30,14 +35,22 @@ class TodayHarness {
   TodayHarness() {
     when(() => runtime.mobileRepository).thenReturn(repository);
     when(() => runtime.database).thenReturn(database);
+    when(() => runtime.workoutRepository).thenReturn(workoutRepository);
     when(() => runtime.settings).thenReturn(settings);
     when(() => runtime.contextRefreshes).thenReturn(contextRefreshes);
     when(() => settings.locale).thenReturn(const Locale('en'));
     when(() => settings.hapticsEnabled).thenReturn(false);
+    when(() => database.watchActiveWorkout()).thenAnswer((_) async* {
+      yield _streamedWorkout;
+      yield* _activeWorkouts.stream;
+    });
+    when(database.activeWorkout).thenAnswer((_) async => storedWorkout);
     when(
-      () => database.watchActiveWorkout(),
-    ).thenAnswer((_) => Stream<LocalWorkout?>.value(null));
-    when(database.activeWorkout).thenAnswer((_) async => null);
+      () => database.workoutExercises(any()),
+    ).thenAnswer((_) async => const <LocalExercise>[]);
+    when(
+      () => database.watchWorkoutSets(any()),
+    ).thenAnswer((_) => Stream.value(const <LocalSet>[]));
     when(
       repository.selectedPlanRunId,
     ).thenAnswer((_) async => selectedPlanRunId);
@@ -55,8 +68,23 @@ class TodayHarness {
   final repository = MockMobileRepository();
   final database = MockAppDatabase();
   final settings = MockAppSettingsController();
+  final workoutRepository = MockWorkoutRepository();
   final contextRefreshes = StreamController<int>.broadcast();
   int? selectedPlanRunId = 2;
+
+  final _activeWorkouts = StreamController<LocalWorkout?>.broadcast();
+  LocalWorkout? _streamedWorkout;
+
+  /// What a direct database read of the active workout returns. The
+  /// active-workout stream follows [streamWorkout] instead, so a test can
+  /// let the stream lag behind the database.
+  LocalWorkout? storedWorkout;
+
+  /// Makes the active-workout stream report [workout].
+  void streamWorkout(LocalWorkout? workout) {
+    _streamedWorkout = workout;
+    _activeWorkouts.add(workout);
+  }
 
   /// Answers context loads with [build] for the requested plan run.
   void stubContext(FutureOr<MobileContext> Function(int? planRunId) build) {
@@ -73,18 +101,65 @@ class TodayHarness {
     );
   }
 
-  Widget app(Widget home) => ProviderScope(
+  /// The app with [home] at `/`. `/focus` shows [focus], by default a
+  /// placeholder titled Focus that ends a workout launch like the real
+  /// workout screen, and `/workout` a placeholder titled Workout tab.
+  Widget app(
+    Widget home, {
+    Widget focus = const EndWorkoutLaunchWhenShown(
+      child: Scaffold(body: Text('Focus')),
+    ),
+    String initialLocation = '/',
+  }) => ProviderScope(
     overrides: [appRuntimeProvider.overrideWithValue(runtime)],
-    child: MaterialApp(
+    child: MaterialApp.router(
       theme: AgonezTheme.dark,
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: home,
+      routerConfig: _router(home, focus, initialLocation),
     ),
   );
 
-  Future<void> dispose() => contextRefreshes.close();
+  /// The app's routing in small: tabs in a stateful shell and the workout
+  /// on the root navigator, so opening it replaces the shell, which leaves
+  /// with an exit transition while the workout appears beneath it.
+  static GoRouter _router(Widget home, Widget focus, String initialLocation) {
+    final rootNavigator = GlobalKey<NavigatorState>();
+    return GoRouter(
+      navigatorKey: rootNavigator,
+      initialLocation: initialLocation,
+      routes: [
+        StatefulShellRoute.indexedStack(
+          builder: (_, _, shell) => shell,
+          branches: [
+            StatefulShellBranch(
+              routes: [GoRoute(path: '/', builder: (_, _) => home)],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/workout',
+                  builder: (_, _) => const Scaffold(body: Text('Workout tab')),
+                ),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/focus',
+          parentNavigatorKey: rootNavigator,
+          builder: (_, _) => focus,
+        ),
+      ],
+    );
+  }
+
+  Future<void> dispose() async {
+    await contextRefreshes.close();
+    // A paused listener would hold this close open; nothing awaits it.
+    unawaited(_activeWorkouts.close());
+  }
 }
 
 const missedPushA = SessionSummary(
@@ -113,11 +188,13 @@ MobileContext restDayContext() => MobileContext(
   recent: const [],
 );
 
-/// Plan run 2 with LEGS, a ready session, expected today.
+/// Plan run 2 with LEGS expected today, prescribed unless [prescribed] is
+/// false.
 MobileContext workoutContext({
   List<SessionSummary> alternatives = const [],
   List<MicrocycleDay> microcycleDays = const [],
   List<RecentWorkout> recent = const [],
+  bool prescribed = true,
 }) => MobileContext(
   generatedAt: DateTime.utc(2026, 10, 19, 8, 1),
   contextVersion: 'run-2',
@@ -125,19 +202,25 @@ MobileContext workoutContext({
   selectionRequired: false,
   today: const TodayPosition(date: '2026-10-19', microcycle: null),
   microcycleDays: microcycleDays,
-  expectedSession: const SessionSummary(
+  expectedSession: SessionSummary(
     sessionId: 41,
     workoutUnitName: 'LEGS',
     workoutTrackId: 5,
     scheduledOn: '2026-10-19',
     status: 'scheduled',
-    prescription: PrescriptionReadiness(
-      readiness: PrescriptionReadinessStatus.ready,
-      prescriptionVersion: 'rx-41',
-      exerciseCount: 7,
-      setCount: 20,
-      estimatedDurationMin: 90,
-    ),
+    prescription: prescribed
+        ? const PrescriptionReadiness(
+            readiness: PrescriptionReadinessStatus.ready,
+            prescriptionVersion: 'rx-41',
+            exerciseCount: 7,
+            setCount: 20,
+            estimatedDurationMin: 90,
+          )
+        : const PrescriptionReadiness(
+            readiness: PrescriptionReadinessStatus.missing,
+            exerciseCount: 0,
+            setCount: 0,
+          ),
   ),
   alternatives: alternatives,
   fallbacks: const [],
@@ -174,3 +257,25 @@ ContextPlanRun contextPlanRun({required int id, required String name}) =>
       planName: name,
       microcycleDurationDays: 7,
     );
+
+/// A just-started local workout for LEGS (session 41).
+LocalWorkout startedLegs() => LocalWorkout(
+  workoutId: 'workout-1',
+  sessionId: 41,
+  planRunId: 2,
+  workoutUnitName: 'LEGS',
+  lifecycle: 'pending_start',
+  startedAt: DateTime.utc(2026, 10, 19, 17),
+  prescriptionJson: '{}',
+  startPayloadJson: '{}',
+  leaseEpoch: 1,
+  appliedSeq: 0,
+  nextSeq: 1,
+  revision: 0,
+  currentExercise: 0,
+  currentSet: 0,
+  cursorPhase: 'set',
+  syncState: 'saving',
+  syncAttempts: 0,
+  updatedAt: DateTime.utc(2026, 10, 19, 17),
+);

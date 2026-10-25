@@ -60,3 +60,28 @@ final mobileContextProvider =
         locale: languageCode,
       );
     }, retry: (_, _) => null);
+
+/// Whether a workout just started on this device is still on its way into
+/// the workout screen.
+///
+/// Home and the Workout tab swap their start card for a resume card as soon
+/// as the new workout reaches the database, which happens before the
+/// workout screen has covered them. While a launch is in progress they keep
+/// the start card, so the swap happens out of sight. The workout screen ends
+/// the launch once its entrance is complete.
+final workoutLaunchProvider = NotifierProvider<WorkoutLaunch, bool>(
+  WorkoutLaunch.new,
+);
+
+class WorkoutLaunch extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void begin() => state = true;
+
+  void end() {
+    // The workout screen may end a launch from a microtask after the whole
+    // provider scope has gone, as when the app or a test shuts down.
+    if (ref.mounted) state = false;
+  }
+}

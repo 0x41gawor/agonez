@@ -17,6 +17,7 @@ import '../../design/design.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../storage/app_database.dart';
 import '../../widgets/sync_status_pill.dart';
+import 'end_workout_launch.dart';
 import 'focus_mode_screen.dart';
 import 'focus_workout_models.dart';
 
@@ -31,60 +32,59 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final active = ref.watch(activeWorkoutProvider);
-    return active.when(
-      loading: () => const _FocusLoading(),
-      error: (_, _) => const _FocusLoadError(),
-      data: (workout) {
-        if (workout == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) context.go('/workout');
-          });
-          return const _FocusLoading();
-        }
-        final exercises = ref.watch(
-          workoutExercisesProvider(workout.workoutId),
-        );
-        final sets = ref.watch(workoutSetsProvider(workout.workoutId));
-        if (exercises.hasError || sets.hasError) return const _FocusLoadError();
-        final localExercises = exercises.value;
-        final localSets = sets.value;
-        if (localExercises == null || localSets == null) {
-          return const _FocusLoading();
-        }
-
-        late final WorkoutPrescription prescription;
-        try {
-          prescription = WorkoutPrescription.fromJson(
-            Map<String, Object?>.from(
-              jsonDecode(workout.prescriptionJson) as Map,
-            ),
+    return EndWorkoutLaunchWhenShown(
+      child: active.when(
+        loading: () => const _FocusLoading(),
+        error: (_, _) => const _FocusLoadError(),
+        data: (workout) {
+          if (workout == null) return const _LeaveWithoutWorkout();
+          final exercises = ref.watch(
+            workoutExercisesProvider(workout.workoutId),
           );
-        } catch (_) {
-          return const _FocusLoadError();
-        }
+          final sets = ref.watch(workoutSetsProvider(workout.workoutId));
+          if (exercises.hasError || sets.hasError) {
+            return const _FocusLoadError();
+          }
+          final localExercises = exercises.value;
+          final localSets = sets.value;
+          if (localExercises == null || localSets == null) {
+            return const _FocusLoading();
+          }
 
-        final viewModel = _mapWorkout(
-          context,
-          workout,
-          prescription,
-          localExercises,
-          localSets,
-        );
-        final runtime = ref.watch(appRuntimeProvider);
-        return FocusModeScreen(
-          workout: viewModel,
-          enableHaptics: runtime.settings.hapticsEnabled,
-          callbacks: _callbacks(
+          late final WorkoutPrescription prescription;
+          try {
+            prescription = WorkoutPrescription.fromJson(
+              Map<String, Object?>.from(
+                jsonDecode(workout.prescriptionJson) as Map,
+              ),
+            );
+          } catch (_) {
+            return const _FocusLoadError();
+          }
+
+          final viewModel = _mapWorkout(
             context,
-            ref,
-            runtime,
             workout,
             prescription,
             localExercises,
-            viewModel,
-          ),
-        );
-      },
+            localSets,
+          );
+          final runtime = ref.watch(appRuntimeProvider);
+          return FocusModeScreen(
+            workout: viewModel,
+            enableHaptics: runtime.settings.hapticsEnabled,
+            callbacks: _callbacks(
+              context,
+              ref,
+              runtime,
+              workout,
+              prescription,
+              localExercises,
+              viewModel,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -694,6 +694,36 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
         'superseded' => l10n.syncSuperseded,
         _ => l10n.syncSaved,
       };
+}
+
+/// Shown while the active-workout stream reports no workout.
+///
+/// Right after a start, the stream can still hold its previous value when
+/// this route opens. The screen therefore leaves for the Workout tab only
+/// once the database confirms that no workout is active; otherwise the
+/// stream catches up and replaces this placeholder with the workout.
+class _LeaveWithoutWorkout extends ConsumerStatefulWidget {
+  const _LeaveWithoutWorkout();
+
+  @override
+  ConsumerState<_LeaveWithoutWorkout> createState() =>
+      _LeaveWithoutWorkoutState();
+}
+
+class _LeaveWithoutWorkoutState extends ConsumerState<_LeaveWithoutWorkout> {
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_leaveUnlessActive());
+  }
+
+  Future<void> _leaveUnlessActive() async {
+    final active = await ref.read(appRuntimeProvider).database.activeWorkout();
+    if (active == null && mounted) context.go('/workout');
+  }
+
+  @override
+  Widget build(BuildContext context) => const _FocusLoading();
 }
 
 class _FocusLoading extends StatelessWidget {

@@ -86,6 +86,21 @@ class AgonezApiClient {
     );
   }
 
+  /// Builds the session's prescription from plan targets wherever no
+  /// analyzed one exists, keeping exercises already analyzed on desktop.
+  /// Idempotent: repeating it returns the same prescription and version.
+  /// Generated loads are null.
+  Future<WorkoutPrescription> prepareFallbackPrescription(int sessionId) async {
+    final response = await _perform(
+      () => _dio.post<Object?>(
+        '/api/v1/mobile/sessions/$sessionId/prescription/fallback',
+      ),
+    );
+    return WorkoutPrescription.fromJson(
+      asJsonMap(response.data, 'prescription'),
+    );
+  }
+
   Future<WorkoutSnapshot> startWorkout(StartWorkout payload) async {
     final response = await _perform(
       () =>

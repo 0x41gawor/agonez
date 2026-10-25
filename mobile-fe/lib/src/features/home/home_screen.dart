@@ -41,6 +41,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final active = ref.watch(activeWorkoutProvider);
+    // A launch leaves Home as it was when the workout was started.
+    final workout = ref.watch(workoutLaunchProvider) ? null : active.value;
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
@@ -50,7 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: _Header(
-                  onPlanRunPressed: active.value == null ? _selectRun : null,
+                  onPlanRunPressed: workout == null ? _selectRun : null,
                 ),
               ),
               SliverPadding(
@@ -59,7 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: active.when(
                     loading: () => const TodaySkeleton(),
                     error: (_, _) => const TodayOverview(),
-                    data: (workout) => workout == null
+                    data: (_) => workout == null
                         ? const TodayOverview()
                         : _LocalActiveCard(workout: workout),
                   ),

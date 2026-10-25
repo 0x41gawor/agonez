@@ -19,6 +19,7 @@ class WorkoutTabScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppLocalizations.of(context);
+    final launching = ref.watch(workoutLaunchProvider);
     return Scaffold(
       appBar: AppBar(title: Text(strings.navWorkout)),
       body: ref
@@ -26,7 +27,7 @@ class WorkoutTabScreen extends ConsumerWidget {
           .when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, _) => const _Today(padding: _padding),
-            data: (workout) => workout == null
+            data: (workout) => workout == null || launching
                 ? const _Today(padding: _padding)
                 : Padding(
                     padding: _padding,

@@ -33,7 +33,11 @@ class AgonezNavigationShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppLocalizations.of(context);
-    final active = ref.watch(activeWorkoutProvider).value;
+    // A launch leaves the shell as it was when the workout was started;
+    // the mini workout bar appears once the workout screen has replaced it.
+    final active = ref.watch(workoutLaunchProvider)
+        ? null
+        : ref.watch(activeWorkoutProvider).value;
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: Column(

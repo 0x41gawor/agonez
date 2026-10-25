@@ -1,18 +1,24 @@
 import 'dart:async';
 
 import 'package:agonez/src/api/context_models.dart';
+import 'package:agonez/src/data/mobile_repository.dart';
 import 'package:agonez/src/features/home/home_screen.dart';
 import 'package:agonez/src/features/home/today_overview.dart';
 import 'package:agonez/src/features/home/workout_unit_picker.dart';
+import 'package:agonez/src/app/app_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../support/today_fixtures.dart';
+import '../../support/workout_fixtures.dart';
 
 void main() {
   late TodayHarness harness;
 
+  setUpAll(() => registerFallbackValue(fixturePrescription));
   setUp(() => harness = TodayHarness());
   tearDown(() => harness.dispose());
 
@@ -124,5 +130,126 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('REST DAY'), findsOneWidget);
+  });
+
+  testWidgets('a session without a prescription starts from plan targets', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    harness.stubContext((_) => workoutContext(prescribed: false));
+    // The preview reads the prescription and is refused, as on the server.
+    when(
+      () => harness.repository.loadPrescription(
+        any(),
+        preferCache: any(named: 'preferCache'),
+      ),
+    ).thenThrow(StateError('prescription_missing'));
+    when(() => harness.repository.prepareFallbackPrescription(41)).thenAnswer(
+      (_) async => LoadedValue(value: fixturePrescription, fromCache: false),
+    );
+    when(
+      () => harness.workoutRepository.start(
+        prescription: any(named: 'prescription'),
+        planRunId: any(named: 'planRunId'),
+        allowMissingLoads: any(named: 'allowMissingLoads'),
+      ),
+    ).thenAnswer((_) async => 'workout-1');
+
+    await tester.pumpWidget(harness.app(const HomeScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start with plan targets'));
+    await tester.pumpAndSettle();
+
+    verify(() => harness.repository.prepareFallbackPrescription(41)).called(1);
+    verify(
+      () => harness.workoutRepository.start(
+        prescription: fixturePrescription,
+        planRunId: 2,
+        allowMissingLoads: true,
+      ),
+    ).called(1);
+    expect(find.text('Focus'), findsOneWidget);
+  });
+
+  testWidgets('a start goes straight into the workout', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    harness.stubContext((_) => workoutContext());
+    final started = Completer<String>();
+    when(
+      () => harness.workoutRepository.start(
+        prescription: any(named: 'prescription'),
+        planRunId: any(named: 'planRunId'),
+        allowMissingLoads: any(named: 'allowMissingLoads'),
+      ),
+    ).thenAnswer((_) {
+      // The new row reaches the database, and Home, before start returns.
+      harness.streamWorkout(startedLegs());
+      return started.future;
+    });
+
+    await tester.pumpWidget(harness.app(const HomeScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start workout'));
+    await tester.pump();
+    await tester.pump();
+
+    // Home keeps the start card, still in progress, rather than flashing
+    // its resume card on the way into the workout.
+    expect(find.text('Resume workout'), findsNothing);
+    expect(find.text('Start workout'), findsOneWidget);
+
+    started.complete('workout-1');
+    await tester.pump();
+    // Mid-transition, Home leaves exactly as it was.
+    for (var frame = 0; frame < 10; frame++) {
+      await tester.pump(const Duration(milliseconds: 30));
+      expect(find.text('Resume workout', skipOffstage: false), findsNothing);
+    }
+    await tester.pumpAndSettle();
+
+    expect(find.text('Focus'), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.text('Focus')),
+    );
+    expect(container.read(workoutLaunchProvider), isFalse);
+
+    // Back on Home, the running workout is offered to resume.
+    GoRouter.of(tester.element(find.text('Focus'))).go('/');
+    await tester.pumpAndSettle();
+    expect(find.text('Resume workout'), findsOneWidget);
+  });
+
+  testWidgets('the workout opens once the new workout can be shown', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    harness.stubContext((_) => workoutContext());
+    // The start returns before the active-workout stream reports it.
+    when(
+      () => harness.workoutRepository.start(
+        prescription: any(named: 'prescription'),
+        planRunId: any(named: 'planRunId'),
+        allowMissingLoads: any(named: 'allowMissingLoads'),
+      ),
+    ).thenAnswer((_) async => 'workout-1');
+
+    await tester.pumpWidget(harness.app(const HomeScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start workout'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Focus'), findsNothing);
+
+    harness.streamWorkout(startedLegs());
+    // Promptly, well before the two-second fallback.
+    for (var frame = 0; frame < 10; frame++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(find.text('Focus'), findsOneWidget);
   });
 }

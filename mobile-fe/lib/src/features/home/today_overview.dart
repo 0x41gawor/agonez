@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../api/context_models.dart';
+import '../../api/prescription_models.dart';
 import '../../api/wire_enums.dart';
 import '../../api/workout_models.dart';
 import '../../app/app_providers.dart';
@@ -53,39 +55,109 @@ class _TodayOverviewState extends ConsumerState<TodayOverview> {
   int? _startingSession;
   bool _claiming = false;
 
+  /// The launch this overview began; see [workoutLaunchProvider].
+  WorkoutLaunch? _launch;
+
+  void _beginLaunch() {
+    final launch = ref.read(workoutLaunchProvider.notifier)..begin();
+    _launch = launch;
+  }
+
+  void _endLaunch() {
+    _launch?.end();
+    _launch = null;
+  }
+
+  @override
+  void dispose() {
+    // Opening the workout replaces the screens around this overview. They
+    // keep their pre-start look through their exit transition, and the
+    // launch ends only now that they are gone.
+    final launch = _launch;
+    if (launch != null) scheduleMicrotask(launch.end);
+    super.dispose();
+  }
+
+  /// Waits until the workout screen can draw [workoutId] on its first frame,
+  /// as it does on resume: the active-workout stream reports the workout and
+  /// its exercises and sets are loaded. Opened earlier, the screen shows a
+  /// loading spinner for a few frames. After two seconds, or on a failure the
+  /// screen reports itself, the workout opens anyway.
+  ///
+  /// The providers are listened to rather than read: Riverpod pauses a
+  /// provider nobody listens to, and a paused stream never delivers.
+  Future<void> _untilShowable(
+    ProviderContainer container,
+    String workoutId,
+  ) async {
+    final subscriptions = <ProviderSubscription<Object?>>[];
+    Future<void> until<T>(
+      ProviderListenable<AsyncValue<T>> provider,
+      bool Function(AsyncValue<T> value) ready,
+    ) {
+      final done = Completer<void>();
+      subscriptions.add(
+        container.listen<AsyncValue<T>>(provider, (_, next) {
+          if (ready(next) && !done.isCompleted) done.complete();
+        }, fireImmediately: true),
+      );
+      return done.future;
+    }
+
+    try {
+      await Future.wait([
+        until(
+          activeWorkoutProvider,
+          (value) => value.value?.workoutId == workoutId,
+        ),
+        until(
+          workoutExercisesProvider(workoutId),
+          (value) => value.hasValue || value.hasError,
+        ),
+        until(
+          workoutSetsProvider(workoutId),
+          (value) => value.hasValue || value.hasError,
+        ),
+      ]).timeout(const Duration(seconds: 2));
+    } on TimeoutException {
+      // Open it anyway.
+    } finally {
+      for (final subscription in subscriptions) {
+        subscription.close();
+      }
+    }
+  }
+
   Future<void> _startWorkout(SessionSummary session) async {
     if (_startingSession != null) return;
     setState(() => _startingSession = session.sessionId);
     final strings = AppLocalizations.of(context);
+    final router = GoRouter.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
+    _beginLaunch();
     try {
       final runtime = ref.read(appRuntimeProvider);
-      final loaded = await runtime.mobileRepository.loadPrescription(
-        session.sessionId,
-      );
+      final start = await _prescriptionToStart(session);
       final selected = await runtime.mobileRepository.selectedPlanRunId();
-      final missingLoads = loaded.value.exercises.any(
-        (exercise) => exercise.sets.any((set) => set.prescribedLoadKg == null),
-      );
-      await runtime.workoutRepository.start(
-        prescription: loaded.value,
+      final workoutId = await runtime.workoutRepository.start(
+        prescription: start.prescription,
         planRunId: selected,
-        allowMissingLoads:
-            missingLoads ||
-            session.prescription.readiness ==
-                PrescriptionReadinessStatus.missing,
+        allowMissingLoads: start.allowMissingLoads,
       );
-      if (!mounted) return;
-      context.go('/focus');
+      await _untilShowable(container, workoutId);
+      // The button keeps its progress while this screen leaves.
+      router.go('/focus');
     } on Object catch (error) {
+      _endLaunch();
       if (!mounted) return;
+      setState(() => _startingSession = null);
       _showError(userFacingError(error, strings));
-    } finally {
-      if (mounted) setState(() => _startingSession = null);
     }
   }
 
   Future<void> _openPicker(MobileContext value) async {
     final runtime = ref.read(appRuntimeProvider);
+    final router = GoRouter.of(context);
     final expected = value.expectedSession;
     final started = await showModalBottomSheet<bool>(
       context: context,
@@ -101,7 +173,7 @@ class _TodayOverviewState extends ConsumerState<TodayOverview> {
             _startOffSchedule(session, expected: expected),
       ),
     );
-    if (started == true && mounted) context.go('/focus');
+    if (started == true) router.go('/focus');
   }
 
   /// Starts a unit other than today's. The server decides how the plan run
@@ -112,24 +184,46 @@ class _TodayOverviewState extends ConsumerState<TodayOverview> {
     required SessionSummary? expected,
   }) async {
     final runtime = ref.read(appRuntimeProvider);
-    final loaded = await runtime.mobileRepository.loadPrescription(
-      session.sessionId,
-    );
+    final container = ProviderScope.containerOf(context, listen: false);
+    _beginLaunch();
+    try {
+      final start = await _prescriptionToStart(session);
+      final workoutId = await runtime.workoutRepository.startAfterServerAccepts(
+        prescription: start.prescription,
+        send: runtime.api.startWorkout,
+        planRunId: await runtime.mobileRepository.selectedPlanRunId(),
+        allowMissingLoads: start.allowMissingLoads,
+        offSchedule: OffSchedule(
+          acknowledged: true,
+          selectedFrom: 'picker',
+          expectedSessionId: expected?.sessionId,
+        ),
+      );
+      await _untilShowable(container, workoutId);
+    } on Object {
+      _endLaunch();
+      rethrow;
+    }
+  }
+
+  /// The prescription a start sends, and whether the server must accept it
+  /// without resolved loads. A session whose prescription is not ready is
+  /// first completed from plan targets on the server; the athlete then
+  /// enters the loads during the workout.
+  Future<({WorkoutPrescription prescription, bool allowMissingLoads})>
+  _prescriptionToStart(SessionSummary session) async {
+    final repository = ref.read(appRuntimeProvider).mobileRepository;
+    final ready =
+        session.prescription.readiness == PrescriptionReadinessStatus.ready;
+    final loaded = ready
+        ? await repository.loadPrescription(session.sessionId)
+        : await repository.prepareFallbackPrescription(session.sessionId);
     final missingLoads = loaded.value.exercises.any(
       (exercise) => exercise.sets.any((set) => set.prescribedLoadKg == null),
     );
-    await runtime.workoutRepository.startAfterServerAccepts(
+    return (
       prescription: loaded.value,
-      send: runtime.api.startWorkout,
-      planRunId: await runtime.mobileRepository.selectedPlanRunId(),
-      allowMissingLoads:
-          missingLoads ||
-          session.prescription.readiness == PrescriptionReadinessStatus.missing,
-      offSchedule: OffSchedule(
-        acknowledged: true,
-        selectedFrom: 'picker',
-        expectedSessionId: expected?.sessionId,
-      ),
+      allowMissingLoads: missingLoads || !ready,
     );
   }
 
@@ -180,16 +274,21 @@ class _TodayOverviewState extends ConsumerState<TodayOverview> {
     if (_claiming) return;
     setState(() => _claiming = true);
     final strings = AppLocalizations.of(context);
+    final router = GoRouter.of(context);
+    final container = ProviderScope.containerOf(context, listen: false);
+    _beginLaunch();
     try {
       await ref
           .read(appRuntimeProvider)
           .workoutRecoveryRepository
           .claim(workoutId);
-      if (mounted) context.go('/focus');
+      await _untilShowable(container, workoutId);
+      router.go('/focus');
     } on Object catch (error) {
-      if (mounted) _showError(userFacingError(error, strings));
-    } finally {
-      if (mounted) setState(() => _claiming = false);
+      _endLaunch();
+      if (!mounted) return;
+      setState(() => _claiming = false);
+      _showError(userFacingError(error, strings));
     }
   }
 
