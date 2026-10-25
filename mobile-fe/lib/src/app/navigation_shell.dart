@@ -60,14 +60,19 @@ class AgonezNavigationShell extends ConsumerWidget {
                 selectedIcon: const Icon(Icons.home_rounded),
                 label: strings.navHome,
               ),
-              NavigationDestination(
-                icon: Badge(
-                  isLabelVisible: active != null,
-                  smallSize: 6,
-                  child: const Icon(Icons.fitness_center_outlined),
+              // The badge says a workout is running; screen readers hear it
+              // as the tab's value, after its name.
+              Semantics(
+                value: active != null ? strings.navWorkoutActive : null,
+                child: NavigationDestination(
+                  icon: Badge(
+                    isLabelVisible: active != null,
+                    smallSize: 6,
+                    child: const Icon(Icons.fitness_center_outlined),
+                  ),
+                  selectedIcon: const Icon(Icons.fitness_center_rounded),
+                  label: strings.navWorkout,
                 ),
-                selectedIcon: const Icon(Icons.fitness_center_rounded),
-                label: strings.navWorkout,
               ),
               NavigationDestination(
                 icon: const Icon(Icons.menu_book_outlined),

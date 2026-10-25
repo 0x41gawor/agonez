@@ -170,11 +170,11 @@ abstract class AppLocalizations {
   /// **'You'**
   String get navYou;
 
-  /// No description provided for @navWorkoutActiveA11y.
+  /// No description provided for @navWorkoutActive.
   ///
   /// In en, this message translates to:
-  /// **'Workout, active'**
-  String get navWorkoutActiveA11y;
+  /// **'active'**
+  String get navWorkoutActive;
 
   /// No description provided for @homeToday.
   ///
@@ -222,6 +222,18 @@ abstract class AppLocalizations {
     String before,
     String after,
   );
+
+  /// No description provided for @homePrescriptionChangedMore.
+  ///
+  /// In en, this message translates to:
+  /// **'(+{count} more)'**
+  String homePrescriptionChangedMore(int count);
+
+  /// No description provided for @homePrescriptionChangedNewUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'The new version will be used.'**
+  String get homePrescriptionChangedNewUsed;
 
   /// No description provided for @homeExercisesLabel.
   ///

@@ -17,9 +17,12 @@ import '../../design/design.dart';
 import '../../errors/user_error_mapper.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/hold_to_confirm.dart';
+import '../../workout/load_format.dart';
 import 'done_today.dart';
 import 'exercise_summary.dart';
 import 'microcycle_strip.dart';
+import 'plan_run_picker.dart';
+import 'prescription_changes.dart';
 import 'workout_unit_picker.dart';
 
 /// What can be trained today: the active or expected session with its start
@@ -672,13 +675,13 @@ class _DoneTodayCard extends StatelessWidget {
   }
 }
 
-class _EmptyToday extends StatelessWidget {
+class _EmptyToday extends ConsumerWidget {
   const _EmptyToday({required this.contextValue});
 
   final MobileContext contextValue;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppLocalizations.of(context);
     final noRun =
         contextValue.planRun == null || contextValue.selectionRequired;
@@ -694,6 +697,17 @@ class _EmptyToday extends StatelessWidget {
                 : strings.homeRestDayExplanation,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
+          if (noRun) ...[
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: () => choosePlanRun(
+                context,
+                ref,
+                currentRunId: contextValue.planRun?.id,
+              ),
+              child: Text(strings.homeNoRunChoose),
+            ),
+          ],
         ],
       ),
     );
@@ -738,7 +752,7 @@ class _ExerciseList extends ConsumerStatefulWidget {
 }
 
 class _ExerciseListState extends ConsumerState<_ExerciseList> {
-  late Future<List<ExerciseSummary>?> _summaries = _load();
+  late Future<_Preview?> _summaries = _load();
 
   @override
   void didUpdateWidget(covariant _ExerciseList oldWidget) {
@@ -750,7 +764,7 @@ class _ExerciseListState extends ConsumerState<_ExerciseList> {
     }
   }
 
-  Future<List<ExerciseSummary>?> _load() async {
+  Future<_Preview?> _load() async {
     final repository = ref.read(appRuntimeProvider).mobileRepository;
     final session = widget.session;
     final version = session.prescription.prescriptionVersion;
@@ -759,13 +773,22 @@ class _ExerciseListState extends ConsumerState<_ExerciseList> {
         session.sessionId,
         preferCache: version != null,
       );
+      // A cached copy of another version is the one the athlete last saw.
+      WorkoutPrescription? lastSeen;
       if (version != null && loaded.value.prescriptionVersion != version) {
+        if (loaded.fromCache) lastSeen = loaded.value;
         loaded = await repository.loadPrescription(session.sessionId);
       }
-      return [
-        for (final exercise in loaded.value.exercises)
-          ExerciseSummary.of(exercise),
-      ];
+      final changes = lastSeen == null
+          ? null
+          : PrescriptionChanges.between(lastSeen, loaded.value);
+      return (
+        rows: [
+          for (final exercise in loaded.value.exercises)
+            ExerciseSummary.of(exercise),
+        ],
+        changes: changes == null || changes.isEmpty ? null : changes,
+      );
     } on Object {
       // Not prescribed yet, or offline without a copy: the card's counts and
       // explanation stand on their own.
@@ -777,10 +800,11 @@ class _ExerciseListState extends ConsumerState<_ExerciseList> {
   Widget build(BuildContext context) {
     final colors = context.agonezColors;
     final textTheme = Theme.of(context).textTheme;
-    return FutureBuilder<List<ExerciseSummary>?>(
+    return FutureBuilder<_Preview?>(
       future: _summaries,
       builder: (context, snapshot) {
-        final rows = snapshot.data ?? const <ExerciseSummary>[];
+        final rows = snapshot.data?.rows ?? const <ExerciseSummary>[];
+        final changes = snapshot.data?.changes;
         return AnimatedSize(
           duration: AgonezDurations.standard,
           alignment: Alignment.topCenter,
@@ -790,6 +814,10 @@ class _ExerciseListState extends ConsumerState<_ExerciseList> {
                   padding: const EdgeInsets.only(top: 14),
                   child: Column(
                     children: [
+                      if (changes != null) ...[
+                        _ChangedBanner(changes: changes),
+                        const SizedBox(height: 8),
+                      ],
                       for (final (index, row) in rows.indexed)
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 7),
@@ -845,6 +873,84 @@ class _ExerciseListState extends ConsumerState<_ExerciseList> {
                 ),
         );
       },
+    );
+  }
+}
+
+/// The Today card's exercise rows, and how the prescription changed since
+/// the athlete last saw it.
+typedef _Preview = ({List<ExerciseSummary> rows, PrescriptionChanges? changes});
+
+/// "Prescription changed: Bench Press, set 3 · 65 → 67.5 kg (+2 more). The
+/// new version will be used." Shown once a newer version replaces the one
+/// the athlete last saw on this card.
+class _ChangedBanner extends StatelessWidget {
+  const _ChangedBanner({required this.changes});
+
+  final PrescriptionChanges changes;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final colors = context.agonezColors;
+    final textTheme = Theme.of(context).textTheme;
+    final first = changes.loads.firstOrNull;
+    final more = changes.loads.length + changes.other - (first == null ? 0 : 1);
+    String load(double? value) => value == null ? '—' : formatLoad(value);
+    final strong = TextStyle(
+      fontWeight: FontWeight.w600,
+      color: colors.textPrimary,
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.caution.withValues(alpha: .08),
+        border: Border.all(color: colors.caution.withValues(alpha: .45)),
+        borderRadius: AgonezRadii.buttonBorder,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(Icons.info_outline, size: 18, color: colors.caution),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                style: textTheme.bodySmall?.copyWith(
+                  color: colors.textSecondary,
+                  height: 1.45,
+                ),
+                children: [
+                  TextSpan(
+                    text: strings.homePrescriptionChanged,
+                    style: strong,
+                  ),
+                  if (first != null) ...[
+                    const TextSpan(text: ': '),
+                    TextSpan(
+                      text: strings.homePrescriptionChangedDetail(
+                        first.exerciseName,
+                        first.setNumber,
+                        load(first.before),
+                        load(first.after),
+                      ),
+                      style: strong,
+                    ),
+                  ],
+                  if (more > 0)
+                    TextSpan(
+                      text: ' ${strings.homePrescriptionChangedMore(more)}',
+                    ),
+                  TextSpan(text: '. ${strings.homePrescriptionChangedNewUsed}'),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

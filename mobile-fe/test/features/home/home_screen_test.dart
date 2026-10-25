@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:agonez/src/api/context_models.dart';
+import 'package:agonez/src/api/prescription_models.dart';
 import 'package:agonez/src/data/mobile_repository.dart';
 import 'package:agonez/src/features/home/home_screen.dart';
 import 'package:agonez/src/features/home/today_overview.dart';
@@ -178,6 +179,139 @@ void main() {
     expect(find.textContaining('18 of 20 sets · finished'), findsOneWidget);
     expect(find.text('Chest + Back · tomorrow'), findsOneWidget);
     expect(find.text('REST DAY'), findsNothing);
+  });
+
+  testWidgets('a newer prescription than the one last seen is flagged', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(430, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    harness.stubContext((_) => workoutContext());
+    PrescriptionSet set(int ordinal, double load) => PrescriptionSet(
+      setPrescriptionId: 500 + ordinal,
+      ordinal: ordinal,
+      role: 'working',
+      prescribedLoadKg: load,
+      repMin: 6,
+      repMax: 8,
+      targetRir: 2,
+      comment: null,
+    );
+    // The card last showed rx-40; analysis has since produced rx-41.
+    when(
+      () => harness.repository.loadPrescription(41, preferCache: true),
+    ).thenAnswer(
+      (_) async => LoadedValue(
+        value: prescriptionWith([
+          set(0, 80),
+          set(1, 80),
+          set(2, 65),
+        ], version: 'rx-40'),
+        fromCache: true,
+      ),
+    );
+    when(() => harness.repository.loadPrescription(41)).thenAnswer(
+      (_) async => LoadedValue(
+        value: prescriptionWith([
+          set(0, 80),
+          set(1, 82.5),
+          set(2, 67.5),
+        ], version: 'rx-41'),
+        fromCache: false,
+      ),
+    );
+
+    await tester.pumpWidget(harness.app(const HomeScreen()));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining(
+        'Prescription changed: Barbell squat, set 2 · 80 → 82.5 kg (+1 more). '
+        'The new version will be used.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('without a plan run the card offers to choose one', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    harness.selectedPlanRunId = null;
+    harness.stubContext(
+      (_) => MobileContext(
+        generatedAt: DateTime.utc(2026, 10, 19, 8),
+        contextVersion: 'none',
+        planRun: null,
+        selectionRequired: true,
+        today: null,
+        microcycleDays: const [],
+        expectedSession: null,
+        alternatives: const [],
+        fallbacks: const [],
+        activeWorkout: null,
+        recent: const [],
+      ),
+    );
+    when(harness.repository.listPlanRuns).thenAnswer(
+      (_) async => const [
+        PlanRunCompact(
+          id: 2,
+          name: 'Filip Majka',
+          status: 'active',
+          startsOn: '2026-10-19',
+          endsOn: '2026-12-13',
+          microcycleCount: 8,
+          currentMicrocycleOrdinal: 1,
+        ),
+      ],
+    );
+    when(() => harness.repository.selectPlanRun(2)).thenAnswer((_) async {});
+
+    await tester.pumpWidget(harness.app(const HomeScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Choose plan run'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Filip Majka'));
+    await tester.pumpAndSettle();
+
+    verify(() => harness.repository.selectPlanRun(2)).called(1);
+  });
+
+  testWidgets('the header names the run the server settled on', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    // Whatever is chosen, the server answers with Filip Majka, as it does
+    // when the chosen run was deleted in the meantime.
+    harness.stubContext((_) => workoutContext());
+    when(harness.repository.listPlanRuns).thenAnswer(
+      (_) async => const [
+        PlanRunCompact(
+          id: 1,
+          name: 'Execution Demo',
+          status: 'active',
+          startsOn: '2026-09-01',
+          endsOn: '2026-10-26',
+          microcycleCount: 8,
+          currentMicrocycleOrdinal: 8,
+        ),
+      ],
+    );
+    when(() => harness.repository.selectPlanRun(1)).thenAnswer((_) async {});
+
+    await tester.pumpWidget(harness.app(const HomeScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-plan-run')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Execution Demo'));
+    await tester.pumpAndSettle();
+
+    final chip = find.byKey(const Key('home-plan-run'));
+    expect(
+      find.descendant(of: chip, matching: find.text('Filip Majka')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the header names the run and the sheet marks it', (

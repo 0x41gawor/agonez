@@ -126,3 +126,42 @@ const emptyCompletionSummary = CompletionSummary(
   addedExercises: 0,
   reordered: false,
 );
+
+/// [fixturePrescription] with its one exercise given [sets].
+WorkoutPrescription prescriptionWith(
+  List<PrescriptionSet> sets, {
+  String version = 'prescription-v1',
+  int? exercisePrescriptionId,
+  ExerciseIdentity? exercise,
+}) {
+  final base = fixturePrescriptionExercise;
+  return WorkoutPrescription(
+    sessionId: fixturePrescription.sessionId,
+    prescriptionId: fixturePrescription.prescriptionId,
+    prescriptionVersion: version,
+    workoutUnitName: fixturePrescription.workoutUnitName,
+    workoutTrackId: fixturePrescription.workoutTrackId,
+    microcycle: fixturePrescription.microcycle,
+    planComment: null,
+    prescriptionComment: null,
+    exercises: [
+      PrescriptionExercise(
+        exercisePrescriptionId:
+            exercisePrescriptionId ?? base.exercisePrescriptionId,
+        ordinal: base.ordinal,
+        exerciseTrackId: base.exerciseTrackId,
+        slot: base.slot,
+        exercise: exercise ?? base.exercise,
+        variantLabel: null,
+        planComment: null,
+        prescriptionComment: null,
+        loadStepKg: base.loadStepKg,
+        defaultRestS: base.defaultRestS,
+        sets: sets,
+        alternatives: const [],
+        history: base.history,
+        atlasPeek: base.atlasPeek,
+      ),
+    ],
+  );
+}

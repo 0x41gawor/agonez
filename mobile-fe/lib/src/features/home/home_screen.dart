@@ -14,6 +14,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../storage/app_database.dart';
 import '../../widgets/agonez_emblem.dart';
 import '../../widgets/rest_countdown_text.dart';
+import 'plan_run_picker.dart';
 import 'today_overview.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -24,42 +25,19 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  /// The run just chosen in the sheet, named in the header while its
-  /// context loads.
-  PlanRunCompact? _switchingTo;
-
-  Future<void> _selectRun(int? currentRunId) async {
-    final runtime = ref.read(appRuntimeProvider);
-    if (await runtime.database.activeWorkout() != null || !mounted) return;
-    // Runs come and go on desktop; the sheet keeps the last list on screen
-    // while the current one loads.
-    ref.invalidate(planRunsProvider);
-    final selected = await showModalBottomSheet<PlanRunCompact>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => _PlanRunSheet(selectedId: currentRunId),
-    );
-    if (selected == null || selected.id == currentRunId || !mounted) return;
-    setState(() => _switchingTo = selected);
-    await runtime.mobileRepository.selectPlanRun(selected.id);
-    ref.invalidate(planRunsProvider);
-    ref.invalidate(mobileContextProvider, asReload: true);
-  }
-
   @override
   Widget build(BuildContext context) {
     final active = ref.watch(activeWorkoutProvider);
     // A launch leaves Home as it was when the workout was started.
     final workout = ref.watch(workoutLaunchProvider) ? null : active.value;
-    final shown = ref
-        .watch(
-          mobileContextProvider(Localizations.localeOf(context).languageCode),
-        )
-        .value
-        ?.value;
-    final switchingTo = _switchingTo;
-    final switching =
-        switchingTo != null && shown?.planRun?.id != switchingTo.id;
+    final contextState = ref.watch(
+      mobileContextProvider(Localizations.localeOf(context).languageCode),
+    );
+    final shown = contextState.value?.value;
+    // The chosen run is named only while its context loads. Afterwards the
+    // context names the run, also when the server followed another one.
+    final switchingTo = ref.watch(switchingPlanRunProvider);
+    final switching = switchingTo != null && contextState.isLoading;
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
@@ -72,7 +50,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   runName: switching ? switchingTo.name : shown?.planRun?.name,
                   contextValue: switching ? null : shown,
                   onPlanRunPressed: workout == null
-                      ? () => _selectRun(shown?.planRun?.id)
+                      ? () => choosePlanRun(
+                          context,
+                          ref,
+                          currentRunId: shown?.planRun?.id,
+                        )
                       : null,
                 ),
               ),
@@ -304,114 +286,6 @@ class _LocalActiveCard extends ConsumerWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _PlanRunSheet extends ConsumerWidget {
-  const _PlanRunSheet({required this.selectedId});
-
-  /// The run Home currently shows; picking it again just closes the sheet.
-  final int? selectedId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final strings = AppLocalizations.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: AgonezInsets.sheetBody,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const AgonezSheetHandle(),
-            Text(
-              strings.runSheetTitle,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 12),
-            ref
-                .watch(planRunsProvider)
-                .when(
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(28),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (_, _) => Text(strings.errorNetworkUnavailable),
-                  data: (runs) => Flexible(
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: [
-                        for (final run in runs)
-                          _PlanRunRow(
-                            run: run,
-                            selected: run.id == selectedId,
-                            onTap: () => Navigator.pop(
-                              context,
-                              run.id == selectedId ? null : run,
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        Text(
-                          strings.runRememberedHint,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// One run in the sheet. The selected run is tinted gold and checked, as in
-/// the design, so the current choice is clear before changing it.
-class _PlanRunRow extends StatelessWidget {
-  const _PlanRunRow({
-    required this.run,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final PlanRunCompact run;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final strings = AppLocalizations.of(context);
-    final colors = context.agonezColors;
-    return ListTile(
-      selected: selected,
-      selectedTileColor: colors.goldSoft,
-      selectedColor: colors.goldText,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-      shape: const RoundedRectangleBorder(
-        borderRadius: AgonezRadii.controlBorder,
-      ),
-      title: Text(run.name),
-      subtitle: Text(
-        '${run.startsOn} — ${run.endsOn}',
-        style: TextStyle(color: colors.textMuted),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (selected) ...[
-            Icon(Icons.check_rounded, size: 20, color: colors.goldText),
-            const SizedBox(width: 8),
-          ],
-          AgonezTag(
-            label: run.status == 'active'
-                ? strings.runActive
-                : strings.runCompleted,
-          ),
-        ],
-      ),
-      onTap: onTap,
     );
   }
 }

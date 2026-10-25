@@ -13,7 +13,7 @@
   "navWorkout": "Workout",
   "navAtlas": "Atlas",
   "navYou": "You",
-  "navWorkoutActiveA11y": "Workout, active",
+  "navWorkoutActive": "active",
 
   "homeToday": "Today",
   "homeRestDay": "Rest day",
@@ -30,6 +30,9 @@
       "after": {"type": "String"}
     }
   },
+  "homePrescriptionChangedMore": "(+{count} more)",
+  "@homePrescriptionChangedMore": {"placeholders": {"count": {"type": "int"}}},
+  "homePrescriptionChangedNewUsed": "The new version will be used.",
   "homeExercisesLabel": "exercises",
   "homeSetsLabel": "sets",
   "homeMinutesLabel": "min",

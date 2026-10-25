@@ -13,7 +13,7 @@
   "navWorkout": "Trening",
   "navAtlas": "Atlas",
   "navYou": "Ty",
-  "navWorkoutActiveA11y": "Trening, aktywny",
+  "navWorkoutActive": "aktywny",
 
   "homeToday": "Dzisiaj",
   "homeRestDay": "Dzień odpoczynku",
@@ -22,6 +22,8 @@
   "homePrescriptionNotReadyExplanation": "Analiza po treningu nie wyznaczyła jeszcze obciążeń dla tej sesji.",
   "homePrescriptionChanged": "Zalecenia się zmieniły",
   "homePrescriptionChangedDetail": "{exercise}, seria {setNumber} · {before} → {after} kg",
+  "homePrescriptionChangedMore": "(+{count} więcej)",
+  "homePrescriptionChangedNewUsed": "Zostanie użyta nowa wersja.",
   "homeExercisesLabel": "ćwiczeń",
   "homeSetsLabel": "serii",
   "homeMinutesLabel": "min",

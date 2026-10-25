@@ -45,7 +45,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navYou => 'You';
 
   @override
-  String get navWorkoutActiveA11y => 'Workout, active';
+  String get navWorkoutActive => 'active';
 
   @override
   String get homeToday => 'Today';
@@ -75,6 +75,14 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return '$exercise, set $setNumber · $before → $after kg';
   }
+
+  @override
+  String homePrescriptionChangedMore(int count) {
+    return '(+$count more)';
+  }
+
+  @override
+  String get homePrescriptionChangedNewUsed => 'The new version will be used.';
 
   @override
   String get homeExercisesLabel => 'exercises';
