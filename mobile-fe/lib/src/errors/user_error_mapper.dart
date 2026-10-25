@@ -10,6 +10,12 @@ String userFacingError(Object error, AppLocalizations strings) {
       'session_not_startable' => strings.errorSessionNotStartable,
       'prescription_missing' => strings.errorPrescriptionMissing,
       'off_schedule_not_supported' => strings.errorOffScheduleNotSupported,
+      // The app's view of today was out of date when the choice was made.
+      'off_schedule_acknowledgement_required' ||
+      'schedule_changed' => strings.errorScheduleChanged,
+      'off_schedule_not_applicable' => strings.errorOffScheduleNotApplicable,
+      'not_next_track_exposure' => strings.errorNotNextTrackExposure,
+      'fallback_unavailable' => strings.errorFallbackUnavailable,
       'seq_gap' => strings.errorSequenceGap,
       'seq_mismatch' => strings.errorSequenceMismatch,
       'superseded' => strings.errorSuperseded,

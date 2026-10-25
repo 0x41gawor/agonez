@@ -148,7 +148,9 @@ class _WorkoutUnitPickerSheetState extends State<WorkoutUnitPickerSheet> {
       PickerUnitKind.done => Text(strings.pickerDoneExplanation, style: hint),
       PickerUnitKind.offSchedule => _WhyBox(
         lead: strings.pickerNotScheduledToday(unit.name),
-        body: strings.pickerOffScheduleRules,
+        body: unit.session?.relation == SessionRelation.earlierMissed
+            ? strings.pickerOffScheduleMissed
+            : strings.pickerOffScheduleEarly,
       ),
       PickerUnitKind.fallback => _WhyBox(body: strings.pickerFallbackFuture),
     };

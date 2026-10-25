@@ -702,6 +702,10 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
 /// this route opens. The screen therefore leaves for the Workout tab only
 /// once the database confirms that no workout is active; otherwise the
 /// stream catches up and replaces this placeholder with the workout.
+///
+/// A finished workout also ends up here once it syncs, often while the
+/// screen is already on its way to the workout summary. It stays put then:
+/// once the route is no longer current, someone else has chosen where to go.
 class _LeaveWithoutWorkout extends ConsumerStatefulWidget {
   const _LeaveWithoutWorkout();
 
@@ -719,7 +723,8 @@ class _LeaveWithoutWorkoutState extends ConsumerState<_LeaveWithoutWorkout> {
 
   Future<void> _leaveUnlessActive() async {
     final active = await ref.read(appRuntimeProvider).database.activeWorkout();
-    if (active == null && mounted) context.go('/workout');
+    if (active != null || !mounted) return;
+    if (ModalRoute.of(context)?.isCurrent ?? true) context.go('/workout');
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:agonez/src/api/agonez_api_client.dart';
 import 'package:agonez/src/api/context_models.dart';
 import 'package:agonez/src/api/wire_enums.dart';
 import 'package:agonez/src/app/app_providers.dart';
@@ -28,6 +29,8 @@ class MockAppSettingsController extends Mock implements AppSettingsController {}
 
 class MockWorkoutRepository extends Mock implements WorkoutRepository {}
 
+class MockApiClient extends Mock implements AgonezApiClient {}
+
 /// A runtime for screens built on today's context: no active workout, plan
 /// run 2 selected and [fixturePrescription] behind every session. Tests
 /// stub `loadContext` themselves through [stubContext].
@@ -36,6 +39,7 @@ class TodayHarness {
     when(() => runtime.mobileRepository).thenReturn(repository);
     when(() => runtime.database).thenReturn(database);
     when(() => runtime.workoutRepository).thenReturn(workoutRepository);
+    when(() => runtime.api).thenReturn(api);
     when(() => runtime.settings).thenReturn(settings);
     when(() => runtime.contextRefreshes).thenReturn(contextRefreshes);
     when(() => settings.locale).thenReturn(const Locale('en'));
@@ -69,6 +73,7 @@ class TodayHarness {
   final database = MockAppDatabase();
   final settings = MockAppSettingsController();
   final workoutRepository = MockWorkoutRepository();
+  final api = MockApiClient();
   final contextRefreshes = StreamController<int>.broadcast();
   int? selectedPlanRunId = 2;
 

@@ -82,6 +82,29 @@ void main() {
     expect(finish.toJson()['acknowledged_incomplete'], isTrue);
   });
 
+  test('an off-schedule start names the next-track-exposure mode', () {
+    final start = StartWorkout(
+      workoutId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      sessionId: 415,
+      prescriptionVersion: 'rx-415-deadbeef1234',
+      startedAt: DateTime.utc(2026, 10, 9, 15, 29, 11),
+      offSchedule: const OffSchedule(
+        acknowledged: true,
+        selectedFrom: 'picker',
+        expectedSessionId: 414,
+      ),
+    );
+
+    expect(start.toJson()['off_schedule'], {
+      'mode': 'next_track_exposure',
+      'acknowledged': true,
+      'selected_from': 'picker',
+      'expected_session_id': 414,
+    });
+    final decoded = StartWorkout.fromJson(start.toJson());
+    expect(decoded.offSchedule?.mode, OffScheduleMode.nextTrackExposure);
+  });
+
   test('error envelope preserves stable code and arbitrary details', () {
     final envelope = ApiErrorEnvelope.fromJson(<String, Object?>{
       'error': <String, Object?>{

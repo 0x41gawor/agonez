@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:agonez/src/features/workout/active_workout_focus_screen.dart';
+import 'package:agonez/src/storage/app_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
 
 import '../../support/today_fixtures.dart';
 
@@ -39,5 +44,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Workout tab'), findsOneWidget);
+  });
+
+  testWidgets('a summary already on its way is not overridden', (tester) async {
+    // The workout finished and synced; the database read is still running.
+    final read = Completer<LocalWorkout?>();
+    when(harness.database.activeWorkout).thenAnswer((_) => read.future);
+    await tester.pumpWidget(
+      harness.app(
+        const Scaffold(body: Text('Summary')),
+        focus: const ActiveWorkoutFocusScreen(),
+        initialLocation: '/focus',
+      ),
+    );
+    await tester.pump();
+
+    // The finish sends the athlete to the summary first.
+    GoRouter.of(tester.element(find.byType(ActiveWorkoutFocusScreen))).go('/');
+    await tester.pump();
+    read.complete(null);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Summary'), findsOneWidget);
+    expect(find.text('Workout tab'), findsNothing);
   });
 }

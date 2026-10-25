@@ -207,6 +207,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get runSheetTitle => 'Plan run';
 
   @override
+  String runChipMicrocycle(int current, int total) {
+    return 'MC $current/$total';
+  }
+
+  @override
   String get runContext => 'Context';
 
   @override
@@ -272,8 +277,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pickerOffScheduleRules =>
-      'Training it now changes the planned order of exposures. How the plan run records this (early, replacement or extra exposure) is decided by the scheduling rules — the app will not guess.';
+  String get pickerOffScheduleEarly =>
+      'Training it now does its next planned exposure early. The exposure keeps its place in the plan; the time you actually train is recorded.';
+
+  @override
+  String get pickerOffScheduleMissed =>
+      'Training it now makes up this missed exposure. The exposure keeps its place in the plan; the time you actually train is recorded.';
 
   @override
   String pickerStart(String workout) {
@@ -1214,6 +1223,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorOffScheduleNotSupported =>
       'Off-schedule workout execution is not available yet.';
+
+  @override
+  String get errorScheduleChanged =>
+      'The schedule changed since this list was opened. Close it and choose again.';
+
+  @override
+  String get errorOffScheduleNotApplicable =>
+      'This is now today\'s scheduled workout-unit. Close the list and start it from Home.';
+
+  @override
+  String get errorNotNextTrackExposure =>
+      'An earlier session of this workout-unit is still pending. Close the list and start that one first.';
+
+  @override
+  String get errorFallbackUnavailable =>
+      'Plan targets can\'t be prepared for this workout-unit. Check its plan on desktop.';
 
   @override
   String get errorSequenceGap =>
