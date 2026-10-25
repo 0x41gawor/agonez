@@ -254,12 +254,20 @@ class MicrocycleDay(APIModel):
 
 
 class PrescriptionReadiness(APIModel):
-    readiness: Literal["ready", "missing", "not_applicable"]
+    readiness: Literal["ready", "missing", "not_applicable"] = Field(
+        description=(
+            "'ready' means the prescription covers the complete plan structure of the "
+            "session and can be started as is; 'missing' means it is absent, partial or "
+            "still needs plan-backed fallback preparation before a start."
+        )
+    )
     source: Literal["analysis", "plan_fallback", "hybrid"] | None = None
     prescription_version: str | None = None
     updated_at: datetime | None = None
     exercise_count: int | None = None
     set_count: int | None = None
+    expected_exercise_count: int | None = None
+    expected_set_count: int | None = None
     estimated_duration_min: int | None = None
 
 

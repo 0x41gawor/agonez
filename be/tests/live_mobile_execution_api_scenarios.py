@@ -153,6 +153,37 @@ def find_ready_session(run_id: int) -> tuple[date, dict[str, Any]]:
     raise AssertionError("No ready expected session was found in the 15-day test window")
 
 
+def assert_readiness_implies_startable(run_id: int) -> None:
+    """Every session the context calls ``ready`` must be complete against its plan."""
+    checked = 0
+    for offset in range(15):
+        candidate = START_DATE + timedelta(days=offset)
+        context, _ = expect(
+            "GET", context_path(run_id, candidate), 200, device_id=DEVICE_A
+        )
+        summaries = [context["expected_session"], *context["alternatives"]]
+        for summary in summaries:
+            if summary is None:
+                continue
+            prescription = summary["prescription"]
+            complete = (
+                prescription["exercise_count"] == prescription["expected_exercise_count"]
+                and prescription["set_count"] == prescription["expected_set_count"]
+            )
+            if prescription["readiness"] == "ready":
+                assert complete, (summary["session_id"], prescription)
+                checked += 1
+            elif complete and prescription["exercise_count"]:
+                # Complete but not ready is allowed only for unresolved loads
+                # or for rows that came from a plan fallback.
+                assert prescription["source"] != "analysis", (
+                    summary["session_id"],
+                    prescription,
+                )
+    assert checked, "No ready session was found to verify readiness against"
+    print(f"readiness implies startable: {checked} ready sessions verified")
+
+
 def main() -> None:
     assert os.getenv("MOBILE_API_ALLOW_DESTRUCTIVE_TEST") == "1", (
         "Refusing to mutate a database without MOBILE_API_ALLOW_DESTRUCTIVE_TEST=1"
@@ -164,6 +195,7 @@ def main() -> None:
     run = next(item for item in runs if item["name"] == DEMO_RUN)
     run_id = run["id"]
     complete_existing_active(run_id)
+    assert_readiness_implies_startable(run_id)
 
     workout_date, expected = find_ready_session(run_id)
     session_id = expected["session_id"]

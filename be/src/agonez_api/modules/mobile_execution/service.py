@@ -7,7 +7,11 @@ from typing import Any, cast
 from uuid import UUID
 
 from agonez_api.modules.execution.errors import ExecutionAPIError, not_found
-from agonez_api.modules.mobile_execution.repository import MobileExecutionRepository, Row
+from agonez_api.modules.mobile_execution.repository import (
+    MobileExecutionRepository,
+    Row,
+    prescription_is_complete,
+)
 from agonez_api.modules.mobile_execution.schemas import (
     ActiveWorkoutSummary,
     AtlasPeek,
@@ -548,6 +552,7 @@ class MobileExecutionService:
             and row["set_count"] > 0
             and row["missing_load_count"] == 0
             and row["fallback_exercise_count"] == 0
+            and prescription_is_complete(row)
         )
         return {
             "session_id": row["session_id"],
@@ -566,6 +571,8 @@ class MobileExecutionService:
                 "updated_at": row["updated_at"],
                 "exercise_count": row["exercise_count"],
                 "set_count": row["set_count"],
+                "expected_exercise_count": row["expected_exercise_count"],
+                "expected_set_count": row["expected_set_count"],
                 "estimated_duration_min": (
                     max(15, round(row["set_count"] * 4.5)) if row["set_count"] else None
                 ),

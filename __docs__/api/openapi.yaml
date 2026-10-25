@@ -7807,6 +7807,9 @@ components:
           - missing
           - not_applicable
           title: Readiness
+          description: '''ready'' means the prescription covers the complete plan structure of the session
+            and can be started as is; ''missing'' means it is absent, partial or still needs plan-backed
+            fallback preparation before a start.'
         source:
           anyOf:
           - type: string
@@ -7837,6 +7840,16 @@ components:
           - type: integer
           - type: 'null'
           title: Set Count
+        expected_exercise_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Expected Exercise Count
+        expected_set_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Expected Set Count
         estimated_duration_min:
           anyOf:
           - type: integer

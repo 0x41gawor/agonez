@@ -189,6 +189,22 @@ any untouched prescribed exercise rows and every missing prescribed set as expli
 Retrying the same finalization is idempotent. A different `final_seq` after completion is a
 conflict. Finalization does not move an off-schedule exposure or change its persisted start mode.
 
+## Context readiness
+
+`prescription.readiness` in `GET /context` means **startable as is**. A session reads
+`ready` only when its prescription covers the complete plan structure of
+`session.source_plan_workout_unit_id` — one exercise per plan slot and every set of each
+slot's DEFAULT variant — with all loads resolved and no plan-fallback rows. Anything else,
+including a partially analysed prescription, reads `missing`; mobile prepares it with
+`POST /sessions/{session_id}/prescription/fallback` and starts with `allow_missing_loads=true`.
+
+Readiness, the start's `prescription_incomplete` check and fallback preparation read those
+expected counts from one definition (`expected_plan_structure_sql` in
+`mobile_execution/repository.py`), so a `ready` session is never refused for the content of
+its prescription. The counts are also published additively as
+`expected_exercise_count` / `expected_set_count`. The same rule applies to `expected_session`
+and to every entry in `alternatives`, including earlier missed sessions.
+
 ## Request-level error audit
 
 | Code | Status | Notes |
@@ -197,7 +213,7 @@ conflict. Finalization does not move an off-schedule exposure or change its pers
 | `prescription_changed` | Implemented, `409` | Includes the fresh prescription payload. |
 | `session_not_startable` | Implemented, `409` | Includes the current session status. |
 | `prescription_missing` | Implemented, `409` on read / `422` on start | Start can opt into unresolved nullable loads. |
-| `prescription_incomplete` | Implemented, `422` on start | The snapshot omits plan exercises or sets; prepare the fallback before retrying. |
+| `prescription_incomplete` | Implemented, `422` on start | The snapshot omits plan exercises or sets; prepare the fallback before retrying. A session that reads `ready` in `GET /context` never hits this. |
 | `fallback_unavailable` | Implemented, `422` on fallback preparation | The session cannot be mapped safely to its governing plan revision/tracks. |
 | `off_schedule_acknowledgement_required` | Implemented, `422` | The selected next-track exposure is not today's expected session. |
 | `off_schedule_not_applicable` | Implemented, `422` | An acknowledgement was supplied for the expected on-schedule session. |

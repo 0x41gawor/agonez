@@ -154,6 +154,8 @@ Plan-run selection in v1 is **client-local**: the phone remembers the chosen `pl
       "updated_at": "2026-10-08T21:12:00+02:00",
       "exercise_count": 6,
       "set_count": 16,
+      "expected_exercise_count": 6,
+      "expected_set_count": 16,
       "estimated_duration_min": 70
     }
   },
@@ -173,7 +175,18 @@ Plan-run selection in v1 is **client-local**: the phone remembers the chosen `pl
 
 Field rules:
 
-- `prescription.readiness`: `ready` | `missing` (no set prescription / loads not resolved — Post-Workout-Analysis not done) | `not_applicable` (rest day).
+- `prescription.readiness`: `ready` | `missing` | `not_applicable` (rest day).
+  `ready` means **startable as is**: the prescription covers the session's complete plan
+  structure (one exercise per plan slot, and every set of each slot's DEFAULT variant), every
+  load is resolved, and no row came from a plan fallback. Starting a `ready` session with its
+  current `prescription_version` and `allow_missing_loads=false` is never refused with
+  `prescription_incomplete` or `prescription_missing`.
+  `missing` covers everything else — no prescription, a partially analysed one (Post-Workout-Analysis
+  saves exercise by exercise, so "5 of 7 slots analysed" is ordinary), unresolved loads, or a
+  prescription already holding plan-fallback rows. Prepare it with `POST .../prescription/fallback`
+  and start with `allow_missing_loads=true`.
+  `expected_exercise_count` and `expected_set_count` report the plan structure the counts are
+  measured against. The same rule applies to `expected_session` and every entry in `alternatives`.
 - `expected_session` is `null` on a rest day or when no session is scheduled; the UI then shows "Rest day" and offers alternatives.
 - `alternatives` lists only the earliest unresolved occurrence of each stable workout track:
   earlier `missed` sessions from the run plus other `scheduled` or `missed` sessions in the

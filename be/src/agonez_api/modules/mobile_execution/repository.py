@@ -32,6 +32,41 @@ from agonez_api.modules.mobile_execution.schemas import (
 Row = dict[str, Any]
 
 
+def expected_plan_structure_sql(workout_unit_ref: str) -> str:
+    """Return the single definition of a session's complete plan structure.
+
+    ``workout_unit_ref`` is a SQL expression naming the plan workout unit a session
+    was built from — a bound ``%s`` placeholder or a column reference chosen by the
+    caller, never user input. Context readiness, the start's completeness check and
+    fallback preparation all read these counts so they cannot drift apart.
+    """
+    return f"""
+        (
+            SELECT count(*)::integer
+            FROM plans.exercise_slots AS expected_slot
+            WHERE expected_slot.workout_unit_id = {workout_unit_ref}
+        ) AS expected_exercise_count,
+        (
+            SELECT count(*)::integer
+            FROM plans.set_infra_prescriptions AS expected_set
+            JOIN plans.exercise_variants AS expected_variant
+              ON expected_variant.id = expected_set.exercise_variant_id
+             AND expected_variant.variant_type = 'DEFAULT'
+            JOIN plans.exercise_slots AS expected_slot
+              ON expected_slot.id = expected_variant.slot_id
+            WHERE expected_slot.workout_unit_id = {workout_unit_ref}
+        ) AS expected_set_count
+    """
+
+
+def prescription_is_complete(row: Row) -> bool:
+    """Whether a prescription covers the whole plan structure of its session."""
+    return bool(
+        row["exercise_count"] == row["expected_exercise_count"]
+        and row["set_count"] == row["expected_set_count"]
+    )
+
+
 def resolve_start_mode(
     payload: StartWorkout,
     *,
@@ -174,7 +209,7 @@ class MobileExecutionRepository:
             current_microcycle_id = microcycle["id"] if microcycle is not None else None
             sessions = await self._fetch_all(
                 connection,
-                """
+                f"""
                     SELECT session.id AS session_id, session.scheduled_date,
                            session.status::text AS status,
                            session.workout_unit_track_id AS workout_track_id,
@@ -191,7 +226,8 @@ class MobileExecutionRepository:
                            )::integer AS fallback_exercise_count,
                            count(sets.id)::integer AS set_count,
                            count(sets.id) FILTER (WHERE sets.prescribed_load_kg IS NULL)::integer
-                               AS missing_load_count
+                               AS missing_load_count,
+                           {expected_plan_structure_sql("session.source_plan_workout_unit_id")}
                     FROM exec.workout_sessions AS session
                     JOIN exec.microcycles AS session_mc ON session_mc.id = session.microcycle_id
                     JOIN exec.workout_unit_tracks AS track
@@ -802,27 +838,30 @@ class MobileExecutionRepository:
 
         completeness = await self._fetch_one(
             connection,
-            """
+            f"""
             SELECT count(DISTINCT exercise.id)::integer AS exercise_count,
-                   count(sets.id)::integer AS set_count
+                   count(sets.id)::integer AS set_count,
+                   {expected_plan_structure_sql("%s")}
             FROM exec.exercise_unit_prescriptions AS exercise
             LEFT JOIN exec.set_prescriptions AS sets
               ON sets.exercise_unit_prescription_id = exercise.id
             WHERE exercise.workout_unit_prescription_id = %s
             """,
-            (workout["id"],),
+            (
+                session["source_plan_workout_unit_id"],
+                session["source_plan_workout_unit_id"],
+                workout["id"],
+            ),
         )
-        if completeness["exercise_count"] != len(plan_exercises) or completeness[
-            "set_count"
-        ] != len(plan_sets):
+        if not prescription_is_complete(completeness):
             raise invalid(
                 "fallback_unavailable",
                 "The resulting prescription does not match the complete plan structure",
                 {
                     "session_id": session_id,
-                    "expected_exercises": len(plan_exercises),
+                    "expected_exercises": completeness["expected_exercise_count"],
                     "actual_exercises": completeness["exercise_count"],
-                    "expected_sets": len(plan_sets),
+                    "expected_sets": completeness["expected_set_count"],
                     "actual_sets": completeness["set_count"],
                 },
             )
@@ -1202,25 +1241,12 @@ class MobileExecutionRepository:
                     )
                 readiness = await self._fetch_one(
                     connection,
-                    """
+                    f"""
                     SELECT count(DISTINCT exercise.id)::integer AS exercise_count,
                            count(sets.id)::integer AS set_count,
                            count(sets.id) FILTER
                              (WHERE sets.prescribed_load_kg IS NULL)::integer AS missing_loads,
-                           (
-                               SELECT count(*)::integer
-                               FROM plans.exercise_slots AS slot
-                               WHERE slot.workout_unit_id = %s
-                           ) AS expected_exercise_count,
-                           (
-                               SELECT count(*)::integer
-                               FROM plans.set_infra_prescriptions AS plan_set
-                               JOIN plans.exercise_variants AS variant
-                                 ON variant.id = plan_set.exercise_variant_id
-                                AND variant.variant_type = 'DEFAULT'
-                               JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id
-                               WHERE slot.workout_unit_id = %s
-                           ) AS expected_set_count
+                           {expected_plan_structure_sql("%s")}
                     FROM exec.workout_unit_prescriptions AS workout
                     LEFT JOIN exec.exercise_unit_prescriptions AS exercise
                       ON exercise.workout_unit_prescription_id = workout.id
@@ -1234,11 +1260,7 @@ class MobileExecutionRepository:
                         session["prescription_id"],
                     ),
                 )
-                incomplete = (
-                    readiness["exercise_count"] != readiness["expected_exercise_count"]
-                    or readiness["set_count"] != readiness["expected_set_count"]
-                )
-                if incomplete:
+                if not prescription_is_complete(readiness):
                     raise invalid(
                         "prescription_incomplete",
                         "The prescription does not contain the complete plan structure",

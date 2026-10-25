@@ -1,7 +1,8 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -13,6 +14,8 @@ from agonez_api.modules.execution.service import ExecutionService
 from agonez_api.modules.mobile_execution.repository import (
     MobileExecutionRepository,
     _OperationRejected,
+    expected_plan_structure_sql,
+    prescription_is_complete,
     resolve_start_mode,
 )
 from agonez_api.modules.mobile_execution.schemas import OperationBatch, StartWorkout
@@ -502,7 +505,12 @@ async def test_fallback_materialization_preserves_analysis_and_fills_missing_slo
             writes.append((query, params))
             return {"id": 102}
         if "SELECT count(DISTINCT exercise.id)" in query:
-            return {"exercise_count": 2, "set_count": 2}
+            return {
+                "exercise_count": 2,
+                "set_count": 2,
+                "expected_exercise_count": 2,
+                "expected_set_count": 2,
+            }
         raise AssertionError(query)
 
     async def execute(
@@ -597,3 +605,76 @@ async def test_stale_start_includes_fresh_prescription() -> None:
         )
     assert caught.value.code == "prescription_changed"
     assert caught.value.details["prescription"]["prescription_version"] == "rx-new"
+
+
+def _summary_row(**overrides: Any) -> dict[str, Any]:
+    row: dict[str, Any] = {
+        "session_id": 42,
+        "workout_unit_name": "Push A",
+        "workout_track_id": 2,
+        "microcycle_ordinal": 7,
+        "scheduled_date": date(2026, 10, 25),
+        "status": "scheduled",
+        "prescription_id": 11,
+        "prescription_version": "v1",
+        "updated_at": None,
+        "exercise_count": 7,
+        "analysis_exercise_count": 7,
+        "fallback_exercise_count": 0,
+        "set_count": 21,
+        "missing_load_count": 0,
+        "expected_exercise_count": 7,
+        "expected_set_count": 21,
+    }
+    row.update(overrides)
+    return row
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected"),
+    [
+        ({}, "ready"),
+        ({"exercise_count": 5, "set_count": 15}, "missing"),
+        ({"set_count": 18}, "missing"),
+        ({"prescription_id": None, "exercise_count": 0, "set_count": 0}, "missing"),
+        ({"missing_load_count": 2}, "missing"),
+        ({"analysis_exercise_count": 5, "fallback_exercise_count": 2}, "missing"),
+    ],
+    ids=[
+        "fully-analysed",
+        "partially-analysed",
+        "missing-one-set",
+        "not-analysed",
+        "loads-missing",
+        "hybrid",
+    ],
+)
+def test_context_readiness_is_ready_only_for_a_startable_prescription(
+    overrides: dict[str, Any],
+    expected: str,
+) -> None:
+    service = MobileExecutionService(None)  # type: ignore[arg-type]
+
+    summary = service._session_summary(_summary_row(**overrides))
+
+    assert summary["prescription"]["readiness"] == expected
+    assert summary["prescription"]["expected_exercise_count"] == 7
+    assert summary["prescription"]["expected_set_count"] == 21
+
+
+def test_readiness_and_the_start_share_one_completeness_definition() -> None:
+    partial = _summary_row(exercise_count=5, set_count=15)
+
+    assert prescription_is_complete(partial) is False
+    assert MobileExecutionService(None)._session_summary(partial)[  # type: ignore[arg-type]
+        "prescription"
+    ]["readiness"] == "missing"
+    assert prescription_is_complete(_summary_row()) is True
+
+
+def test_expected_plan_structure_sql_counts_slots_and_default_variant_sets() -> None:
+    sql = expected_plan_structure_sql("%s")
+
+    assert "FROM plans.exercise_slots AS expected_slot" in sql
+    assert "expected_variant.variant_type = 'DEFAULT'" in sql
+    assert sql.count("%s") == 2
