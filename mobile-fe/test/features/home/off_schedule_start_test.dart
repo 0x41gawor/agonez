@@ -100,10 +100,8 @@ void main() {
     );
     expect(find.text('Focus'), findsNothing);
     verify(
-      () => harness.repository.loadContext(
-        planRunId: any(named: 'planRunId'),
-        locale: any(named: 'locale'),
-      ),
+      () =>
+          harness.repository.loadSelectedContext(locale: any(named: 'locale')),
     ).called(2);
   });
 

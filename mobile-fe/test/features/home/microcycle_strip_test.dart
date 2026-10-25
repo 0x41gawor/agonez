@@ -59,6 +59,27 @@ void main() {
     expect(find.text('Wolne'), findsNWidgets(2));
   });
 
+  testWidgets('a long microcycle opens on today', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 300));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    // Fourteen days, 4–17 Oct; the fixture's today, 16 Oct, is the 13th.
+    final days = [
+      for (var day = 4; day <= 17; day++)
+        _day(
+          '2026-10-${day.toString().padLeft(2, '0')}',
+          day,
+          'Upper',
+          'scheduled',
+        ),
+    ];
+
+    await tester.pumpWidget(_host(_context(days), locale: const Locale('en')));
+
+    final today = tester.getRect(find.bySemanticsLabel('Friday, Upper, today'));
+    expect(today.left, greaterThanOrEqualTo(0));
+    expect(today.right, lessThanOrEqualTo(390));
+  });
+
   testWidgets('a long microcycle scrolls instead of squeezing its days', (
     tester,
   ) async {

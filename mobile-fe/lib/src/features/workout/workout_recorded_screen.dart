@@ -10,6 +10,8 @@ import '../../app/app_providers.dart';
 import '../../design/design.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../storage/app_database.dart';
+import '../../workout/load_format.dart';
+import 'recorded_summary.dart';
 
 class WorkoutRecordedScreen extends ConsumerWidget {
   const WorkoutRecordedScreen({required this.workoutId, super.key});
@@ -46,7 +48,13 @@ class WorkoutRecordedScreen extends ConsumerWidget {
               final skipped = sets
                   .where((set) => set.status == 'skipped')
                   .length;
-              final prescribed = _prescribedSetCount(value.prescriptionJson);
+              final prescription = _prescription(value.prescriptionJson);
+              final prescribed =
+                  prescription?.exercises.fold(
+                    0,
+                    (sum, exercise) => sum + exercise.sets.length,
+                  ) ??
+                  0;
               final notDone = (prescribed - performed - skipped).clamp(
                 0,
                 prescribed,
@@ -124,6 +132,13 @@ class WorkoutRecordedScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  for (final exercise in recordedExercises(
+                    prescription: prescription,
+                    exercises: exercises,
+                    sets: sets,
+                  ))
+                    _RecordedExerciseRow(exercise: exercise),
                   const SizedBox(height: 24),
                   AgonezPrimaryButton(
                     label: strings.commonDone,
@@ -138,18 +153,101 @@ class WorkoutRecordedScreen extends ConsumerWidget {
     );
   }
 
-  int _prescribedSetCount(String json) {
+  WorkoutPrescription? _prescription(String json) {
     try {
-      final prescription = WorkoutPrescription.fromJson(
+      return WorkoutPrescription.fromJson(
         asJsonMap(jsonDecode(json), 'prescription'),
       );
-      return prescription.exercises.fold(
-        0,
-        (sum, exercise) => sum + exercise.sets.length,
-      );
     } on Object {
-      return 0;
+      return null;
     }
+  }
+}
+
+/// An exercise as performed: its sets and how it departed from the plan.
+class _RecordedExerciseRow extends StatelessWidget {
+  const _RecordedExerciseRow({required this.exercise});
+
+  final RecordedExercise exercise;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context);
+    final colors = context.agonezColors;
+    final textTheme = Theme.of(context).textTheme;
+    final sets = exercise.sets.isEmpty
+        ? '—'
+        : exercise.sets
+              .map(
+                (set) =>
+                    '${set.loadKg == null ? '—' : formatLoad(set.loadKg!)}'
+                    '×${set.repetitions ?? '—'}',
+              )
+              .join(' / ');
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: colors.lineSubtle)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  exercise.name,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  sets,
+                  textAlign: TextAlign.end,
+                  style: AgonezTypography.monoSmall.copyWith(
+                    color: exercise.sets.isEmpty
+                        ? colors.textDim
+                        : colors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (exercise.tags.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final tag in exercise.tags)
+                  AgonezTag(
+                    label: switch (tag) {
+                      RecordedTag.substituted => strings.recordedTagSubstituted,
+                      RecordedTag.unplanned => strings.recordedTagUnplanned,
+                      RecordedTag.skipped => strings.recordedTagSkipped,
+                      RecordedTag.incomplete => strings.recordedTagIncomplete,
+                      RecordedTag.reordered => strings.recordedTagReordered,
+                      RecordedTag.note => strings.recordedTagNote,
+                    },
+                    color: switch (tag) {
+                      RecordedTag.substituted ||
+                      RecordedTag.unplanned => colors.goldText,
+                      RecordedTag.skipped ||
+                      RecordedTag.incomplete => colors.caution,
+                      RecordedTag.reordered ||
+                      RecordedTag.note => colors.textMuted,
+                    },
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 

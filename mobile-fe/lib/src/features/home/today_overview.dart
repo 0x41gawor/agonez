@@ -342,6 +342,10 @@ class _TodayOverviewState extends ConsumerState<TodayOverview> {
     final loaded = state.value;
     if (loaded == null) {
       return _ErrorState(
+        message: userFacingError(
+          state.error ?? StateError('no context'),
+          AppLocalizations.of(context),
+        ),
         onRetry: () => ref.invalidate(mobileContextProvider(language)),
       );
     }
@@ -916,8 +920,10 @@ class _Skeleton extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.onRetry});
+  const _ErrorState({required this.message, required this.onRetry});
 
+  /// Why the context could not be loaded, as the athlete should read it.
+  final String message;
   final VoidCallback onRetry;
 
   @override
@@ -933,7 +939,7 @@ class _ErrorState extends StatelessWidget {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 6),
-          Text(strings.errorNetworkUnavailable, textAlign: TextAlign.center),
+          Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 14),
           OutlinedButton(onPressed: onRetry, child: Text(strings.commonRetry)),
         ],

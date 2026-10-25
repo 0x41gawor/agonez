@@ -54,11 +54,7 @@ final mobileContextProvider =
         (_) => ref.invalidateSelf(),
       );
       ref.onDispose(refreshes.cancel);
-      final selected = await runtime.mobileRepository.selectedPlanRunId();
-      return runtime.mobileRepository.loadContext(
-        planRunId: selected,
-        locale: languageCode,
-      );
+      return runtime.mobileRepository.loadSelectedContext(locale: languageCode);
     }, retry: (_, _) => null);
 
 /// Whether a workout just started on this device is still on its way into

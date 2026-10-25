@@ -33,6 +33,12 @@ class MobileRepository {
   final AppDatabase _database;
   final AgonezApiClient _api;
 
+  /// Whether [error] means the server could not be reached or could not
+  /// answer, so a cached copy is the best available. Any other refusal is
+  /// the server's answer and must not be hidden behind a stale copy.
+  static bool _unreachable(AgonezApiException error) =>
+      error.isTransportFailure || (error.statusCode ?? 0) >= 500;
+
   Future<int?> selectedPlanRunId() async {
     final value = await _database.readSetting('selected_plan_run_id');
     return value == null ? null : int.tryParse(value);
@@ -43,6 +49,36 @@ class MobileRepository {
       throw StateError('Plan run selection is locked during a workout');
     }
     await _database.writeSetting('selected_plan_run_id', id?.toString() ?? '');
+  }
+
+  /// The context of the selected plan run, or of the server's own choice
+  /// when none is selected.
+  ///
+  /// A selected run that no longer exists on the server, because it was
+  /// deleted, is forgotten together with its cached contexts, and the
+  /// server's choice loads instead.
+  Future<LoadedValue<MobileContext>> loadSelectedContext({
+    required String locale,
+  }) async {
+    final selected = await selectedPlanRunId();
+    try {
+      return await loadContext(planRunId: selected, locale: locale);
+    } on AgonezApiException catch (error) {
+      if (selected == null || error.error?.code != 'plan_run_not_found') {
+        rethrow;
+      }
+      await forgetPlanRun(selected);
+      return loadContext(locale: locale);
+    }
+  }
+
+  /// Clears what the phone remembers about a plan run that is gone: the
+  /// selection, if it is this run, and the run's cached contexts.
+  Future<void> forgetPlanRun(int id) async {
+    if (await selectedPlanRunId() == id) {
+      await _database.writeSetting('selected_plan_run_id', '');
+    }
+    await _database.deleteCachedDocuments(prefix: 'context:$id:');
   }
 
   Future<LoadedValue<MobileContext>> loadContext({
@@ -93,8 +129,8 @@ class MobileRepository {
         );
       }
       throw const FormatException('Server returned 304 without cached context');
-    } on AgonezApiException {
-      if (cachedValue != null) {
+    } on AgonezApiException catch (error) {
+      if (_unreachable(error) && cachedValue != null) {
         return LoadedValue(
           value: cachedValue,
           fromCache: true,
@@ -154,8 +190,8 @@ class MobileRepository {
         json: jsonEncode(value.toJson()),
       );
       return LoadedValue(value: value, fromCache: false);
-    } on AgonezApiException {
-      if (cachedValue != null) {
+    } on AgonezApiException catch (error) {
+      if (_unreachable(error) && cachedValue != null) {
         return LoadedValue(value: cachedValue, fromCache: true, offline: true);
       }
       rethrow;

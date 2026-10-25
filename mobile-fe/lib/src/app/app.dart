@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../design/design.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'app_runtime.dart';
+import 'context_freshness.dart';
 
 class AgonezApp extends StatefulWidget {
   const AgonezApp({required this.runtime, required this.router, super.key});
@@ -17,11 +19,17 @@ class AgonezApp extends StatefulWidget {
 }
 
 class _AgonezAppState extends State<AgonezApp> with WidgetsBindingObserver {
+  late final ContextFreshness _freshness = ContextFreshness(
+    refresh: widget.runtime.refreshContext,
+    connectivity: Connectivity().onConnectivityChanged,
+  );
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     widget.runtime.syncEngine.start();
+    _freshness.start();
   }
 
   @override
@@ -33,6 +41,7 @@ class _AgonezAppState extends State<AgonezApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _freshness.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

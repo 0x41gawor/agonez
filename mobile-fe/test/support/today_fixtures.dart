@@ -33,7 +33,7 @@ class MockApiClient extends Mock implements AgonezApiClient {}
 
 /// A runtime for screens built on today's context: no active workout, plan
 /// run 2 selected and [fixturePrescription] behind every session. Tests
-/// stub `loadContext` themselves through [stubContext].
+/// stub the context themselves through [stubContext].
 class TodayHarness {
   TodayHarness() {
     when(() => runtime.mobileRepository).thenReturn(repository);
@@ -91,18 +91,14 @@ class TodayHarness {
     _activeWorkouts.add(workout);
   }
 
-  /// Answers context loads with [build] for the requested plan run.
+  /// Answers context loads with [build] for the selected plan run, read
+  /// from [selectedPlanRunId] at load time.
   void stubContext(FutureOr<MobileContext> Function(int? planRunId) build) {
     when(
-      () => repository.loadContext(
-        planRunId: any(named: 'planRunId'),
-        locale: any(named: 'locale'),
-      ),
+      () => repository.loadSelectedContext(locale: any(named: 'locale')),
     ).thenAnswer(
-      (invocation) async => LoadedValue(
-        value: await build(invocation.namedArguments[#planRunId] as int?),
-        fromCache: false,
-      ),
+      (_) async =>
+          LoadedValue(value: await build(selectedPlanRunId), fromCache: false),
     );
   }
 

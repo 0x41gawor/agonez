@@ -31,6 +31,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _selectRun(int? currentRunId) async {
     final runtime = ref.read(appRuntimeProvider);
     if (await runtime.database.activeWorkout() != null || !mounted) return;
+    // Runs come and go on desktop; the sheet keeps the last list on screen
+    // while the current one loads.
+    ref.invalidate(planRunsProvider);
     final selected = await showModalBottomSheet<PlanRunCompact>(
       context: context,
       isScrollControlled: true,

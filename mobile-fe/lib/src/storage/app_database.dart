@@ -562,6 +562,17 @@ class AppDatabase extends _$AppDatabase {
     cachedDocuments,
   )..where((row) => row.cacheKey.equals(key))).getSingleOrNull();
 
+  /// Drops every cached document whose key starts with [prefix].
+  Future<void> deleteCachedDocuments({required String prefix}) =>
+      (delete(cachedDocuments)..where(
+            (row) =>
+                row.cacheKey.like('${_escapeLike(prefix)}%', escapeChar: r'\'),
+          ))
+          .go();
+
+  static String _escapeLike(String value) =>
+      value.replaceAllMapped(RegExp(r'[\\%_]'), (match) => '\\${match[0]}');
+
   Future<void> putCachedDocument({
     required String key,
     required String json,

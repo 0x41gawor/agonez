@@ -76,7 +76,7 @@ void main() {
 
     expect(find.text('Start workout'), findsNWidgets(2));
     verify(
-      () => harness.repository.loadContext(planRunId: 2, locale: 'en'),
+      () => harness.repository.loadSelectedContext(locale: 'en'),
     ).called(1);
   });
 }

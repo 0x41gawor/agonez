@@ -55,13 +55,11 @@ class AppRuntime {
       locale: () => settings.locale.languageCode,
     );
     final contextRefreshes = StreamController<int>.broadcast();
-    var refreshRevision = 0;
+    late final AppRuntime runtime;
     final syncEngine = WorkoutSyncEngine(
       database: database,
       api: api,
-      onWorkoutFinalized: () {
-        contextRefreshes.add(++refreshRevision);
-      },
+      onWorkoutFinalized: () => runtime.refreshContext(),
     );
     final workoutRepository = WorkoutRepository(
       database: database,
@@ -72,7 +70,7 @@ class AppRuntime {
       api: api,
       deviceId: deviceId,
     );
-    return AppRuntime._(
+    return runtime = AppRuntime._(
       database: database,
       settings: settings,
       api: api,
@@ -96,6 +94,12 @@ class AppRuntime {
   final RestNotificationService notifications;
   final String deviceId;
   final StreamController<int> contextRefreshes;
+  var _refreshRevision = 0;
+
+  /// Asks every screen built on today's context to reload it.
+  void refreshContext() {
+    if (!contextRefreshes.isClosed) contextRefreshes.add(++_refreshRevision);
+  }
 
   Future<void> dispose() async {
     await syncEngine.dispose();

@@ -83,15 +83,11 @@ class MicrocycleStrip extends StatelessWidget {
                 ],
               );
             }
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final (index, cell) in cells.indexed) ...[
-                    if (index > 0) const SizedBox(width: _gap),
-                    SizedBox(width: _minCellWidth, child: cell),
-                  ],
-                ],
+            return _ScrollingDays(
+              cells: cells,
+              viewportWidth: constraints.maxWidth,
+              todayIndex: contextValue.microcycleDays.indexWhere(
+                (day) => day.date == todayDate,
               ),
             );
           },
@@ -99,6 +95,70 @@ class MicrocycleStrip extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A microcycle too long for one row, opened with today's cell centred so
+/// the days around it are in view; it re-centres when the day changes.
+class _ScrollingDays extends StatefulWidget {
+  const _ScrollingDays({
+    required this.cells,
+    required this.viewportWidth,
+    required this.todayIndex,
+  });
+
+  final List<Widget> cells;
+  final double viewportWidth;
+
+  /// Index of today's cell; -1 when today is outside this microcycle.
+  final int todayIndex;
+
+  @override
+  State<_ScrollingDays> createState() => _ScrollingDaysState();
+}
+
+class _ScrollingDaysState extends State<_ScrollingDays> {
+  static const _cell = MicrocycleStrip._minCellWidth;
+  static const _gap = MicrocycleStrip._gap;
+
+  late final ScrollController _controller = ScrollController(
+    initialScrollOffset: _offsetFor(widget.todayIndex),
+  );
+
+  double _offsetFor(int index) {
+    if (index < 0) return 0;
+    final count = widget.cells.length;
+    final content = count * _cell + (count - 1) * _gap;
+    final centred = index * (_cell + _gap) - (widget.viewportWidth - _cell) / 2;
+    return centred.clamp(0, (content - widget.viewportWidth).clamp(0, content));
+  }
+
+  @override
+  void didUpdateWidget(covariant _ScrollingDays oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.todayIndex != widget.todayIndex && _controller.hasClients) {
+      _controller.jumpTo(_offsetFor(widget.todayIndex));
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    controller: _controller,
+    scrollDirection: Axis.horizontal,
+    child: Row(
+      children: [
+        for (final (index, cell) in widget.cells.indexed) ...[
+          if (index > 0) const SizedBox(width: _gap),
+          SizedBox(width: _cell, child: cell),
+        ],
+      ],
+    ),
+  );
 }
 
 class _DayCell extends StatelessWidget {
