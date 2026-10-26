@@ -9,9 +9,10 @@ services:
     ports:
       - "${MERSAA:?MERSAA must contain the frontend host port}:8080"
     environment:
-      MAMMOONE: "${MAMMOONE:?MAMMOONE must contain the backend host port}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      # Reached over the shared reverse-proxy network, not through the host, so
+      # the API no longer needs a publicly published port. "atlas-api" is the
+      # service name from be/compose.yml, registered as a network alias.
+      API_UPSTREAM: "${API_UPSTREAM:-atlas-api:8000}"
     networks:
       - default
       - reverse-proxy-global-network
