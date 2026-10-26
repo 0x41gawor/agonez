@@ -11,9 +11,8 @@
 
 There is no identity anywhere in the system:
 
-- **The API trusts everyone who can reach it.** `https://agonez.com/api/...` and — because
-  `be/compose.yml` publishes the container port (`${MAMMOONE}:8000`) — also
-  `http://<server-ip>:33287` directly, bypassing Caddy.
+- **The API trusts everyone who can reach it** at `https://agonez.com/api/...`. (The direct
+  `http://<server-ip>:33287` route that bypassed Caddy was closed on 2026-10-26.)
 - Anyone who finds either address can read every plan and workout, change them, and since
   this week **delete plan runs** (`DELETE /plan-runs/{id}`).
 - The mobile app's `X-Agonez-Device-Id` is a label for its installation, used for
@@ -143,8 +142,8 @@ These can come in the multi-user phase, but plan for them.
     work and the main risk: one unscoped query is a data leak. It needs a helper that makes
     scoping the default, and an isolation test per endpoint ("user B gets 404 on user A's
     run").
-- **Infrastructure:** stop publishing port 33287 in `compose.yml`, so the API is only
-  reachable through Caddy and HTTPS. CORS stays same-origin.
+- **Infrastructure:** port 33287 is already closed (2026-10-26), so the API is only reachable
+  through Caddy and HTTPS. CORS stays same-origin.
 - **Google verification:** a well-known library (e.g. `google-auth` or `authlib`) with
   Google's cached public keys. Accept the web client id as the audience; mobile requests the
   token *for* the web client id (see below), so one audience is enough.
@@ -200,7 +199,6 @@ These can come in the multi-user phase, but plan for them.
 3. **Enforce.**
    - Private endpoints require a session, and queries are scoped by owner.
    - The cross-user isolation tests must pass.
-   - Close port 33287.
 4. **Multi-user readiness.**
    - The sign-up policy (D3).
    - The consent screen moves to production.
