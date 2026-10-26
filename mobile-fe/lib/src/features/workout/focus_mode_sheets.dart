@@ -144,7 +144,11 @@ class _OutlineSheet extends StatelessWidget {
                       !exercise.isComplete)
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(exercise),
-                      child: Text(l10n.workoutDoNext),
+                      child: Text(
+                        workout.canPostponeCurrent
+                            ? l10n.workoutDoNow
+                            : l10n.workoutDoNext,
+                      ),
                     ),
                 ],
               ),
@@ -170,6 +174,7 @@ class _ActionsSheet extends StatelessWidget {
         exercise.mode == FocusExerciseMode.asPrescribed;
     final canSkipSet = workout.currentSet?.prescribedSetId != null;
     final canSkipExercise = exercise.exercisePrescriptionId != null;
+    final postponeReplacement = workout.postponeReplacement;
     return _SheetFrame(
       title: l10n.workoutActions,
       body: ListView(
@@ -219,6 +224,19 @@ class _ActionsSheet extends StatelessWidget {
             friction: 1,
             onTap: () => Navigator.pop(context, _FocusAction.addSet),
           ),
+          if (postponeReplacement != null)
+            _ActionTile(
+              key: const Key('focus-postpone'),
+              icon: Icons.low_priority,
+              label: l10n.deviationPostpone(exercise.name),
+              supporting: workout.canPostponeCurrent
+                  ? null
+                  : l10n.deviationPostponeLocked,
+              friction: 1,
+              onTap: workout.canPostponeCurrent
+                  ? () => Navigator.pop(context, _FocusAction.postpone)
+                  : null,
+            ),
           _ActionTile(
             icon: Icons.swap_horiz,
             label: l10n.deviationSubstitute,
@@ -261,6 +279,7 @@ class _ActionTile extends StatelessWidget {
     required this.onTap,
     this.supporting,
     this.friction,
+    super.key,
   });
 
   final IconData icon;

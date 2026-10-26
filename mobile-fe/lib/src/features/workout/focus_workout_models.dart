@@ -121,6 +121,8 @@ class FocusExerciseViewModel {
   final String name;
   final String? fullName;
   final String roleLabel;
+
+  /// Its place in the plan as shown to the athlete, counted from 1.
   final int plannedOrdinal;
   final int performedOrdinal;
   final FocusExerciseMode mode;
@@ -225,6 +227,21 @@ class FocusWorkoutViewModel {
     return sets[currentSetIndex];
   }
 
+  /// Whether the current exercise may still give up its slot. You choose
+  /// what to start, you finish what you started: once one of its sets is
+  /// recorded or skipped, it stays.
+  bool get canPostponeCurrent =>
+      exercises.isNotEmpty &&
+      currentExercise.resolvedSetCount == 0 &&
+      postponeReplacement != null;
+
+  /// The exercise that takes the current one's slot when it is postponed
+  /// without choosing one: the next that still has work left.
+  FocusExerciseViewModel? get postponeReplacement => exercises
+      .skip(currentExerciseIndex + 1)
+      .where((exercise) => !exercise.isComplete)
+      .firstOrNull;
+
   int get totalSets =>
       exercises.fold(0, (total, exercise) => total + exercise.sets.length);
   int get resolvedSets =>
@@ -322,6 +339,7 @@ class FocusWorkoutCallbacks {
     required this.onAddExtraSet,
     required this.onSkipExercise,
     required this.onReorderExercise,
+    required this.onDoNow,
     required this.onFinish,
     this.onCursorChanged,
     this.onDraftChanged,
@@ -349,6 +367,10 @@ class FocusWorkoutCallbacks {
   final Future<void> Function(FocusExerciseViewModel exercise) onSkipExercise;
   final Future<void> Function(FocusExerciseViewModel exercise)
   onReorderExercise;
+
+  /// Starts [exercise] in the current exercise's slot; the current one,
+  /// untouched, follows right after it.
+  final Future<void> Function(FocusExerciseViewModel exercise) onDoNow;
   final Future<void> Function(bool acknowledgedIncomplete) onFinish;
   final Future<void> Function(int exerciseIndex, int setIndex)? onCursorChanged;
   final Future<void> Function(FocusEntryDraft draft)? onDraftChanged;

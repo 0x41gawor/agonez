@@ -446,29 +446,79 @@ class WorkoutRepository {
     required String workoutId,
     required List<String> order,
   }) async {
-    final data = ReorderExercisesData(order: order);
+    await _database.transaction(() => _writeOrder(workoutId, order));
+    _requestSync?.call();
+  }
+
+  /// Starts the exercise that [order] puts at [exerciseIndex], the cursor's
+  /// slot, from its first set.
+  ///
+  /// One local commit, so the screen never pairs that exercise with the
+  /// entry draft typed for the one it displaced.
+  Future<void> startExerciseNow({
+    required String workoutId,
+    required List<String> order,
+    required int exerciseIndex,
+  }) async {
     await _database.transaction(() async {
-      for (var index = 0; index < order.length; index++) {
-        await (_database.update(_database.localExercises)
-              ..where((row) => row.exercisePerformanceId.equals(order[index])))
-            .write(
-              LocalExercisesCompanion(
-                performedOrdinal: Value(index),
-                localRev: const Value(1),
-                updatedAt: Value(DateTime.now().toUtc()),
-              ),
-            );
-      }
-      await _database.enqueueOperation(
+      await _writeOrder(workoutId, order);
+      await _writeCursor(
         workoutId: workoutId,
-        type: 'reorder_exercises',
-        data: data.toJson(),
+        exercisePerformanceId: order[exerciseIndex],
+        exerciseIndex: exerciseIndex,
+        setOrdinal: 0,
+        phase: PositionPhase.set,
       );
     });
     _requestSync?.call();
   }
 
+  Future<void> _writeOrder(String workoutId, List<String> order) async {
+    final data = ReorderExercisesData(order: order);
+    final exercises = _database.localExercises;
+    for (var index = 0; index < order.length; index++) {
+      // The server counts a reorder as one revision of every exercise in
+      // it, so the next note, skip or substitution of any of them must
+      // expect one more.
+      await (_database.update(
+        exercises,
+      )..where((row) => row.exercisePerformanceId.equals(order[index]))).write(
+        LocalExercisesCompanion.custom(
+          performedOrdinal: Variable(index),
+          localRev: exercises.localRev + const Constant(1),
+          updatedAt: Variable(DateTime.now().toUtc()),
+        ),
+      );
+    }
+    await _database.enqueueOperation(
+      workoutId: workoutId,
+      type: 'reorder_exercises',
+      data: data.toJson(),
+    );
+  }
+
   Future<void> setCursor({
+    required String workoutId,
+    required String exercisePerformanceId,
+    required int exerciseIndex,
+    required int setOrdinal,
+    required PositionPhase phase,
+    String? draftJson,
+  }) async {
+    await _database.transaction(
+      () => _writeCursor(
+        workoutId: workoutId,
+        exercisePerformanceId: exercisePerformanceId,
+        exerciseIndex: exerciseIndex,
+        setOrdinal: setOrdinal,
+        phase: phase,
+        draftJson: draftJson,
+      ),
+    );
+    _requestSync?.call();
+  }
+
+  Future<void> _writeCursor({
     required String workoutId,
     required String exercisePerformanceId,
     required int exerciseIndex,
@@ -481,21 +531,18 @@ class WorkoutRepository {
       setOrdinal: setOrdinal,
       phase: phase,
     );
-    await _database.transaction(() async {
-      await _database.setWorkoutCursor(
-        workoutId: workoutId,
-        exerciseIndex: exerciseIndex,
-        setIndex: setOrdinal,
-        phase: phase.wireName,
-        draftJson: draftJson,
-      );
-      await _database.enqueueOperation(
-        workoutId: workoutId,
-        type: 'set_cursor',
-        data: data.toJson(),
-      );
-    });
-    _requestSync?.call();
+    await _database.setWorkoutCursor(
+      workoutId: workoutId,
+      exerciseIndex: exerciseIndex,
+      setIndex: setOrdinal,
+      phase: phase.wireName,
+      draftJson: draftJson,
+    );
+    await _database.enqueueOperation(
+      workoutId: workoutId,
+      type: 'set_cursor',
+      data: data.toJson(),
+    );
   }
 
   Future<void> setWorkoutComment({

@@ -73,6 +73,53 @@ const fixturePrescription = WorkoutPrescription(
   exercises: <PrescriptionExercise>[fixturePrescriptionExercise],
 );
 
+const fixtureSecondExercise = PrescriptionExercise(
+  exercisePrescriptionId: 223,
+  ordinal: 1,
+  exerciseTrackId: 11,
+  slot: PrescriptionSlot(goal: 'legs', role: 'isolation'),
+  exercise: ExerciseIdentity(id: 19, slug: 'leg-curl', name: 'Leg curl'),
+  variantLabel: null,
+  planComment: null,
+  prescriptionComment: null,
+  loadStepKg: 2.5,
+  defaultRestS: 90,
+  sets: <PrescriptionSet>[
+    PrescriptionSet(
+      setPrescriptionId: 478,
+      ordinal: 0,
+      role: 'working',
+      prescribedLoadKg: 40,
+      repMin: 10,
+      repMax: 12,
+      targetRir: 2,
+      comment: null,
+    ),
+  ],
+  alternatives: <PrescriptionAlternative>[],
+  history: ExerciseHistory(previousExposure: null),
+  atlasPeek: fixtureAtlasPeek,
+);
+
+/// [fixturePrescription] followed by [fixtureSecondExercise].
+const twoExercisePrescription = WorkoutPrescription(
+  sessionId: 28,
+  prescriptionId: 901,
+  prescriptionVersion: 'prescription-v1',
+  workoutUnitName: 'Legs',
+  workoutTrackId: 12,
+  microcycle: PrescriptionMicrocycle(
+    ordinal: 2,
+    classification: PrescriptionMicrocycleClassification.normal,
+  ),
+  planComment: null,
+  prescriptionComment: null,
+  exercises: <PrescriptionExercise>[
+    fixturePrescriptionExercise,
+    fixtureSecondExercise,
+  ],
+);
+
 WorkoutSnapshot fixtureSnapshot({
   required String workoutId,
   required DateTime startedAt,

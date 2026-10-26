@@ -94,67 +94,97 @@ void main() {
   testWidgets('the summary lists exercises with their sets and tags', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(412, 1200));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final workout = startedLegs().copyWith(
-      lifecycle: 'completed',
-      prescriptionJson: jsonEncode(prescription.toJson()),
+    await _pumpSummary(
+      tester,
+      prescription,
+      exercises: [
+        _exercise('bench', 1, position: 0),
+        _exercise('row', 2, position: 1, mode: 'skipped'),
+      ],
+      sets: [
+        _set('bench', 0, 80, 8, planned: 10),
+        _set('bench', 1, 82.5, 6, planned: 11),
+        _set('bench', 2, 82.5, 6, planned: 12),
+        // An extra set does not make up for a planned one.
+        _set('bench', 3, 82.5, 5),
+        for (var ordinal = 0; ordinal < 3; ordinal++)
+          _set('row', ordinal, 0, 0, planned: 20 + ordinal, status: 'skipped'),
+      ],
     );
-    final harness = TodayHarness();
-    addTearDown(harness.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appRuntimeProvider.overrideWithValue(harness.runtime),
-          workoutProvider(
-            workout.workoutId,
-          ).overrideWith((ref) => Stream.value(workout)),
-          workoutExercisesProvider(workout.workoutId).overrideWith(
-            (ref) async => [
-              _exercise('bench', 1, position: 0),
-              _exercise('row', 2, position: 1, mode: 'skipped'),
-            ],
-          ),
-          workoutSetsProvider(workout.workoutId).overrideWith(
-            (ref) => Stream.value([
-              _set('bench', 0, 80, 8, planned: 10),
-              _set('bench', 1, 82.5, 6, planned: 11),
-              _set('bench', 2, 82.5, 6, planned: 12),
-              // An extra set does not make up for a planned one.
-              _set('bench', 3, 82.5, 5),
-              for (var ordinal = 0; ordinal < 3; ordinal++)
-                _set(
-                  'row',
-                  ordinal,
-                  0,
-                  0,
-                  planned: 20 + ordinal,
-                  status: 'skipped',
-                ),
-            ]),
-          ),
-        ],
-        child: MaterialApp(
-          theme: AgonezTheme.dark,
-          locale: const Locale('en'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: WorkoutRecordedScreen(workoutId: workout.workoutId),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
 
     // 12 planned sets, 3 of them performed: the skipped Row counts as not
     // done and the extra set changes nothing.
     expect(_metric(tester, 'sets done'), '4');
     expect(_metric(tester, 'not done'), '9');
+    expect(_metric(tester, 'structural changes'), '1');
     expect(find.text('Bench'), findsOneWidget);
     expect(find.text('80×8 / 82.5×6 / 82.5×6 / 82.5×5'), findsOneWidget);
     expect(find.text('Row'), findsOneWidget);
     expect(find.text('SKIPPED'), findsOneWidget);
   });
+
+  testWidgets('a changed order counts as a structural change', (tester) async {
+    await _pumpSummary(
+      tester,
+      prescription,
+      // Bench was postponed behind Row.
+      exercises: [
+        _exercise('row', 2, position: 0),
+        _exercise('bench', 1, position: 1),
+        _exercise('curl', 3, position: 2),
+        _exercise('dip', 4, position: 3),
+      ],
+      sets: [
+        for (final (index, id) in ['bench', 'row', 'curl', 'dip'].indexed)
+          for (var ordinal = 0; ordinal < 3; ordinal++)
+            _set(id, ordinal, 50, 10, planned: (index + 1) * 10 + ordinal),
+      ],
+    );
+
+    expect(find.text('REORDERED'), findsOneWidget);
+    expect(_metric(tester, 'structural changes'), '1');
+  });
+}
+
+Future<void> _pumpSummary(
+  WidgetTester tester,
+  WorkoutPrescription prescription, {
+  required List<LocalExercise> exercises,
+  required List<LocalSet> sets,
+}) async {
+  await tester.binding.setSurfaceSize(const Size(412, 1200));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  final workout = startedLegs().copyWith(
+    lifecycle: 'completed',
+    prescriptionJson: jsonEncode(prescription.toJson()),
+  );
+  final harness = TodayHarness();
+  addTearDown(harness.dispose);
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        appRuntimeProvider.overrideWithValue(harness.runtime),
+        workoutProvider(
+          workout.workoutId,
+        ).overrideWith((ref) => Stream.value(workout)),
+        workoutExercisesProvider(
+          workout.workoutId,
+        ).overrideWith((ref) async => exercises),
+        workoutSetsProvider(
+          workout.workoutId,
+        ).overrideWith((ref) => Stream.value(sets)),
+      ],
+      child: MaterialApp(
+        theme: AgonezTheme.dark,
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: WorkoutRecordedScreen(workoutId: workout.workoutId),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 WorkoutPrescription _prescription(List<String> names) => WorkoutPrescription(

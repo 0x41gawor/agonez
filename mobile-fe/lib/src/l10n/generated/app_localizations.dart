@@ -829,6 +829,12 @@ abstract class AppLocalizations {
   /// **'{workout} outline'**
   String workoutOutlineTitle(String workout);
 
+  /// No description provided for @workoutDoNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Do now'**
+  String get workoutDoNow;
+
   /// No description provided for @workoutDoNext.
   ///
   /// In en, this message translates to:
@@ -1243,6 +1249,36 @@ abstract class AppLocalizations {
   /// **'Move it next'**
   String get deviationHoldReorder;
 
+  /// No description provided for @deviationPostpone.
+  ///
+  /// In en, this message translates to:
+  /// **'Postpone {exercise}'**
+  String deviationPostpone(String exercise);
+
+  /// No description provided for @deviationPostponeExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'{next} takes its place now. This exercise was planned #{planned} and moves to #{position}. Doing it later means doing it more tired, and it compares less well with last time.'**
+  String deviationPostponeExplanation(String next, int planned, int position);
+
+  /// No description provided for @deviationPostponeUnplannedExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'{next} takes its place now. This exercise moves to #{position}.'**
+  String deviationPostponeUnplannedExplanation(String next, int position);
+
+  /// No description provided for @deviationPostponeLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Only before its first set.'**
+  String get deviationPostponeLocked;
+
+  /// No description provided for @deviationHoldPostpone.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to postpone'**
+  String get deviationHoldPostpone;
+
   /// No description provided for @deviationAddUnplanned.
   ///
   /// In en, this message translates to:
@@ -1516,6 +1552,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keep this phone\'s value'**
   String get syncKeepPhone;
+
+  /// No description provided for @syncConflictNoNote.
+  ///
+  /// In en, this message translates to:
+  /// **'No note'**
+  String get syncConflictNoNote;
+
+  /// No description provided for @syncConflictNotRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Not recorded'**
+  String get syncConflictNotRecorded;
+
+  /// No description provided for @syncConflictUndone.
+  ///
+  /// In en, this message translates to:
+  /// **'Undone'**
+  String get syncConflictUndone;
 
   /// No description provided for @syncUseServer.
   ///

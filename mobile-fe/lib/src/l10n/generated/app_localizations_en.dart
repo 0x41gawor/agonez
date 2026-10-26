@@ -441,6 +441,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get workoutDoNow => 'Do now';
+
+  @override
   String get workoutDoNext => 'Do next';
 
   @override
@@ -708,6 +711,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deviationHoldReorder => 'Move it next';
 
   @override
+  String deviationPostpone(String exercise) {
+    return 'Postpone $exercise';
+  }
+
+  @override
+  String deviationPostponeExplanation(String next, int planned, int position) {
+    return '$next takes its place now. This exercise was planned #$planned and moves to #$position. Doing it later means doing it more tired, and it compares less well with last time.';
+  }
+
+  @override
+  String deviationPostponeUnplannedExplanation(String next, int position) {
+    return '$next takes its place now. This exercise moves to #$position.';
+  }
+
+  @override
+  String get deviationPostponeLocked => 'Only before its first set.';
+
+  @override
+  String get deviationHoldPostpone => 'Hold to postpone';
+
+  @override
   String get deviationAddUnplanned => 'Add unplanned exercise…';
 
   @override
@@ -876,6 +900,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncKeepPhone => 'Keep this phone\'s value';
+
+  @override
+  String get syncConflictNoNote => 'No note';
+
+  @override
+  String get syncConflictNotRecorded => 'Not recorded';
+
+  @override
+  String get syncConflictUndone => 'Undone';
 
   @override
   String get syncUseServer => 'Use server value';

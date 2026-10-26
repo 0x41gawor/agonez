@@ -21,6 +21,7 @@ import '../../widgets/sync_status_pill.dart';
 import 'end_workout_launch.dart';
 import 'focus_mode_screen.dart';
 import 'focus_workout_models.dart';
+import 'sync_conflict.dart';
 
 /// Production route adapter for `/focus`.
 ///
@@ -293,6 +294,31 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
         );
         ref.invalidate(workoutExercisesProvider(model.workoutId));
       },
+      onDoNow: (exercise) async {
+        final order = model.exercises.map((item) => item.id).toList();
+        order.remove(exercise.id);
+        order.insert(model.currentExerciseIndex, exercise.id);
+        await repository.startExerciseNow(
+          workoutId: model.workoutId,
+          order: order,
+          exerciseIndex: model.currentExerciseIndex,
+        );
+        ref.invalidate(workoutExercisesProvider(model.workoutId));
+        // A rest still running should end on this exercise, not the
+        // postponed one.
+        final restEndsAt = model.restEndsAt;
+        if (restEndsAt != null &&
+            restEndsAt.isAfter(DateTime.now()) &&
+            exercise.sets.isNotEmpty) {
+          await _notifyRestEnd(
+            runtime,
+            l10n,
+            restEndsAt,
+            exercise,
+            exercise.sets.first,
+          );
+        }
+      },
       onCursorChanged: (exerciseIndex, setIndex) => moveCursor(
         exerciseIndex: exerciseIndex,
         setIndex: setIndex,
@@ -386,6 +412,9 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
       },
       onExerciseNoteChanged: (exercise, comment) async {
         final local = localExercise(exercise);
+        // The server keeps its revision for an unchanged note, so sending
+        // one would leave this phone a revision ahead.
+        if (comment == local.comment) return;
         await repository.setExerciseComment(
           workoutId: model.workoutId,
           exercisePerformanceId: exercise.id,
@@ -577,7 +606,8 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
           fullName: actual?.fullName ?? prescribed?.exercise.fullName,
           prescribedName: prescribed?.exercise.name,
           roleLabel: _roleLabel(l10n, prescribed?.slot.role),
-          plannedOrdinal: prescribed?.ordinal ?? local.performedOrdinal + 1,
+          // Ordinals count from 0; the athlete counts from 1.
+          plannedOrdinal: (prescribed?.ordinal ?? local.performedOrdinal) + 1,
           performedOrdinal: local.performedOrdinal,
           mode: switch (local.mode) {
             'substituted' => FocusExerciseMode.substituted,
@@ -806,6 +836,17 @@ Future<void> _scheduleRestNotification(
   final exercise = workout.exercises[targetExerciseIndex];
   if (exercise.sets.isEmpty) return;
   final set = exercise.sets[targetSetIndex.clamp(0, exercise.sets.length - 1)];
+  await _notifyRestEnd(runtime, l10n, endsAt, exercise, set);
+}
+
+Future<void> _notifyRestEnd(
+  AppRuntime runtime,
+  AppLocalizations l10n,
+  DateTime endsAt,
+  FocusExerciseViewModel exercise,
+  FocusSetViewModel set,
+) async {
+  if (!runtime.settings.restNotificationsEnabled) return;
   final load = set.prescribedLoadKg == null
       ? '— kg'
       : '${_notificationLoad(set.prescribedLoadKg!)} kg';
@@ -1042,6 +1083,15 @@ Future<void> _showSyncSheet(
   final isRejected =
       localWorkout.syncState == 'recovery_required' ||
       blocking?.deliveryState == 'rejected';
+  final conflict = !isConflict || blocking == null
+      ? null
+      : describeConflict(
+          type: blocking.type,
+          data: Map<String, Object?>.from(jsonDecode(blocking.dataJson) as Map),
+          serverState: serverState,
+          workout: workout,
+          l10n: l10n,
+        );
   final title = switch (workout.syncStatus) {
     WorkoutSyncStatus.saved => l10n.syncEverythingSaved,
     WorkoutSyncStatus.saving => l10n.syncSavingTitle,
@@ -1074,17 +1124,19 @@ Future<void> _showSyncSheet(
                   : l10n.syncLocalFirstExplanation,
               style: AgonezTypography.of(context).bodyMedium,
             ),
-            if (isConflict && blocking != null) ...[
-              const SizedBox(height: 16),
-              _ConflictValue(
-                label: l10n.syncThisPhone,
-                value: _compactConflictValue(jsonDecode(blocking.dataJson)),
-              ),
+            if (conflict != null) ...[
+              if (conflict.subject != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  conflict.subject!,
+                  key: const Key('sync-conflict-subject'),
+                  style: AgonezTypography.of(context).labelMedium,
+                ),
+              ],
+              const SizedBox(height: 12),
+              _ConflictValue(label: l10n.syncThisPhone, value: conflict.phone),
               const SizedBox(height: 8),
-              _ConflictValue(
-                label: l10n.syncServer,
-                value: _compactConflictValue(serverState),
-              ),
+              _ConflictValue(label: l10n.syncServer, value: conflict.server),
             ],
             const SizedBox(height: 14),
             Row(
@@ -1164,34 +1216,10 @@ class _ConflictValue extends StatelessWidget {
       children: [
         AgonezEyebrow(label),
         const SizedBox(height: 6),
-        Text(value, style: AgonezTypography.of(context).labelSmall),
+        Text(value, style: AgonezTypography.of(context).bodyMedium),
       ],
     ),
   );
-}
-
-String _compactConflictValue(Object? value) {
-  if (value == null) return '—';
-  if (value is Map) {
-    const preferred = [
-      'load_kg',
-      'repetitions',
-      'rir',
-      'status',
-      'comment',
-      'actual_exercise',
-      'order',
-    ];
-    final parts = <String>[];
-    for (final key in preferred) {
-      if (value.containsKey(key) && value[key] != null) {
-        parts.add('$key: ${value[key]}');
-      }
-    }
-    if (parts.isNotEmpty) return parts.join(' · ');
-  }
-  final encoded = value is String ? value : jsonEncode(value);
-  return encoded.length <= 180 ? encoded : '${encoded.substring(0, 177)}…';
 }
 
 /// Why the server refused this workout's sync. The picker's wording for

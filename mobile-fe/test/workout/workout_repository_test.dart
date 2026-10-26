@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:agonez/src/api/wire_enums.dart';
 import 'package:agonez/src/api/workout_models.dart';
 import 'package:agonez/src/storage/app_database.dart';
 import 'package:agonez/src/workout/workout_repository.dart';
@@ -115,6 +116,89 @@ void main() {
     expect(finalize.finalSeq, 1);
     expect(finalize.finishedAt, finishedAt);
     expect(finalize.acknowledgedIncomplete, isTrue);
+  });
+
+  test('starting an exercise now swaps it in and starts it fresh', () async {
+    final workoutId = await repository.start(
+      prescription: twoExercisePrescription,
+      startedAt: DateTime.utc(2026, 10, 26, 17),
+    );
+    final planned = await database.workoutExercises(workoutId);
+    final squat = planned
+        .firstWhere((exercise) => exercise.exercisePrescriptionId == 222)
+        .exercisePerformanceId;
+    final legCurl = planned
+        .firstWhere((exercise) => exercise.exercisePrescriptionId == 223)
+        .exercisePerformanceId;
+    // A load already dialled in for the squat.
+    await repository.setCursor(
+      workoutId: workoutId,
+      exercisePerformanceId: squat,
+      exerciseIndex: 0,
+      setOrdinal: 0,
+      phase: PositionPhase.set,
+      draftJson: '{"load_kg":80}',
+    );
+    final requestsBefore = syncRequests;
+
+    await repository.startExerciseNow(
+      workoutId: workoutId,
+      order: [legCurl, squat],
+      exerciseIndex: 0,
+    );
+
+    final workout = await database.activeWorkout();
+    final exercises = await database.workoutExercises(workoutId);
+    final operations = await database.deliverableOperations(workoutId);
+    final ordinals = {
+      for (final exercise in exercises)
+        exercise.exercisePerformanceId: exercise.performedOrdinal,
+    };
+    expect(ordinals, {legCurl: 0, squat: 1});
+    expect(workout!.currentExercise, 0);
+    expect(workout.currentSet, 0);
+    expect(workout.cursorPhase, 'set');
+    expect(workout.entryDraftJson, isNull);
+    expect(operations.map((operation) => operation.type).toList(), [
+      'set_cursor',
+      'reorder_exercises',
+      'set_cursor',
+    ]);
+    expect((jsonDecode(operations[1].dataJson) as Map)['order'], [
+      legCurl,
+      squat,
+    ]);
+    expect(
+      (jsonDecode(operations.last.dataJson) as Map)['exercise_performance_id'],
+      legCurl,
+    );
+    expect(syncRequests, requestsBefore + 1);
+  });
+
+  test('each reorder counts as a revision of every exercise', () async {
+    // The server bumps every exercise's rev when it applies a reorder; a
+    // note sent afterwards must expect that rev or it comes back a conflict.
+    final workoutId = await repository.start(
+      prescription: twoExercisePrescription,
+      startedAt: DateTime.utc(2026, 10, 26, 17),
+    );
+    final ids = [
+      for (final exercise in await database.workoutExercises(workoutId))
+        exercise.exercisePerformanceId,
+    ];
+
+    await repository.reorderExercises(
+      workoutId: workoutId,
+      order: ids.reversed.toList(),
+    );
+    await repository.startExerciseNow(
+      workoutId: workoutId,
+      order: ids,
+      exerciseIndex: 0,
+    );
+
+    final exercises = await database.workoutExercises(workoutId);
+    expect(exercises.map((exercise) => exercise.localRev), [2, 2]);
   });
 
   test('a server-first start stores nothing when the server refuses', () async {

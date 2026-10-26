@@ -190,6 +190,7 @@
   "workoutFinishWorkout": "Finish workout",
   "workoutOutlineTitle": "{workout} outline",
   "@workoutOutlineTitle": {"placeholders": {"workout": {"type": "String"}}},
+  "workoutDoNow": "Do now",
   "workoutDoNext": "Do next",
   "workoutPlannedPosition": "planned #{position}",
   "@workoutPlannedPosition": {"placeholders": {"position": {"type": "int"}}},
@@ -296,6 +297,25 @@
   "deviationReorderExplanation": "The planned order puts it at #{position}. Changing order affects fatigue and comparability.",
   "@deviationReorderExplanation": {"placeholders": {"position": {"type": "int"}}},
   "deviationHoldReorder": "Move it next",
+  "deviationPostpone": "Postpone {exercise}",
+  "@deviationPostpone": {"placeholders": {"exercise": {"type": "String"}}},
+  "deviationPostponeExplanation": "{next} takes its place now. This exercise was planned #{planned} and moves to #{position}. Doing it later means doing it more tired, and it compares less well with last time.",
+  "@deviationPostponeExplanation": {
+    "placeholders": {
+      "next": {"type": "String"},
+      "planned": {"type": "int"},
+      "position": {"type": "int"}
+    }
+  },
+  "deviationPostponeUnplannedExplanation": "{next} takes its place now. This exercise moves to #{position}.",
+  "@deviationPostponeUnplannedExplanation": {
+    "placeholders": {
+      "next": {"type": "String"},
+      "position": {"type": "int"}
+    }
+  },
+  "deviationPostponeLocked": "Only before its first set.",
+  "deviationHoldPostpone": "Hold to postpone",
   "deviationAddUnplanned": "Add unplanned exercise…",
   "deviationAddUnplannedExplanation": "{exercise} isn't part of {workout}. Extra work changes this session's volume.",
   "@deviationAddUnplannedExplanation": {
@@ -363,6 +383,9 @@
   "syncThisPhone": "This phone",
   "syncServer": "Server",
   "syncKeepPhone": "Keep this phone's value",
+  "syncConflictNoNote": "No note",
+  "syncConflictNotRecorded": "Not recorded",
+  "syncConflictUndone": "Undone",
   "syncUseServer": "Use server value",
   "syncConflictExplanation": "Choose which recorded value should be kept. Other workout data remains available.",
 

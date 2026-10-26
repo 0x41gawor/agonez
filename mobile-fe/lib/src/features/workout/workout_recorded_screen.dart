@@ -65,11 +65,24 @@ class WorkoutRecordedScreen extends ConsumerWidget {
                 0,
                 prescribed,
               );
-              final structuralChanges = exercises
+              final recorded = recordedExercises(
+                prescription: prescription,
+                exercises: exercises,
+                sets: sets,
+              );
+              // The same deviations the workout's hold sheets call
+              // structural, a changed order among them.
+              final structuralChanges = recorded
                   .where(
-                    (exercise) =>
-                        exercise.mode != 'as_prescribed' ||
-                        exercise.exercisePrescriptionId == null,
+                    (exercise) => exercise.tags.any(
+                      (tag) => switch (tag) {
+                        RecordedTag.substituted ||
+                        RecordedTag.unplanned ||
+                        RecordedTag.skipped ||
+                        RecordedTag.reordered => true,
+                        RecordedTag.incomplete || RecordedTag.note => false,
+                      },
+                    ),
                   )
                   .length;
               final finalized = value.lifecycle == 'completed';
@@ -139,11 +152,7 @@ class WorkoutRecordedScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  for (final exercise in recordedExercises(
-                    prescription: prescription,
-                    exercises: exercises,
-                    sets: sets,
-                  ))
+                  for (final exercise in recorded)
                     _RecordedExerciseRow(exercise: exercise),
                   const SizedBox(height: 24),
                   AgonezPrimaryButton(

@@ -32,9 +32,14 @@ There is no implicit server. Every run or build must provide `API_BASE_URL` as
 a compile-time Dart definition:
 
 ```powershell
-flutter run -d <device-id> --dart-define=API_BASE_URL=http://192.46.236.119:33287
-flutter build apk --debug --dart-define=API_BASE_URL=http://192.46.236.119:33287
+flutter run -d <device-id> --dart-define=API_BASE_URL=https://agonez.com
+flutter build apk --debug --dart-define=API_BASE_URL=https://agonez.com
 ```
+
+`https://agonez.com` is the production API behind Caddy, which also keeps its
+certificate renewed. Use it for every device build; it works in release builds
+too. The plain-HTTP address of the backend container is for local development
+only (see below).
 
 The app fails at startup with a configuration error when the definition is
 missing. Keep the scheme and port in the value and do not add an API path; the
@@ -49,9 +54,9 @@ launch.
 
 Cleartext traffic is permitted by
 `android/app/src/debug/res/xml/network_security_config.xml` and referenced only
-by the debug manifest. Release builds retain Android's secure default, so a
-production endpoint must use HTTPS unless a deliberate release policy is added
-and reviewed.
+by the debug manifest, so a debug build can reach a backend running on a
+workstation. Release builds keep Android's secure default and refuse plain HTTP,
+which is one reason device builds use the HTTPS address above.
 
 A physical phone cannot reach a workstation service through the workstation's
 `localhost`. Use a server address reachable from the phone, or reverse a local
@@ -70,7 +75,7 @@ target before launching:
 ```powershell
 adb devices
 flutter devices
-flutter run -d ZY22LNTRJ6 --dart-define=API_BASE_URL=http://192.46.236.119:33287
+flutter run -d ZY22LNTRJ6 --dart-define=API_BASE_URL=https://agonez.com
 ```
 
 `ZY22LNTRJ6` is the current Motorola test device; replace it when testing on a
@@ -84,7 +89,7 @@ and the in-app timer continue to work.
 dart format lib test
 flutter analyze
 flutter test
-flutter build apk --debug --dart-define=API_BASE_URL=http://192.46.236.119:33287
+flutter build apk --debug --dart-define=API_BASE_URL=https://agonez.com
 ```
 
 For an end-to-end device smoke test, verify both connected and airplane-mode

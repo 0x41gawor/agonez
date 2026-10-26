@@ -443,7 +443,10 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get workoutDoNext => 'Wykonaj teraz';
+  String get workoutDoNow => 'Wykonaj teraz';
+
+  @override
+  String get workoutDoNext => 'Jako następne';
 
   @override
   String workoutPlannedPosition(int position) {
@@ -715,6 +718,27 @@ class AppLocalizationsPl extends AppLocalizations {
   String get deviationHoldReorder => 'Przenieś jako następne';
 
   @override
+  String deviationPostpone(String exercise) {
+    return 'Odłóż: $exercise';
+  }
+
+  @override
+  String deviationPostponeExplanation(String next, int planned, int position) {
+    return '$next wchodzi teraz na jego miejsce. To ćwiczenie było zaplanowane jako #$planned i przechodzi na #$position. Później wykonasz je na większym zmęczeniu, a wynik gorzej porówna się z poprzednim treningiem.';
+  }
+
+  @override
+  String deviationPostponeUnplannedExplanation(String next, int position) {
+    return '$next wchodzi teraz na jego miejsce. To ćwiczenie przechodzi na #$position.';
+  }
+
+  @override
+  String get deviationPostponeLocked => 'Tylko przed pierwszą serią.';
+
+  @override
+  String get deviationHoldPostpone => 'Przytrzymaj, aby odłożyć';
+
+  @override
   String get deviationAddUnplanned => 'Dodaj nieplanowane ćwiczenie…';
 
   @override
@@ -887,6 +911,15 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get syncKeepPhone => 'Zachowaj wartość z telefonu';
+
+  @override
+  String get syncConflictNoNote => 'Brak notatki';
+
+  @override
+  String get syncConflictNotRecorded => 'Nie zapisano';
+
+  @override
+  String get syncConflictUndone => 'Cofnięta';
 
   @override
   String get syncUseServer => 'Użyj wartości z serwera';

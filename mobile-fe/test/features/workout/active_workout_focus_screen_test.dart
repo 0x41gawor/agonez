@@ -182,4 +182,106 @@ void main() {
       expect(find.text('24 × 6 @2'), findsNothing);
     });
   });
+
+  group('a workout of two exercises', () {
+    setUpAll(() => registerFallbackValue(<String>[]));
+
+    LocalExercise planned(
+      String id,
+      int prescriptionId,
+      int ordinal, {
+      String? comment,
+    }) => LocalExercise(
+      exercisePerformanceId: id,
+      workoutId: startedLegs().workoutId,
+      exercisePrescriptionId: prescriptionId,
+      performedOrdinal: ordinal,
+      mode: 'as_prescribed',
+      comment: comment,
+      serverRev: 0,
+      localRev: 0,
+      updatedAt: DateTime.utc(2026, 10, 26, 17),
+    );
+
+    Future<void> openWorkout(WidgetTester tester, {String? squatNote}) async {
+      await tester.binding.setSurfaceSize(const Size(412, 915));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final workout = startedLegs().copyWith(
+        prescriptionJson: jsonEncode(twoExercisePrescription.toJson()),
+      );
+      harness
+        ..storedWorkout = workout
+        ..streamWorkout(workout);
+      when(() => harness.database.workoutExercises(any())).thenAnswer(
+        (_) async => [
+          planned('squat', 222, 0, comment: squatNote),
+          planned('leg-curl', 223, 1),
+        ],
+      );
+      await tester.pumpWidget(focusApp());
+      for (var frame = 0; frame < 5; frame++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+    }
+
+    testWidgets('doing the leg curl now postpones the squat to #2', (
+      tester,
+    ) async {
+      when(
+        () => harness.workoutRepository.startExerciseNow(
+          workoutId: any(named: 'workoutId'),
+          order: any(named: 'order'),
+          exerciseIndex: any(named: 'exerciseIndex'),
+        ),
+      ).thenAnswer((_) async {});
+      await openWorkout(tester);
+      final workout = harness.storedWorkout!;
+
+      await tester.tap(find.byKey(const Key('focus-outline')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Do now'));
+      await tester.pumpAndSettle();
+      // The plan numbers exercises from 0; the athlete reads them from 1.
+      expect(
+        find.textContaining('This exercise was planned #1 and moves to #2.'),
+        findsOneWidget,
+      );
+      final hold = await tester.startGesture(
+        tester.getCenter(find.byKey(const Key('focus-hold-confirm'))),
+      );
+      await tester.pump(const Duration(milliseconds: 1050));
+      await hold.up();
+      await tester.pumpAndSettle();
+
+      verify(
+        () => harness.workoutRepository.startExerciseNow(
+          workoutId: workout.workoutId,
+          order: ['leg-curl', 'squat'],
+          exerciseIndex: 0,
+        ),
+      ).called(1);
+    });
+
+    testWidgets('a note saved unchanged is not sent', (tester) async {
+      await openWorkout(tester, squatNote: 'Seat on 6');
+
+      await tester.tap(find.byKey(const Key('focus-actions')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Exercise note'));
+      await tester.pumpAndSettle();
+      expect(find.text('Seat on 6'), findsOneWidget);
+      await tester.tap(find.text('Save note'));
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        () => harness.workoutRepository.setExerciseComment(
+          workoutId: any(named: 'workoutId'),
+          exercisePerformanceId: any(named: 'exercisePerformanceId'),
+          exercisePrescriptionId: any(named: 'exercisePrescriptionId'),
+          comment: any(named: 'comment'),
+          ifRev: any(named: 'ifRev'),
+        ),
+      );
+    });
+  });
 }

@@ -458,6 +458,10 @@ class _FocusModeScreenState extends State<FocusModeScreen>
       builder: (context) => _OutlineSheet(workout: widget.workout),
     );
     if (!mounted || chosen == null) return;
+    if (widget.workout.canPostponeCurrent) {
+      await _showPostpone(chosen);
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     await _showHoldFor(
       title: chosen.name,
@@ -465,6 +469,31 @@ class _FocusModeScreenState extends State<FocusModeScreen>
       label: l10n.deviationHoldReorder,
       duration: const Duration(seconds: 1),
       action: () => widget.callbacks.onReorderExercise(chosen),
+    );
+  }
+
+  /// Postpones the untouched current exercise so [replacement] can start
+  /// now. The current one comes right after it, as close to its planned
+  /// place as possible: a primary lift done last is done tired.
+  Future<void> _showPostpone(FocusExerciseViewModel replacement) async {
+    final l10n = AppLocalizations.of(context);
+    final current = widget.workout.currentExercise;
+    final position = widget.workout.currentExerciseIndex + 2;
+    await _showHoldFor(
+      title: l10n.deviationPostpone(current.name),
+      explanation: current.exercisePrescriptionId == null
+          ? l10n.deviationPostponeUnplannedExplanation(
+              replacement.name,
+              position,
+            )
+          : l10n.deviationPostponeExplanation(
+              replacement.name,
+              current.plannedOrdinal,
+              position,
+            ),
+      label: l10n.deviationHoldPostpone,
+      duration: const Duration(seconds: 1),
+      action: () => widget.callbacks.onDoNow(replacement),
     );
   }
 
@@ -509,6 +538,10 @@ class _FocusModeScreenState extends State<FocusModeScreen>
           neutral: true,
           action: () => widget.callbacks.onAddExtraSet(exercise),
         );
+      case _FocusAction.postpone:
+        final replacement = widget.workout.postponeReplacement;
+        if (replacement == null) return;
+        await _showPostpone(replacement);
       case _FocusAction.skipExercise:
         await _showHoldFor(
           title: l10n.deviationSkipExercise(exercise.name),
@@ -753,6 +786,7 @@ enum _FocusAction {
   exerciseNote,
   skipSet,
   addSet,
+  postpone,
   skipExercise,
   substitute,
   addUnplanned,
