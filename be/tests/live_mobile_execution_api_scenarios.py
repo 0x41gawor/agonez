@@ -534,6 +534,30 @@ def main() -> None:
     assert takeover["results"][1]["error"]["code"] == "substitution_after_sets"
     assert all(item["status"] == "applied" for item in takeover["results"][2:])
 
+    # A reorder bumps rev by exactly 1 on every exercise of the workout, moved or not.
+    # Mobile mirrors this locally; breaking it makes every later exercise-level edit
+    # conflict. See mobile-api-contract.md § 6.5 rule 6.
+    before = {
+        item["exercise_performance_id"]: item["rev"]
+        for item in expect("GET", workout_path, 200, device_id=DEVICE_B)[0]["exercises"]
+    }
+    expect(
+        "POST",
+        f"{workout_path}/ops",
+        200,
+        device_id=DEVICE_B,
+        payload={
+            "lease_epoch": 2,
+            "base_seq": 6,
+            "ops": [operation(7, "reorder_exercises", {"order": order}, at=at)],
+        },
+    )
+    after = {
+        item["exercise_performance_id"]: item["rev"]
+        for item in expect("GET", workout_path, 200, device_id=DEVICE_B)[0]["exercises"]
+    }
+    assert after == {key: value + 1 for key, value in before.items()}, (before, after)
+
     incomplete, _ = expect(
         "POST",
         f"{workout_path}/finalize",
@@ -541,7 +565,7 @@ def main() -> None:
         device_id=DEVICE_B,
         payload={
             "lease_epoch": 2,
-            "final_seq": 6,
+            "final_seq": 7,
             "finished_at": at,
             "unrecorded": "mark_not_performed",
             "acknowledged_incomplete": False,
@@ -551,7 +575,7 @@ def main() -> None:
 
     finalize_payload = {
         "lease_epoch": 2,
-        "final_seq": 6,
+        "final_seq": 7,
         "finished_at": at,
         "unrecorded": "mark_not_performed",
         "acknowledged_incomplete": True,

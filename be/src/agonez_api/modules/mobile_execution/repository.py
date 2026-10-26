@@ -2188,6 +2188,13 @@ class MobileExecutionRepository:
             """,
             (workout["id"],),
         )
+        # Every exercise of the workout gets exactly one rev bump per applied reorder,
+        # moved or not: the ordinal belongs to the row, so the row's revision advances.
+        # Mobile mirrors this +1 locally to keep its if_rev values aligned, so dropping
+        # it here — or bumping only the exercises that actually moved — makes every
+        # later exercise-level edit conflict until the app ships a matching change.
+        # Documented in prompts/mobile-fe/mobile-api-contract.md § 6.5 rule 6; changing
+        # it needs a coordinated release on both sides.
         for ordinal, client_uuid in enumerate(operation.data.order):
             await self._execute(
                 connection,

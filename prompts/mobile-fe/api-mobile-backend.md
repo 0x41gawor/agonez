@@ -163,6 +163,17 @@ Set operations accept and persist `heart_rate_bpm`. A performed set without `loa
 consumed `load_required` rejection; clients use `0` for no external load. Decimal scale and
 timezone offsets are normalized before idempotent stale-state comparison.
 
+**Entity revisions after a reorder — contract, do not change one-sidedly.** Applying
+`reorder_exercises` increments `rev` by exactly 1 on *every* exercise performance of the
+workout, whether or not that exercise moved: the ordinal belongs to the row, so the row's
+revision advances. The op carries no `if_rev` and never conflicts itself. An idempotent
+replay does not bump anything — a duplicate `(workout, epoch, seq)` with the same `op_id`
+returns the stored result as `duplicate` and is never re-applied. A write whose values
+already equal the stored ones also leaves `rev` untouched. Mobile mirrors the `+1` locally
+to keep its `if_rev` values aligned; dropping the bump, or bumping only the moved
+exercises, makes every later exercise-level edit conflict until the app ships a matching
+change. See `prompts/mobile-fe/mobile-api-contract.md` § 6.5 rules 6-7.
+
 ## Off-schedule start semantics
 
 The ordinary start remains unchanged: when `session_id` is the currently scheduled session for
