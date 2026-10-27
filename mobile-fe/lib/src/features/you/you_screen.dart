@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../api/context_models.dart';
 import '../../app/app_providers.dart';
 import '../../design/design.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -219,46 +220,54 @@ class _PlanRunTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context);
+    // The run this app follows, from the same context as Home. Several runs
+    // can be active on the server at once; the first of them is not
+    // necessarily the one the athlete chose.
+    final contextState = ref.watch(
+      mobileContextProvider(Localizations.localeOf(context).languageCode),
+    );
+    final shown = contextState.value?.value;
     return AgonezPanel(
-      child: ref
-          .watch(planRunsProvider)
-          .when(
-            loading: () => const LinearProgressIndicator(),
-            error: (_, _) => Text(strings.errorNetworkUnavailable),
-            data: (runs) {
-              final active = runs
-                  .where((run) => run.status == 'active')
-                  .firstOrNull;
-              if (active == null) return Text(strings.homeNoRunExplanation);
-              return Row(
+      child: switch (shown) {
+        null when contextState.hasError => Text(
+          strings.errorNetworkUnavailable,
+        ),
+        null => const LinearProgressIndicator(),
+        MobileContext(planRun: null) => Text(strings.homeNoRunExplanation),
+        MobileContext(planRun: final run?, :final today) => Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          active.name,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          strings.homeMicrocycle(
-                            active.currentMicrocycleOrdinal ?? 0,
-                            active.microcycleCount,
-                          ),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
+                  Text(
+                    run.name,
+                    key: const Key('you-plan-run'),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  AgonezTag(
-                    label: strings.runActive,
-                    color: context.agonezColors.success,
+                  const SizedBox(height: 4),
+                  Text(
+                    strings.homeMicrocycle(
+                      today?.microcycle?.ordinal ??
+                          run.currentMicrocycleOrdinal ??
+                          0,
+                      run.microcycleCount,
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
-              );
-            },
-          ),
+              ),
+            ),
+            if (run.status == 'active')
+              AgonezTag(
+                label: strings.runActive,
+                color: context.agonezColors.success,
+              )
+            else
+              AgonezTag(label: strings.runCompleted),
+          ],
+        ),
+      },
     );
   }
 }
@@ -303,12 +312,5 @@ class _SyncSummary extends StatelessWidget {
             },
           ),
     );
-  }
-}
-
-extension<T> on Iterable<T> {
-  T? get firstOrNull {
-    final iterator = this.iterator;
-    return iterator.moveNext() ? iterator.current : null;
   }
 }
