@@ -11,6 +11,7 @@ import 'package:agonez/src/design/design.dart';
 import 'package:agonez/src/l10n/generated/app_localizations.dart';
 import 'package:agonez/src/settings/app_settings_controller.dart';
 import 'package:agonez/src/storage/app_database.dart';
+import 'package:agonez/src/workout/workout_names.dart';
 import 'package:agonez/src/workout/workout_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,8 @@ class MockWorkoutRepository extends Mock implements WorkoutRepository {}
 
 class MockApiClient extends Mock implements AgonezApiClient {}
 
+class MockWorkoutNames extends Mock implements WorkoutNames {}
+
 /// A runtime for screens built on today's context: no active workout, plan
 /// run 2 selected and [fixturePrescription] behind every session. Tests
 /// stub the context themselves through [stubContext].
@@ -40,6 +43,10 @@ class TodayHarness {
     when(() => runtime.database).thenReturn(database);
     when(() => runtime.workoutRepository).thenReturn(workoutRepository);
     when(() => runtime.api).thenReturn(api);
+    when(() => runtime.workoutNames).thenReturn(workoutNames);
+    when(
+      () => workoutNames.localize(any(), any()),
+    ).thenAnswer((_) async => false);
     when(() => runtime.settings).thenReturn(settings);
     when(() => runtime.contextRefreshes).thenReturn(contextRefreshes);
     when(() => settings.locale).thenReturn(const Locale('en'));
@@ -75,6 +82,7 @@ class TodayHarness {
   final settings = MockAppSettingsController();
   final workoutRepository = MockWorkoutRepository();
   final api = MockApiClient();
+  final workoutNames = MockWorkoutNames();
   final contextRefreshes = StreamController<int>.broadcast();
   int? selectedPlanRunId = 2;
 

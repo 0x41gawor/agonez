@@ -40,6 +40,13 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
         error: (_, _) => const _FocusLoadError(),
         data: (workout) {
           if (workout == null) return const _LeaveWithoutWorkout();
+          // Its names were frozen in the language the app had at the start.
+          ref.watch(
+            workoutNamesProvider((
+              workoutId: workout.workoutId,
+              language: Localizations.localeOf(context).languageCode,
+            )),
+          );
           final exercises = ref.watch(
             workoutExercisesProvider(workout.workoutId),
           );

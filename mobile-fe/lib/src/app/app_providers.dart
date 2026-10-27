@@ -32,6 +32,18 @@ final workoutExercisesProvider =
       return ref.watch(appRuntimeProvider).database.workoutExercises(workoutId);
     });
 
+/// Brings a workout's exercise names into [language] when they were frozen
+/// in another. The workout screen watches it, so a failure is retried the
+/// next time the screen opens.
+final workoutNamesProvider = FutureProvider.autoDispose
+    .family<void, ({String workoutId, String language})>((ref, key) async {
+      final changed = await ref
+          .read(appRuntimeProvider)
+          .workoutNames
+          .localize(key.workoutId, key.language);
+      if (changed) ref.invalidate(workoutExercisesProvider(key.workoutId));
+    }, retry: (_, _) => null);
+
 final planRunsProvider = FutureProvider<List<PlanRunCompact>>((ref) {
   return ref.watch(appRuntimeProvider).mobileRepository.listPlanRuns();
 });

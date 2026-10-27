@@ -558,6 +558,16 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
 
+  /// The language a workout's exercise names are stored in; null when it
+  /// was never recorded.
+  Future<String?> workoutNamesLanguage(String workoutId) =>
+      readSetting('workout-names:$workoutId');
+
+  Future<void> rememberWorkoutNamesLanguage(
+    String workoutId,
+    String language,
+  ) => writeSetting('workout-names:$workoutId', language);
+
   Future<CachedDocument?> cachedDocument(String key) => (select(
     cachedDocuments,
   )..where((row) => row.cacheKey.equals(key))).getSingleOrNull();

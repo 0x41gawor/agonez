@@ -11,6 +11,7 @@ import '../platform/system_theme_bridge.dart';
 import '../settings/app_settings_controller.dart';
 import '../storage/app_database.dart';
 import '../sync/workout_sync_engine.dart';
+import '../workout/workout_names.dart';
 import '../workout/workout_repository.dart';
 import '../workout/workout_recovery_repository.dart';
 
@@ -23,6 +24,7 @@ class AppRuntime {
     required this.syncEngine,
     required this.workoutRepository,
     required this.workoutRecoveryRepository,
+    required this.workoutNames,
     required this.notifications,
     required this.deviceId,
     required this.contextRefreshes,
@@ -78,6 +80,7 @@ class AppRuntime {
       syncEngine: syncEngine,
       workoutRepository: workoutRepository,
       workoutRecoveryRepository: workoutRecoveryRepository,
+      workoutNames: WorkoutNames(database: database, api: api),
       notifications: RestNotificationService(),
       deviceId: deviceId,
       contextRefreshes: contextRefreshes,
@@ -91,6 +94,7 @@ class AppRuntime {
   final WorkoutSyncEngine syncEngine;
   final WorkoutRepository workoutRepository;
   final WorkoutRecoveryRepository workoutRecoveryRepository;
+  final WorkoutNames workoutNames;
   final RestNotificationService notifications;
   final String deviceId;
   final StreamController<int> contextRefreshes;
