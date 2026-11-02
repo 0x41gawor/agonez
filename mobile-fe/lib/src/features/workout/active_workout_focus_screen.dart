@@ -435,6 +435,16 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
         );
         ref.invalidate(workoutExercisesProvider(model.workoutId));
       },
+      onSetupNoteChanged: (exercise, text) async {
+        final note = exercise.setupNote;
+        if (note == null) return;
+        await repository.setSetupNote(
+          workoutId: model.workoutId,
+          exerciseTrackId: note.exerciseTrackId,
+          exerciseId: note.exerciseId,
+          text: text,
+        );
+      },
       pickSubstitute: (exercise) => _showExercisePicker(
         context,
         runtime,
@@ -641,6 +651,7 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
                   rir: previousSet.rir,
                 ),
           atlasPeek: prescribed?.atlasPeek,
+          setupNote: _setupNote(prescribed, actual?.id),
           orderChanged:
               prescribed != null &&
               local.performedOrdinal != prescribed.ordinal,
@@ -671,6 +682,22 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
       restEndsAt: workout.restEndsAt,
       restDurationSeconds: workout.restDurationS,
       readOnly: workout.syncState == 'superseded',
+    );
+  }
+
+  /// The note for the exercise done in [prescribed]'s slot, the substitute
+  /// when there is one; none for an exercise without a slot.
+  FocusSetupNote? _setupNote(PrescriptionExercise? prescribed, int? actualId) {
+    if (prescribed == null) return null;
+    final exerciseId = actualId ?? prescribed.exercise.id;
+    final note = prescribed.setupNotes
+        .where((item) => item.exerciseId == exerciseId)
+        .firstOrNull;
+    return FocusSetupNote(
+      exerciseTrackId: prescribed.exerciseTrackId,
+      exerciseId: exerciseId,
+      text: note?.text,
+      updatedAt: note?.updatedAt,
     );
   }
 

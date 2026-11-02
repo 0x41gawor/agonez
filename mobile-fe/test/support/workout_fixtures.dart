@@ -132,6 +132,7 @@ WorkoutSnapshot fixtureSnapshot({
     epoch: 1,
     isThisDevice: true,
   ),
+  List<SlotSetupNote>? setupNotes,
 }) => WorkoutSnapshot(
   workoutId: workoutId,
   sessionId: fixturePrescription.sessionId,
@@ -144,6 +145,7 @@ WorkoutSnapshot fixtureSnapshot({
   positionHint: null,
   prescription: fixturePrescription,
   performance: const PerformanceTree(comment: null, exercises: []),
+  setupNotes: setupNotes,
 );
 
 OperationBatchResponse fixtureOperationResponse(OperationBatch batch) =>

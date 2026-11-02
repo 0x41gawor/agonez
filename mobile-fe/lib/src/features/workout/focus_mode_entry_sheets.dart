@@ -7,6 +7,8 @@ class _NoteSheet extends StatefulWidget {
     required this.initialValue,
     required this.suggestions,
     this.supportingText,
+    this.maxLength = 1000,
+    this.saveLabel,
   });
 
   final String title;
@@ -14,6 +16,10 @@ class _NoteSheet extends StatefulWidget {
   final String? initialValue;
   final List<String> suggestions;
   final String? supportingText;
+  final int maxLength;
+
+  /// Defaults to saving a note.
+  final String? saveLabel;
 
   @override
   State<_NoteSheet> createState() => _NoteSheetState();
@@ -66,7 +72,7 @@ class _NoteSheetState extends State<_NoteSheet> {
                 controller: _controller,
                 minLines: 3,
                 maxLines: 5,
-                maxLength: 1000,
+                maxLength: widget.maxLength,
                 decoration: InputDecoration(hintText: widget.hint),
               ),
               if (widget.suggestions.isNotEmpty) ...[
@@ -87,7 +93,7 @@ class _NoteSheetState extends State<_NoteSheet> {
           ),
         ),
         footer: AgonezPrimaryButton(
-          label: l10n.noteSave,
+          label: widget.saveLabel ?? l10n.noteSave,
           onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
         ),
       ),

@@ -202,6 +202,42 @@ class ExerciseHistory {
   };
 }
 
+/// The athlete's standing "My setup" note for one exercise in a slot: how
+/// they set the machine up. Not frozen with the prescription; it stays true
+/// until they change it.
+class SetupNote {
+  const SetupNote({
+    required this.exerciseId,
+    required this.text,
+    required this.rev,
+    required this.updatedAt,
+  });
+
+  factory SetupNote.fromJson(JsonMap json) => SetupNote(
+    exerciseId: asInt(requiredJson(json, 'exercise_id'), 'exercise_id'),
+    text: asNullableString(requiredJson(json, 'text'), 'text'),
+    rev: asInt(requiredJson(json, 'rev'), 'rev'),
+    updatedAt: asNullableDateTime(
+      requiredJson(json, 'updated_at'),
+      'updated_at',
+    ),
+  );
+
+  final int exerciseId;
+  final String? text;
+  final int rev;
+
+  /// Null until the athlete first writes it.
+  final DateTime? updatedAt;
+
+  JsonMap toJson() => <String, Object?>{
+    'exercise_id': exerciseId,
+    'text': text,
+    'rev': rev,
+    'updated_at': updatedAt == null ? null : encodeDateTime(updatedAt!),
+  };
+}
+
 class PrescriptionExercise {
   const PrescriptionExercise({
     required this.exercisePrescriptionId,
@@ -218,6 +254,7 @@ class PrescriptionExercise {
     required this.alternatives,
     required this.history,
     required this.atlasPeek,
+    this.setupNotes = const [],
   });
 
   factory PrescriptionExercise.fromJson(JsonMap json) => PrescriptionExercise(
@@ -267,6 +304,14 @@ class PrescriptionExercise {
     atlasPeek: AtlasPeek.fromJson(
       asJsonMap(requiredJson(json, 'atlas_peek'), 'atlas_peek'),
     ),
+    // Prescriptions cached before the server sent notes have none.
+    setupNotes: json['setup_notes'] == null
+        ? const []
+        : decodeList(
+            json['setup_notes'],
+            (value) => SetupNote.fromJson(asJsonMap(value, 'setup_notes[]')),
+            'setup_notes',
+          ),
   );
 
   final int exercisePrescriptionId;
@@ -283,6 +328,29 @@ class PrescriptionExercise {
   final List<PrescriptionAlternative> alternatives;
   final ExerciseHistory history;
   final AtlasPeek atlasPeek;
+
+  /// One per exercise this slot holds: the prescribed one, its plan
+  /// variants, and any Atlas substitute already noted here.
+  final List<SetupNote> setupNotes;
+
+  PrescriptionExercise withSetupNotes(List<SetupNote> notes) =>
+      PrescriptionExercise(
+        exercisePrescriptionId: exercisePrescriptionId,
+        ordinal: ordinal,
+        exerciseTrackId: exerciseTrackId,
+        slot: slot,
+        exercise: exercise,
+        variantLabel: variantLabel,
+        planComment: planComment,
+        prescriptionComment: prescriptionComment,
+        loadStepKg: loadStepKg,
+        defaultRestS: defaultRestS,
+        sets: sets,
+        alternatives: alternatives,
+        history: history,
+        atlasPeek: atlasPeek,
+        setupNotes: notes,
+      );
 
   JsonMap toJson() => <String, Object?>{
     'exercise_prescription_id': exercisePrescriptionId,
@@ -301,6 +369,9 @@ class PrescriptionExercise {
         .toList(growable: false),
     'history': history.toJson(),
     'atlas_peek': atlasPeek.toJson(),
+    'setup_notes': setupNotes
+        .map((item) => item.toJson())
+        .toList(growable: false),
   };
 }
 
@@ -339,6 +410,27 @@ class WorkoutPrescription {
     required this.prescriptionComment,
     required this.exercises,
   });
+
+  /// This prescription with each slot's notes replaced by the ones in
+  /// [notesByTrack], keyed by exercise track; slots missing there keep
+  /// their own.
+  WorkoutPrescription withSetupNotes(Map<int, List<SetupNote>> notesByTrack) =>
+      WorkoutPrescription(
+        sessionId: sessionId,
+        prescriptionId: prescriptionId,
+        prescriptionVersion: prescriptionVersion,
+        workoutUnitName: workoutUnitName,
+        workoutTrackId: workoutTrackId,
+        microcycle: microcycle,
+        planComment: planComment,
+        prescriptionComment: prescriptionComment,
+        exercises: [
+          for (final exercise in exercises)
+            exercise.withSetupNotes(
+              notesByTrack[exercise.exerciseTrackId] ?? exercise.setupNotes,
+            ),
+        ],
+      );
 
   factory WorkoutPrescription.fromJson(JsonMap json) => WorkoutPrescription(
     sessionId: asInt(requiredJson(json, 'session_id'), 'session_id'),

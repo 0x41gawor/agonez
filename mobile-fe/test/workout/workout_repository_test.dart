@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:agonez/src/api/prescription_models.dart';
 import 'package:agonez/src/api/wire_enums.dart';
 import 'package:agonez/src/api/workout_models.dart';
 import 'package:agonez/src/storage/app_database.dart';
@@ -175,6 +176,149 @@ void main() {
     expect(undone, isFalse);
     expect(await database.pendingOperationCount(workoutId), queuedBefore);
     expect(syncRequests, requestsBefore);
+  });
+
+  group('my setup', () {
+    // The squat's slot (track 10) with a note the server is at revision 3 of.
+    final noted = fixturePrescription.withSetupNotes({
+      10: [
+        SetupNote(
+          exerciseId: 18,
+          text: 'Seat 2',
+          rev: 3,
+          updatedAt: DateTime.utc(2026, 10, 26, 17),
+        ),
+      ],
+    });
+
+    Future<List<SetupNote>> storedNotes(String workoutId) async {
+      final workout = await database.activeWorkout();
+      return WorkoutPrescription.fromJson(
+        jsonDecode(workout!.prescriptionJson) as Map<String, Object?>,
+      ).exercises.single.setupNotes;
+    }
+
+    test(
+      'an edit is kept in the workout and sent against its revision',
+      () async {
+        final workoutId = await repository.start(
+          prescription: noted,
+          startedAt: DateTime.utc(2026, 11, 2, 17),
+        );
+        final requestsBefore = syncRequests;
+
+        final sent = await repository.setSetupNote(
+          workoutId: workoutId,
+          exerciseTrackId: 10,
+          exerciseId: 18,
+          text: ' Seat 2, K13 ',
+        );
+
+        final note = (await storedNotes(workoutId)).single;
+        final operation = (await database.deliverableOperations(
+          workoutId,
+        )).last;
+        expect(sent, isTrue);
+        expect(note.text, 'Seat 2, K13');
+        expect(note.rev, 4);
+        expect(note.updatedAt, isNotNull);
+        expect(operation.type, 'set_setup_note');
+        expect(jsonDecode(operation.dataJson), {
+          'if_rev': 3,
+          'exercise_track_id': 10,
+          'exercise_id': 18,
+          'text': 'Seat 2, K13',
+        });
+        expect(syncRequests, requestsBefore + 1);
+      },
+    );
+
+    test('an unchanged setup is not sent', () async {
+      final workoutId = await repository.start(
+        prescription: noted,
+        startedAt: DateTime.utc(2026, 11, 2, 17),
+      );
+      final queuedBefore = await database.pendingOperationCount(workoutId);
+
+      final sent = await repository.setSetupNote(
+        workoutId: workoutId,
+        exerciseTrackId: 10,
+        exerciseId: 18,
+        text: 'Seat 2 ',
+      );
+
+      expect(sent, isFalse);
+      expect(await database.pendingOperationCount(workoutId), queuedBefore);
+      expect((await storedNotes(workoutId)).single.rev, 3);
+    });
+
+    test("a substitute's first setup goes without a revision", () async {
+      final workoutId = await repository.start(
+        prescription: noted,
+        startedAt: DateTime.utc(2026, 11, 2, 17),
+      );
+
+      await repository.setSetupNote(
+        workoutId: workoutId,
+        exerciseTrackId: 10,
+        exerciseId: 140,
+        text: 'Bench 3',
+      );
+
+      final notes = await storedNotes(workoutId);
+      final operation = (await database.deliverableOperations(workoutId)).last;
+      expect(
+        {for (final note in notes) note.exerciseId: (note.text, note.rev)},
+        {18: ('Seat 2', 3), 140: ('Bench 3', 1)},
+      );
+      expect((jsonDecode(operation.dataJson) as Map)['if_rev'], isNull);
+    });
+
+    test(
+      "keeping this phone's setup expects the server's next revision",
+      () async {
+        final workoutId = await repository.start(
+          prescription: noted,
+          startedAt: DateTime.utc(2026, 11, 2, 17),
+        );
+        await repository.setSetupNote(
+          workoutId: workoutId,
+          exerciseTrackId: 10,
+          exerciseId: 18,
+          text: 'Seat 2, K13',
+        );
+        final sent = (await database.deliverableOperations(workoutId)).last;
+        // Edited on the desktop meanwhile, up to revision 5.
+        await database.acknowledgeOperations(
+          workoutId: workoutId,
+          leaseEpoch: sent.leaseEpoch,
+          appliedSeq: sent.seq,
+          revision: 9,
+          resultsBySeq: {
+            sent.seq: {
+              'seq': sent.seq,
+              'op_id': sent.opId,
+              'status': 'conflict',
+              'entity_rev': null,
+              'server_state': {
+                'exercise_id': 18,
+                'text': 'Seat 3',
+                'rev': 5,
+                'updated_at': '2026-11-02T18:00:00Z',
+              },
+              'error': null,
+            },
+          },
+        );
+
+        expect(await database.retryLatestConflict(workoutId), isTrue);
+
+        final resent = (await database.deliverableOperations(workoutId)).last;
+        expect((jsonDecode(resent.dataJson) as Map)['if_rev'], 5);
+        expect((jsonDecode(resent.dataJson) as Map)['text'], 'Seat 2, K13');
+        expect((await storedNotes(workoutId)).single.rev, 6);
+      },
+    );
   });
 
   test('starting an exercise now swaps it in and starts it fresh', () async {

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../../atlas/widgets/anatomy_heatmap.dart';
 import '../../atlas/widgets/exercise_image.dart';
@@ -327,6 +328,11 @@ class _FocusModeScreenState extends State<FocusModeScreen>
                           onTap: exercise.atlasPeek == null
                               ? null
                               : _showQuickPeek,
+                          onSetup:
+                              exercise.setupNote == null ||
+                                  widget.callbacks.onSetupNoteChanged == null
+                              ? null
+                              : _showSetupNote,
                         ),
                         const SizedBox(height: 12),
                         _SetRail(
@@ -709,6 +715,40 @@ class _FocusModeScreenState extends State<FocusModeScreen>
     }
   }
 
+  Future<void> _showSetupNote() async {
+    final exercise = widget.workout.currentExercise;
+    final note = exercise.setupNote;
+    if (note == null) return;
+    final l10n = AppLocalizations.of(context);
+    final updatedAt = note.updatedAt;
+    final value = await _showNoteSheet(
+      title: l10n.setupNoteTitle,
+      hint: l10n.setupNotePlaceholder,
+      initialValue: note.text,
+      suggestions: const [],
+      supportingText: [
+        l10n.setupNoteExplanation(exercise.name),
+        if (updatedAt != null)
+          l10n.setupNoteUpdated(
+            DateFormat.MMMd(
+              Localizations.localeOf(context).languageCode,
+            ).format(updatedAt.toLocal()),
+          ),
+      ].join(' '),
+      maxLength: 2000,
+      saveLabel: l10n.setupNoteSave,
+    );
+    if (!mounted || value == null) return;
+    try {
+      await widget.callbacks.onSetupNoteChanged?.call(
+        exercise,
+        value.isEmpty ? null : value,
+      );
+    } catch (_) {
+      if (mounted) _showFailure();
+    }
+  }
+
   List<String> get _noteSuggestions {
     final l10n = AppLocalizations.of(context);
     return [
@@ -727,6 +767,8 @@ class _FocusModeScreenState extends State<FocusModeScreen>
     required String? initialValue,
     required List<String> suggestions,
     String? supportingText,
+    int maxLength = 1000,
+    String? saveLabel,
   }) => showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
@@ -736,6 +778,8 @@ class _FocusModeScreenState extends State<FocusModeScreen>
       initialValue: initialValue,
       suggestions: suggestions,
       supportingText: supportingText,
+      maxLength: maxLength,
+      saveLabel: saveLabel,
     ),
   );
 

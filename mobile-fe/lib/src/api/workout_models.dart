@@ -161,6 +161,27 @@ class PerformanceTree {
   };
 }
 
+/// A setup note as the workout snapshot carries it, named by its slot.
+class SlotSetupNote {
+  const SlotSetupNote({required this.exerciseTrackId, required this.note});
+
+  factory SlotSetupNote.fromJson(JsonMap json) => SlotSetupNote(
+    exerciseTrackId: asInt(
+      requiredJson(json, 'exercise_unit_track_id'),
+      'exercise_unit_track_id',
+    ),
+    note: SetupNote.fromJson(json),
+  );
+
+  final int exerciseTrackId;
+  final SetupNote note;
+
+  JsonMap toJson() => <String, Object?>{
+    'exercise_unit_track_id': exerciseTrackId,
+    ...note.toJson(),
+  };
+}
+
 class WorkoutSnapshot {
   const WorkoutSnapshot({
     required this.workoutId,
@@ -174,6 +195,7 @@ class WorkoutSnapshot {
     required this.positionHint,
     required this.prescription,
     required this.performance,
+    this.setupNotes,
   });
 
   factory WorkoutSnapshot.fromJson(JsonMap json) => WorkoutSnapshot(
@@ -199,6 +221,14 @@ class WorkoutSnapshot {
     performance: PerformanceTree.fromJson(
       asJsonMap(requiredJson(json, 'performance'), 'performance'),
     ),
+    setupNotes: json['setup_notes'] == null
+        ? null
+        : decodeList(
+            json['setup_notes'],
+            (value) =>
+                SlotSetupNote.fromJson(asJsonMap(value, 'setup_notes[]')),
+            'setup_notes',
+          ),
   );
 
   final String workoutId;
@@ -213,6 +243,22 @@ class WorkoutSnapshot {
   final WorkoutPrescription prescription;
   final PerformanceTree performance;
 
+  /// The notes of the workout's slots as they stand now, unlike the
+  /// prescription, which is frozen at start. Null from a server that sends
+  /// none.
+  final List<SlotSetupNote>? setupNotes;
+
+  /// The prescription with its setup notes brought up to date.
+  WorkoutPrescription get prescriptionWithCurrentNotes {
+    final notes = setupNotes;
+    if (notes == null) return prescription;
+    final byTrack = <int, List<SetupNote>>{};
+    for (final item in notes) {
+      byTrack.putIfAbsent(item.exerciseTrackId, () => []).add(item.note);
+    }
+    return prescription.withSetupNotes(byTrack);
+  }
+
   JsonMap toJson() => <String, Object?>{
     'workout_id': workoutId,
     'session_id': sessionId,
@@ -225,6 +271,10 @@ class WorkoutSnapshot {
     'position_hint': positionHint?.toJson(),
     'prescription': prescription.toJson(),
     'performance': performance.toJson(),
+    if (setupNotes != null)
+      'setup_notes': setupNotes!
+          .map((item) => item.toJson())
+          .toList(growable: false),
   };
 }
 

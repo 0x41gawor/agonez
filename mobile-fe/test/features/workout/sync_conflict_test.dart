@@ -19,6 +19,7 @@ void main() {
         performedOrdinal: 2,
         loadStepKg: 2.5,
         defaultRestSeconds: 90,
+        setupNote: FocusSetupNote(exerciseTrackId: 31, exerciseId: 20),
         sets: [
           FocusSetViewModel(
             id: 'extension-set-1',
@@ -60,6 +61,30 @@ void main() {
     expect(conflict.subject, 'Leg extension · Exercise note');
     expect(conflict.phone, 'Seat on 6');
     expect(conflict.server, 'No note');
+  });
+
+  test('a setup note reads as the two notes', () {
+    final conflict = describeConflict(
+      type: 'set_setup_note',
+      data: const {
+        'exercise_track_id': 31,
+        'exercise_id': 20,
+        'text': 'Seat 6, K13',
+        'if_rev': 1,
+      },
+      serverState: const {
+        'exercise_id': 20,
+        'text': 'Seat 5',
+        'rev': 3,
+        'updated_at': '2026-11-02T18:00:00Z',
+      },
+      workout: workout,
+      l10n: l10n,
+    );
+
+    expect(conflict.subject, 'Leg extension · My setup');
+    expect(conflict.phone, 'Seat 6, K13');
+    expect(conflict.server, 'Seat 5');
   });
 
   test('a set reads as load, reps and RIR', () {

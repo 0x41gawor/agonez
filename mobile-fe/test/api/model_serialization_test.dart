@@ -1,6 +1,8 @@
 import 'package:agonez/src/api/api.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/workout_fixtures.dart';
+
 void main() {
   test('prescription keeps unresolved load separate and nullable', () {
     final set = PrescriptionSet.fromJson(<String, Object?>{
@@ -138,6 +140,35 @@ void main() {
 
     expect(set.loadFromLastSession, isTrue);
     expect(PrescriptionSet.fromJson(set.toJson()).loadSource, 'last_exposure');
+  });
+
+  test('a prescription cached before setup notes reads as having none', () {
+    final exercise = PrescriptionExercise.fromJson(
+      fixturePrescriptionExercise.toJson()..remove('setup_notes'),
+    );
+
+    expect(exercise.setupNotes, isEmpty);
+  });
+
+  test('a setup note never written keeps its missing date', () {
+    final exercise = PrescriptionExercise.fromJson(
+      fixturePrescriptionExercise.toJson()
+        ..['setup_notes'] = <Object?>[
+          <String, Object?>{
+            'exercise_id': 18,
+            'text': null,
+            'rev': 0,
+            'updated_at': null,
+          },
+        ],
+    );
+    final note = PrescriptionExercise.fromJson(
+      exercise.toJson(),
+    ).setupNotes.single;
+
+    expect(note.text, isNull);
+    expect(note.rev, 0);
+    expect(note.updatedAt, isNull);
   });
 
   test('error envelope preserves stable code and arbitrary details', () {

@@ -1009,6 +1009,7 @@ class AppDatabase extends _$AppDatabase {
     );
     if (entityRevision != null) {
       await _storeEntityRevision(
+        workoutId: workoutId,
         operationType: conflict.type,
         data: data,
         serverRevision: entityRevision,
@@ -1113,6 +1114,7 @@ class AppDatabase extends _$AppDatabase {
           (status == 'applied' || status == 'duplicate') &&
           entityRevision is int) {
         await _storeEntityRevision(
+          workoutId: workoutId,
           operationType: operation.type,
           data: Map<String, Object?>.from(
             jsonDecode(operation.dataJson) as Map,
@@ -1160,11 +1162,20 @@ class AppDatabase extends _$AppDatabase {
   });
 
   Future<void> _storeEntityRevision({
+    required String workoutId,
     required String operationType,
     required Map<String, Object?> data,
     required int serverRevision,
     int? localRevision,
   }) async {
+    if (operationType == 'set_setup_note') {
+      // A note keeps one revision, the one its next edit expects, and only
+      // a re-sent edit moves it.
+      if (localRevision != null) {
+        await _setSetupNoteRevision(workoutId, data, localRevision);
+      }
+      return;
+    }
     if (operationType == 'upsert_set' || operationType == 'skip_set') {
       final id = data['set_performance_id'];
       if (id is! String) return;
@@ -1197,6 +1208,35 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
     }
+  }
+
+  Future<void> _setSetupNoteRevision(
+    String workoutId,
+    Map<String, Object?> data,
+    int revision,
+  ) async {
+    final workout = await (select(
+      localWorkouts,
+    )..where((row) => row.workoutId.equals(workoutId))).getSingleOrNull();
+    if (workout == null) return;
+    final prescription =
+        jsonDecode(workout.prescriptionJson) as Map<String, Object?>;
+    final note = (prescription['exercises']! as List<Object?>)
+        .cast<Map<String, Object?>>()
+        .where(
+          (entry) => entry['exercise_track_id'] == data['exercise_track_id'],
+        )
+        .expand((entry) => entry['setup_notes'] as List<Object?>? ?? const [])
+        .cast<Map<String, Object?>>()
+        .where((entry) => entry['exercise_id'] == data['exercise_id'])
+        .firstOrNull;
+    if (note == null) return;
+    note['rev'] = revision;
+    await (update(
+      localWorkouts,
+    )..where((row) => row.workoutId.equals(workoutId))).write(
+      LocalWorkoutsCompanion(prescriptionJson: Value(jsonEncode(prescription))),
+    );
   }
 
   Future<void> setWorkoutCursor({

@@ -616,6 +616,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteSave => 'Save note';
 
   @override
+  String get setupNoteTitle => 'My setup';
+
+  @override
+  String get setupNoteSavedA11y => 'My setup, saved';
+
+  @override
+  String setupNoteExplanation(String exercise) {
+    return 'For $exercise in this slot, for the rest of this plan run. It stays until you change it.';
+  }
+
+  @override
+  String setupNoteUpdated(String date) {
+    return 'Updated $date.';
+  }
+
+  @override
+  String get setupNotePlaceholder => 'e.g. Seat 2, pin K13, quite deep';
+
+  @override
+  String get setupNoteSave => 'Save setup';
+
+  @override
   String get noteSuggestionGripSlipped => 'Grip slipped';
 
   @override

@@ -622,6 +622,28 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noteSave => 'Zapisz notatkę';
 
   @override
+  String get setupNoteTitle => 'Moje ustawienia';
+
+  @override
+  String get setupNoteSavedA11y => 'Moje ustawienia, zapisane';
+
+  @override
+  String setupNoteExplanation(String exercise) {
+    return 'Dla $exercise na tym miejscu w treningu, do końca tej realizacji planu. Zostają, dopóki ich nie zmienisz.';
+  }
+
+  @override
+  String setupNoteUpdated(String date) {
+    return 'Zmieniono $date.';
+  }
+
+  @override
+  String get setupNotePlaceholder => 'np. siedzisko 2, pin K13, dość głęboko';
+
+  @override
+  String get setupNoteSave => 'Zapisz ustawienia';
+
+  @override
   String get noteSuggestionGripSlipped => 'Chwyt puścił';
 
   @override

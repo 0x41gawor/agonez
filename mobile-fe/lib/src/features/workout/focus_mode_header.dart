@@ -186,10 +186,17 @@ class _SupersededBanner extends StatelessWidget {
 }
 
 class _ExerciseHeader extends StatelessWidget {
-  const _ExerciseHeader({required this.exercise, required this.onTap});
+  const _ExerciseHeader({
+    required this.exercise,
+    required this.onTap,
+    this.onSetup,
+  });
 
   final FocusExerciseViewModel exercise;
   final VoidCallback? onTap;
+
+  /// Opens the "My setup" note; null hides its icon.
+  final VoidCallback? onSetup;
 
   @override
   Widget build(BuildContext context) {
@@ -209,37 +216,61 @@ class _ExerciseHeader extends StatelessWidget {
               : null,
         ),
         const SizedBox(height: 5),
-        Semantics(
-          button: onTap != null,
-          label: '${exercise.name}, ${l10n.atlasQuickView}',
-          child: InkWell(
-            key: const Key('focus-exercise-name'),
-            onTap: onTap,
-            borderRadius: AgonezRadii.controlBorder,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      exercise.name,
-                      style: AgonezTypography.of(context).headlineLarge,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Semantics(
+                button: onTap != null,
+                label: '${exercise.name}, ${l10n.atlasQuickView}',
+                child: InkWell(
+                  key: const Key('focus-exercise-name'),
+                  onTap: onTap,
+                  borderRadius: AgonezRadii.controlBorder,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            exercise.name,
+                            style: AgonezTypography.of(context).headlineLarge,
+                          ),
+                        ),
+                        if (onTap != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Icon(
+                              Icons.menu_book_outlined,
+                              size: 21,
+                              color: colors.goldText,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  if (onTap != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Icon(
-                        Icons.menu_book_outlined,
-                        size: 21,
-                        color: colors.goldText,
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
-          ),
+            if (onSetup != null)
+              // Out of the way until the athlete wonders how they set the
+              // machine up last time; a dot says something is saved.
+              IconButton(
+                key: const Key('focus-setup-note'),
+                onPressed: onSetup,
+                tooltip: exercise.setupNote?.text == null
+                    ? l10n.setupNoteTitle
+                    : l10n.setupNoteSavedA11y,
+                visualDensity: VisualDensity.compact,
+                icon: Badge(
+                  isLabelVisible: exercise.setupNote?.text != null,
+                  smallSize: 7,
+                  backgroundColor: colors.goldText,
+                  child: Icon(Icons.tune, size: 21, color: colors.goldText),
+                ),
+              ),
+          ],
         ),
         if (exercise.mode == FocusExerciseMode.substituted) ...[
           const SizedBox(height: 8),

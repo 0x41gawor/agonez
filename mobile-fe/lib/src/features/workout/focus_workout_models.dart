@@ -89,6 +89,23 @@ class FocusPreviousSetViewModel {
   final int? rir;
 }
 
+/// The athlete's standing "My setup" note for an exercise in its slot.
+class FocusSetupNote {
+  const FocusSetupNote({
+    required this.exerciseTrackId,
+    required this.exerciseId,
+    this.text,
+    this.updatedAt,
+  });
+
+  final int exerciseTrackId;
+  final int exerciseId;
+
+  /// Null when the athlete has not written one.
+  final String? text;
+  final DateTime? updatedAt;
+}
+
 class FocusExerciseViewModel {
   const FocusExerciseViewModel({
     required this.id,
@@ -111,6 +128,7 @@ class FocusExerciseViewModel {
     this.exerciseComment,
     this.previousSet,
     this.atlasPeek,
+    this.setupNote,
     this.orderChanged = false,
   });
 
@@ -136,6 +154,9 @@ class FocusExerciseViewModel {
   final List<FocusSetViewModel> sets;
   final FocusPreviousSetViewModel? previousSet;
   final AtlasPeek? atlasPeek;
+
+  /// Null for an exercise without a slot, which has no setup note.
+  final FocusSetupNote? setupNote;
   final bool orderChanged;
 
   int get recordedSetCount => sets.where((set) => set.isRecorded).length;
@@ -347,6 +368,7 @@ class FocusWorkoutCallbacks {
     this.onUndoSet,
     this.onEditSet,
     this.onExerciseNoteChanged,
+    this.onSetupNoteChanged,
     this.pickSubstitute,
     this.onSubstitute,
     this.pickUnplannedExercise,
@@ -387,6 +409,10 @@ class FocusWorkoutCallbacks {
   final Future<void> Function(FocusSetEdit edit)? onEditSet;
   final Future<void> Function(FocusExerciseViewModel exercise, String? comment)?
   onExerciseNoteChanged;
+
+  /// Saves [exercise]'s "My setup" note; null text clears it.
+  final Future<void> Function(FocusExerciseViewModel exercise, String? text)?
+  onSetupNoteChanged;
   final FocusExercisePicker? pickSubstitute;
   final Future<void> Function(
     FocusExerciseViewModel exercise,

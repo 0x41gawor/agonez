@@ -352,6 +352,80 @@ class WorkoutRepository {
     _requestSync?.call();
   }
 
+  /// Saves the athlete's "My setup" note for [exerciseId] in the slot
+  /// [exerciseTrackId] into the workout's copy of the prescription, where
+  /// the workout reads it, and queues it for the server. Returns false when
+  /// the text is unchanged: the server keeps its revision for an unchanged
+  /// note, so sending one would leave this phone a revision ahead.
+  Future<bool> setSetupNote({
+    required String workoutId,
+    required int exerciseTrackId,
+    required int exerciseId,
+    required String? text,
+  }) async {
+    final trimmed = text?.trim();
+    final value = trimmed == null || trimmed.isEmpty ? null : trimmed;
+    final queued = await _database.transaction(() async {
+      final workout = await (_database.select(
+        _database.localWorkouts,
+      )..where((row) => row.workoutId.equals(workoutId))).getSingle();
+      // Edited as JSON, not through the model, so nothing the model does
+      // not know is lost.
+      final prescription =
+          jsonDecode(workout.prescriptionJson) as Map<String, Object?>;
+      final slot = (prescription['exercises']! as List<Object?>)
+          .cast<Map<String, Object?>>()
+          .where((entry) => entry['exercise_track_id'] == exerciseTrackId)
+          .firstOrNull;
+      if (slot == null) return false;
+      final notes = [
+        for (final entry in slot['setup_notes'] as List<Object?>? ?? const [])
+          SetupNote.fromJson(entry! as Map<String, Object?>),
+      ];
+      final current = notes
+          .where((note) => note.exerciseId == exerciseId)
+          .firstOrNull;
+      if (current?.text == value) return false;
+
+      final now = DateTime.now().toUtc();
+      // A note the server does not have yet, such as an Atlas substitute's
+      // first, goes without a revision.
+      final ifRev = current?.rev;
+      slot['setup_notes'] = [
+        for (final note in notes)
+          if (note.exerciseId != exerciseId) note.toJson(),
+        SetupNote(
+          exerciseId: exerciseId,
+          text: value,
+          rev: (ifRev ?? 0) + 1,
+          updatedAt: now,
+        ).toJson(),
+      ];
+      await (_database.update(
+        _database.localWorkouts,
+      )..where((row) => row.workoutId.equals(workoutId))).write(
+        LocalWorkoutsCompanion(
+          prescriptionJson: Value(jsonEncode(prescription)),
+          updatedAt: Value(now),
+        ),
+      );
+      await _database.enqueueOperation(
+        workoutId: workoutId,
+        type: 'set_setup_note',
+        data: SetSetupNoteData(
+          exerciseTrackId: exerciseTrackId,
+          exerciseId: exerciseId,
+          text: value,
+          ifRev: ifRev,
+        ).toJson(),
+        occurredAt: now,
+      );
+      return true;
+    });
+    if (queued) _requestSync?.call();
+    return queued;
+  }
+
   Future<void> skipExercise({
     required String workoutId,
     required String exercisePerformanceId,

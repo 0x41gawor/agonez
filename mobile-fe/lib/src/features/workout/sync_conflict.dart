@@ -38,7 +38,11 @@ ConflictDescription describeConflict({
   final exercise = workout.exercises
       .where(
         (item) =>
-            item.id == exerciseId || item.sets.any((set) => set.id == setId),
+            item.id == exerciseId ||
+            item.sets.any((set) => set.id == setId) ||
+            (item.setupNote != null &&
+                item.setupNote!.exerciseTrackId == data['exercise_track_id'] &&
+                item.setupNote!.exerciseId == data['exercise_id']),
       )
       .firstOrNull;
   final set = exercise?.sets.where((item) => item.id == setId).firstOrNull;
@@ -55,6 +59,12 @@ ConflictDescription describeConflict({
         subject: subject(l10n.noteExerciseTitle),
         phone: _note(data['comment'], l10n),
         server: _note(server?['comment'], l10n),
+      );
+    case 'set_setup_note':
+      return ConflictDescription(
+        subject: subject(l10n.setupNoteTitle),
+        phone: _note(data['text'], l10n),
+        server: _note(server?['text'], l10n),
       );
     case 'skip_exercise' || 'substitute_exercise':
       return ConflictDescription(

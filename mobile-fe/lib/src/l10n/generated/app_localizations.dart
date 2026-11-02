@@ -1093,6 +1093,42 @@ abstract class AppLocalizations {
   /// **'Save note'**
   String get noteSave;
 
+  /// No description provided for @setupNoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My setup'**
+  String get setupNoteTitle;
+
+  /// No description provided for @setupNoteSavedA11y.
+  ///
+  /// In en, this message translates to:
+  /// **'My setup, saved'**
+  String get setupNoteSavedA11y;
+
+  /// No description provided for @setupNoteExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'For {exercise} in this slot, for the rest of this plan run. It stays until you change it.'**
+  String setupNoteExplanation(String exercise);
+
+  /// No description provided for @setupNoteUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {date}.'**
+  String setupNoteUpdated(String date);
+
+  /// No description provided for @setupNotePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Seat 2, pin K13, quite deep'**
+  String get setupNotePlaceholder;
+
+  /// No description provided for @setupNoteSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save setup'**
+  String get setupNoteSave;
+
   /// No description provided for @noteSuggestionGripSlipped.
   ///
   /// In en, this message translates to:

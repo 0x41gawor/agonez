@@ -144,6 +144,29 @@ void main() {
     expect(decoded.ops[9], isA<SetWorkoutCommentOperation>());
   });
 
+  test('a setup note is sent by its slot and exercise', () {
+    final operation = WorkoutOperation.fromJson(
+      SetSetupNoteOperation(
+        opId: opId,
+        seq: 4,
+        at: at,
+        data: SetSetupNoteData(
+          exerciseTrackId: 489,
+          exerciseId: 112,
+          text: 'Seat 2, K13',
+        ),
+      ).toJson(),
+    );
+
+    expect(operation, isA<SetSetupNoteOperation>());
+    expect(operation.data.toJson(), {
+      'if_rev': null,
+      'exercise_track_id': 489,
+      'exercise_id': 112,
+      'text': 'Seat 2, K13',
+    });
+  });
+
   test('additional set is an upsert with a null prescription reference', () {
     final data = UpsertSetData(
       setPerformanceId: setId,

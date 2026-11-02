@@ -114,7 +114,9 @@ class WorkoutRecoveryRepository {
                 workoutUnitName: snapshot.prescription.workoutUnitName,
                 lifecycle: const Value('active'),
                 startedAt: snapshot.startedAt,
-                prescriptionJson: jsonEncode(snapshot.prescription.toJson()),
+                prescriptionJson: jsonEncode(
+                  snapshot.prescriptionWithCurrentNotes.toJson(),
+                ),
                 startPayloadJson: jsonEncode(start.toJson()),
                 serverSnapshotJson: Value(jsonEncode(snapshot.toJson())),
                 leaseEpoch: Value(snapshot.lease.epoch),
@@ -142,7 +144,9 @@ class WorkoutRecoveryRepository {
         )..where((row) => row.workoutId.equals(snapshot.workoutId))).write(
           LocalWorkoutsCompanion(
             lifecycle: const Value('active'),
-            prescriptionJson: Value(jsonEncode(snapshot.prescription.toJson())),
+            prescriptionJson: Value(
+              jsonEncode(snapshot.prescriptionWithCurrentNotes.toJson()),
+            ),
             serverSnapshotJson: Value(jsonEncode(snapshot.toJson())),
             leaseEpoch: Value(snapshot.lease.epoch),
             appliedSeq: Value(snapshot.appliedSeq),

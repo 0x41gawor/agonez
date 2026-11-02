@@ -447,6 +447,42 @@ class SetWorkoutCommentData extends OperationData {
   JsonMap toJson() => baseJson()..['comment'] = comment;
 }
 
+/// The athlete's standing "My setup" note for one exercise in one slot.
+/// It outlives the workout that sends it.
+class SetSetupNoteData extends OperationData {
+  SetSetupNoteData({
+    required this.exerciseTrackId,
+    required this.exerciseId,
+    required this.text,
+    super.ifRev,
+  }) {
+    _positive(exerciseTrackId, 'exerciseTrackId');
+    _positive(exerciseId, 'exerciseId');
+  }
+
+  factory SetSetupNoteData.fromJson(JsonMap json) => SetSetupNoteData(
+    ifRev: asNullableInt(json['if_rev'], 'if_rev'),
+    exerciseTrackId: asInt(
+      requiredJson(json, 'exercise_track_id'),
+      'exercise_track_id',
+    ),
+    exerciseId: asInt(requiredJson(json, 'exercise_id'), 'exercise_id'),
+    text: asNullableString(requiredJson(json, 'text'), 'text'),
+  );
+
+  final int exerciseTrackId;
+  final int exerciseId;
+  final String? text;
+
+  @override
+  JsonMap toJson() => baseJson()
+    ..addAll(<String, Object?>{
+      'exercise_track_id': exerciseTrackId,
+      'exercise_id': exerciseId,
+      'text': text,
+    });
+}
+
 sealed class WorkoutOperation {
   WorkoutOperation({required this.opId, required this.seq, required this.at}) {
     _positive(seq, 'seq');
@@ -517,6 +553,12 @@ sealed class WorkoutOperation {
         seq: seq,
         at: at,
         data: SetWorkoutCommentData.fromJson(data),
+      ),
+      'set_setup_note' => SetSetupNoteOperation(
+        opId: opId,
+        seq: seq,
+        at: at,
+        data: SetSetupNoteData.fromJson(data),
       ),
       final type => throw FormatException('Unknown workout operation "$type"'),
     };
@@ -666,6 +708,19 @@ final class SetWorkoutCommentOperation extends WorkoutOperation {
   final SetWorkoutCommentData data;
   @override
   String get type => 'set_workout_comment';
+}
+
+final class SetSetupNoteOperation extends WorkoutOperation {
+  SetSetupNoteOperation({
+    required super.opId,
+    required super.seq,
+    required super.at,
+    required this.data,
+  });
+  @override
+  final SetSetupNoteData data;
+  @override
+  String get type => 'set_setup_note';
 }
 
 class OperationBatch {

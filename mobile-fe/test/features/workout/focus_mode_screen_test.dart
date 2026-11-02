@@ -308,6 +308,63 @@ void main() {
       expect(find.byKey(const Key('focus-postpone')), findsNothing);
     });
   });
+
+  group('my setup', () {
+    const saved = FocusSetupNote(
+      exerciseTrackId: 10,
+      exerciseId: 18,
+      text: 'Seat 2, K13',
+    );
+
+    testWidgets('opens the saved setup and saves an edit', (tester) async {
+      String? savedText;
+      await _pumpFocus(
+        tester,
+        _workout(setupNote: saved),
+        _callbacks(onSetupNoteChanged: (_, text) async => savedText = text),
+      );
+
+      await tester.tap(find.byKey(const Key('focus-setup-note')));
+      await tester.pumpAndSettle();
+      expect(find.text('My setup'), findsOneWidget);
+      expect(find.text('Seat 2, K13'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'Seat 2, K14 ');
+      await tester.tap(find.text('Save setup'));
+      await tester.pumpAndSettle();
+
+      expect(savedText, 'Seat 2, K14');
+    });
+
+    testWidgets('closing the setup without saving changes nothing', (
+      tester,
+    ) async {
+      var calls = 0;
+      await _pumpFocus(
+        tester,
+        _workout(setupNote: saved),
+        _callbacks(onSetupNoteChanged: (_, _) async => calls++),
+      );
+
+      await tester.tap(find.byKey(const Key('focus-setup-note')));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(195, 40));
+      await tester.pumpAndSettle();
+
+      expect(find.text('My setup'), findsNothing);
+      expect(calls, 0);
+    });
+
+    testWidgets('an exercise without a slot has no setup', (tester) async {
+      await _pumpFocus(
+        tester,
+        _workout(),
+        _callbacks(onSetupNoteChanged: (_, _) async {}),
+      );
+
+      expect(find.byKey(const Key('focus-setup-note')), findsNothing);
+    });
+  });
 }
 
 Future<void> _openPostpone(WidgetTester tester) async {
@@ -359,6 +416,7 @@ Future<void> _pumpFocus(
 
 FocusWorkoutViewModel _workout({
   AtlasPeek? atlasPeek,
+  FocusSetupNote? setupNote,
   int repMin = 6,
   int repMax = 8,
 }) => FocusWorkoutViewModel(
@@ -375,6 +433,7 @@ FocusWorkoutViewModel _workout({
       loadStepKg: 2.5,
       defaultRestSeconds: 180,
       atlasPeek: atlasPeek,
+      setupNote: setupNote,
       sets: [
         FocusSetViewModel(
           id: 'set-id',
@@ -468,9 +527,11 @@ FocusWorkoutCallbacks _callbacks({
   Future<void> Function(FocusExerciseViewModel)? onReorderExercise,
   Future<void> Function(FocusExerciseViewModel)? onDoNow,
   Future<void> Function(FocusExerciseViewModel, FocusSetViewModel)? onUndoSet,
+  Future<void> Function(FocusExerciseViewModel, String?)? onSetupNoteChanged,
 }) => FocusWorkoutCallbacks(
   onMinimise: () {},
   onUndoSet: onUndoSet,
+  onSetupNoteChanged: onSetupNoteChanged,
   onConfirmSet: onConfirmSet ?? (_) async {},
   onSkipSet: (_, _) async {},
   onAddExtraSet: (_) async {},
