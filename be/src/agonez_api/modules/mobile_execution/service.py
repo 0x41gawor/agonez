@@ -344,6 +344,9 @@ class MobileExecutionService:
         previous_sets: dict[int, list[Row]] = {}
         for item in data["previous_sets"]:
             previous_sets.setdefault(item["exercise_prescription_id"], []).append(item)
+        notes_by_track: dict[int, list[Row]] = {}
+        for item in data.get("setup_notes", []):
+            notes_by_track.setdefault(item["exercise_unit_track_id"], []).append(item)
         exercises: list[dict[str, Any]] = []
         for item in data["exercises"]:
             exercise_id = item["exercise_prescription_id"]
@@ -356,6 +359,10 @@ class MobileExecutionService:
                     "ordinal": item["ordinal"],
                     "exercise_track_id": item["exercise_track_id"],
                     "slot": {"goal": item["plan_goal_snapshot"], "role": role},
+                    "setup_notes": [
+                        self._setup_note(note)
+                        for note in notes_by_track.get(item["exercise_track_id"], [])
+                    ],
                     "exercise": self._exercise_identity(
                         item["prescribed_exercise_id"],
                         item["slug"],
@@ -471,6 +478,10 @@ class MobileExecutionService:
             revision=workout["revision"],
             position_hint=self._position_hint(workout),
             prescription=self._prescription(prescription),
+            setup_notes=[
+                self._setup_note(note, with_track=True)
+                for note in data.get("setup_notes", [])
+            ],
             performance={
                 "comment": workout["performance_comment"],
                 "exercises": [
@@ -606,6 +617,19 @@ class MobileExecutionService:
                 ),
             },
         }
+
+    @staticmethod
+    def _setup_note(note: Row, *, with_track: bool = False) -> dict[str, Any]:
+        """Render a standing setup note as an object so photos can join it later."""
+        payload: dict[str, Any] = {
+            "exercise_id": note["exercise_id"],
+            "text": note["text"],
+            "rev": note["rev"],
+            "updated_at": note["updated_at"],
+        }
+        if with_track:
+            payload["exercise_unit_track_id"] = note["exercise_unit_track_id"]
+        return payload
 
     @staticmethod
     def _prescription_source(exercises: list[Row]) -> str:

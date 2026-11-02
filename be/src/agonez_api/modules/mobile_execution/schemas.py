@@ -105,12 +105,37 @@ class ExerciseHistory(APIModel):
     previous_exposure: PreviousExposure | None
 
 
+class SetupNote(APIModel):
+    """A standing "My setup" note for one exercise in one run-scoped slot.
+
+    An object rather than a bare string so a photos field can be added later
+    without reshaping the payload.
+    """
+
+    exercise_id: int
+    text: str | None = None
+    rev: int = 0
+    updated_at: datetime | None = None
+    exercise_unit_track_id: int | None = Field(
+        default=None,
+        description="Present in the workout snapshot, omitted inside a prescription exercise.",
+    )
+
+
 class PrescriptionExercise(APIModel):
     exercise_prescription_id: int | None = None
     source: Literal["analysis", "plan_fallback"]
     ordinal: int
     exercise_track_id: int
     slot: PrescriptionSlot
+    setup_notes: list[SetupNote] = Field(
+        default_factory=list,
+        description=(
+            "Standing setup notes for this slot: the prescribed exercise, its plan "
+            "variants, and any Atlas substitute already noted here. Editing one never "
+            "changes prescription_version."
+        ),
+    )
     exercise: ExerciseIdentity
     variant_label: str | None
     plan_comment: str | None
@@ -236,6 +261,13 @@ class WorkoutSnapshot(APIModel):
     revision: int
     position_hint: PositionHint | None
     prescription: WorkoutPrescription
+    setup_notes: list[SetupNote] = Field(
+        default_factory=list,
+        description=(
+            "Standing setup notes for this workout's slots, as they stand now. Unlike "
+            "the prescription these are not frozen at start."
+        ),
+    )
     performance: PerformanceTree
 
 
@@ -503,6 +535,24 @@ class SetCursorOperation(BaseOperation):
     data: SetCursorData
 
 
+class SetSetupNoteData(OpData):
+    """Payload of set_setup_note.
+
+    `text` carries no max_length on purpose. A length limit here would make an
+    over-long note fail request validation and take the whole ordered batch with
+    it; the handler rejects it as a single op instead (setup_note_too_long).
+    """
+
+    exercise_track_id: int = Field(ge=1)
+    exercise_id: int = Field(ge=1)
+    text: str | None
+
+
+class SetSetupNoteOperation(BaseOperation):
+    type: Literal["set_setup_note"]
+    data: SetSetupNoteData
+
+
 class SetWorkoutCommentOperation(BaseOperation):
     type: Literal["set_workout_comment"]
     data: SetWorkoutCommentData
@@ -518,7 +568,8 @@ MobileOperation = Annotated[
     | AddUnplannedExerciseOperation
     | ReorderExercisesOperation
     | SetCursorOperation
-    | SetWorkoutCommentOperation,
+    | SetWorkoutCommentOperation
+    | SetSetupNoteOperation,
     Field(discriminator="type"),
 ]
 

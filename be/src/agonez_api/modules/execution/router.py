@@ -26,6 +26,8 @@ from agonez_api.modules.execution.schemas import (
     PrescriptionWriteResponse,
     SessionPatch,
     SessionStatusResponse,
+    SetupNotePut,
+    SetupNoteWritten,
     TimelineMicrocycle,
     WorkoutPrescriptionPatch,
     WorkoutPrescriptionResponse,
@@ -164,6 +166,21 @@ async def get_exercise_trace(
         exercise_trace_id,
         include_next=include_next,
     )
+
+
+@router.put(
+    "/plan-runs/{plan_run_id}/exercise-traces/{exercise_trace_id}/setup-note",
+    response_model=SetupNoteWritten,
+    responses=ERROR_RESPONSES,
+)
+async def save_setup_note(
+    plan_run_id: Identifier,
+    exercise_trace_id: Identifier,
+    payload: Annotated[SetupNotePut, Body()],
+    service: Annotated[ExecutionService, Depends(get_execution_service)],
+) -> SetupNoteWritten:
+    """Write the standing "My setup" note for one exercise in this slot."""
+    return await service.save_setup_note(plan_run_id, exercise_trace_id, payload)
 
 
 @router.get(

@@ -28,6 +28,7 @@ from agonez_api.modules.mobile_execution.schemas import (
     ReorderExercisesOperation,
     SetCursorOperation,
     SetExerciseCommentOperation,
+    SetSetupNoteOperation,
     SetWorkoutCommentOperation,
     SkipExerciseOperation,
     SkipSetOperation,
@@ -496,6 +497,9 @@ class MobileExecutionRepository:
         return {
             "session": session,
             "locale": locale,
+            # Deliberately computed without the setup notes: a note edit must not change
+            # the prescription version, or the phone's next start would be refused with
+            # prescription_changed. See mobile-api-contract.md § 4.3.
             "version": await self._prescription_version(connection, session_id),
             "exercises": exercises,
             "sets": sets,
@@ -503,7 +507,29 @@ class MobileExecutionRepository:
             "previous": previous,
             "previous_sets": previous_sets,
             "peeks": peeks,
+            "setup_notes": await self._load_setup_notes(
+                connection,
+                [cast(int, item["exercise_track_id"]) for item in exercises],
+            ),
         }
+
+    async def _load_setup_notes(
+        self, connection: Any, exercise_track_ids: list[int]
+    ) -> list[Row]:
+        """Every standing note held by these run-scoped slots, in one statement."""
+        if not exercise_track_ids:
+            return []
+        return await self._fetch_all(
+            connection,
+            """
+            SELECT note.exercise_unit_track_id, note.exercise_id,
+                   note.note_text AS text, note.rev, note.updated_at
+            FROM exec.exercise_setup_notes AS note
+            WHERE note.exercise_unit_track_id = ANY(%s)
+            ORDER BY note.exercise_unit_track_id, note.exercise_id
+            """,
+            (exercise_track_ids,),
+        )
 
     async def _ensure_fallback_prescription(self, connection: Any, session_id: int) -> None:
         session = await self._fetch_optional(
@@ -1126,7 +1152,30 @@ class MobileExecutionRepository:
             """,
             (workout["id"],),
         )
-        return {"workout": workout, "exercises": exercises, "sets": sets, "counts": counts}
+        # Notes are live, not frozen with the prescription: a resume, a device switch
+        # or a conflict refresh must show the note as it stands now.
+        setup_notes = await self._fetch_all(
+            connection,
+            """
+            SELECT note.exercise_unit_track_id, note.exercise_id,
+                   note.note_text AS text, note.rev, note.updated_at
+            FROM exec.exercise_setup_notes AS note
+            WHERE note.exercise_unit_track_id IN (
+                SELECT exercise.exercise_unit_track_id
+                FROM exec.exercise_unit_prescriptions AS exercise
+                WHERE exercise.workout_unit_prescription_id = %s
+            )
+            ORDER BY note.exercise_unit_track_id, note.exercise_id
+            """,
+            (workout["workout_unit_prescription_id"],),
+        )
+        return {
+            "workout": workout,
+            "exercises": exercises,
+            "sets": sets,
+            "counts": counts,
+            "setup_notes": setup_notes,
+        }
 
     async def load_atlas_peek(self, exercise_id: int, *, locale: str) -> dict[str, Any]:
         async with self._pool.connection() as connection:
@@ -1543,6 +1592,17 @@ class MobileExecutionRepository:
         async with self._pool.connection() as connection:
             async with connection.transaction():
                 workout = await self._lock_workout(connection, workout_id)
+                if workout["performance_status"] != "draft" and all(
+                    isinstance(item, SetSetupNoteOperation) for item in batch.ops
+                ):
+                    # A setup note is not workout data: it describes how a machine is set
+                    # up, and stays true after the workout is finalized. A note the athlete
+                    # wrote mid-workout must still land if the workout finalized first
+                    # (say from another device) while the phone was offline. Such a batch is
+                    # applied out of band: not recorded in the op log and applied_seq is not
+                    # advanced, so finalize accounting is untouched. Every other operation
+                    # keeps today's workout_finalized refusal.
+                    return await self._apply_setup_notes_out_of_band(connection, workout, batch)
                 self._assert_writable_lease(workout, batch.lease_epoch, device_id)
                 applied_seq = cast(int, workout["applied_seq"])
                 if batch.base_seq > applied_seq:
@@ -1631,6 +1691,26 @@ class MobileExecutionRepository:
                     "results": results,
                 }
 
+    async def _apply_setup_notes_out_of_band(
+        self, connection: Any, workout: Row, batch: OperationBatch
+    ) -> dict[str, Any]:
+        """Apply setup-note operations to a workout that is already finalized.
+
+        Notes are idempotent by key and value (an identical write leaves rev alone), so
+        they do not need the op log's exactly-once protection. The response reports the
+        workout's unchanged applied_seq and revision; the client simply drops these
+        operations from its queue.
+        """
+        results = [
+            await self._apply_operation(connection, workout, operation)
+            for operation in batch.ops
+        ]
+        return {
+            "applied_seq": workout["applied_seq"],
+            "revision": workout["revision"],
+            "results": results,
+        }
+
     async def _apply_operation(
         self,
         connection: Any,
@@ -1658,6 +1738,10 @@ class MobileExecutionRepository:
                 )
             elif isinstance(operation, AddUnplannedExerciseOperation):
                 entity_rev, server_state = await self._add_unplanned_exercise(
+                    connection, workout, operation
+                )
+            elif isinstance(operation, SetSetupNoteOperation):
+                entity_rev, server_state = await self._set_setup_note(
                     connection, workout, operation
                 )
             elif isinstance(operation, ReorderExercisesOperation):
@@ -2161,6 +2245,118 @@ class MobileExecutionRepository:
             ),
         )
         return cast(int, inserted["rev"]), None
+
+    SETUP_NOTE_MAX_LENGTH = 2000
+
+    async def _set_setup_note(
+        self, connection: Any, workout: Row, operation: SetSetupNoteOperation
+    ) -> tuple[int | None, dict[str, Any] | None]:
+        """Upsert the standing setup note for one slot and exercise.
+
+        Every failure here is a per-operation rejection, never a request-level error:
+        the phone's queue is strictly ordered, so refusing the whole batch over one bad
+        note would stall every operation behind it for the rest of the workout.
+        """
+        data = operation.data
+        text = data.text
+        if text is not None and len(text) > self.SETUP_NOTE_MAX_LENGTH:
+            raise _OperationRejected(
+                "setup_note_too_long",
+                f"A setup note is limited to {self.SETUP_NOTE_MAX_LENGTH} characters",
+            )
+        if text is not None and not text.strip():
+            text = None
+        slot = await self._fetch_optional(
+            connection,
+            """
+            SELECT track.id
+            FROM exec.exercise_unit_tracks AS track
+            JOIN exec.workout_sessions AS session
+              ON session.plan_run_id = track.plan_run_id
+            JOIN exec.workout_unit_prescriptions AS prescription
+              ON prescription.workout_session_id = session.id
+            WHERE track.id = %s AND prescription.id = %s
+              AND EXISTS (
+                  SELECT 1
+                  FROM exec.exercise_unit_prescriptions AS exercise
+                  WHERE exercise.workout_unit_prescription_id = prescription.id
+                    AND exercise.exercise_unit_track_id = track.id
+              )
+            """,
+            (data.exercise_track_id, workout["workout_unit_prescription_id"]),
+        )
+        if slot is None:
+            raise _OperationRejected(
+                "setup_note_slot_not_in_workout",
+                "The slot does not belong to this workout's session",
+            )
+        if await self._fetch_optional(
+            connection,
+            "SELECT id FROM core.exercises WHERE id = %s",
+            (data.exercise_id,),
+        ) is None:
+            raise _OperationRejected("exercise_not_found", "Exercise was not found")
+
+        current = await self._fetch_optional(
+            connection,
+            """
+            SELECT exercise_unit_track_id, exercise_id, note_text AS text, rev, updated_at
+            FROM exec.exercise_setup_notes
+            WHERE exercise_unit_track_id = %s AND exercise_id = %s
+            FOR UPDATE
+            """,
+            (data.exercise_track_id, data.exercise_id),
+        )
+        desired = {"text": text}
+        if current is None:
+            # An Atlas substitute the plan never named: its note is born on first write.
+            inserted = await self._fetch_one(
+                connection,
+                """
+                INSERT INTO exec.exercise_setup_notes (
+                    exercise_unit_track_id, exercise_id, note_text, rev, updated_at
+                ) VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT ON CONSTRAINT exercise_setup_notes_slot_exercise_unique
+                DO UPDATE SET note_text = EXCLUDED.note_text,
+                              rev = exec.exercise_setup_notes.rev + 1,
+                              updated_at = clock_timestamp()
+                RETURNING rev
+                """,
+                (
+                    data.exercise_track_id,
+                    data.exercise_id,
+                    text,
+                    0 if text is None else 1,
+                    None if text is None else datetime.now(timezone.utc),
+                ),
+            )
+            return cast(int, inserted["rev"]), None
+        stored = {"text": current["text"]}
+        if self._stale_and_different(data.if_rev, cast(int, current["rev"]), desired, stored):
+            return cast(int, current["rev"]), self._setup_note_state(current)
+        if desired == stored:
+            return cast(int, current["rev"]), None
+        updated = await self._fetch_one(
+            connection,
+            """
+            UPDATE exec.exercise_setup_notes
+            SET note_text = %s, rev = rev + 1, updated_at = clock_timestamp()
+            WHERE exercise_unit_track_id = %s AND exercise_id = %s
+            RETURNING rev
+            """,
+            (text, data.exercise_track_id, data.exercise_id),
+        )
+        return cast(int, updated["rev"]), None
+
+    @staticmethod
+    def _setup_note_state(note: Row) -> dict[str, Any]:
+        return {
+            "exercise_unit_track_id": note["exercise_unit_track_id"],
+            "exercise_id": note["exercise_id"],
+            "text": note["text"],
+            "rev": note["rev"],
+            "updated_at": note["updated_at"],
+        }
 
     async def _reorder_exercises(
         self, connection: Any, workout: Row, operation: ReorderExercisesOperation

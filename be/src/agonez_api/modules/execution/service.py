@@ -46,6 +46,8 @@ from agonez_api.modules.execution.schemas import (
     PrescriptionWriteResponse,
     SessionPatch,
     SessionStatusResponse,
+    SetupNotePut,
+    SetupNoteWritten,
     TimelineMicrocycle,
     WorkoutPrescriptionPatch,
     WorkoutPrescriptionResponse,
@@ -209,6 +211,21 @@ class ExecutionService:
     ) -> PlanRunOverview:
         await self._repository.update_plan_run(plan_run_id, payload)
         return await self.get_overview(plan_run_id)
+
+    async def save_setup_note(
+        self,
+        plan_run_id: int,
+        exercise_track_id: int,
+        payload: SetupNotePut,
+    ) -> SetupNoteWritten:
+        row = await self._repository.save_setup_note(
+            plan_run_id=plan_run_id,
+            exercise_track_id=exercise_track_id,
+            exercise_id=payload.exercise_id,
+            text=payload.text,
+            expected_rev=payload.expected_rev,
+        )
+        return SetupNoteWritten.model_validate(row)
 
     async def delete_plan_run(self, plan_run_id: int, *, force: bool) -> None:
         await self._repository.delete_plan_run(plan_run_id, force=force)
@@ -1189,6 +1206,17 @@ class ExecutionService:
                     "progression_model": structure["variant"]["progression_model_slug"],
                     "load_step_kg": numeric(structure["variant"]["load_step_kg"]),
                 },
+                "setup_notes": [
+                    {
+                        "exercise_id": note["exercise_id"],
+                        "exercise": {"slug": note["slug"], "name": note["name"]},
+                        "text": note["text"],
+                        "rev": note["rev"],
+                        "updated_at": note["updated_at"],
+                    }
+                    for note in bundle.setup_notes
+                    if note["exercise_unit_track_id"] == track["id"]
+                ],
                 "continuity": {
                     "first_microcycle_ordinal": first_ordinal,
                     "revisions_spanned": revision_nos,

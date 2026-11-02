@@ -1,3 +1,4 @@
+import asyncio
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -18,7 +19,11 @@ from agonez_api.modules.mobile_execution.repository import (
     prescription_is_complete,
     resolve_start_mode,
 )
-from agonez_api.modules.mobile_execution.schemas import OperationBatch, StartWorkout
+from agonez_api.modules.mobile_execution.schemas import (
+    OperationBatch,
+    SetSetupNoteOperation,
+    StartWorkout,
+)
 from agonez_api.modules.mobile_execution.service import (
     MobileExecutionService,
     etag_for,
@@ -345,6 +350,7 @@ def test_mobile_openapi_has_all_routes_headers_and_operation_discriminator(
         "reorder_exercises",
         "set_cursor",
         "set_workout_comment",
+        "set_setup_note",
     }
 
 
@@ -718,3 +724,145 @@ def test_expected_plan_structure_sql_counts_slots_and_default_variant_sets() -> 
     assert "FROM plans.exercise_slots AS expected_slot" in sql
     assert "expected_variant.variant_type = 'DEFAULT'" in sql
     assert sql.count("%s") == 2
+
+
+def _setup_note_op(text: str | None, *, if_rev: int | None = None) -> dict[str, Any]:
+    data: dict[str, Any] = {"exercise_track_id": 41, "exercise_id": 61, "text": text}
+    if if_rev is not None:
+        data["if_rev"] = if_rev
+    return {
+        "op_id": "11111111-1111-1111-1111-111111111111",
+        "seq": 1,
+        "at": "2026-11-02T10:00:00Z",
+        "type": "set_setup_note",
+        "data": data,
+    }
+
+
+def test_an_over_long_setup_note_never_fails_request_validation() -> None:
+    """The queue is strictly ordered: one bad note must not stall the whole batch."""
+    batch = OperationBatch.model_validate(
+        {"lease_epoch": 1, "base_seq": 0, "ops": [_setup_note_op("x" * 5000)]}
+    )
+
+    operation = batch.ops[0]
+    assert isinstance(operation, SetSetupNoteOperation)
+    assert operation.data.text == "x" * 5000
+
+
+def test_setup_note_accepts_a_cleared_note_and_an_optional_if_rev() -> None:
+    cleared = OperationBatch.model_validate(
+        {"lease_epoch": 1, "base_seq": 0, "ops": [_setup_note_op(None)]}
+    )
+    guarded = OperationBatch.model_validate(
+        {"lease_epoch": 1, "base_seq": 0, "ops": [_setup_note_op("Seat 2", if_rev=3)]}
+    )
+
+    cleared_op, guarded_op = cleared.ops[0], guarded.ops[0]
+    assert isinstance(cleared_op, SetSetupNoteOperation)
+    assert isinstance(guarded_op, SetSetupNoteOperation)
+    assert cleared_op.data.text is None
+    assert cleared_op.data.if_rev is None
+    assert guarded_op.data.if_rev == 3
+
+
+def test_a_note_longer_than_the_limit_is_rejected_per_operation() -> None:
+    repository = MobileExecutionRepository(None)  # type: ignore[arg-type]
+    operation = OperationBatch.model_validate(
+        {"lease_epoch": 1, "base_seq": 0, "ops": [_setup_note_op("x" * 2001)]}
+    ).ops[0]
+
+    result = asyncio.run(
+        repository._apply_operation(object(), {"workout_unit_prescription_id": 9}, operation)
+    )
+
+    assert result["status"] == "rejected"
+    assert result["error"]["code"] == "setup_note_too_long"
+
+
+def test_setup_notes_reach_the_prescription_without_changing_its_version() -> None:
+    service = MobileExecutionService(None)  # type: ignore[arg-type]
+    data = {
+        "session": {
+            "session_id": 7,
+            "prescription_id": 11,
+            "workout_unit_name": "Push A",
+            "workout_track_id": 2,
+            "microcycle_ordinal": 4,
+            "microcycle_classification": "normal",
+            "description_snapshot": None,
+            "workout_prescription_comment": None,
+            "session_status": "scheduled",
+            "plan_run_id": 3,
+            "prescription_updated_at": None,
+        },
+        "locale": "en",
+        "version": "rx-7-abc123",
+        "exercises": [
+            {
+                "exercise_prescription_id": 101,
+                "ordinal": 0,
+                "generation_source": "analysis",
+                "exercise_track_id": 41,
+                "source_plan_exercise_slot_id": 20,
+                "source_plan_exercise_variant_id": 51,
+                "prescribed_exercise_id": 61,
+                "slot_name_snapshot": "Press",
+                "plan_description_snapshot": None,
+                "plan_goal_snapshot": None,
+                "slot_role": "primary_progressive",
+                "progression_model_slug_snapshot": None,
+                "load_step_kg": Decimal("2.5"),
+                "prescription_comment": None,
+                "slug": "bench_press",
+                "name": "Bench Press",
+                "full_name": "Barbell Bench Press",
+            }
+        ],
+        "sets": [],
+        "alternatives": [],
+        "previous": [],
+        "previous_sets": [],
+        "peeks": {
+            61: {
+                "exercise": {
+                    "id": 61,
+                    "slug": "bench_press",
+                    "name": "Bench Press",
+                    "full_name": "Barbell Bench Press",
+                    "body_part": "chest",
+                    "target_category": "push",
+                    "mechanics_tier": "compound",
+                    "resistance_source": "barbell",
+                    "execution_pattern": "bilateral",
+                    "technique": {},
+                },
+                "muscles": [],
+            }
+        },
+        "setup_notes": [
+            {
+                "exercise_unit_track_id": 41,
+                "exercise_id": 61,
+                "text": "Seat 2, K13",
+                "rev": 3,
+                "updated_at": None,
+            },
+            {
+                "exercise_unit_track_id": 41,
+                "exercise_id": 140,
+                "text": None,
+                "rev": 0,
+                "updated_at": None,
+            },
+        ],
+    }
+
+    prescription = service._prescription(data)
+
+    assert prescription.prescription_version == "rx-7-abc123"
+    notes = prescription.exercises[0].setup_notes
+    assert [item.exercise_id for item in notes] == [61, 140]
+    assert notes[0].text == "Seat 2, K13" and notes[0].rev == 3
+    assert notes[1].text is None and notes[1].rev == 0
+    assert notes[0].exercise_unit_track_id is None

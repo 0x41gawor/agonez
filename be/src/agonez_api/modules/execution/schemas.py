@@ -477,12 +477,28 @@ class Continuity(APIModel):
     continued_by: ContinuityLink | None
 
 
+class SetupNoteRef(APIModel):
+    slug: str
+    name: str
+
+
+class TraceSetupNote(APIModel):
+    """Standing "My setup" note for one exercise in this slot."""
+
+    exercise_id: int
+    exercise: SetupNoteRef
+    text: str | None = None
+    rev: int = 0
+    updated_at: datetime | None = None
+
+
 class TraceHeader(APIModel):
     exercise_trace_id: int
     workout_trace: WorkoutTraceRef
     slot_ordinal: int
     display_name: str
     current_plan: CurrentPlan
+    setup_notes: list[TraceSetupNote] = Field(default_factory=list)
     continuity: Continuity
 
 
@@ -593,6 +609,22 @@ class ExerciseTraceResponse(APIModel):
     revision_transitions: list[RevisionTransition]
     exposures: list[ExerciseExposure]
     next: NextPrescription | None
+
+
+class SetupNotePut(APIModel):
+    """Desktop write. `text` carries no max_length so an over-long note is answered
+    with the stable setup_note_too_long code rather than a validation envelope."""
+
+    exercise_id: int = Field(ge=1)
+    text: str | None
+    expected_rev: int | None = Field(default=None, ge=0)
+
+
+class SetupNoteWritten(APIModel):
+    exercise_id: int
+    text: str | None = None
+    rev: int
+    updated_at: datetime | None = None
 
 
 class PrescriptionSetInput(APIModel):

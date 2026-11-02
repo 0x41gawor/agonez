@@ -58,6 +58,7 @@ class RunBundle:
     plan_slots: list[Row]
     plan_variants: list[Row]
     plan_sets: list[Row]
+    setup_notes: list[Row]
 
 
 class ExecutionRepository:
@@ -320,6 +321,13 @@ class ExecutionRepository:
                     for item in tree.variants
                     if item["variant_type"] == "DEFAULT"
                 }
+                # Every variant of a slot, not only the DEFAULT: a "My setup" note is
+                # seeded for each exercise the athlete may end up performing there.
+                slot_exercise_ids: dict[int, list[int]] = {}
+                for item in tree.variants:
+                    exercises = slot_exercise_ids.setdefault(cast(int, item["slot_id"]), [])
+                    if item["exercise_id"] not in exercises:
+                        exercises.append(cast(int, item["exercise_id"]))
                 workout_track_ids: dict[int, int] = {}
                 exercise_track_ids: dict[tuple[int, int], int] = {}
                 for workout in tree.workouts:
@@ -365,6 +373,21 @@ class ExecutionRepository:
                         exercise_track_ids[(workout_id, cast(int, slot["id"]))] = cast(
                             int, exercise_track["id"]
                         )
+                        # Seed an empty "My setup" note per exercise this slot can hold.
+                        # A new run always starts empty: nothing is copied from earlier
+                        # runs. An Atlas substitute gets its note on first write instead.
+                        for exercise_id in slot_exercise_ids.get(cast(int, slot["id"]), []):
+                            await self._execute(
+                                connection,
+                                """
+                                INSERT INTO exec.exercise_setup_notes (
+                                    exercise_unit_track_id, exercise_id
+                                ) VALUES (%s, %s)
+                                ON CONFLICT ON CONSTRAINT
+                                    exercise_setup_notes_slot_exercise_unique DO NOTHING
+                                """,
+                                (exercise_track["id"], exercise_id),
+                            )
 
                 day_by_id = {cast(int, day["id"]): day for day in tree.days}
                 for ordinal in range(1, payload.microcycle_count + 1):
@@ -620,6 +643,21 @@ class ExecutionRepository:
         plan_days, plan_workouts, plan_slots, plan_variants, plan_sets = (
             await self._load_plan_structures(connection, revision_ids)
         )
+        setup_notes = await self._fetch_all(
+            connection,
+            """
+            SELECT note.exercise_unit_track_id, note.exercise_id,
+                   note.note_text AS text, note.rev, note.updated_at,
+                   core.slug, core.name
+            FROM exec.exercise_setup_notes AS note
+            JOIN exec.exercise_unit_tracks AS track
+              ON track.id = note.exercise_unit_track_id
+            JOIN core.exercises AS core ON core.id = note.exercise_id
+            WHERE track.plan_run_id = %s
+            ORDER BY note.exercise_unit_track_id, note.exercise_id
+            """,
+            (plan_run_id,),
+        )
         return RunBundle(
             run,
             microcycles,
@@ -638,6 +676,7 @@ class ExecutionRepository:
             plan_slots,
             plan_variants,
             plan_sets,
+            setup_notes,
         )
 
     async def _load_plan_structures(
@@ -761,6 +800,99 @@ class ExecutionRepository:
                     """,
                     (payload.name.strip() if payload.name else None, requested, plan_run_id),
                 )
+
+    SETUP_NOTE_MAX_LENGTH = 2000
+
+    async def save_setup_note(
+        self,
+        *,
+        plan_run_id: int,
+        exercise_track_id: int,
+        exercise_id: int,
+        text: str | None,
+        expected_rev: int | None,
+    ) -> Row:
+        """Write the standing setup note desktop and phone share through `rev`."""
+        if text is not None and len(text) > self.SETUP_NOTE_MAX_LENGTH:
+            raise invalid(
+                "setup_note_too_long",
+                f"A setup note is limited to {self.SETUP_NOTE_MAX_LENGTH} characters",
+            )
+        if text is not None and not text.strip():
+            text = None
+        async with self._pool.connection() as connection:
+            async with connection.transaction():
+                track = await self._fetch_optional(
+                    connection,
+                    """
+                    SELECT id FROM exec.exercise_unit_tracks
+                    WHERE id = %s AND plan_run_id = %s
+                    """,
+                    (exercise_track_id, plan_run_id),
+                )
+                if track is None:
+                    raise not_found(
+                        "exercise_trace_not_found",
+                        "Exercise trace was not found in this plan run",
+                    )
+                if await self._fetch_optional(
+                    connection,
+                    "SELECT id FROM core.exercises WHERE id = %s",
+                    (exercise_id,),
+                ) is None:
+                    raise not_found("exercise_not_found", "Exercise was not found")
+                current = await self._fetch_optional(
+                    connection,
+                    """
+                    SELECT exercise_unit_track_id, exercise_id, note_text AS text,
+                           rev, updated_at
+                    FROM exec.exercise_setup_notes
+                    WHERE exercise_unit_track_id = %s AND exercise_id = %s
+                    FOR UPDATE
+                    """,
+                    (exercise_track_id, exercise_id),
+                )
+                stored_rev = cast(int, current["rev"]) if current else 0
+                stored_text = current["text"] if current else None
+                if (
+                    expected_rev is not None
+                    and expected_rev != stored_rev
+                    and text != stored_text
+                ):
+                    raise conflict(
+                        "version_conflict",
+                        "The setup note changed after it was loaded",
+                        {"current": self._public_setup_note(current, exercise_id)},
+                    )
+                if current is not None and text == stored_text:
+                    return self._public_setup_note(current, exercise_id)
+                written = await self._fetch_one(
+                    connection,
+                    """
+                    INSERT INTO exec.exercise_setup_notes (
+                        exercise_unit_track_id, exercise_id, note_text, rev, updated_at
+                    ) VALUES (%s, %s, %s, 1, clock_timestamp())
+                    ON CONFLICT ON CONSTRAINT exercise_setup_notes_slot_exercise_unique
+                    DO UPDATE SET note_text = EXCLUDED.note_text,
+                                  rev = exec.exercise_setup_notes.rev + 1,
+                                  updated_at = clock_timestamp()
+                    RETURNING exercise_unit_track_id, exercise_id, note_text AS text,
+                              rev, updated_at
+                    """,
+                    (exercise_track_id, exercise_id, text),
+                )
+                return self._public_setup_note(written, exercise_id)
+
+    @staticmethod
+    def _public_setup_note(note: Row | None, exercise_id: int) -> Row:
+        if note is None:
+            return {"exercise_id": exercise_id, "text": None, "rev": 0, "updated_at": None}
+        return {
+            "exercise_id": note["exercise_id"],
+            "text": note["text"],
+            "rev": note["rev"],
+            "updated_at": note["updated_at"],
+        }
 
     async def delete_plan_run(self, plan_run_id: int, *, force: bool) -> None:
         async with self._pool.connection() as connection:

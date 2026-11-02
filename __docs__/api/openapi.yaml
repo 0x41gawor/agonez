@@ -1095,6 +1095,59 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/exec/plan-runs/{plan_run_id}/exercise-traces/{exercise_trace_id}/setup-note:
+    put:
+      tags:
+      - Execution
+      summary: Save Setup Note
+      description: Write the standing "My setup" note for one exercise in this slot.
+      operationId: save_setup_note_api_v1_exec_plan_runs__plan_run_id__exercise_traces__exercise_trace_id__setup_note_put
+      parameters:
+      - name: plan_run_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Run Id
+      - name: exercise_trace_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Exercise Trace Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupNotePut'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetupNoteWritten'
+        '404':
+          description: Execution resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Execution state conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Execution request validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
   /api/v1/exec/plan-runs/{plan_run_id}/exercise-traces/{exercise_trace_id}/next:
     get:
       tags:
@@ -6497,6 +6550,7 @@ components:
             - $ref: '#/components/schemas/ReorderExercisesOperation'
             - $ref: '#/components/schemas/SetCursorOperation'
             - $ref: '#/components/schemas/SetWorkoutCommentOperation'
+            - $ref: '#/components/schemas/SetSetupNoteOperation'
             discriminator:
               propertyName: type
               mapping:
@@ -6505,6 +6559,7 @@ components:
                 reorder_exercises: '#/components/schemas/ReorderExercisesOperation'
                 set_cursor: '#/components/schemas/SetCursorOperation'
                 set_exercise_comment: '#/components/schemas/SetExerciseCommentOperation'
+                set_setup_note: '#/components/schemas/SetSetupNoteOperation'
                 set_workout_comment: '#/components/schemas/SetWorkoutCommentOperation'
                 skip_exercise: '#/components/schemas/SkipExerciseOperation'
                 skip_set: '#/components/schemas/SkipSetOperation'
@@ -7788,6 +7843,13 @@ components:
           title: Exercise Track Id
         slot:
           $ref: '#/components/schemas/PrescriptionSlot'
+        setup_notes:
+          items:
+            $ref: '#/components/schemas/SetupNote'
+          type: array
+          title: Setup Notes
+          description: 'Standing setup notes for this slot: the prescribed exercise, its plan variants,
+            and any Atlas substitute already noted here. Editing one never changes prescription_version.'
         exercise:
           $ref: '#/components/schemas/ExerciseIdentity'
         variant_label:
@@ -9203,6 +9265,71 @@ components:
       - working_backoff
       - working_amrap
       title: SetRole
+    SetSetupNoteData:
+      properties:
+        if_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: If Rev
+        exercise_track_id:
+          type: integer
+          minimum: 1.0
+          title: Exercise Track Id
+        exercise_id:
+          type: integer
+          minimum: 1.0
+          title: Exercise Id
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_track_id
+      - exercise_id
+      - text
+      title: SetSetupNoteData
+      description: 'Payload of set_setup_note.
+
+
+        `text` carries no max_length on purpose. A length limit here would make an
+
+        over-long note fail request validation and take the whole ordered batch with
+
+        it; the handler rejects it as a single op instead (setup_note_too_long).'
+    SetSetupNoteOperation:
+      properties:
+        op_id:
+          type: string
+          format: uuid
+          title: Op Id
+        seq:
+          type: integer
+          minimum: 1.0
+          title: Seq
+        at:
+          type: string
+          format: date-time
+          title: At
+        type:
+          type: string
+          const: set_setup_note
+          title: Type
+        data:
+          $ref: '#/components/schemas/SetSetupNoteData'
+      additionalProperties: false
+      type: object
+      required:
+      - op_id
+      - seq
+      - at
+      - type
+      - data
+      title: SetSetupNoteOperation
     SetWorkoutCommentData:
       properties:
         if_rev:
@@ -9250,6 +9377,108 @@ components:
       - type
       - data
       title: SetWorkoutCommentOperation
+    SetupNote:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        rev:
+          type: integer
+          title: Rev
+          default: 0
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated At
+        exercise_unit_track_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Exercise Unit Track Id
+          description: Present in the workout snapshot, omitted inside a prescription exercise.
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_id
+      title: SetupNote
+      description: 'A standing "My setup" note for one exercise in one run-scoped slot.
+
+
+        An object rather than a bare string so a photos field can be added later
+
+        without reshaping the payload.'
+    SetupNotePut:
+      properties:
+        exercise_id:
+          type: integer
+          minimum: 1.0
+          title: Exercise Id
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        expected_rev:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Expected Rev
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_id
+      - text
+      title: SetupNotePut
+      description: 'Desktop write. `text` carries no max_length so an over-long note is answered
+
+        with the stable setup_note_too_long code rather than a validation envelope.'
+    SetupNoteRef:
+      properties:
+        slug:
+          type: string
+          title: Slug
+        name:
+          type: string
+          title: Name
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      title: SetupNoteRef
+    SetupNoteWritten:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        rev:
+          type: integer
+          title: Rev
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated At
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_id
+      - rev
+      title: SetupNoteWritten
     SkipExerciseData:
       properties:
         if_rev:
@@ -9758,6 +9987,11 @@ components:
           title: Display Name
         current_plan:
           $ref: '#/components/schemas/CurrentPlan'
+        setup_notes:
+          items:
+            $ref: '#/components/schemas/TraceSetupNote'
+          type: array
+          title: Setup Notes
         continuity:
           $ref: '#/components/schemas/Continuity'
       additionalProperties: false
@@ -9770,6 +10004,35 @@ components:
       - current_plan
       - continuity
       title: TraceHeader
+    TraceSetupNote:
+      properties:
+        exercise_id:
+          type: integer
+          title: Exercise Id
+        exercise:
+          $ref: '#/components/schemas/SetupNoteRef'
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        rev:
+          type: integer
+          title: Rev
+          default: 0
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated At
+      additionalProperties: false
+      type: object
+      required:
+      - exercise_id
+      - exercise
+      title: TraceSetupNote
+      description: Standing "My setup" note for one exercise in this slot.
     UpsertSetData:
       properties:
         if_rev:
@@ -10146,6 +10409,13 @@ components:
           - type: 'null'
         prescription:
           $ref: '#/components/schemas/WorkoutPrescription'
+        setup_notes:
+          items:
+            $ref: '#/components/schemas/SetupNote'
+          type: array
+          title: Setup Notes
+          description: Standing setup notes for this workout's slots, as they stand now. Unlike the prescription
+            these are not frozen at start.
         performance:
           $ref: '#/components/schemas/PerformanceTree'
       additionalProperties: false

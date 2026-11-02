@@ -266,6 +266,16 @@ Rules:
 - `atlas_peek` is embedded for every prescribed exercise **and** every `alternatives[].exercise` (see §7.1), so Quick Peek works offline.
 - Nothing here exposes revision/day/slot integer FKs beyond what the client needs to address writes.
 
+- `exercises[].setup_notes` is the standing **My setup** note per exercise this slot can hold — the prescribed exercise, its plan variants, and any Atlas substitute already noted here. Each entry is an object (`exercise_id`, `text`, `rev`, `updated_at`), not a bare string, so photos can join it later. `text: null` with `rev: 0` and `updated_at: null` means the athlete has never written one. Cache it with the prescription: the note must be readable in the gym with no signal, including after a substitution.
+
+```json
+"setup_notes": [
+  { "exercise_id": 112, "text": "Seat 2, K13, quite deep", "rev": 3, "updated_at": "2026-10-26T17:19:05Z" },
+  { "exercise_id": 140, "text": null, "rev": 0, "updated_at": null }
+]
+```
+
+- **A note never changes `prescription_version`.** The version hashes the prescription tables only, so a desktop note edit cannot make the phone's next start fail with `prescription_changed`. The ETag of this `GET` does change, which is intended.
 - `sets[].load_source` says who decided `prescribed_load_kg`: `analysis` for a manual Post-Workout-Analysis save, `last_exposure` for the default progression agent repeating the athlete's previous exposure, `null` when no load is prescribed. Label an inherited load as coming from the last session; a `null` load means a first exposure for that set role.
 
 Errors: `404 session_not_found`, `409 prescription_missing` (readiness `missing`; body carries the plan targets so the athlete can still *Start with plan targets* — see §5.1 `allow_missing_loads`).
@@ -300,6 +310,9 @@ Query: `plan_run_id`. `200` → `ActiveWorkoutSummary`; `404 no_active_workout` 
     "expected_session_id": null
   },
   "lease": { "device_id": "a1c5…", "epoch": 1, "is_this_device": true },
+  "setup_notes": [
+    { "exercise_unit_track_id": 489, "exercise_id": 112, "text": "Seat 2, K13", "rev": 3, "updated_at": "2026-10-26T17:19:05Z" }
+  ],
   "applied_seq": 27,
   "revision": 31,
   "position_hint": { "exercise_performance_id": "…", "set_ordinal": 2 },
@@ -312,6 +325,8 @@ Query: `plan_run_id`. `200` → `ActiveWorkoutSummary`; `404 no_active_workout` 
 ### 4.6 `GET /workouts/{workout_id}`
 
 The full snapshot used for resume after reinstall, device switch, conflict refresh, or local-store corruption.
+
+`setup_notes` sits beside `prescription` and `performance` and carries `exercise_unit_track_id`, because it covers the whole workout rather than one exercise. Unlike the prescription it is **not frozen at start**: a resume, a device switch or a conflict refresh shows the note as it stands now.
 
 ```json
 {
@@ -529,8 +544,15 @@ All `data` objects name the entity they change by a client UUID. Unknown `exerci
 | `reorder_exercises` | `order: [exercise_performance_id, …]` (complete list of the workout's exercise performances, including not-yet-started prescribed ones) | Writes `performed_ordinal` for each. Prescription ordinals unchanged; "order changed" = any `performed_ordinal ≠ prescription ordinal`. Idempotent (full order). **Applying it increments `rev` by exactly 1 on every exercise performance of the workout — see § 6.5 rule 6.** | Do next (outline) | hold 1.0 s |
 | `set_cursor` | `exercise_performance_id`, `set_ordinal`, `phase: "set" \| "exercise_complete"` | Updates `position_hint` only. No domain effect. Coalescible. | Advancing / starting next exercise | none |
 | `set_workout_comment` | `comment` | Workout-level performance comment (optional, reserved; v1 UI does not expose it). | — | — |
+| `set_setup_note` | `exercise_track_id`, `exercise_id`, `text` (nullable to clear), `if_rev?` | Upserts the standing **My setup** note for that slot and exercise. Creates it on first write, which is how an Atlas substitute gets one. Blank text is stored as `null`. | My setup popup | none |
 
 Validation (`rejected` with codes): `load_out_of_range` (0–1000 kg), `reps_out_of_range`, `rir_out_of_range`, `ordinal_conflict` (two set performances with the same ordinal in one exercise performance), `unknown_prescription_ref`, `prescription_ref_mismatch` (set prescription not under that exercise prescription), `exercise_not_found`, `substitution_after_sets`, `workout_not_draft`.
+
+`set_setup_note` adds `setup_note_too_long` (over 2000 characters) and `setup_note_slot_not_in_workout` (the slot is not one of this workout's session, or belongs to another run), plus `exercise_not_found`. **Both are per-operation rejections.** `text` deliberately carries no length limit in the request schema, so an over-long note can never fail request validation and take the whole ordered batch — and the 31 operations queued behind it — with it.
+
+**Notes survive finalize.** A batch containing only `set_setup_note` operations is applied even when the workout is already finalized, since a note describes a machine rather than that workout. Such a batch is applied out of band: it is not recorded in the op log and `applied_seq` does not advance (the response repeats the workout's current value), so finalize accounting is untouched. Treat those operations as applied and drop them from the queue. A batch that mixes a note with any other operation still gets `workout_finalized`.
+
+Revisions follow § 6.5 unchanged: a stale `if_rev` whose text differs is a `conflict` carrying the current note as `server_state`; identical text leaves `rev` untouched (rule 7); a note that does not exist yet takes no `if_rev`; `entity_rev` comes back as for sets.
 
 Explicitly **not** validated as errors: load ≠ prescribed, reps outside the target band, RIR ≠ target. These are normal field data.
 

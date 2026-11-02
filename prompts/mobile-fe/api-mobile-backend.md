@@ -238,6 +238,37 @@ its prescription. The counts are also published additively as
 `expected_exercise_count` / `expected_set_count`. The same rule applies to `expected_session`
 and to every entry in `alternatives`, including earlier missed sessions.
 
+## My setup notes
+
+`exec.exercise_setup_notes` holds one standing note per `(exercise_unit_track_id, exercise_id)`:
+how the athlete sets a machine up for one exercise in one run-scoped slot, true until they
+change it. Unlike a performance comment it does not belong to one exposure.
+
+- **Seeded empty at plan run creation** for every slot's prescribed exercise and every plan
+  variant of that slot. A run never inherits notes from an earlier run — "new run, always new
+  life". An Atlas substitute the plan never named gets its note on first write, through the
+  same upsert. Unplanned exercises have no slot and so no note.
+- **Published** as `exercises[].setup_notes` in the mobile prescription (without the track id)
+  and as a top-level `setup_notes` tree in the workout snapshot (with it). The snapshot's notes
+  are live, not frozen at start. Desktop reads them on the exercise trace, with the exercise's
+  slug and name.
+- **Never part of `prescription_version`.** That hash covers the prescription tables only, so a
+  note edit cannot make a phone's start fail with `prescription_changed`.
+- **Written** by the mobile op `set_setup_note` and by
+  `PUT /plan-runs/{id}/exercise-traces/{trace}/setup-note` on desktop. Both share one `rev`, so
+  the two sides meet through the same optimistic-concurrency check.
+- **Every mobile failure is a per-operation rejection** (`setup_note_too_long`,
+  `setup_note_slot_not_in_workout`, `exercise_not_found`). The op's `text` carries no length
+  limit in the request schema on purpose: a limit there would fail request validation and stall
+  the phone's strictly ordered queue behind one bad note. The 2000-character bound is enforced
+  in the handler and by a database CHECK.
+- **A note-only batch applies to a finalized workout**, out of band: not recorded in the op log,
+  `applied_seq` unchanged. A mixed batch keeps the `workout_finalized` refusal.
+- **Not yet wired:** a mid-run plan revision that adds a slot or a variant must create the
+  matching notes. There is no mid-run track creation in the codebase today — tracks are built
+  only in `create_plan_run` — so there is nothing to hook. Whoever implements revision
+  transitions must seed notes there too.
+
 ## Request-level error audit
 
 | Code | Status | Notes |

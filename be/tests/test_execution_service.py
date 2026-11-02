@@ -102,6 +102,17 @@ def test_exercise_trace_exposes_the_governing_variant_load_step() -> None:
             }
         ],
         plan_sets=[],
+        setup_notes=[
+            {
+                "exercise_unit_track_id": 41,
+                "exercise_id": 61,
+                "text": "Seat 2, K13",
+                "rev": 3,
+                "updated_at": None,
+                "slug": "bench_press",
+                "name": "Bench Press",
+            }
+        ],
     )
     service = ExecutionService(cast(Any, None))
 
@@ -113,6 +124,15 @@ def test_exercise_trace_exposes_the_governing_variant_load_step() -> None:
     )
 
     assert value["trace"]["current_plan"]["load_step_kg"] == 2.5
+    assert value["trace"]["setup_notes"] == [
+        {
+            "exercise_id": 61,
+            "exercise": {"slug": "bench_press", "name": "Bench Press"},
+            "text": "Seat 2, K13",
+            "rev": 3,
+            "updated_at": None,
+        }
+    ]
 
 
 @pytest.mark.asyncio
