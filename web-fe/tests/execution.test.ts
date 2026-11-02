@@ -115,11 +115,20 @@ describe('Execution critical workflows', () => {
   it('keeps unsaved prescription drafts keyed by exercise trace', () => {
     const store = useExecutionDraftsStore()
     const draft = store.initialize(41, next)
-    expect(draft.loads).toEqual(['67.5', '67.5', '67.5'])
+    expect(draft.loads).toEqual(['67.5', '67.5', '65'])
     draft.loads[2] = '65'
     store.markDirty(41)
     expect(store.hasDirty).toBe(true)
     expect(store.initialize(41, next).loads[2]).toBe('65')
+  })
+
+  it('defaults each unsaved set to the latest performance with a prescription fallback', () => {
+    const store = useExecutionDraftsStore()
+    const mixedDefaults = structuredClone(next)
+    mixedDefaults.defaults.from_previous_performance = [54, null, 68]
+    mixedDefaults.defaults.from_previous_prescription = [32, 32, 32]
+
+    expect(store.initialize(42, mixedDefaults).loads).toEqual(['54', '32', '68'])
   })
 
   it('renders queue dirty state and changes the selected trace', async () => {

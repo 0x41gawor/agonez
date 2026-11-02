@@ -25,7 +25,11 @@ export const useExecutionDraftsStore = defineStore('execution-drafts', () => {
     const existing = drafts[traceId]
     if (existing && !force) return existing
     const loads = next.prescription?.sets.map((set) => set.load_kg)
-      ?? next.defaults.from_previous_prescription
+      ?? next.plan_sets.map((_, index) => (
+        next.defaults.from_previous_performance[index]
+        ?? next.defaults.from_previous_prescription[index]
+        ?? null
+      ))
     const comments = next.prescription?.sets.map((set) => set.comment ?? '')
       ?? next.plan_sets.map(() => '')
     const draft: PrescriptionDraft = {

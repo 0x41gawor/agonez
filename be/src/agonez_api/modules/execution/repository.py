@@ -1260,7 +1260,8 @@ class ExecutionRepository:
                             prescribed_load_kg, prescription_comment, load_source
                         ) VALUES (
                             %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                            CASE WHEN %s IS NULL THEN NULL ELSE 'analysis' END
+                            CASE WHEN %s IS NULL THEN NULL
+                                 ELSE 'analysis'::exec.prescribed_load_source END
                         )
                         """,
                         (
