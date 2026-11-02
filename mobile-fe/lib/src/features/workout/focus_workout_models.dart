@@ -376,6 +376,9 @@ class FocusWorkoutCallbacks {
   final Future<void> Function(FocusEntryDraft draft)? onDraftChanged;
   final Future<void> Function(DateTime? endsAt, int? durationSeconds)?
   onRestChanged;
+
+  /// Takes back the set just recorded. [set] is the set as it was shown
+  /// when it was confirmed, before it had a recorded row.
   final Future<void> Function(
     FocusExerciseViewModel exercise,
     FocusSetViewModel set,

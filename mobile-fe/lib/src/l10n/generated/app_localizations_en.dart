@@ -472,6 +472,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get setOther => 'other';
 
   @override
+  String get setRepsKeypadA11y => 'Opens the number pad';
+
+  @override
+  String get setKeypadBackspaceA11y => 'Delete last digit';
+
+  @override
   String setConfirm(int setNumber) {
     return 'Confirm set $setNumber';
   }

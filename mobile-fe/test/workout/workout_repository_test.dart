@@ -118,6 +118,65 @@ void main() {
     expect(finalize.acknowledgedIncomplete, isTrue);
   });
 
+  test('an undo clears the recorded set by its own id and revision', () async {
+    final workoutId = await repository.start(
+      prescription: fixturePrescription,
+      startedAt: DateTime.utc(2026, 11, 2, 17),
+    );
+    final exerciseId = (await database.workoutExercises(
+      workoutId,
+    )).single.exercisePerformanceId;
+    await repository.confirmSet(
+      workoutId: workoutId,
+      exercise: fixturePrescriptionExercise,
+      prescribedSet: fixtureSet,
+      ordinal: 0,
+      loadKg: 68,
+      repetitions: 12,
+      rir: 5,
+      nextExerciseIndex: 0,
+      nextSetIndex: 1,
+    );
+    final recorded = (await database.workoutSets(workoutId)).single;
+
+    final undone = await repository.clearSet(
+      workoutId: workoutId,
+      exercisePerformanceId: exerciseId,
+      ordinal: 0,
+    );
+
+    final operations = await database.deliverableOperations(workoutId);
+    expect(undone, isTrue);
+    expect(await database.workoutSets(workoutId), isEmpty);
+    expect(operations.last.type, 'clear_set');
+    expect(jsonDecode(operations.last.dataJson), {
+      'set_performance_id': recorded.setPerformanceId,
+      'if_rev': 1,
+    });
+  });
+
+  test('an undo with no recorded set queues nothing', () async {
+    final workoutId = await repository.start(
+      prescription: fixturePrescription,
+      startedAt: DateTime.utc(2026, 11, 2, 17),
+    );
+    final exerciseId = (await database.workoutExercises(
+      workoutId,
+    )).single.exercisePerformanceId;
+    final queuedBefore = await database.pendingOperationCount(workoutId);
+    final requestsBefore = syncRequests;
+
+    final undone = await repository.clearSet(
+      workoutId: workoutId,
+      exercisePerformanceId: exerciseId,
+      ordinal: 0,
+    );
+
+    expect(undone, isFalse);
+    expect(await database.pendingOperationCount(workoutId), queuedBefore);
+    expect(syncRequests, requestsBefore);
+  });
+
   test('starting an exercise now swaps it in and starts it fresh', () async {
     final workoutId = await repository.start(
       prescription: twoExercisePrescription,

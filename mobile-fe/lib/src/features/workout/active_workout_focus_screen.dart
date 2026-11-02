@@ -351,11 +351,15 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
         }
       },
       onUndoSet: (exercise, set) async {
-        await repository.clearSet(
+        // The set is as the screen showed it before recording, so its id
+        // and revision are not the recorded row's; the repository finds
+        // the row by its place.
+        final undone = await repository.clearSet(
           workoutId: model.workoutId,
-          setPerformanceId: set.id,
-          ifRev: set.localRevision,
+          exercisePerformanceId: exercise.id,
+          ordinal: set.ordinal,
         );
+        if (!undone) return;
         await runtime.notifications.cancel();
         // Back to the undone set itself.
         await moveCursor(

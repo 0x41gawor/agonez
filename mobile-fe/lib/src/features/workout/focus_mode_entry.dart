@@ -10,7 +10,7 @@ class _EntryZone extends StatelessWidget {
     required this.onLoadChanged,
     required this.onOpenKeypad,
     required this.onRepsChanged,
-    required this.onOpenRepGrid,
+    required this.onOpenRepKeypad,
     required this.onRirChanged,
     required this.onSetNote,
     required this.onMoreData,
@@ -24,7 +24,7 @@ class _EntryZone extends StatelessWidget {
   final ValueChanged<double> onLoadChanged;
   final VoidCallback onOpenKeypad;
   final ValueChanged<int> onRepsChanged;
-  final VoidCallback onOpenRepGrid;
+  final VoidCallback onOpenRepKeypad;
   final ValueChanged<int> onRirChanged;
   final VoidCallback onSetNote;
   final VoidCallback onMoreData;
@@ -33,8 +33,7 @@ class _EntryZone extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.agonezColors;
-    final repStart = math.max(1, (set.repMin ?? 6) - 1);
-    final repValues = List<int>.generate(5, (index) => repStart + index);
+    final repValues = _repWindow(set.repMin, set.repMax);
     final customRep =
         draft.repetitions != null && !repValues.contains(draft.repetitions);
     final loadDelta = set.prescribedLoadKg != null && draft.loadKg != null
@@ -84,21 +83,20 @@ class _EntryZone extends StatelessWidget {
         const SizedBox(height: 11),
         _ZoneLabel(
           label: l10n.setReps,
-          target: set.repMin == null
-              ? null
-              : l10n.setTarget(
-                  set.repMin == set.repMax
-                      ? '${set.repMin}'
-                      : '${set.repMin}–${set.repMax}',
-                ),
+          target: switch (_repTarget(set)) {
+            final target? => l10n.setTarget(target),
+            null => null,
+          },
         ),
         const SizedBox(height: 6),
         _SelectorRow(
+          keyPrefix: 'focus-reps',
           values: [
             for (final value in repValues) _SelectorValue(value, '$value'),
             _SelectorValue(
               customRep ? draft.repetitions! : null,
               customRep ? '${draft.repetitions}' : l10n.setOther,
+              opensKeypad: true,
             ),
           ],
           selected: draft.repetitions,
@@ -116,8 +114,10 @@ class _EntryZone extends StatelessWidget {
                   target ? l10n.setWithinTargetA11y : l10n.setOutsideTargetA11y,
                 ),
           onChanged: (value) {
-            if (value == null) {
-              onOpenRepGrid();
+            // The last button always opens the keypad, also once it shows
+            // a count typed there, so that count can be corrected.
+            if (value == null || !repValues.contains(value)) {
+              onOpenRepKeypad();
             } else {
               onRepsChanged(value);
             }
@@ -135,6 +135,7 @@ class _EntryZone extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         _SelectorRow(
+          keyPrefix: 'focus-rir',
           values: const [
             _SelectorValue(0, '0'),
             _SelectorValue(1, '1'),
@@ -186,6 +187,23 @@ class _EntryZone extends StatelessWidget {
     );
   }
 }
+
+/// The five rep counts offered as buttons: the whole target range and one
+/// below it when they fit, otherwise the range from its minimum. Any other
+/// count is typed on the keypad.
+List<int> _repWindow(int? repMin, int? repMax) {
+  final min = repMin ?? 6;
+  final max = math.max(min, repMax ?? min);
+  final start = max - min + 1 <= 4 ? math.max(1, min - 1) : min;
+  return List<int>.generate(5, (index) => start + index);
+}
+
+/// The set's rep target as shown, e.g. `6–8`; null without one.
+String? _repTarget(FocusSetViewModel? set) => switch (set) {
+  FocusSetViewModel(repMin: final min?, :final repMax) =>
+    repMax == null || repMax == min ? '$min' : '$min–$repMax',
+  _ => null,
+};
 
 class _ZoneLabel extends StatelessWidget {
   const _ZoneLabel({required this.label, this.target});
@@ -393,14 +411,18 @@ class _RepeatButtonState extends State<_RepeatButton> {
 }
 
 class _SelectorValue {
-  const _SelectorValue(this.value, this.label);
+  const _SelectorValue(this.value, this.label, {this.opensKeypad = false});
 
   final int? value;
   final String label;
+
+  /// Opens the keypad instead of choosing [value].
+  final bool opensKeypad;
 }
 
 class _SelectorRow extends StatelessWidget {
   const _SelectorRow({
+    required this.keyPrefix,
     required this.values,
     required this.selected,
     required this.enabled,
@@ -409,6 +431,8 @@ class _SelectorRow extends StatelessWidget {
     required this.onChanged,
   });
 
+  /// Names the row's buttons in keys, e.g. `focus-reps-8`.
+  final String keyPrefix;
   final List<_SelectorValue> values;
   final int? selected;
   final bool enabled;
@@ -425,6 +449,7 @@ class _SelectorRow extends StatelessWidget {
           if (index > 0) const SizedBox(width: 6),
           Expanded(
             child: _SelectorButton(
+              keyPrefix: keyPrefix,
               value: values[index],
               selected: selected != null && selected == values[index].value,
               target: isTarget(values[index].value),
@@ -445,6 +470,7 @@ class _SelectorRow extends StatelessWidget {
 
 class _SelectorButton extends StatelessWidget {
   const _SelectorButton({
+    required this.keyPrefix,
     required this.value,
     required this.selected,
     required this.target,
@@ -453,6 +479,7 @@ class _SelectorButton extends StatelessWidget {
     required this.onPressed,
   });
 
+  final String keyPrefix;
   final _SelectorValue value;
   final bool selected;
   final bool target;
@@ -463,11 +490,16 @@ class _SelectorButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.agonezColors;
+    // A count typed on the keypad stays editable there.
+    final edits = value.opensKeypad && value.value != null;
     return Semantics(
       button: true,
       selected: selected,
       enabled: enabled,
       label: semanticLabel,
+      hint: value.opensKeypad
+          ? AppLocalizations.of(context).setRepsKeypadA11y
+          : null,
       excludeSemantics: true,
       child: Opacity(
         opacity: enabled ? 1 : 0.45,
@@ -480,9 +512,7 @@ class _SelectorButton extends StatelessWidget {
             ),
           ),
           child: InkWell(
-            key: value.value == null
-                ? const Key('focus-selector-other')
-                : Key('focus-selector-${value.value}'),
+            key: Key('$keyPrefix-${value.value ?? 'other'}'),
             onTap: enabled ? onPressed : null,
             borderRadius: AgonezRadii.controlBorder,
             child: Container(
@@ -498,15 +528,34 @@ class _SelectorButton extends StatelessWidget {
                       ),
                     )
                   : null,
-              child: Text(
-                value.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AgonezTypography.inputNumber.copyWith(
-                  color: selected ? colors.ground : colors.textPrimary,
-                  fontSize: value.label.length > 2 ? 12 : 19,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Center(
+                    child: Text(
+                      value.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AgonezTypography.inputNumber.copyWith(
+                        color: selected ? colors.ground : colors.textPrimary,
+                        fontSize: value.label.length > 2 ? 12 : 19,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  if (edits)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 12,
+                        color: selected ? colors.ground : colors.textSecondary,
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

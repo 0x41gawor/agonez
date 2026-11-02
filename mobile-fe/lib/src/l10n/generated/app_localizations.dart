@@ -883,6 +883,18 @@ abstract class AppLocalizations {
   /// **'other'**
   String get setOther;
 
+  /// No description provided for @setRepsKeypadA11y.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the number pad'**
+  String get setRepsKeypadA11y;
+
+  /// No description provided for @setKeypadBackspaceA11y.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete last digit'**
+  String get setKeypadBackspaceA11y;
+
   /// No description provided for @setConfirm.
   ///
   /// In en, this message translates to:

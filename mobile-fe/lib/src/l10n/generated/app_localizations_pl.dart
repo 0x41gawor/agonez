@@ -474,6 +474,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get setOther => 'inne';
 
   @override
+  String get setRepsKeypadA11y => 'Otwiera klawiaturę numeryczną';
+
+  @override
+  String get setKeypadBackspaceA11y => 'Usuń ostatnią cyfrę';
+
+  @override
   String setConfirm(int setNumber) {
     return 'Potwierdź serię $setNumber';
   }

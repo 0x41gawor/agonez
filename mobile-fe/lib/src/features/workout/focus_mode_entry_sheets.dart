@@ -313,36 +313,120 @@ class _LoadKeypadSheetState extends State<_LoadKeypadSheet> {
   }
 }
 
-class _RepGridSheet extends StatelessWidget {
-  const _RepGridSheet();
+/// A number pad for repetitions, like the one for load.
+///
+/// A count chosen earlier is shown and replaced by the first digit typed,
+/// so 12 becomes 13 with "1", "3"; backspace edits it instead.
+class _RepKeypadSheet extends StatefulWidget {
+  const _RepKeypadSheet({required this.current, required this.target});
+
+  final int? current;
+
+  /// The set's rep target as shown, e.g. `6–8`.
+  final String? target;
+
+  @override
+  State<_RepKeypadSheet> createState() => _RepKeypadSheetState();
+}
+
+class _RepKeypadSheetState extends State<_RepKeypadSheet> {
+  late String _value = widget.current?.toString() ?? '';
+
+  /// Whether the shown count is still the one the sheet opened with.
+  late bool _fresh = widget.current != null;
+
+  void _press(String key) {
+    setState(() {
+      if (key == 'backspace') {
+        if (_value.isNotEmpty) _value = _value.substring(0, _value.length - 1);
+        _fresh = false;
+        return;
+      }
+      final typed = _fresh ? '' : _value;
+      if ((typed.isEmpty && key == '0') || typed.length >= 3) return;
+      _value = '$typed$key';
+      _fresh = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final parsed = int.tryParse(_value);
     return _SheetFrame(
       title: l10n.setReps,
-      maxHeightFactor: 0.76,
-      body: GridView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5,
-          mainAxisSpacing: 7,
-          crossAxisSpacing: 7,
-          childAspectRatio: 1,
-        ),
-        itemCount: 30,
-        itemBuilder: (context, index) {
-          final value = index + 1;
-          return OutlinedButton(
-            key: Key('focus-rep-grid-$value'),
-            onPressed: () => Navigator.of(context).pop(value),
-            style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
-            child: Text(
-              '$value',
-              style: AgonezTypography.inputNumberOf(context),
+      eyebrow: widget.target == null ? null : l10n.setTarget(widget.target!),
+      maxHeightFactor: 0.84,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        child: Column(
+          children: [
+            Container(
+              key: const Key('focus-rep-keypad-value'),
+              height: 64,
+              width: double.infinity,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: context.agonezColors.sunk,
+                borderRadius: AgonezRadii.controlBorder,
+                border: Border.all(color: context.agonezColors.control),
+              ),
+              child: Text(
+                _value.isEmpty ? '—' : _value,
+                style: AgonezTypography.inputNumberOf(context),
+              ),
             ),
-          );
-        },
+            const SizedBox(height: 12),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 3,
+              childAspectRatio: 1.7,
+              mainAxisSpacing: 7,
+              crossAxisSpacing: 7,
+              children: [
+                for (final key in const [
+                  '1',
+                  '2',
+                  '3',
+                  '4',
+                  '5',
+                  '6',
+                  '7',
+                  '8',
+                  '9',
+                  '',
+                  '0',
+                  'backspace',
+                ])
+                  if (key.isEmpty)
+                    const SizedBox.shrink()
+                  else
+                    OutlinedButton(
+                      key: Key('focus-rep-keypad-$key'),
+                      onPressed: () => _press(key),
+                      child: key == 'backspace'
+                          ? Icon(
+                              Icons.backspace_outlined,
+                              size: 20,
+                              semanticLabel: l10n.setKeypadBackspaceA11y,
+                            )
+                          : Text(
+                              key,
+                              style: AgonezTypography.inputNumberOf(context),
+                            ),
+                    ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      footer: AgonezPrimaryButton(
+        key: const Key('focus-rep-keypad-done'),
+        label: l10n.commonDone,
+        onPressed: parsed == null || parsed < 1
+            ? null
+            : () => Navigator.of(context).pop(parsed),
       ),
     );
   }
@@ -411,10 +495,11 @@ class _EditSetSheetState extends State<_EditSetSheet> {
             _ZoneLabel(label: l10n.setReps),
             const SizedBox(height: 6),
             _SelectorRow(
+              keyPrefix: 'focus-edit-reps',
               values: [
                 for (var value = repStart; value < repStart + 5; value++)
                   _SelectorValue(value, '$value'),
-                const _SelectorValue(null, '…'),
+                const _SelectorValue(null, '…', opensKeypad: true),
               ],
               selected: _reps,
               enabled: true,
@@ -432,7 +517,11 @@ class _EditSetSheetState extends State<_EditSetSheet> {
                 }
                 final picked = await showModalBottomSheet<int>(
                   context: context,
-                  builder: (_) => const _RepGridSheet(),
+                  isScrollControlled: true,
+                  builder: (_) => _RepKeypadSheet(
+                    current: _reps,
+                    target: _repTarget(widget.set),
+                  ),
                 );
                 if (mounted && picked != null) setState(() => _reps = picked);
               },
@@ -441,6 +530,7 @@ class _EditSetSheetState extends State<_EditSetSheet> {
             _ZoneLabel(label: l10n.setRir),
             const SizedBox(height: 6),
             _SelectorRow(
+              keyPrefix: 'focus-edit-rir',
               values: const [
                 _SelectorValue(0, '0'),
                 _SelectorValue(1, '1'),

@@ -9,6 +9,7 @@ import 'package:agonez/src/data/mobile_repository.dart';
 import 'package:agonez/src/features/workout/end_workout_launch.dart';
 import 'package:agonez/src/design/design.dart';
 import 'package:agonez/src/l10n/generated/app_localizations.dart';
+import 'package:agonez/src/platform/rest_notification_service.dart';
 import 'package:agonez/src/settings/app_settings_controller.dart';
 import 'package:agonez/src/storage/app_database.dart';
 import 'package:agonez/src/workout/workout_names.dart';
@@ -33,6 +34,9 @@ class MockWorkoutRepository extends Mock implements WorkoutRepository {}
 class MockApiClient extends Mock implements AgonezApiClient {}
 
 class MockWorkoutNames extends Mock implements WorkoutNames {}
+
+class MockRestNotificationService extends Mock
+    implements RestNotificationService {}
 
 /// A runtime for screens built on today's context: no active workout, plan
 /// run 2 selected and [fixturePrescription] behind every session. Tests

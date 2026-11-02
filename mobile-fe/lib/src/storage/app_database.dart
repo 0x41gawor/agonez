@@ -709,18 +709,31 @@ class AppDatabase extends _$AppDatabase {
     );
   });
 
-  Future<PendingOperation> deleteSetAndEnqueue({
+  /// Deletes the set at [ordinal] of the exercise and queues its clear,
+  /// built from the row as stored. Nothing is queued when there is no such
+  /// set: the server would only refuse a clear for a set it never got.
+  Future<PendingOperation?> deleteSetAndEnqueue({
     required String workoutId,
-    required String setPerformanceId,
-    required Map<String, Object?> operationData,
+    required String exercisePerformanceId,
+    required int ordinal,
+    required Map<String, Object?> Function(LocalSet set) operationData,
   }) => transaction(() async {
+    final set =
+        await (select(localSets)..where(
+              (row) =>
+                  row.workoutId.equals(workoutId) &
+                  row.exercisePerformanceId.equals(exercisePerformanceId) &
+                  row.ordinal.equals(ordinal),
+            ))
+            .getSingleOrNull();
+    if (set == null) return null;
     await (delete(
       localSets,
-    )..where((row) => row.setPerformanceId.equals(setPerformanceId))).go();
+    )..where((row) => row.setPerformanceId.equals(set.setPerformanceId))).go();
     return enqueueOperation(
       workoutId: workoutId,
       type: 'clear_set',
-      data: operationData,
+      data: operationData(set),
     );
   });
 

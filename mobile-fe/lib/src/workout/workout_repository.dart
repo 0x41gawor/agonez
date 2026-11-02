@@ -303,18 +303,26 @@ class WorkoutRepository {
     return setId;
   }
 
-  Future<void> clearSet({
+  /// Takes back the set recorded at [ordinal] of the exercise. The clear
+  /// names the set and its revision as stored here, not as a screen last
+  /// showed them. Returns false when there was no such set.
+  Future<bool> clearSet({
     required String workoutId,
-    required String setPerformanceId,
-    int? ifRev,
+    required String exercisePerformanceId,
+    required int ordinal,
   }) async {
-    final data = ClearSetData(setPerformanceId: setPerformanceId, ifRev: ifRev);
-    await _database.deleteSetAndEnqueue(
+    final operation = await _database.deleteSetAndEnqueue(
       workoutId: workoutId,
-      setPerformanceId: setPerformanceId,
-      operationData: data.toJson(),
+      exercisePerformanceId: exercisePerformanceId,
+      ordinal: ordinal,
+      operationData: (set) => ClearSetData(
+        setPerformanceId: set.setPerformanceId,
+        ifRev: set.localRev,
+      ).toJson(),
     );
+    if (operation == null) return false;
     _requestSync?.call();
+    return true;
   }
 
   Future<void> setExerciseComment({

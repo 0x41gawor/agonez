@@ -202,6 +202,8 @@
   "@setTarget": {"placeholders": {"target": {"type": "String"}}},
   "setTapToType": "Tap to type",
   "setOther": "other",
+  "setRepsKeypadA11y": "Opens the number pad",
+  "setKeypadBackspaceA11y": "Delete last digit",
   "setConfirm": "Confirm set {setNumber}",
   "@setConfirm": {"placeholders": {"setNumber": {"type": "int"}}},
   "setConfirmSummary": "{load} × {reps} @ {rir} · then rest {rest}",

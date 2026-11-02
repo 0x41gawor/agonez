@@ -172,6 +172,84 @@ void main() {
       expect(find.text('Load from last session'), findsNothing);
     });
 
+    testWidgets('an undo takes back the set by its place, not its old id', (
+      tester,
+    ) async {
+      // What the screen held before recording names the set by its
+      // prescription; the server knows it only by the recorded row's id.
+      registerFallbackValue(PositionPhase.set);
+      registerFallbackValue(fixturePrescriptionExercise);
+      final notifications = MockRestNotificationService();
+      when(notifications.cancel).thenAnswer((_) async {});
+      when(() => harness.runtime.notifications).thenReturn(notifications);
+      when(() => harness.settings.restNotificationsEnabled).thenReturn(false);
+      when(
+        () => harness.database.setWorkoutCursor(
+          workoutId: any(named: 'workoutId'),
+          exerciseIndex: any(named: 'exerciseIndex'),
+          setIndex: any(named: 'setIndex'),
+          phase: any(named: 'phase'),
+          draftJson: any(named: 'draftJson'),
+        ),
+      ).thenAnswer((_) async {});
+      final repository = harness.workoutRepository;
+      when(
+        () => repository.confirmSet(
+          workoutId: any(named: 'workoutId'),
+          exercise: any(named: 'exercise'),
+          prescribedSet: any(named: 'prescribedSet'),
+          ordinal: any(named: 'ordinal'),
+          loadKg: any(named: 'loadKg'),
+          repetitions: any(named: 'repetitions'),
+          rir: any(named: 'rir'),
+          setPerformanceId: any(named: 'setPerformanceId'),
+          comment: any(named: 'comment'),
+          heartRateBpm: any(named: 'heartRateBpm'),
+          ifRev: any(named: 'ifRev'),
+          nextExerciseIndex: any(named: 'nextExerciseIndex'),
+          nextSetIndex: any(named: 'nextSetIndex'),
+          performedAt: any(named: 'performedAt'),
+          restSeconds: any(named: 'restSeconds'),
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        () => repository.setCursor(
+          workoutId: any(named: 'workoutId'),
+          exercisePerformanceId: any(named: 'exercisePerformanceId'),
+          exerciseIndex: any(named: 'exerciseIndex'),
+          setOrdinal: any(named: 'setOrdinal'),
+          phase: any(named: 'phase'),
+          draftJson: any(named: 'draftJson'),
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        () => repository.clearSet(
+          workoutId: any(named: 'workoutId'),
+          exercisePerformanceId: any(named: 'exercisePerformanceId'),
+          ordinal: any(named: 'ordinal'),
+        ),
+      ).thenAnswer((_) async => true);
+      await openWorkout(tester);
+
+      await tester.tap(find.bySemanticsLabel(RegExp(r'^7 repetitions')));
+      await tester.pump();
+      await tester.tap(find.bySemanticsLabel(RegExp(r'^2 RIR')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('focus-confirm')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Undo'));
+      await tester.pump();
+
+      verify(
+        () => repository.clearSet(
+          workoutId: harness.storedWorkout!.workoutId,
+          exercisePerformanceId: 'exercise-1',
+          ordinal: 0,
+        ),
+      ).called(1);
+    });
+
     testWidgets('last time shows the same set, not the next one', (
       tester,
     ) async {

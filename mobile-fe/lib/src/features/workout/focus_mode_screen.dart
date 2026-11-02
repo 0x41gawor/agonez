@@ -53,6 +53,10 @@ class _FocusModeScreenState extends State<FocusModeScreen>
   bool _restCompletionAnnounced = false;
   bool _submitting = false;
 
+  /// The screen's own snack bars, which leave with it: an undo offered here
+  /// must not follow the athlete to the summary or Home.
+  final _messenger = GlobalKey<ScaffoldMessengerState>();
+
   DateTime get _now => (widget.now ?? DateTime.now)();
 
   @override
@@ -193,12 +197,16 @@ class _FocusModeScreenState extends State<FocusModeScreen>
     int rir,
   ) {
     final l10n = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = _messenger.currentState;
+    if (messenger == null) return;
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
         duration: AgonezDurations.snackbarUndo,
+        // A snack bar with an action stays until dismissed unless told
+        // otherwise; the undo is only offered for a moment.
+        persist: false,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 76),
         content: Text(
           '${l10n.setRecordedSnackbar(set.number)} · '
@@ -222,9 +230,9 @@ class _FocusModeScreenState extends State<FocusModeScreen>
 
   void _showFailure() {
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.errorGenericBody)));
+    _messenger.currentState?.showSnackBar(
+      SnackBar(content: Text(l10n.errorGenericBody)),
+    );
   }
 
   void _updateDraft(FocusEntryDraft value) {
@@ -286,106 +294,112 @@ class _FocusModeScreenState extends State<FocusModeScreen>
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) widget.callbacks.onMinimise();
       },
-      child: Scaffold(
-        body: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              _FocusTopBar(
-                workout: workout,
-                now: _now,
-                onMinimise: widget.callbacks.onMinimise,
-                onOutline: _showOutline,
-                onActions: _showActions,
-                onSync: widget.callbacks.onSyncDetails,
-              ),
-              _WorkoutProgress(workout: workout),
-              if (workout.syncStatus == WorkoutSyncStatus.superseded)
-                _SupersededBanner(
-                  readOnly: workout.readOnly,
-                  onResumeHere: widget.callbacks.onResumeHere,
+      child: ScaffoldMessenger(
+        key: _messenger,
+        child: Scaffold(
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                _FocusTopBar(
+                  workout: workout,
+                  now: _now,
+                  onMinimise: widget.callbacks.onMinimise,
+                  onOutline: _showOutline,
+                  onActions: _showActions,
+                  onSync: widget.callbacks.onSyncDetails,
                 ),
-              Expanded(
-                child: SingleChildScrollView(
-                  key: const Key('focus-scroll-body'),
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _ExerciseHeader(
-                        exercise: exercise,
-                        onTap: exercise.atlasPeek == null
-                            ? null
-                            : _showQuickPeek,
-                      ),
-                      const SizedBox(height: 12),
-                      _SetRail(
-                        exercise: exercise,
-                        currentSetId: set?.id,
-                        onTapRecorded: widget.callbacks.onEditSet == null
-                            ? null
-                            : _showEditSet,
-                      ),
-                      const SizedBox(height: 12),
-                      if (_restEndsAt != null)
-                        _RestCard(
-                          endsAt: _restEndsAt!,
-                          durationSeconds: _restDurationSeconds ?? 0,
-                          now: _now,
-                          nextSet: set,
-                          onMinus: () => _adjustRest(-30),
-                          onPlus: () => _adjustRest(30),
-                          onEnd: _endRest,
-                        )
-                      else if (!exerciseComplete)
-                        _PrescriptionCard(exercise: exercise, set: set),
-                      const SizedBox(height: 14),
-                      if (exerciseComplete)
-                        _ExerciseCompleteCard(
+                _WorkoutProgress(workout: workout),
+                if (workout.syncStatus == WorkoutSyncStatus.superseded)
+                  _SupersededBanner(
+                    readOnly: workout.readOnly,
+                    onResumeHere: widget.callbacks.onResumeHere,
+                  ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    key: const Key('focus-scroll-body'),
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _ExerciseHeader(
                           exercise: exercise,
-                          onExerciseNote: _showExerciseNote,
-                          onAddExtraSet: () => _showHoldFor(
-                            title: AppLocalizations.of(context).deviationAddSet,
-                            explanation: AppLocalizations.of(
-                              context,
-                            ).deviationAddSetExplanation,
-                            label: AppLocalizations.of(
-                              context,
-                            ).deviationHoldAddSet,
-                            duration: const Duration(milliseconds: 600),
-                            neutral: true,
-                            action: () =>
-                                widget.callbacks.onAddExtraSet(exercise),
-                          ),
-                        )
-                      else
-                        _EntryZone(
-                          exercise: exercise,
-                          set: set,
-                          draft: _draft,
-                          enabled: !workout.readOnly && !_submitting,
-                          enableHaptics: widget.enableHaptics,
-                          onLoadChanged: (value) => _updateDraft(
-                            _draft.copyWith(
-                              loadKg: value,
-                              carriedFromLastSet: false,
-                            ),
-                          ),
-                          onOpenKeypad: _openLoadKeypad,
-                          onRepsChanged: (value) =>
-                              _updateDraft(_draft.copyWith(repetitions: value)),
-                          onOpenRepGrid: _openRepGrid,
-                          onRirChanged: (value) =>
-                              _updateDraft(_draft.copyWith(rir: value)),
-                          onSetNote: _showSetNote,
-                          onMoreData: _showMoreData,
+                          onTap: exercise.atlasPeek == null
+                              ? null
+                              : _showQuickPeek,
                         ),
-                    ],
+                        const SizedBox(height: 12),
+                        _SetRail(
+                          exercise: exercise,
+                          currentSetId: set?.id,
+                          onTapRecorded: widget.callbacks.onEditSet == null
+                              ? null
+                              : _showEditSet,
+                        ),
+                        const SizedBox(height: 12),
+                        if (_restEndsAt != null)
+                          _RestCard(
+                            endsAt: _restEndsAt!,
+                            durationSeconds: _restDurationSeconds ?? 0,
+                            now: _now,
+                            nextSet: set,
+                            onMinus: () => _adjustRest(-30),
+                            onPlus: () => _adjustRest(30),
+                            onEnd: _endRest,
+                          )
+                        else if (!exerciseComplete)
+                          _PrescriptionCard(exercise: exercise, set: set),
+                        const SizedBox(height: 14),
+                        if (exerciseComplete)
+                          _ExerciseCompleteCard(
+                            exercise: exercise,
+                            onExerciseNote: _showExerciseNote,
+                            onAddExtraSet: () => _showHoldFor(
+                              title: AppLocalizations.of(
+                                context,
+                              ).deviationAddSet,
+                              explanation: AppLocalizations.of(
+                                context,
+                              ).deviationAddSetExplanation,
+                              label: AppLocalizations.of(
+                                context,
+                              ).deviationHoldAddSet,
+                              duration: const Duration(milliseconds: 600),
+                              neutral: true,
+                              action: () =>
+                                  widget.callbacks.onAddExtraSet(exercise),
+                            ),
+                          )
+                        else
+                          _EntryZone(
+                            exercise: exercise,
+                            set: set,
+                            draft: _draft,
+                            enabled: !workout.readOnly && !_submitting,
+                            enableHaptics: widget.enableHaptics,
+                            onLoadChanged: (value) => _updateDraft(
+                              _draft.copyWith(
+                                loadKg: value,
+                                carriedFromLastSet: false,
+                              ),
+                            ),
+                            onOpenKeypad: _openLoadKeypad,
+                            onRepsChanged: (value) => _updateDraft(
+                              _draft.copyWith(repetitions: value),
+                            ),
+                            onOpenRepKeypad: _openRepKeypad,
+                            onRirChanged: (value) =>
+                                _updateDraft(_draft.copyWith(rir: value)),
+                            onSetNote: _showSetNote,
+                            onMoreData: _showMoreData,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              _buildPinnedAction(exercise, set, exerciseComplete),
-            ],
+                _buildPinnedAction(exercise, set, exerciseComplete),
+              ],
+            ),
           ),
         ),
       ),
@@ -754,10 +768,14 @@ class _FocusModeScreenState extends State<FocusModeScreen>
     _updateDraft(_draft.copyWith(loadKg: value, carriedFromLastSet: false));
   }
 
-  Future<void> _openRepGrid() async {
+  Future<void> _openRepKeypad() async {
     final value = await showModalBottomSheet<int>(
       context: context,
-      builder: (context) => const _RepGridSheet(),
+      isScrollControlled: true,
+      builder: (context) => _RepKeypadSheet(
+        current: _draft.repetitions,
+        target: _repTarget(widget.workout.currentSet),
+      ),
     );
     if (!mounted || value == null) return;
     _updateDraft(_draft.copyWith(repetitions: value));

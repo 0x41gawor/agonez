@@ -136,6 +136,8 @@
   "setTarget": "cel {target}",
   "setTapToType": "Dotknij, aby wpisać",
   "setOther": "inne",
+  "setRepsKeypadA11y": "Otwiera klawiaturę numeryczną",
+  "setKeypadBackspaceA11y": "Usuń ostatnią cyfrę",
   "setConfirm": "Potwierdź serię {setNumber}",
   "setConfirmSummary": "{load} × {reps} @ {rir} · potem odpoczynek {rest}",
   "setSelectRepsRir": "Wybierz powtórzenia i RIR",

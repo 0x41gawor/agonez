@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:agonez/src/api/atlas_models.dart';
 import 'package:agonez/src/atlas/widgets/exercise_image.dart';
+import 'package:agonez/src/design/design.dart';
 import 'package:agonez/src/features/workout/focus_mode_screen.dart';
 import 'package:agonez/src/features/workout/focus_workout_models.dart';
 import 'package:agonez/src/l10n/generated/app_localizations.dart';
@@ -65,6 +68,142 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  group('the undo after a set', () {
+    Future<void> confirmASet(WidgetTester tester) async {
+      await tester.tap(find.bySemanticsLabel(RegExp(r'^6 repetitions')));
+      await tester.pump();
+      await tester.tap(find.bySemanticsLabel(RegExp(r'^2 RIR')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('focus-confirm')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    testWidgets('is offered for a moment, not until dismissed', (tester) async {
+      await _pumpFocus(
+        tester,
+        _workout(),
+        _callbacks(onUndoSet: (_, _) async {}),
+      );
+      await confirmASet(tester);
+      expect(find.text('Undo'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 7));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Undo'), findsNothing);
+    });
+
+    testWidgets('does not follow the athlete off the screen', (tester) async {
+      await _pumpFocus(
+        tester,
+        _workout(),
+        _callbacks(onUndoSet: (_, _) async {}),
+      );
+      await confirmASet(tester);
+      expect(find.text('Undo'), findsOneWidget);
+
+      // Finishing replaces the workout with its summary.
+      unawaited(
+        tester
+            .state<NavigatorState>(find.byType(Navigator))
+            .pushReplacement(
+              MaterialPageRoute<void>(
+                builder: (_) => const Scaffold(body: Text('Summary')),
+              ),
+            ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Summary'), findsOneWidget);
+      expect(find.text('Undo'), findsNothing);
+    });
+  });
+
+  group('typing reps', () {
+    Future<void> tapKeys(WidgetTester tester, String keys) async {
+      for (final key in keys.split('')) {
+        await tester.tap(find.byKey(Key('focus-rep-keypad-$key')));
+        await tester.pump();
+      }
+    }
+
+    String keypadValue(WidgetTester tester) => tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byKey(const Key('focus-rep-keypad-value')),
+            matching: find.byType(Text),
+          ),
+        )
+        .data!;
+
+    testWidgets('a count typed on the keypad can be corrected there', (
+      tester,
+    ) async {
+      await _pumpFocus(tester, _workout(), _callbacks());
+
+      await tester.tap(find.byKey(const Key('focus-reps-other')));
+      await tester.pumpAndSettle();
+      await tapKeys(tester, '12');
+      await tester.tap(find.byKey(const Key('focus-rep-keypad-done')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('focus-reps-12')), findsOneWidget);
+
+      // Tapping it again reopens the keypad with 12, which typing replaces.
+      await tester.tap(find.byKey(const Key('focus-reps-12')));
+      await tester.pumpAndSettle();
+      expect(keypadValue(tester), '12');
+      await tapKeys(tester, '13');
+      expect(keypadValue(tester), '13');
+      await tester.tap(find.byKey(const Key('focus-rep-keypad-done')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('focus-reps-13')), findsOneWidget);
+      expect(find.byKey(const Key('focus-reps-12')), findsNothing);
+    });
+
+    testWidgets('the keypad takes no leading zero and no empty count', (
+      tester,
+    ) async {
+      await _pumpFocus(tester, _workout(), _callbacks());
+
+      await tester.tap(find.byKey(const Key('focus-reps-other')));
+      await tester.pumpAndSettle();
+      await tapKeys(tester, '0');
+
+      expect(keypadValue(tester), '—');
+      expect(
+        tester
+            .widget<AgonezPrimaryButton>(
+              find.byKey(const Key('focus-rep-keypad-done')),
+            )
+            .onPressed,
+        isNull,
+      );
+
+      await tapKeys(tester, '105');
+      await tester.tap(find.byKey(const Key('focus-rep-keypad-backspace')));
+      await tester.pump();
+      expect(keypadValue(tester), '10');
+    });
+
+    testWidgets('the row covers the target, one below when it fits', (
+      tester,
+    ) async {
+      await _pumpFocus(tester, _workout(repMin: 6, repMax: 8), _callbacks());
+      for (final reps in [5, 6, 7, 8, 9]) {
+        expect(find.byKey(Key('focus-reps-$reps')), findsOneWidget);
+      }
+
+      // 10–15 does not fit with one below: the row starts at the minimum.
+      await _pumpFocus(tester, _workout(repMin: 10, repMax: 15), _callbacks());
+      expect(find.byKey(const Key('focus-reps-9')), findsNothing);
+      for (final reps in [10, 11, 12, 13, 14]) {
+        expect(find.byKey(Key('focus-reps-$reps')), findsOneWidget);
+      }
+    });
   });
 
   group('changing the order', () {
@@ -198,8 +337,11 @@ Future<void> _pumpFocus(
   FocusWorkoutViewModel workout,
   FocusWorkoutCallbacks callbacks,
 ) async {
-  await tester.binding.setSurfaceSize(const Size(390, 844));
-  addTearDown(() => tester.binding.setSurfaceSize(null));
+  // A phone-sized view, so sheets sized from the screen height get a phone's.
+  tester.view
+    ..physicalSize = const Size(390, 844)
+    ..devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
       locale: const Locale('en'),
@@ -215,7 +357,11 @@ Future<void> _pumpFocus(
   await tester.pumpAndSettle();
 }
 
-FocusWorkoutViewModel _workout({AtlasPeek? atlasPeek}) => FocusWorkoutViewModel(
+FocusWorkoutViewModel _workout({
+  AtlasPeek? atlasPeek,
+  int repMin = 6,
+  int repMax = 8,
+}) => FocusWorkoutViewModel(
   workoutId: 'workout-id',
   workoutUnitName: 'Legs',
   startedAt: DateTime.utc(2026, 10, 10, 17),
@@ -229,7 +375,7 @@ FocusWorkoutViewModel _workout({AtlasPeek? atlasPeek}) => FocusWorkoutViewModel(
       loadStepKg: 2.5,
       defaultRestSeconds: 180,
       atlasPeek: atlasPeek,
-      sets: const [
+      sets: [
         FocusSetViewModel(
           id: 'set-id',
           ordinal: 1,
@@ -237,8 +383,8 @@ FocusWorkoutViewModel _workout({AtlasPeek? atlasPeek}) => FocusWorkoutViewModel(
           status: FocusSetStatus.planned,
           prescribedSetId: 477,
           prescribedLoadKg: 80,
-          repMin: 6,
-          repMax: 8,
+          repMin: repMin,
+          repMax: repMax,
           targetRir: 2,
         ),
       ],
@@ -321,8 +467,10 @@ FocusWorkoutCallbacks _callbacks({
   Future<void> Function(FocusSetSubmission)? onConfirmSet,
   Future<void> Function(FocusExerciseViewModel)? onReorderExercise,
   Future<void> Function(FocusExerciseViewModel)? onDoNow,
+  Future<void> Function(FocusExerciseViewModel, FocusSetViewModel)? onUndoSet,
 }) => FocusWorkoutCallbacks(
   onMinimise: () {},
+  onUndoSet: onUndoSet,
   onConfirmSet: onConfirmSet ?? (_) async {},
   onSkipSet: (_, _) async {},
   onAddExtraSet: (_) async {},

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Resources named only from Dart, where the release resource shrinker
+     cannot see them. Without the rest notification's icon, notification
+     setup fails at launch and the app shows its startup error.
+     See lib/src/platform/rest_notification_service.dart. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_agonez" />
