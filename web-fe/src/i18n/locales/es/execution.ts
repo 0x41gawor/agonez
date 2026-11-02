@@ -29,6 +29,12 @@ export default {
       expand: 'Ampliar detalles de MC{mc}', collapse: 'Contraer detalles de MC{mc}', session: 'Sesión', recorded: 'Registrado', setComment: 'Comentario de la serie', performanceAfterSync: 'El rendimiento aparece después de sincronizar la sesión desde el móvil.',
       flags: { substituted: 'Sustituido', skipped: 'Omitido', additional_set: 'Serie adicional', reps_below_range: 'Repeticiones bajo el rango', reps_at_floor: 'Repeticiones en el límite inferior', top_of_range: 'Límite superior del rango', load_reduced: 'Carga reducida', personal_record: 'Récord personal' },
     },
+    setup: {
+      eyebrow: 'Ajuste permanente del ejercicio', title: 'Mi configuración', help: 'Ajustes de máquina, asiento, pasador y accesorio para esta posición de ejercicio. La nota permanece hasta que la cambies y se comparte con la aplicación móvil.',
+      exercisePicker: 'Notas de configuración de ejercicios', current: 'Ejercicio actual', variant: 'Variante del plan', label: 'Detalles de configuración', placeholder: 'p. ej., asiento 6 · pasador K13 · cable en la polea baja',
+      updated: 'Actualizado {date}', neverSet: 'Aún sin configurar', notSet: 'Añadir ajustes de máquina', confirmDiscard: '¿Descartar los cambios de configuración sin guardar?', clear: 'Borrar nota', saving: 'Guardando…', loadCurrent: 'Cargar nota actual',
+      version_conflict: 'Esta configuración cambió en otro dispositivo. Carga la nota actual antes de volver a editarla.', setup_note_too_long: 'Una nota de configuración puede contener como máximo 2000 caracteres.', genericError: 'No se pudo guardar la nota de configuración.', unavailable: 'No hay ninguna nota de configuración para esta posición de ejercicio.', savedToast: 'Mi configuración guardada · {exercise}',
+    },
     editor: {
       planOwnedWeek: 'El número de series, el rango de repeticiones y el RIR proceden de la revisión r{revision}. Cámbialos en el Creador de planes para semanas futuras.',
       eyebrow: 'Siguiente prescripción', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · editable hasta que empiece la sesión', status: { clean: 'Sin empezar', dirty: 'Sin guardar', saving: 'Guardando…', saved: 'Guardado', locked: 'Bloqueado' },

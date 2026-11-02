@@ -49,6 +49,12 @@ export default {
       performanceAfterSync: 'Performance appears after the session is synced from mobile.',
       flags: { substituted: 'Substituted', skipped: 'Skipped', additional_set: 'Additional set', reps_below_range: 'Reps below range', reps_at_floor: 'Reps at range floor', top_of_range: 'Top of range', load_reduced: 'Load reduced', personal_record: 'Personal record' },
     },
+    setup: {
+      eyebrow: 'Standing exercise setting', title: 'My setup', help: 'Machine, seat, pin and attachment settings for this exercise slot. This note stays until you change it and is shared with the mobile app.',
+      exercisePicker: 'Exercise setup notes', current: 'Current exercise', variant: 'Plan variant', label: 'Setup details', placeholder: 'e.g. Seat 6 · pin K13 · cable on the low pulley',
+      updated: 'Updated {date}', neverSet: 'Not set yet', notSet: 'Add machine settings', confirmDiscard: 'Discard the unsaved setup changes?', clear: 'Clear note', saving: 'Saving…', loadCurrent: 'Load current note',
+      version_conflict: 'This setup changed on another device. Load the current note before editing it again.', setup_note_too_long: 'A setup note can contain at most 2000 characters.', genericError: 'The setup note could not be saved.', unavailable: 'No setup note is available for this exercise slot.', savedToast: 'My setup saved · {exercise}',
+    },
     editor: {
       eyebrow: 'Next prescription', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · editable until the session starts',
       status: { clean: 'Not started', dirty: 'Unsaved', saving: 'Saving…', saved: 'Saved', locked: 'Locked' },

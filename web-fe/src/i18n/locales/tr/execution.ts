@@ -29,6 +29,12 @@ export default {
       expand: 'MC{mc} ayrıntılarını genişlet', collapse: 'MC{mc} ayrıntılarını daralt', session: 'Seans', recorded: 'Kaydedildi', setComment: 'Set yorumu', performanceAfterSync: 'Performans, seans mobilden senkronize edildikten sonra görünür.',
       flags: { substituted: 'Değiştirildi', skipped: 'Atlandı', additional_set: 'Ek set', reps_below_range: 'Tekrarlar aralığın altında', reps_at_floor: 'Tekrarlar alt sınırda', top_of_range: 'Aralığın üst sınırı', load_reduced: 'Yük azaltıldı', personal_record: 'Kişisel rekor' },
     },
+    setup: {
+      eyebrow: 'Kalıcı egzersiz ayarı', title: 'Ayarım', help: 'Bu egzersiz konumu için makine, koltuk, pim ve aparat ayarları. Not siz değiştirene kadar kalır ve mobil uygulamayla paylaşılır.',
+      exercisePicker: 'Egzersiz ayarı notları', current: 'Mevcut egzersiz', variant: 'Plan varyantı', label: 'Ayar ayrıntıları', placeholder: 'örn. koltuk 6 · pim K13 · kablo alt makarada',
+      updated: 'Güncellendi {date}', neverSet: 'Henüz ayarlanmadı', notSet: 'Makine ayarlarını ekle', confirmDiscard: 'Kaydedilmemiş ayar değişiklikleri silinsin mi?', clear: 'Notu temizle', saving: 'Kaydediliyor…', loadCurrent: 'Güncel notu yükle',
+      version_conflict: 'Bu ayar başka bir cihazda değiştirildi. Yeniden düzenlemeden önce güncel notu yükleyin.', setup_note_too_long: 'Bir ayar notu en fazla 2000 karakter içerebilir.', genericError: 'Ayar notu kaydedilemedi.', unavailable: 'Bu egzersiz konumu için ayar notu yok.', savedToast: 'Ayarım kaydedildi · {exercise}',
+    },
     editor: {
       planOwnedWeek: 'Set sayısı, tekrar aralığı ve RIR plan revizyonu r{revision} içinden gelir. Gelecek haftalar için bunları Plan Oluşturucu’da değiştirin.',
       eyebrow: 'Sonraki reçete', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · seans başlayana kadar düzenlenebilir', status: { clean: 'Başlamadı', dirty: 'Kaydedilmedi', saving: 'Kaydediliyor…', saved: 'Kaydedildi', locked: 'Kilitli' },

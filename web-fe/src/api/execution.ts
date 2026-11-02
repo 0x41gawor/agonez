@@ -3,7 +3,7 @@ import type {
   AnalysisQueue, CalendarResponse, EventDTO, EventListResponse, ExerciseTraceResponse,
   LoadSeriesResponse, MicrocycleClassification, MicrocycleTimeline, PlanRunListResponse,
   PlanRunOverview, PlanRunPreview, PlanRunStatus, PrescriptionPut, PrescriptionWriteResponse,
-  SessionStatus, WorkoutTraceList, WorkoutTraceResponse,
+  SessionStatus, SetupNotePut, SetupNoteWritten, WorkoutTraceList, WorkoutTraceResponse,
 } from './execution-types'
 
 const root = '/api/v1/exec/plan-runs'
@@ -17,6 +17,7 @@ export const executionApi = {
   deleteRun: (runId: number, force = false, signal?: AbortSignal) => deleteRequest(`${root}/${runId}${force ? '?force=true' : ''}`, signal),
   queue: (runId: number, signal?: AbortSignal) => getJson<AnalysisQueue>(`${root}/${runId}/analysis/queue`, undefined, signal),
   exerciseTrace: (runId: number, traceId: number, signal?: AbortSignal) => getJson<ExerciseTraceResponse>(`${root}/${runId}/exercise-traces/${traceId}`, undefined, signal),
+  saveSetupNote: (runId: number, traceId: number, payload: SetupNotePut, signal?: AbortSignal) => putJson<SetupNoteWritten>(`${root}/${runId}/exercise-traces/${traceId}/setup-note`, payload, signal),
   savePrescription: (runId: number, sessionId: number, traceId: number, payload: PrescriptionPut, signal?: AbortSignal) => putJson<PrescriptionWriteResponse>(`${root}/${runId}/sessions/${sessionId}/exercise-prescriptions/${traceId}`, payload, signal),
   deletePrescription: (runId: number, sessionId: number, traceId: number, signal?: AbortSignal) => deleteRequest(`${root}/${runId}/sessions/${sessionId}/exercise-prescriptions/${traceId}`, signal),
   workoutTraces: (runId: number, signal?: AbortSignal) => getJson<WorkoutTraceList>(`${root}/${runId}/workout-traces`, undefined, signal),

@@ -29,6 +29,12 @@ export default {
       expand: 'Details zu MC{mc} einblenden', collapse: 'Details zu MC{mc} ausblenden', session: 'Einheit', recorded: 'Erfasst', setComment: 'Satzkommentar', performanceAfterSync: 'Die Leistung erscheint nach der Synchronisierung der Einheit aus der mobilen App.',
       flags: { substituted: 'Ersetzt', skipped: 'Übersprungen', additional_set: 'Zusätzlicher Satz', reps_below_range: 'Wiederholungen unter dem Bereich', reps_at_floor: 'Wiederholungen an der Untergrenze', top_of_range: 'Obergrenze des Bereichs', load_reduced: 'Last reduziert', personal_record: 'Persönlicher Rekord' },
     },
+    setup: {
+      eyebrow: 'Dauerhafte Übungseinstellung', title: 'Mein Setup', help: 'Maschinen-, Sitz-, Steckstift- und Griffpositionen für diesen Übungsslot. Die Notiz bleibt bis zur Änderung bestehen und wird mit der mobilen App geteilt.',
+      exercisePicker: 'Setup-Notizen der Übungen', current: 'Aktuelle Übung', variant: 'Planvariante', label: 'Setup-Details', placeholder: 'z. B. Sitz 6 · Stift K13 · Kabel am unteren Zug',
+      updated: 'Aktualisiert {date}', neverSet: 'Noch nicht eingerichtet', notSet: 'Maschineneinstellung hinzufügen', confirmDiscard: 'Ungespeicherte Setup-Änderungen verwerfen?', clear: 'Notiz leeren', saving: 'Speichern…', loadCurrent: 'Aktuelle Notiz laden',
+      version_conflict: 'Dieses Setup wurde auf einem anderen Gerät geändert. Lade vor der erneuten Bearbeitung die aktuelle Notiz.', setup_note_too_long: 'Eine Setup-Notiz darf höchstens 2000 Zeichen enthalten.', genericError: 'Die Setup-Notiz konnte nicht gespeichert werden.', unavailable: 'Für diesen Übungsslot ist keine Setup-Notiz verfügbar.', savedToast: 'Mein Setup gespeichert · {exercise}',
+    },
     editor: {
       planOwnedWeek: 'Satzanzahl, Wiederholungsbereich und RIR stammen aus Planrevision r{revision}. Ändere sie im Planersteller für zukünftige Wochen.',
       eyebrow: 'Nächste Vorgabe', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · bis zum Start der Einheit bearbeitbar', status: { clean: 'Nicht begonnen', dirty: 'Ungespeichert', saving: 'Speichern…', saved: 'Gespeichert', locked: 'Gesperrt' },

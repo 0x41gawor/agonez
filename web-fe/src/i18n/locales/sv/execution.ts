@@ -29,6 +29,12 @@ export default {
       expand: 'Visa detaljer för MC{mc}', collapse: 'Dölj detaljer för MC{mc}', session: 'Pass', recorded: 'Registrerat', setComment: 'Setkommentar', performanceAfterSync: 'Prestationen visas efter att passet synkroniserats från mobilen.',
       flags: { substituted: 'Ersatt', skipped: 'Överhoppad', additional_set: 'Extra set', reps_below_range: 'Repetitioner under intervallet', reps_at_floor: 'Repetitioner vid nedre gränsen', top_of_range: 'Övre delen av intervallet', load_reduced: 'Belastning minskad', personal_record: 'Personligt rekord' },
     },
+    setup: {
+      eyebrow: 'Bestående övningsinställning', title: 'Min inställning', help: 'Maskin-, sits-, sprint- och tillbehörsinställningar för den här övningsplatsen. Anteckningen ligger kvar tills du ändrar den och delas med mobilappen.',
+      exercisePicker: 'Inställningsanteckningar för övningar', current: 'Aktuell övning', variant: 'Planvariant', label: 'Inställningsdetaljer', placeholder: 't.ex. sits 6 · sprint K13 · kabel i nedre trissan',
+      updated: 'Uppdaterad {date}', neverSet: 'Inte inställd ännu', notSet: 'Lägg till maskininställningar', confirmDiscard: 'Kassera osparade ändringar i inställningen?', clear: 'Rensa anteckning', saving: 'Sparar…', loadCurrent: 'Läs in aktuell anteckning',
+      version_conflict: 'Den här inställningen ändrades på en annan enhet. Läs in den aktuella anteckningen innan du redigerar igen.', setup_note_too_long: 'En inställningsanteckning får innehålla högst 2000 tecken.', genericError: 'Inställningsanteckningen kunde inte sparas.', unavailable: 'Ingen inställningsanteckning finns för den här övningsplatsen.', savedToast: 'Min inställning sparades · {exercise}',
+    },
     editor: {
       planOwnedWeek: 'Antal set, repetitionsintervall och RIR kommer från planrevision r{revision}. Ändra dem i Planskaparen för kommande veckor.',
       eyebrow: 'Nästa ordination', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · redigerbar tills passet startar', status: { clean: 'Inte påbörjad', dirty: 'Osparad', saving: 'Sparar…', saved: 'Sparad', locked: 'Låst' },

@@ -29,6 +29,12 @@ export default {
       expand: 'Expandir detalhes do MC{mc}', collapse: 'Recolher detalhes do MC{mc}', session: 'Sessão', recorded: 'Registrado', setComment: 'Comentário da série', performanceAfterSync: 'O desempenho aparece após a sincronização da sessão pelo celular.',
       flags: { substituted: 'Substituído', skipped: 'Pulado', additional_set: 'Série adicional', reps_below_range: 'Repetições abaixo da faixa', reps_at_floor: 'Repetições no limite inferior', top_of_range: 'Topo da faixa', load_reduced: 'Carga reduzida', personal_record: 'Recorde pessoal' },
     },
+    setup: {
+      eyebrow: 'Ajuste permanente do exercício', title: 'Minha configuração', help: 'Ajustes de máquina, assento, pino e acessório para esta posição de exercício. A nota permanece até você alterá-la e é compartilhada com o aplicativo móvel.',
+      exercisePicker: 'Notas de configuração dos exercícios', current: 'Exercício atual', variant: 'Variação do plano', label: 'Detalhes da configuração', placeholder: 'ex.: assento 6 · pino K13 · cabo na polia baixa',
+      updated: 'Atualizado em {date}', neverSet: 'Ainda não configurado', notSet: 'Adicionar ajustes da máquina', confirmDiscard: 'Descartar as alterações de configuração não salvas?', clear: 'Limpar nota', saving: 'Salvando…', loadCurrent: 'Carregar nota atual',
+      version_conflict: 'Esta configuração foi alterada em outro dispositivo. Carregue a nota atual antes de editá-la novamente.', setup_note_too_long: 'Uma nota de configuração pode ter no máximo 2000 caracteres.', genericError: 'Não foi possível salvar a nota de configuração.', unavailable: 'Nenhuma nota de configuração está disponível para esta posição de exercício.', savedToast: 'Minha configuração foi salva · {exercise}',
+    },
     editor: {
       planOwnedWeek: 'O número de séries, a faixa de repetições e o RIR vêm da revisão r{revision}. Altere-os no Criador de planos para as próximas semanas.',
       eyebrow: 'Próxima prescrição', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · editável até a sessão começar', status: { clean: 'Não iniciado', dirty: 'Não salvo', saving: 'Salvando…', saved: 'Salvo', locked: 'Bloqueado' },

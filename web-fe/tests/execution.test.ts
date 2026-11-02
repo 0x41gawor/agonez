@@ -5,13 +5,15 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 
 import { ApiError } from '@/api/client'
 import { executionApi } from '@/api/execution'
-import type { AnalysisQueue as AnalysisQueueDTO, ExerciseTraceResponse, LoadSeriesResponse, PlanRunListItem, PlanRunOverview, SessionStatus } from '@/api/execution-types'
+import type { AnalysisQueue as AnalysisQueueDTO, ExerciseExposure, ExerciseTraceResponse, LoadSeriesResponse, PlanRunListItem, PlanRunOverview, SessionStatus } from '@/api/execution-types'
 import AnalysisQueue from '@/components/execution/AnalysisQueue.vue'
 import ExerciseTraceTable from '@/components/execution/ExerciseTraceTable.vue'
+import LoadPerSetStrip from '@/components/execution/LoadPerSetStrip.vue'
 import LoadsChart from '@/components/execution/LoadsChart.vue'
 import PrescriptionEditor from '@/components/execution/PrescriptionEditor.vue'
 import RunManagerDialog from '@/components/execution/RunManagerDialog.vue'
 import SessionStatusMark from '@/components/execution/SessionStatusMark.vue'
+import SetupNotesEditor from '@/components/execution/SetupNotesEditor.vue'
 import AppShell from '@/components/shell/AppShell.vue'
 import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { i18n, setActiveLocale } from '@/i18n'
@@ -35,9 +37,37 @@ const trace: ExerciseTraceResponse = {
     workout_trace: { workout_trace_id: 2, workout_name: 'Push A' },
     slot_ordinal: 0, display_name: 'Bench Press',
     current_plan: { plan_revision_no: 2, slot_role: 'Primary progressive', exercise: { exercise_id: 1, slug: 'bench_press', name: 'Bench Press', variant_label: 'Flat Bench' }, sets: next.plan_sets, plan_comment: null, progression_model: null, load_step_kg: null },
+    setup_notes: [
+      { exercise_id: 1, exercise: { slug: 'bench_press', name: 'Bench Press' }, text: 'Rack 3 · safeties 8', rev: 2, updated_at: '2026-10-08T12:00:00Z' },
+      { exercise_id: 2, exercise: { slug: 'dumbbell_press', name: 'Dumbbell Press' }, text: null, rev: 0, updated_at: null },
+    ],
     continuity: { first_microcycle_ordinal: 1, revisions_spanned: [1, 2], continues_from: null, continued_by: null },
   },
   revision_transitions: [], exposures: [], next,
+}
+
+function exposure(ordinal: number, status: SessionStatus, prescribedLoad: number, performedLoads: number[] | null): ExerciseExposure {
+  const date = `2026-10-${String(ordinal).padStart(2, '0')}`
+  return {
+    microcycle: { ordinal, starts_on: date, ends_on: date, classification: 'normal', plan_revision_no: 1 },
+    session: { session_id: ordinal, scheduled_date: date, status, completion_mode: status === 'completed' ? 'as_prescribed' : null },
+    prescription: {
+      exercise_prescription_id: ordinal,
+      exercise: trace.trace.current_plan.exercise,
+      plan_comment: null,
+      prescription_comment: null,
+      based_on_performance_microcycle_ordinal: ordinal > 1 ? ordinal - 1 : null,
+      sets: next.plan_sets.map((set) => ({ ...set, load_kg: prescribedLoad, comment: null })),
+    },
+    performance: performedLoads == null ? null : {
+      status: 'finalized',
+      execution_mode: 'as_prescribed',
+      actual_exercise: null,
+      comment: null,
+      sets: performedLoads.map((load, index) => ({ ordinal: index, prescribed_set_ordinal: index, status: 'performed', load_kg: load, repetitions: 6, rir: 1, comment: null, recorded_at: `${date}T12:00:00Z`, is_additional: false, divergence: { load: 'equal', reps: 'in_range', rir: 'on_target' } })),
+      summary: { total_reps: performedLoads.length * 6, volume_load_kg: performedLoads.reduce((total, load) => total + load * 6, 0), top_load_kg: Math.max(...performedLoads) },
+    },
+  }
 }
 
 const queue: AnalysisQueueDTO = {
@@ -219,6 +249,44 @@ describe('Execution critical workflows', () => {
     expect(wrapper.get('.exercise-trace-table').attributes('style')).toContain('minmax(320px, 1fr)')
   })
 
+  it('edits the current standing setup note with its revision', async () => {
+    const wrapper = mount(SetupNotesEditor, {
+      props: { notes: trace.trace.setup_notes, currentExerciseId: 1, savingExerciseId: null, errorCode: null },
+    })
+    const textarea = wrapper.get<HTMLTextAreaElement>('textarea')
+
+    expect(textarea.element.value).toBe('Rack 3 · safeties 8')
+    expect(wrapper.get('.setup-note-identity b').text()).toBe('Bench Press')
+    await textarea.setValue('Rack 4 · safeties 9')
+    await wrapper.get('form').trigger('submit')
+
+    expect(wrapper.emitted('dirty')?.at(-1)).toEqual([true])
+    expect(wrapper.emitted('save')).toEqual([[{ exerciseId: 1, text: 'Rack 4 · safeties 9', expectedRev: 2 }]])
+  })
+
+  it('draws load continuity while breaking performed history at missed exposures', () => {
+    const store = useExecutionDraftsStore()
+    const chartTrace = structuredClone(trace)
+    chartTrace.exposures = [
+      exposure(1, 'completed', 65, [65, 65, 65]),
+      exposure(2, 'completed', 67.5, [67.5, 67.5, 65]),
+      exposure(3, 'missed', 67.5, null),
+      exposure(4, 'completed', 60, [60, 60, 60]),
+      exposure(5, 'completed', 65, [65, 65, 65]),
+    ]
+    const wrapper = mount(LoadPerSetStrip, { props: { trace: chartTrace, draft: store.initialize(99, next) } })
+    const prescribed = wrapper.get('.prescribed-continuity').attributes('d') ?? ''
+    const performed = wrapper.get('.performed-continuity').attributes('d') ?? ''
+    const upcoming = wrapper.get('.next-continuity').attributes('d') ?? ''
+
+    expect(prescribed.match(/\bM\b/g)).toHaveLength(1)
+    expect(prescribed.match(/\bL\b/g)).toHaveLength(4)
+    expect(performed.match(/\bM\b/g)).toHaveLength(2)
+    expect(performed.match(/\bL\b/g)).toHaveLength(2)
+    expect(upcoming).toMatch(/^M .+ L .+$/)
+    expect(wrapper.findAll('circle')).toHaveLength(12)
+  })
+
   it('breaks load chart paths across null substitution points', () => {
     const data: LoadSeriesResponse = {
       as_of: '2026-10-08', metric: 'top_set_load',
@@ -241,6 +309,17 @@ describe('Execution critical workflows', () => {
     await expect(executionApi.savePrescription(3, 7, 41, payload)).rejects.toMatchObject({ status: 409, code: 'stale_basis' })
     expect(fetchMock.mock.calls[0]?.[0]).toContain('/api/v1/exec/plan-runs/3/sessions/7/exercise-prescriptions/41')
     expect(JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body))).toEqual(payload)
+    vi.unstubAllGlobals()
+  })
+
+  it('sends a revision-checked standing setup note to its exercise trace', async () => {
+    const response = { exercise_id: 1, text: 'Rack 4', rev: 3, updated_at: '2026-10-09T12:00:00Z' }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(response), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(executionApi.saveSetupNote(14, 482, { exercise_id: 1, text: 'Rack 4', expected_rev: 2 })).resolves.toEqual(response)
+    expect(fetchMock.mock.calls[0]?.[0]).toContain('/api/v1/exec/plan-runs/14/exercise-traces/482/setup-note')
+    expect(JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body))).toEqual({ exercise_id: 1, text: 'Rack 4', expected_rev: 2 })
     vi.unstubAllGlobals()
   })
 it('deletes a plan run without recorded results after a single confirmation', async () => {

@@ -34,6 +34,12 @@ export default {
       revision: 'Wersja planu r{from} → r{to}', revisionBody: 'Obowiązuje od MC{mc} · {date}. {changes}. Historia tego ćwiczenia jest kontynuowana.', compare: 'Porównaj wersje', expand: 'Rozwiń szczegóły MC{mc}', collapse: 'Zwiń szczegóły MC{mc}', session: 'Sesja', recorded: 'Zarejestrowano', setComment: 'Komentarz do serii', performanceAfterSync: 'Wynik pojawi się po synchronizacji sesji z aplikacji mobilnej.',
       flags: { substituted: 'Zamieniono', skipped: 'Pominięto', additional_set: 'Dodatkowa seria', reps_below_range: 'Powtórzenia poniżej zakresu', reps_at_floor: 'Powtórzenia na dolnej granicy', top_of_range: 'Górna granica zakresu', load_reduced: 'Zmniejszono obciążenie', personal_record: 'Rekord osobisty' },
     },
+    setup: {
+      eyebrow: 'Stałe ustawienie ćwiczenia', title: 'Moje ustawienie', help: 'Ustawienia maszyny, fotela, bolca i uchwytu dla tego slotu ćwiczenia. Notatka pozostaje do czasu zmiany i jest współdzielona z aplikacją mobilną.',
+      exercisePicker: 'Notatki o ustawieniu ćwiczeń', current: 'Aktualne ćwiczenie', variant: 'Wariant planu', label: 'Szczegóły ustawienia', placeholder: 'np. fotel 6 · bolec K13 · linka na dolnym wyciągu',
+      updated: 'Zaktualizowano {date}', neverSet: 'Jeszcze nie ustawiono', notSet: 'Dodaj ustawienia maszyny', confirmDiscard: 'Odrzucić niezapisane zmiany ustawienia?', clear: 'Wyczyść notatkę', saving: 'Zapisywanie…', loadCurrent: 'Wczytaj aktualną notatkę',
+      version_conflict: 'To ustawienie zmieniono na innym urządzeniu. Wczytaj aktualną notatkę przed ponowną edycją.', setup_note_too_long: 'Notatka o ustawieniu może mieć najwyżej 2000 znaków.', genericError: 'Nie udało się zapisać notatki o ustawieniu.', unavailable: 'Dla tego slotu ćwiczenia nie ma notatki o ustawieniu.', savedToast: 'Zapisano moje ustawienie · {exercise}',
+    },
     editor: {
       eyebrow: 'Następne zalecenie', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · edytowalne do rozpoczęcia sesji', status: { clean: 'Nierozpoczęte', dirty: 'Niezapisane', saving: 'Zapisywanie…', saved: 'Zapisano', locked: 'Zablokowane' },
       basis: 'Na podstawie wyniku MC{mc} · {date} · zakończony', firstExposure: 'Pierwsza ekspozycja — brak wcześniejszego wyniku.', evidence: 'Powt. {reps} · obciążenia {loads} kg · {top} na górnej granicy · {floor} na dolnej granicy · {deeper} głębiej niż docelowy RIR',

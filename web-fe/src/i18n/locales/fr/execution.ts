@@ -31,6 +31,12 @@ export default {
       expand: 'Développer les détails de MC{mc}', collapse: 'Réduire les détails de MC{mc}', session: 'Séance', recorded: 'Enregistré', setComment: 'Commentaire de série', performanceAfterSync: 'La performance apparaît après la synchronisation de la séance depuis le mobile.',
       flags: { substituted: 'Remplacé', skipped: 'Ignoré', additional_set: 'Série supplémentaire', reps_below_range: 'Répétitions sous la plage', reps_at_floor: 'Répétitions à la limite basse', top_of_range: 'Haut de la plage', load_reduced: 'Charge réduite', personal_record: 'Record personnel' },
     },
+    setup: {
+      eyebrow: 'Réglage permanent de l’exercice', title: 'Mon réglage', help: 'Réglages de la machine, du siège, de la goupille et de l’accessoire pour cet emplacement d’exercice. La note reste valable jusqu’à sa modification et est partagée avec l’application mobile.',
+      exercisePicker: 'Notes de réglage des exercices', current: 'Exercice actuel', variant: 'Variante du plan', label: 'Détails du réglage', placeholder: 'p. ex. siège 6 · goupille K13 · câble sur la poulie basse',
+      updated: 'Mis à jour {date}', neverSet: 'Pas encore défini', notSet: 'Ajouter les réglages de la machine', confirmDiscard: 'Ignorer les modifications de réglage non enregistrées ?', clear: 'Effacer la note', saving: 'Enregistrement…', loadCurrent: 'Charger la note actuelle',
+      version_conflict: 'Ce réglage a été modifié sur un autre appareil. Chargez la note actuelle avant de la modifier à nouveau.', setup_note_too_long: 'Une note de réglage peut contenir au maximum 2000 caractères.', genericError: 'La note de réglage n’a pas pu être enregistrée.', unavailable: 'Aucune note de réglage n’est disponible pour cet emplacement d’exercice.', savedToast: 'Mon réglage enregistré · {exercise}',
+    },
     editor: {
       planOwnedWeek: 'Le nombre de séries, la plage de répétitions et le RIR viennent de la révision r{revision}. Modifiez-les dans le Créateur de plan pour les semaines futures.',
       eyebrow: 'Prescription suivante', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · modifiable jusqu’au début de la séance', status: { clean: 'Non commencé', dirty: 'Non enregistré', saving: 'Enregistrement…', saved: 'Enregistré', locked: 'Verrouillé' },

@@ -29,6 +29,12 @@ export default {
       expand: 'Espandi i dettagli di MC{mc}', collapse: 'Comprimi i dettagli di MC{mc}', session: 'Sessione', recorded: 'Registrato', setComment: 'Commento della serie', performanceAfterSync: 'La prestazione appare dopo la sincronizzazione della sessione dal mobile.',
       flags: { substituted: 'Sostituito', skipped: 'Saltato', additional_set: 'Serie aggiuntiva', reps_below_range: 'Ripetizioni sotto l’intervallo', reps_at_floor: 'Ripetizioni al limite inferiore', top_of_range: 'Limite superiore dell’intervallo', load_reduced: 'Carico ridotto', personal_record: 'Record personale' },
     },
+    setup: {
+      eyebrow: 'Impostazione permanente dell’esercizio', title: 'La mia configurazione', help: 'Impostazioni di macchina, sedile, perno e accessorio per questo slot esercizio. La nota resta valida finché non la modifichi ed è condivisa con l’app mobile.',
+      exercisePicker: 'Note di configurazione degli esercizi', current: 'Esercizio attuale', variant: 'Variante del piano', label: 'Dettagli della configurazione', placeholder: 'es. sedile 6 · perno K13 · cavo alla puleggia bassa',
+      updated: 'Aggiornato {date}', neverSet: 'Non ancora impostato', notSet: 'Aggiungi impostazioni macchina', confirmDiscard: 'Scartare le modifiche alla configurazione non salvate?', clear: 'Cancella nota', saving: 'Salvataggio…', loadCurrent: 'Carica la nota attuale',
+      version_conflict: 'Questa configurazione è cambiata su un altro dispositivo. Carica la nota attuale prima di modificarla di nuovo.', setup_note_too_long: 'Una nota di configurazione può contenere al massimo 2000 caratteri.', genericError: 'Impossibile salvare la nota di configurazione.', unavailable: 'Nessuna nota di configurazione disponibile per questo slot esercizio.', savedToast: 'La mia configurazione è stata salvata · {exercise}',
+    },
     editor: {
       planOwnedWeek: 'Numero di serie, intervallo di ripetizioni e RIR derivano dalla revisione r{revision}. Modificali nel Creatore del piano per le settimane future.',
       eyebrow: 'Prossima prescrizione', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · modificabile fino all’inizio della sessione', status: { clean: 'Non iniziato', dirty: 'Non salvato', saving: 'Salvataggio…', saved: 'Salvato', locked: 'Bloccato' },

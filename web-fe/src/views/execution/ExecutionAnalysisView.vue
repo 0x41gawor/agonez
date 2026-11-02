@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/client'
 import { executionApi } from '@/api/execution'
@@ -12,6 +12,7 @@ import ExerciseTraceTable from '@/components/execution/ExerciseTraceTable.vue'
 import ExecutionSkeleton from '@/components/execution/ExecutionSkeleton.vue'
 import LoadPerSetStrip from '@/components/execution/LoadPerSetStrip.vue'
 import PrescriptionEditor from '@/components/execution/PrescriptionEditor.vue'
+import SetupNotesEditor from '@/components/execution/SetupNotesEditor.vue'
 import { executionContextKey } from '@/features/execution/context'
 import { useExecutionCycleLabels } from '@/features/execution/cycle-labels'
 import { parseLoad } from '@/features/execution/format'
@@ -32,6 +33,10 @@ const saving = ref(false)
 const saveErrorCode = ref<string | null>(null)
 const queueOpen = ref(false)
 const savedMessage = ref('')
+const setupOpen = ref(false)
+const setupDirty = ref(false)
+const setupSavingExerciseId = ref<number | null>(null)
+const setupErrorCode = ref<string | null>(null)
 const selectedTraceId = computed(() => {
   const value = Number(route.query.trace)
   return Number.isFinite(value) && value > 0 ? value : null
@@ -39,6 +44,8 @@ const selectedTraceId = computed(() => {
 const draft = computed(() => selectedTraceId.value ? drafts.drafts[selectedTraceId.value] : undefined)
 const ordered = computed(() => queue.value?.workouts.flatMap((workout) => workout.exercises.map((exercise) => ({ ...exercise, workoutTraceId: workout.workout_trace_id }))) ?? [])
 const selectedIndex = computed(() => ordered.value.findIndex((item) => item.exercise_trace_id === selectedTraceId.value))
+const setupNotes = computed(() => trace.value?.trace.setup_notes ?? [])
+const currentSetupNote = computed(() => setupNotes.value.find((note) => note.exercise_id === trace.value?.trace.current_plan.exercise.exercise_id) ?? null)
 
 async function loadQueue(): Promise<void> {
   loadingQueue.value = true
@@ -100,6 +107,35 @@ function stepAll(direction: number): void { const step = trace.value?.trace.curr
 function applyBulk(value: string): void { if (!draft.value || parseLoad(value) === undefined) return; draft.value.loads = draft.value.loads.map((load, index) => draft.value?.selected[index] ? value : load); markDirty() }
 function discard(): void { if (trace.value?.next && selectedTraceId.value) drafts.initialize(selectedTraceId.value, trace.value.next, true) }
 
+async function saveSetupNote(payload: { exerciseId: number; text: string | null; expectedRev: number }): Promise<void> {
+  if (!trace.value || setupSavingExerciseId.value != null) return
+  setupSavingExerciseId.value = payload.exerciseId
+  setupErrorCode.value = null
+  try {
+    const result = await executionApi.saveSetupNote(context.runId.value, trace.value.trace.exercise_trace_id, {
+      exercise_id: payload.exerciseId,
+      text: payload.text,
+      expected_rev: payload.expectedRev,
+    })
+    const note = setupNotes.value.find((item) => item.exercise_id === payload.exerciseId)
+    trace.value.trace.setup_notes = setupNotes.value.map((item) => item.exercise_id === payload.exerciseId ? { ...item, ...result } : item)
+    savedMessage.value = t('execution.setup.savedToast', { exercise: note?.exercise.name ?? trace.value.trace.display_name })
+  } catch (caught) {
+    setupErrorCode.value = caught instanceof ApiError ? caught.code ?? 'genericError' : 'genericError'
+  } finally {
+    setupSavingExerciseId.value = null
+  }
+}
+
+async function reloadSetupNotes(): Promise<void> {
+  setupErrorCode.value = null
+  await loadTrace(true)
+}
+
+function confirmSetupNavigation(): boolean {
+  return !setupDirty.value || window.confirm(t('execution.setup.confirmDiscard'))
+}
+
 async function save(advance = false): Promise<void> {
   if (!trace.value?.next?.target || !draft.value || saving.value) return
   const values = draft.value.loads.map(parseLoad)
@@ -138,7 +174,17 @@ function handleKey(event: KeyboardEvent): void {
   if (event.key === 'Escape') queueOpen.value = false
 }
 
-onBeforeRouteLeave(() => !drafts.hasDirty || window.confirm(t('execution.analysis.confirmLeave')))
+onBeforeRouteLeave(() => (!drafts.hasDirty || window.confirm(t('execution.analysis.confirmLeave'))) && confirmSetupNavigation())
+onBeforeRouteUpdate((to, from) => {
+  const sameTrace = to.params.runId === from.params.runId && to.query.trace === from.query.trace
+  if (sameTrace || confirmSetupNavigation()) {
+    setupOpen.value = false
+    setupDirty.value = false
+    setupErrorCode.value = null
+    return true
+  }
+  return false
+})
 onMounted(() => { window.addEventListener('keydown', handleKey); void loadQueue() })
 onBeforeUnmount(() => window.removeEventListener('keydown', handleKey))
 watch(selectedTraceId, () => void loadTrace(), { immediate: true })
@@ -160,8 +206,26 @@ watch(selectedTraceId, () => void loadTrace(), { immediate: true })
       <template v-else>
         <header class="trace-header">
           <div><span class="eyebrow">{{ $t('execution.analysis.traceEyebrow', { workout: trace.trace.workout_trace.workout_name, slot: trace.trace.slot_ordinal + 1 }) }}</span><h1>{{ trace.trace.display_name }} <small>{{ trace.trace.current_plan.slot_role }}</small></h1><p>{{ trace.trace.current_plan.exercise.variant_label }} · <span class="mono">{{ $t('execution.analysis.plan', { sets: trace.trace.current_plan.sets.length, min: trace.trace.current_plan.sets[0]?.rep_min ?? '—', max: trace.trace.current_plan.sets[0]?.rep_max ?? '—', rir: trace.trace.current_plan.sets[0]?.target_rir ?? '—' }) }}</span></p><p v-if="trace.trace.current_plan.plan_comment" class="trace-plan-note"><b class="mono">{{ $t('execution.analysis.planNote') }}</b>{{ trace.trace.current_plan.plan_comment }}</p></div>
-          <div class="trace-navigation"><button class="icon-button" type="button" :aria-label="$t('execution.analysis.previous')" @click="selectRelative(-1)">↑</button><span class="mono">{{ $t('execution.analysis.position', { current: selectedIndex + 1, total: ordered.length }) }}</span><button class="icon-button" type="button" :aria-label="$t('execution.analysis.next')" @click="selectRelative(1)">↓</button></div>
+          <div class="trace-header-actions">
+            <button class="setup-note-trigger" :class="{ filled: !!currentSetupNote?.text }" type="button" :aria-expanded="setupOpen" aria-controls="trace-setup-notes" @click="setupOpen = true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6" /></svg>
+              <span><small>{{ $t('execution.setup.title') }}</small><b>{{ currentSetupNote?.text || $t('execution.setup.notSet') }}</b></span>
+            </button>
+            <div class="trace-navigation"><button class="icon-button" type="button" :aria-label="$t('execution.analysis.previous')" @click="selectRelative(-1)">↑</button><span class="mono">{{ $t('execution.analysis.position', { current: selectedIndex + 1, total: ordered.length }) }}</span><button class="icon-button" type="button" :aria-label="$t('execution.analysis.next')" @click="selectRelative(1)">↓</button></div>
+          </div>
         </header>
+        <SetupNotesEditor
+          v-if="setupOpen"
+          id="trace-setup-notes"
+          :notes="setupNotes"
+          :current-exercise-id="trace.trace.current_plan.exercise.exercise_id"
+          :saving-exercise-id="setupSavingExerciseId"
+          :error-code="setupErrorCode"
+          @close="setupOpen = false"
+          @dirty="setupDirty = $event"
+          @reload="reloadSetupNotes"
+          @save="saveSetupNote"
+        />
         <LoadPerSetStrip :trace="trace" :draft="draft" />
         <ExerciseTraceTable :trace="trace" :draft="draft" />
       </template>

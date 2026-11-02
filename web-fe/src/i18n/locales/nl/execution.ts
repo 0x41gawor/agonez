@@ -29,6 +29,12 @@ export default {
       expand: 'Details van MC{mc} uitvouwen', collapse: 'Details van MC{mc} samenvouwen', session: 'Sessie', recorded: 'Vastgelegd', setComment: 'Setopmerking', performanceAfterSync: 'De prestatie verschijnt nadat de sessie vanaf mobiel is gesynchroniseerd.',
       flags: { substituted: 'Vervangen', skipped: 'Overgeslagen', additional_set: 'Extra set', reps_below_range: 'Herhalingen onder bereik', reps_at_floor: 'Herhalingen op ondergrens', top_of_range: 'Bovengrens van bereik', load_reduced: 'Belasting verlaagd', personal_record: 'Persoonlijk record' },
     },
+    setup: {
+      eyebrow: 'Vaste oefeninstelling', title: 'Mijn instelling', help: 'Machine-, zitting-, pin- en hulpstukinstellingen voor deze oefenpositie. De notitie blijft staan tot je haar wijzigt en wordt gedeeld met de mobiele app.',
+      exercisePicker: 'Instellingsnotities per oefening', current: 'Huidige oefening', variant: 'Planvariant', label: 'Instellingsdetails', placeholder: 'bijv. zitting 6 · pin K13 · kabel aan de lage katrol',
+      updated: 'Bijgewerkt {date}', neverSet: 'Nog niet ingesteld', notSet: 'Machine-instellingen toevoegen', confirmDiscard: 'Niet-opgeslagen instellingswijzigingen verwijderen?', clear: 'Notitie wissen', saving: 'Opslaan…', loadCurrent: 'Huidige notitie laden',
+      version_conflict: 'Deze instelling is op een ander apparaat gewijzigd. Laad de huidige notitie voordat je opnieuw bewerkt.', setup_note_too_long: 'Een instellingsnotitie mag maximaal 2000 tekens bevatten.', genericError: 'De instellingsnotitie kon niet worden opgeslagen.', unavailable: 'Voor deze oefenpositie is geen instellingsnotitie beschikbaar.', savedToast: 'Mijn instelling opgeslagen · {exercise}',
+    },
     editor: {
       planOwnedWeek: 'Het aantal sets, het herhalingsbereik en RIR komen uit planrevisie r{revision}. Wijzig ze in de Planmaker voor toekomstige weken.',
       eyebrow: 'Volgend voorschrift', title: '{exercise} · MC{mc}', scheduled: '{workout} · {date} · bewerkbaar tot de sessie start', status: { clean: 'Niet gestart', dirty: 'Niet opgeslagen', saving: 'Opslaan…', saved: 'Opgeslagen', locked: 'Vergrendeld' },
