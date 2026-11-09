@@ -857,21 +857,42 @@ class AppDatabase extends _$AppDatabase {
   /// active workout and another one can start. The row is kept, not deleted.
   /// Returns whether the workout qualified and was set aside.
   Future<bool> abandonRefusedWorkout(String workoutId) async {
-    final count =
-        await (update(localWorkouts)..where(
-              (row) =>
-                  row.workoutId.equals(workoutId) &
-                  row.syncState.equals('recovery_required') &
-                  row.serverSnapshotJson.isNull(),
-            ))
-            .write(
-              LocalWorkoutsCompanion(
-                lifecycle: const Value('abandoned'),
-                updatedAt: Value(DateTime.now().toUtc()),
-              ),
-            );
+    final count = await _refusedStart(workoutId).write(
+      LocalWorkoutsCompanion(
+        lifecycle: const Value('abandoned'),
+        updatedAt: Value(DateTime.now().toUtc()),
+      ),
+    );
     return count > 0;
   }
+
+  /// Lets a workout whose start the server refused ask again. What refused
+  /// it may have changed since, as a corrected schedule rule did; a second
+  /// refusal brings it back here. Returns whether the workout qualified.
+  Future<bool> retryRefusedStart(String workoutId) async {
+    final count = await _refusedStart(workoutId).write(
+      LocalWorkoutsCompanion(
+        syncState: const Value('saving'),
+        syncErrorCode: const Value(null),
+        syncAttempts: const Value(0),
+        nextSyncAt: const Value(null),
+        updatedAt: Value(DateTime.now().toUtc()),
+      ),
+    );
+    return count > 0;
+  }
+
+  /// The workout, if the server refused its start: it stopped for
+  /// recovery and has no snapshot, so the server never accepted it.
+  UpdateStatement<$LocalWorkoutsTable, LocalWorkout> _refusedStart(
+    String workoutId,
+  ) => update(localWorkouts)
+    ..where(
+      (row) =>
+          row.workoutId.equals(workoutId) &
+          row.syncState.equals('recovery_required') &
+          row.serverSnapshotJson.isNull(),
+    );
 
   Future<void> reconcileExpectedSequence({
     required String workoutId,

@@ -12,6 +12,7 @@ import 'package:agonez/src/l10n/generated/app_localizations.dart';
 import 'package:agonez/src/platform/rest_notification_service.dart';
 import 'package:agonez/src/settings/app_settings_controller.dart';
 import 'package:agonez/src/storage/app_database.dart';
+import 'package:agonez/src/sync/workout_sync_engine.dart';
 import 'package:agonez/src/workout/workout_names.dart';
 import 'package:agonez/src/workout/workout_repository.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,8 @@ class MockWorkoutNames extends Mock implements WorkoutNames {}
 
 class MockRestNotificationService extends Mock
     implements RestNotificationService {}
+
+class MockWorkoutSyncEngine extends Mock implements WorkoutSyncEngine {}
 
 /// A runtime for screens built on today's context: no active workout, plan
 /// run 2 selected and [fixturePrescription] behind every session. Tests
@@ -168,6 +171,8 @@ class TodayHarness {
           parentNavigatorKey: rootNavigator,
           builder: (_, _) => focus,
         ),
+        // The app's home tab, which the workout leaves for.
+        GoRoute(path: '/home', redirect: (_, _) => '/'),
       ],
     );
   }

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:agonez/src/storage/app_database.dart';
-import 'package:drift/drift.dart' hide isNotNull;
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
@@ -519,7 +519,40 @@ void main() {
     await database.close();
   });
 
-  test('a refused start can be set aside so another workout can start', () async {
+  test(
+    'a refused start can be set aside so another workout can start',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      const workoutId = '3d594650-3436-4fd4-9e14-60f7c27e17b8';
+      final now = DateTime.utc(2026, 11, 8);
+      await database.createLocalWorkout(
+        workout: LocalWorkoutsCompanion.insert(
+          workoutId: workoutId,
+          sessionId: 564,
+          workoutUnitName: 'Rest + LISS&Core',
+          startedAt: now,
+          prescriptionJson: '{}',
+          startPayloadJson: '{}',
+          updatedAt: now,
+        ),
+        exercises: const [],
+      );
+
+      // Still syncing: not eligible to be set aside.
+      expect(await database.abandonRefusedWorkout(workoutId), isFalse);
+
+      await database.markSyncIssue(
+        workoutId: workoutId,
+        state: 'recovery_required',
+        errorCode: 'not_next_track_exposure',
+      );
+      expect(await database.abandonRefusedWorkout(workoutId), isTrue);
+      expect(await database.activeWorkout(), isNull);
+      await database.close();
+    },
+  );
+
+  test('a refused start can ask the server again', () async {
     final database = AppDatabase(NativeDatabase.memory());
     const workoutId = '3d594650-3436-4fd4-9e14-60f7c27e17b8';
     final now = DateTime.utc(2026, 11, 8);
@@ -535,17 +568,20 @@ void main() {
       ),
       exercises: const [],
     );
-
-    // Still syncing: not eligible to be set aside.
-    expect(await database.abandonRefusedWorkout(workoutId), isFalse);
-
     await database.markSyncIssue(
       workoutId: workoutId,
       state: 'recovery_required',
       errorCode: 'not_next_track_exposure',
     );
-    expect(await database.abandonRefusedWorkout(workoutId), isTrue);
-    expect(await database.activeWorkout(), isNull);
+
+    expect(await database.retryRefusedStart(workoutId), isTrue);
+
+    final workout = (await database.activeWorkout())!;
+    expect(workout.workoutId, workoutId);
+    expect(workout.syncState, 'saving');
+    expect(workout.syncErrorCode, isNull);
+    // Asked again, it is no longer a refused start.
+    expect(await database.retryRefusedStart(workoutId), isFalse);
     await database.close();
   });
 
@@ -573,6 +609,7 @@ void main() {
     );
 
     expect(await database.abandonRefusedWorkout(workoutId), isFalse);
+    expect(await database.retryRefusedStart(workoutId), isFalse);
     expect((await database.activeWorkout())?.workoutId, workoutId);
     await database.close();
   });

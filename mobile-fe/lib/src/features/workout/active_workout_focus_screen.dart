@@ -1224,9 +1224,22 @@ Future<void> _showSyncSheet(
               ),
             ] else if (localWorkout.syncState == 'recovery_required' &&
                 localWorkout.serverSnapshotJson == null) ...[
-              // The server refused the start itself, so retrying cannot
-              // succeed; the only way forward is to set this workout aside.
+              // The server refused the start itself. It may accept it once
+              // whatever refused it has changed; otherwise the workout can
+              // only be set aside.
               const SizedBox(height: 16),
+              AgonezPrimaryButton(
+                key: const Key('sync-retry-refused-start'),
+                label: l10n.syncRetryNow,
+                onPressed: () async {
+                  final retried = await runtime.database.retryRefusedStart(
+                    workout.workoutId,
+                  );
+                  if (retried) runtime.syncEngine.kick();
+                  if (context.mounted) Navigator.of(context).pop();
+                },
+              ),
+              const SizedBox(height: 8),
               OutlinedButton(
                 key: const Key('sync-discard-refused-workout'),
                 onPressed: () async {

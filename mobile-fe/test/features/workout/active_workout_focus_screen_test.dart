@@ -5,6 +5,8 @@ import 'package:agonez/src/api/prescription_models.dart';
 import 'package:agonez/src/api/wire_enums.dart';
 import 'package:agonez/src/features/workout/active_workout_focus_screen.dart';
 import 'package:agonez/src/storage/app_database.dart';
+import 'package:agonez/src/widgets/sync_status_pill.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -71,6 +73,84 @@ void main() {
 
     expect(find.text('Summary'), findsOneWidget);
     expect(find.text('Workout tab'), findsNothing);
+  });
+
+  group('a start the server refused', () {
+    Future<void> openSyncSheet(WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(412, 915));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final workout = startedLegs().copyWith(
+        prescriptionJson: jsonEncode(fixturePrescription.toJson()),
+        syncState: 'recovery_required',
+        syncErrorCode: const Value('not_next_track_exposure'),
+      );
+      harness
+        ..storedWorkout = workout
+        ..streamWorkout(workout);
+      when(
+        () => harness.database.latestBlockingOperation(any()),
+      ).thenAnswer((_) async => null);
+      when(() => harness.database.workoutExercises(any())).thenAnswer(
+        (_) async => [
+          LocalExercise(
+            exercisePerformanceId: 'exercise-1',
+            workoutId: workout.workoutId,
+            exercisePrescriptionId:
+                fixturePrescriptionExercise.exercisePrescriptionId,
+            performedOrdinal: 0,
+            mode: 'as_prescribed',
+            serverRev: 0,
+            localRev: 0,
+            updatedAt: DateTime.utc(2026, 11, 8, 17),
+          ),
+        ],
+      );
+      await tester.pumpWidget(focusApp());
+      for (var frame = 0; frame < 5; frame++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await tester.tap(find.byType(SyncStatusPill));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('can ask the server again', (tester) async {
+      when(
+        () => harness.database.retryRefusedStart(any()),
+      ).thenAnswer((_) async => true);
+      final engine = MockWorkoutSyncEngine();
+      when(() => harness.runtime.syncEngine).thenReturn(engine);
+      await openSyncSheet(tester);
+
+      await tester.tap(find.byKey(const Key('sync-retry-refused-start')));
+      await tester.pumpAndSettle();
+
+      verify(() => harness.database.retryRefusedStart('workout-1')).called(1);
+      verify(engine.kick).called(1);
+    });
+
+    testWidgets('can be discarded once confirmed', (tester) async {
+      when(
+        () => harness.database.abandonRefusedWorkout(any()),
+      ).thenAnswer((_) async => true);
+      final notifications = MockRestNotificationService();
+      when(notifications.cancel).thenAnswer((_) async {});
+      when(() => harness.runtime.notifications).thenReturn(notifications);
+      await openSyncSheet(tester);
+
+      await tester.tap(find.byKey(const Key('sync-discard-refused-workout')));
+      await tester.pumpAndSettle();
+      // Nothing is discarded before the athlete confirms.
+      verifyNever(() => harness.database.abandonRefusedWorkout(any()));
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Discard this workout'),
+      );
+      await tester.pumpAndSettle();
+
+      verify(
+        () => harness.database.abandonRefusedWorkout('workout-1'),
+      ).called(1);
+      expect(find.byType(ActiveWorkoutFocusScreen), findsNothing);
+    });
   });
 
   group('a running workout', () {
