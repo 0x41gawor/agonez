@@ -622,6 +622,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noteSave => 'Zapisz notatkę';
 
   @override
+  String get noteExerciseSavedA11y => 'Notatka do ćwiczenia, zapisana';
+
+  @override
   String get setupNoteTitle => 'Moje ustawienia';
 
   @override

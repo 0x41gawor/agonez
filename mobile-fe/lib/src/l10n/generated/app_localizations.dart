@@ -1093,6 +1093,12 @@ abstract class AppLocalizations {
   /// **'Save note'**
   String get noteSave;
 
+  /// No description provided for @noteExerciseSavedA11y.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise note, saved'**
+  String get noteExerciseSavedA11y;
+
   /// No description provided for @setupNoteTitle.
   ///
   /// In en, this message translates to:

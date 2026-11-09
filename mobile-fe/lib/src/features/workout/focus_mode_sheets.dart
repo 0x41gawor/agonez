@@ -69,10 +69,27 @@ class _SheetFrame extends StatelessWidget {
   );
 }
 
+/// What the athlete picked in the outline.
+enum _OutlineAction { reorder, note, setup }
+
+typedef _OutlineChoice = ({
+  FocusExerciseViewModel exercise,
+  _OutlineAction action,
+});
+
 class _OutlineSheet extends StatelessWidget {
-  const _OutlineSheet({required this.workout});
+  const _OutlineSheet({
+    required this.workout,
+    required this.canNote,
+    required this.canSetup,
+  });
 
   final FocusWorkoutViewModel workout;
+
+  /// Whether a finished exercise offers its note and its setup. Its sets
+  /// stay as recorded; notes do not change what was done.
+  final bool canNote;
+  final bool canSetup;
 
   @override
   Widget build(BuildContext context) {
@@ -143,18 +160,80 @@ class _OutlineSheet extends StatelessWidget {
                   if (index > workout.currentExerciseIndex &&
                       !exercise.isComplete)
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(exercise),
+                      onPressed: () => Navigator.of(context).pop((
+                        exercise: exercise,
+                        action: _OutlineAction.reorder,
+                      )),
                       child: Text(
                         workout.canPostponeCurrent
                             ? l10n.workoutDoNow
                             : l10n.workoutDoNext,
                       ),
                     ),
+                  if (!current && exercise.isComplete) ...[
+                    if (canNote)
+                      _OutlineNoteButton(
+                        key: Key('outline-note-${exercise.id}'),
+                        icon: Icons.comment_outlined,
+                        saved: exercise.exerciseComment != null,
+                        label: exercise.exerciseComment == null
+                            ? l10n.noteExerciseTitle
+                            : l10n.noteExerciseSavedA11y,
+                        onPressed: () => Navigator.of(context).pop((
+                          exercise: exercise,
+                          action: _OutlineAction.note,
+                        )),
+                      ),
+                    if (canSetup && exercise.setupNote != null)
+                      _OutlineNoteButton(
+                        key: Key('outline-setup-${exercise.id}'),
+                        icon: Icons.tune,
+                        saved: exercise.setupNote!.text != null,
+                        label: exercise.setupNote!.text == null
+                            ? l10n.setupNoteTitle
+                            : l10n.setupNoteSavedA11y,
+                        onPressed: () => Navigator.of(context).pop((
+                          exercise: exercise,
+                          action: _OutlineAction.setup,
+                        )),
+                      ),
+                  ],
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// A finished exercise's note or setup; a dot says something is saved.
+class _OutlineNoteButton extends StatelessWidget {
+  const _OutlineNoteButton({
+    required this.icon,
+    required this.saved,
+    required this.label,
+    required this.onPressed,
+    super.key,
+  });
+
+  final IconData icon;
+  final bool saved;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.agonezColors;
+    return IconButton(
+      onPressed: onPressed,
+      tooltip: label,
+      icon: Badge(
+        isLabelVisible: saved,
+        smallSize: 7,
+        backgroundColor: colors.goldText,
+        child: Icon(icon, size: 21, color: colors.goldText),
       ),
     );
   }

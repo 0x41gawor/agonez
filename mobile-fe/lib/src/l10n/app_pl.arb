@@ -173,6 +173,7 @@
   "noteSetPlaceholder": "np. chwyt puścił przy 5. powtórzeniu",
   "noteExercisePlaceholder": "np. lepiej działa użycie obu linek",
   "noteSave": "Zapisz notatkę",
+  "noteExerciseSavedA11y": "Notatka do ćwiczenia, zapisana",
   "setupNoteTitle": "Moje ustawienia",
   "setupNoteSavedA11y": "Moje ustawienia, zapisane",
   "setupNoteExplanation": "Dla {exercise} na tym miejscu w treningu, do końca tej realizacji planu. Zostają, dopóki ich nie zmienisz.",
