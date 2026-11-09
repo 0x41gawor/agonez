@@ -852,6 +852,27 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
 
+  /// Sets aside a workout whose start the server refused. It never reached the
+  /// server (no snapshot), so nothing remains to sync; it stops being the
+  /// active workout and another one can start. The row is kept, not deleted.
+  /// Returns whether the workout qualified and was set aside.
+  Future<bool> abandonRefusedWorkout(String workoutId) async {
+    final count =
+        await (update(localWorkouts)..where(
+              (row) =>
+                  row.workoutId.equals(workoutId) &
+                  row.syncState.equals('recovery_required') &
+                  row.serverSnapshotJson.isNull(),
+            ))
+            .write(
+              LocalWorkoutsCompanion(
+                lifecycle: const Value('abandoned'),
+                updatedAt: Value(DateTime.now().toUtc()),
+              ),
+            );
+    return count > 0;
+  }
+
   Future<void> reconcileExpectedSequence({
     required String workoutId,
     required int expectedSeq,

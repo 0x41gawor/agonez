@@ -188,17 +188,22 @@ The ordinary start remains unchanged: when `session_id` is the currently schedul
 }
 ```
 
-The start transaction serializes the plan run and validates that the selected session is the
-earliest unresolved (`scheduled` or `missed`) occurrence of its stable workout track, ordered by
-microcycle ordinal. Tracks remain independent: choosing an early Pull workout does not require
-finishing a pending Push workout, but Week 8 Pull cannot skip unresolved Week 7 Pull. A cancelled
-occurrence is resolved and does not block. A missed occurrence can transition directly to
-`in_progress`; clients may prepare its plan-backed fallback before starting when analysis is
-missing.
+The start transaction serializes the plan run and validates that the selected session is a
+*startable* occurrence of its stable workout track. Occurrences are ordered by microcycle
+ordinal. Only those after the track's latest executed (`in_progress` or `completed`) occurrence
+are candidates; among them every `missed` occurrence is startable, plus the earliest `scheduled`
+one, which is included. So a missed occurrence never blocks a later one, a `scheduled` occurrence
+is never skipped, and once a later occurrence has been executed the earlier missed ones can no
+longer be recovered out of order. A `cancelled` occurrence is resolved and does not block.
+Tracks remain independent: choosing an early Pull workout does not require finishing a pending
+Push workout, but Week 8 Pull cannot skip *scheduled* Week 7 Pull. A missed occurrence can
+transition directly to `in_progress`; clients may prepare its plan-backed fallback before
+starting when analysis is missing.
 
-Mobile context exposes only that earliest unresolved occurrence per workout track, including
-earlier missed candidates after the run's final calendar microcycle. The start transaction still
-revalidates the choice so a stale picker cannot skip an exposure.
+Mobile context exposes every startable occurrence per workout track, including earlier missed
+candidates after the run's final calendar microcycle. One track may therefore contribute
+**several** `earlier_missed` candidates at once. The start transaction still revalidates the
+choice so a stale picker cannot skip a scheduled exposure.
 
 The selected session is not moved. Its microcycle and `scheduled_date` remain the authoritative
 exposure sequence, while `started_at` and `completed_at` record when it was actually executed.
@@ -281,7 +286,7 @@ change it. Unlike a performance comment it does not belong to one exposure.
 | `fallback_unavailable` | Implemented, `422` on fallback preparation | The session cannot be mapped safely to its governing plan revision/tracks. |
 | `off_schedule_acknowledgement_required` | Implemented, `422` | The selected next-track exposure is not today's expected session. |
 | `off_schedule_not_applicable` | Implemented, `422` | An acknowledgement was supplied for the expected on-schedule session. |
-| `not_next_track_exposure` | Implemented, `409` | An earlier unresolved occurrence of the selected workout track must be executed or cancelled first. |
+| `not_next_track_exposure` | Implemented, `409` | The selected occurrence skips an earlier scheduled occurrence of its track, or precedes one already executed. Missed occurrences never block. |
 | `schedule_changed` | Implemented, `409` | The acknowledged expected session no longer matches current server state. |
 | `seq_gap` | Implemented, `409` | Includes the authoritative next sequence. |
 | `seq_mismatch` | Implemented, `409` | Detects both sequence reuse and global op-id misuse. |
@@ -314,7 +319,7 @@ the contract codes (`load_required`, `load_out_of_range`, `reps_out_of_range`, `
 | `human.svg` / body-map v2 name | Adapted | Returns the installed `/assets/anatomy.svg` asset and its existing region ids; no nonexistent asset URL is invented. |
 | API `added` execution mode | Adapted | Persisted as existing database value `additional`, rendered as `added`. |
 | Full Atlas article | Reused with documented limitation | Flutter opens the existing slug route. It is not duplicated under `/mobile`; project-wide ETag support for that older route remains future work. |
-| Off-schedule execution | Implemented | Explicit `next_track_exposure` acknowledgement; earliest unresolved occurrence per stable workout track; actual timestamps remain metadata. |
+| Off-schedule execution | Implemented | Explicit `next_track_exposure` acknowledgement; missed occurrences and the earliest scheduled one per stable workout track, after its latest executed occurrence; actual timestamps remain metadata. |
 | Authentication/athlete ownership | Deferred | Network restriction remains required. Device id is not authentication. |
 | Server rest timer | Not applicable | Client-only by contract; `performed_at` preserves reconstructible intervals. |
 

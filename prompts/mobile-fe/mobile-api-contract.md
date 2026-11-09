@@ -25,7 +25,7 @@ the smallest backend surface that lets a phone run a workout **offline-first**, 
 | Prescription | Frozen at start (`prescription_version`). Start with a stale version → `409 prescription_changed` + fresh payload. Never changes mid-workout. |
 | Rest timer | **Client-only.** No timer endpoints. `performed_at` timestamps on sets make rest intervals reconstructible later. |
 | Finalize | Separate idempotent endpoint carrying `final_seq`. Unrecorded prescribed sets become `not_performed`. Session → `completed`, performance → `finalized`, in one transaction (invariants §Transaction boundaries #3). |
-| Off-schedule start | Explicit `next_track_exposure` acknowledgement. Backend permits only the earliest unresolved occurrence of the selected workout track and preserves its planned microcycle/date. |
+| Off-schedule start | Explicit `next_track_exposure` acknowledgement. Per workout track the backend permits every `missed` occurrence plus the earliest `scheduled` one, counting only occurrences after the track's latest executed one, and preserves the planned microcycle/date. |
 | `heart_rate_bpm` | Accepted in the set DTO now (nullable). Stored when the column exists; until then echoed in `unsupported_fields`, never an error. |
 | Atlas | Reuse the existing Atlas exercise/muscle reads for the full article. Add a compact **peek** read and a compact **search** read; embed peek data in the workout payload for offline use. |
 | Auth | Not invented. Identity is deferred in the current backend; mobile scopes by `plan_run_id` and sends an `X-Agonez-Device-Id`. See §11. |
@@ -188,11 +188,15 @@ Field rules:
   `expected_exercise_count` and `expected_set_count` report the plan structure the counts are
   measured against. The same rule applies to `expected_session` and every entry in `alternatives`.
 - `expected_session` is `null` on a rest day or when no session is scheduled; the UI then shows "Rest day" and offers alternatives.
-- `alternatives` lists only the earliest unresolved occurrence of each stable workout track:
-  earlier `missed` sessions from the run plus other `scheduled` or `missed` sessions in the
-  **current microcycle**. Earlier missed candidates remain available after the calendar's final
-  microcycle. `relation` ∈ `earlier_missed` | `later_in_microcycle`. Final start validation
-  remains authoritative in `POST /workouts` (§5.1).
+- `alternatives` lists the startable occurrences of each stable workout track: earlier `missed`
+  sessions from the run plus other `scheduled` or `missed` sessions in the **current microcycle**.
+  Per track, only occurrences after its latest executed one are offered — every `missed` one, plus
+  the earliest `scheduled` one. **One track may contribute several `earlier_missed` entries**
+  (e.g. the same workout missed in two microcycles), so the picker must key rows by `session_id`
+  and show `scheduled_on` to tell them apart; it must not collapse them by workout-unit name.
+  Earlier missed candidates remain available after the calendar's final microcycle.
+  `relation` ∈ `earlier_missed` | `later_in_microcycle`. Final start validation remains
+  authoritative in `POST /workouts` (§5.1).
 - `fallbacks` is reserved for future fallback workout-units (`fallback_source_plan_workout_unit_id` hook). Always `[]` in v1.
 - `active_workout`, when present, has the shape of §4.5 `ActiveWorkoutSummary`. The Home screen must show *Resume* instead of *Start* whenever it is non-null.
 - `recent` is at most 3 rows. No trends, no MARKER.X — deep analysis stays on desktop.
@@ -402,10 +406,10 @@ Errors:
 | `422 prescription_missing` | No resolved loads and `allow_missing_loads=false` | Offer *Start with plan targets*; resend with `allow_missing_loads=true`. Load fields of the frozen prescription are then `null`. |
 | `422 off_schedule_acknowledgement_required` | `session_id` is not `expected_session` | Show the confirmation and resend with the explicit acknowledgement. |
 | `422 off_schedule_not_applicable` | An acknowledgement was sent for the expected session | Refresh context and start normally. |
-| `409 not_next_track_exposure` | An earlier unresolved occurrence of this workout track exists | Refresh context and offer `details.next_session_id`; the athlete may execute it or cancel it outside the workout flow. |
+| `409 not_next_track_exposure` | The selected occurrence skips an earlier `scheduled` occurrence of this track, or precedes one already executed. Missed occurrences never block. | Refresh context and offer the startable candidates it returns; `details.next_session_id` names one of them. |
 | `409 schedule_changed` | The acknowledged `expected_session_id` is stale | Refresh context and ask for confirmation again. |
 
-**Off-schedule starts.** The picker lets an athlete deliberately execute the next unresolved exposure of another workout type, or recover a missed exposure:
+**Off-schedule starts.** The picker lets an athlete deliberately execute the next scheduled exposure of another workout type, or recover any missed exposure of it:
 
 ```json
 "off_schedule": {

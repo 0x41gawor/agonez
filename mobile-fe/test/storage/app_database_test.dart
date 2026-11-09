@@ -518,4 +518,62 @@ void main() {
     expect(workout.syncErrorCode, 'invalid_comment');
     await database.close();
   });
+
+  test('a refused start can be set aside so another workout can start', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    const workoutId = '3d594650-3436-4fd4-9e14-60f7c27e17b8';
+    final now = DateTime.utc(2026, 11, 8);
+    await database.createLocalWorkout(
+      workout: LocalWorkoutsCompanion.insert(
+        workoutId: workoutId,
+        sessionId: 564,
+        workoutUnitName: 'Rest + LISS&Core',
+        startedAt: now,
+        prescriptionJson: '{}',
+        startPayloadJson: '{}',
+        updatedAt: now,
+      ),
+      exercises: const [],
+    );
+
+    // Still syncing: not eligible to be set aside.
+    expect(await database.abandonRefusedWorkout(workoutId), isFalse);
+
+    await database.markSyncIssue(
+      workoutId: workoutId,
+      state: 'recovery_required',
+      errorCode: 'not_next_track_exposure',
+    );
+    expect(await database.abandonRefusedWorkout(workoutId), isTrue);
+    expect(await database.activeWorkout(), isNull);
+    await database.close();
+  });
+
+  test('a workout the server accepted is never set aside', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    const workoutId = '3d594650-3436-4fd4-9e14-60f7c27e17b8';
+    final now = DateTime.utc(2026, 11, 8);
+    await database.createLocalWorkout(
+      workout: LocalWorkoutsCompanion.insert(
+        workoutId: workoutId,
+        sessionId: 564,
+        workoutUnitName: 'Legs',
+        startedAt: now,
+        prescriptionJson: '{}',
+        startPayloadJson: '{}',
+        serverSnapshotJson: const Value('{}'),
+        updatedAt: now,
+      ),
+      exercises: const [],
+    );
+    await database.markSyncIssue(
+      workoutId: workoutId,
+      state: 'recovery_required',
+      errorCode: 'incomplete_not_acknowledged',
+    );
+
+    expect(await database.abandonRefusedWorkout(workoutId), isFalse);
+    expect((await database.activeWorkout())?.workoutId, workoutId);
+    await database.close();
+  });
 }

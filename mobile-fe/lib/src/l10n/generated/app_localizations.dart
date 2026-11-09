@@ -2435,6 +2435,24 @@ abstract class AppLocalizations {
   /// **'The server\'s schedule no longer allows this workout for the time it was started. Your entries are kept on this phone.'**
   String get syncStartRefusedBySchedule;
 
+  /// No description provided for @syncDiscardWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this workout'**
+  String get syncDiscardWorkout;
+
+  /// No description provided for @syncDiscardConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this workout?'**
+  String get syncDiscardConfirmTitle;
+
+  /// No description provided for @syncDiscardConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The server never accepted this workout, so its entries exist only on this phone and will be removed. You can then start another workout.'**
+  String get syncDiscardConfirmBody;
+
   /// No description provided for @errorNetworkUnavailable.
   ///
   /// In en, this message translates to:

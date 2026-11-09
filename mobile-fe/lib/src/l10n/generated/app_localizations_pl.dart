@@ -1407,6 +1407,16 @@ class AppLocalizationsPl extends AppLocalizations {
       'Harmonogram na serwerze nie pozwala już na ten trening w czasie, w którym go rozpoczęto. Twoje wpisy pozostają na tym telefonie.';
 
   @override
+  String get syncDiscardWorkout => 'Odrzuć ten trening';
+
+  @override
+  String get syncDiscardConfirmTitle => 'Odrzucić ten trening?';
+
+  @override
+  String get syncDiscardConfirmBody =>
+      'Serwer nigdy nie przyjął tego treningu, więc jego wpisy istnieją tylko na tym telefonie i zostaną usunięte. Potem możesz rozpocząć inny trening.';
+
+  @override
   String get errorNetworkUnavailable =>
       'Nie można połączyć się z serwerem. Zapis treningu działa offline.';
 

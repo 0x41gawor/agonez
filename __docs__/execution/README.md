@@ -94,8 +94,11 @@ historical in exactly the same way as a fully analyzed prescription.
 Fallback snapshot preparation is intentionally separate from calendar start eligibility and is
 available for both scheduled and missed pending sessions. A normal start uses the session expected
 for the supplied start date. An acknowledged `next_track_exposure` start may instead select the
-earliest unresolved occurrence of another workout track, or recover a missed occurrence. The
-transaction never permits a later occurrence of that same track to skip an earlier unresolved one.
+startable occurrence of another workout track, or recover a missed occurrence. Per track, only
+occurrences after the latest executed one are startable: every missed occurrence, plus the
+earliest scheduled one. A missed occurrence therefore never blocks a later one, a scheduled one
+is never skipped, and once a later occurrence was executed the earlier missed ones are no longer
+recoverable.
 The original microcycle and scheduled date remain the exposure's plan position; actual start and
 completion timestamps are execution metadata.
 

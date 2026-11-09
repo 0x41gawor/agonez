@@ -1222,6 +1222,43 @@ Future<void> _showSyncSheet(
                 },
                 child: Text(l10n.syncUseServer),
               ),
+            ] else if (localWorkout.syncState == 'recovery_required' &&
+                localWorkout.serverSnapshotJson == null) ...[
+              // The server refused the start itself, so retrying cannot
+              // succeed; the only way forward is to set this workout aside.
+              const SizedBox(height: 16),
+              OutlinedButton(
+                key: const Key('sync-discard-refused-workout'),
+                onPressed: () async {
+                  final router = GoRouter.of(context);
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      title: Text(l10n.syncDiscardConfirmTitle),
+                      content: Text(l10n.syncDiscardConfirmBody),
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(false),
+                          child: Text(l10n.commonCancel),
+                        ),
+                        FilledButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(true),
+                          child: Text(l10n.syncDiscardWorkout),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed != true) return;
+                  final discarded = await runtime.database
+                      .abandonRefusedWorkout(workout.workoutId);
+                  if (discarded) await runtime.notifications.cancel();
+                  if (context.mounted) Navigator.of(context).pop();
+                  if (discarded) router.go('/home');
+                },
+                child: Text(l10n.syncDiscardWorkout),
+              ),
             ] else if (localWorkout.syncState == 'failed' ||
                 localWorkout.syncState == 'offline') ...[
               const SizedBox(height: 16),

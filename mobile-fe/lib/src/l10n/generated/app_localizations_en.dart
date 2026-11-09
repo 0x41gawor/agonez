@@ -1393,6 +1393,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'The server\'s schedule no longer allows this workout for the time it was started. Your entries are kept on this phone.';
 
   @override
+  String get syncDiscardWorkout => 'Discard this workout';
+
+  @override
+  String get syncDiscardConfirmTitle => 'Discard this workout?';
+
+  @override
+  String get syncDiscardConfirmBody =>
+      'The server never accepted this workout, so its entries exist only on this phone and will be removed. You can then start another workout.';
+
+  @override
   String get errorNetworkUnavailable =>
       'The server cannot be reached. Recording continues offline.';
 

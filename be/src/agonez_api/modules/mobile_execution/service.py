@@ -11,6 +11,7 @@ from agonez_api.modules.mobile_execution.repository import (
     MobileExecutionRepository,
     Row,
     prescription_is_complete,
+    startable_session_ids,
 )
 from agonez_api.modules.mobile_execution.schemas import (
     ActiveWorkoutSummary,
@@ -34,16 +35,6 @@ DB_TO_SVG = {
     "deltoid_posterior": "posterior_deltoid",
     "rotator_cuffs": "rotator_cuff",
 }
-
-
-def next_pending_session_ids(sessions: list[Row]) -> set[int]:
-    """Return only the earliest unresolved occurrence of each stable workout track."""
-    pending = [item for item in sessions if item["status"] in {"scheduled", "missed"}]
-    pending.sort(key=lambda item: (item["microcycle_ordinal"], item["session_id"]))
-    by_track: dict[int, int] = {}
-    for item in pending:
-        by_track.setdefault(item["workout_track_id"], item["session_id"])
-    return set(by_track.values())
 
 
 class MobileExecutionService:
@@ -88,7 +79,7 @@ class MobileExecutionService:
             ),
             None,
         )
-        selectable_ids = next_pending_session_ids(sessions)
+        selectable_ids = startable_session_ids(context["track_sessions"])
         alternatives = [
             self._session_summary(
                 item,

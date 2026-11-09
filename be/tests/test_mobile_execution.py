@@ -18,6 +18,7 @@ from agonez_api.modules.mobile_execution.repository import (
     expected_plan_structure_sql,
     prescription_is_complete,
     resolve_start_mode,
+    startable_session_ids,
 )
 from agonez_api.modules.mobile_execution.schemas import (
     OperationBatch,
@@ -27,7 +28,6 @@ from agonez_api.modules.mobile_execution.schemas import (
 from agonez_api.modules.mobile_execution.service import (
     MobileExecutionService,
     etag_for,
-    next_pending_session_ids,
 )
 
 
@@ -65,7 +65,7 @@ def test_on_schedule_start_uses_on_schedule_mode() -> None:
             payload,
             session_status="scheduled",
             expected_session_id=9,
-            next_track_session_id=9,
+            track_startable_ids={9},
         )
         == "on_schedule"
     )
@@ -77,7 +77,7 @@ def test_off_schedule_start_requires_explicit_acknowledgement() -> None:
             start_payload(),
             session_status="scheduled",
             expected_session_id=8,
-            next_track_session_id=9,
+            track_startable_ids={9},
         )
 
     assert caught.value.code == "off_schedule_acknowledgement_required"
@@ -98,7 +98,7 @@ def test_missed_next_track_exposure_can_start_off_schedule() -> None:
             payload,
             session_status="missed",
             expected_session_id=8,
-            next_track_session_id=9,
+            track_startable_ids={9},
         )
         == "next_track_exposure"
     )
@@ -119,7 +119,7 @@ def test_later_occurrence_cannot_skip_an_unresolved_track_exposure() -> None:
             payload,
             session_status="scheduled",
             expected_session_id=8,
-            next_track_session_id=7,
+            track_startable_ids={7},
         )
 
     assert caught.value.code == "not_next_track_exposure"
@@ -141,7 +141,7 @@ def test_off_schedule_acknowledgement_detects_expected_session_change() -> None:
             payload,
             session_status="scheduled",
             expected_session_id=6,
-            next_track_session_id=9,
+            track_startable_ids={9},
         )
 
     assert caught.value.code == "schedule_changed"
@@ -166,13 +166,19 @@ def test_off_schedule_contract_requires_mode_and_true_acknowledgement(
         start_payload(off_schedule=off_schedule)
 
 
-def test_context_offers_only_the_next_unresolved_occurrence_per_track() -> None:
+def test_startable_occurrences_skip_missed_but_never_a_scheduled_one() -> None:
     sessions = [
         {"session_id": 31, "workout_track_id": 1, "microcycle_ordinal": 7, "status": "missed"},
         {
             "session_id": 36,
             "workout_track_id": 1,
             "microcycle_ordinal": 8,
+            "status": "scheduled",
+        },
+        {
+            "session_id": 41,
+            "workout_track_id": 1,
+            "microcycle_ordinal": 9,
             "status": "scheduled",
         },
         {"session_id": 32, "workout_track_id": 2, "microcycle_ordinal": 7, "status": "missed"},
@@ -190,7 +196,44 @@ def test_context_offers_only_the_next_unresolved_occurrence_per_track() -> None:
         },
     ]
 
-    assert next_pending_session_ids(sessions) == {31, 32, 38}
+    assert startable_session_ids(sessions) == {31, 36, 32, 38}
+
+
+def test_missed_occurrences_before_an_executed_one_are_not_recoverable() -> None:
+    sessions = [
+        {"session_id": 1, "workout_track_id": 5, "microcycle_ordinal": 1, "status": "missed"},
+        {"session_id": 2, "workout_track_id": 5, "microcycle_ordinal": 2, "status": "completed"},
+        {"session_id": 3, "workout_track_id": 5, "microcycle_ordinal": 3, "status": "missed"},
+        {"session_id": 4, "workout_track_id": 5, "microcycle_ordinal": 4, "status": "scheduled"},
+        {"session_id": 5, "workout_track_id": 6, "microcycle_ordinal": 1, "status": "cancelled"},
+        {"session_id": 6, "workout_track_id": 6, "microcycle_ordinal": 2, "status": "in_progress"},
+        {"session_id": 7, "workout_track_id": 6, "microcycle_ordinal": 3, "status": "scheduled"},
+    ]
+
+    assert startable_session_ids(sessions) == {3, 4, 7}
+
+
+def test_today_session_starts_on_schedule_despite_an_earlier_missed_occurrence() -> None:
+    """Regression: a missed Nov 1 exposure must not refuse the same track's Nov 8 session."""
+    sessions = [
+        {"session_id": 559, "workout_track_id": 78, "microcycle_ordinal": 1, "status": "missed"},
+        {
+            "session_id": 564,
+            "workout_track_id": 78,
+            "microcycle_ordinal": 2,
+            "status": "scheduled",
+        },
+    ]
+
+    assert (
+        resolve_start_mode(
+            start_payload(session_id=564),
+            session_status="scheduled",
+            expected_session_id=564,
+            track_startable_ids=startable_session_ids(sessions),
+        )
+        == "on_schedule"
+    )
 
 
 def test_operation_batch_requires_contiguous_sequence() -> None:

@@ -75,27 +75,63 @@ def prescription_is_complete(row: Row) -> bool:
     )
 
 
+EXECUTED_SESSION_STATUSES = frozenset({"in_progress", "completed"})
+
+
+def startable_session_ids(sessions: list[Row]) -> set[int]:
+    """Return the occurrences of each stable workout track that may be started.
+
+    Occurrences are ordered by microcycle. Only those after the track's latest executed
+    occurrence are candidates: once a later exposure was performed, an earlier one can no
+    longer be recovered out of order. Among the candidates, every missed occurrence up to
+    and including the earliest scheduled one is startable. A missed occurrence therefore
+    never blocks a later one, while a scheduled occurrence is never skipped.
+
+    Each row needs ``session_id``, ``workout_track_id``, ``microcycle_ordinal`` and ``status``.
+    """
+    by_track: dict[int, list[Row]] = {}
+    for item in sessions:
+        by_track.setdefault(cast(int, item["workout_track_id"]), []).append(item)
+    startable: set[int] = set()
+    for items in by_track.values():
+        items.sort(key=lambda item: (item["microcycle_ordinal"], item["session_id"]))
+        executed = [
+            index for index, item in enumerate(items) if item["status"] in EXECUTED_SESSION_STATUSES
+        ]
+        for item in items[executed[-1] + 1 if executed else 0 :]:
+            if item["status"] == "missed":
+                startable.add(cast(int, item["session_id"]))
+            elif item["status"] == "scheduled":
+                startable.add(cast(int, item["session_id"]))
+                break
+    return startable
+
+
 def resolve_start_mode(
     payload: StartWorkout,
     *,
     session_status: str,
     expected_session_id: int | None,
-    next_track_session_id: int | None,
+    track_startable_ids: set[int],
 ) -> str:
-    """Validate the selected occurrence and return its persisted start mode."""
+    """Validate the selected occurrence and return its persisted start mode.
+
+    ``track_startable_ids`` holds the startable occurrences of the selected session's track,
+    as computed by :func:`startable_session_ids`.
+    """
     if session_status not in {"scheduled", "missed"}:
         raise conflict(
             "session_not_startable",
             "The workout session cannot be started",
             {"status": session_status},
         )
-    if next_track_session_id != payload.session_id:
+    if payload.session_id not in track_startable_ids:
         raise conflict(
             "not_next_track_exposure",
-            "The selected session is not the next unresolved exposure of this workout type",
+            "The selected session is not a startable exposure of this workout type",
             {
                 "selected_session_id": payload.session_id,
-                "next_session_id": next_track_session_id,
+                "next_session_id": min(track_startable_ids) if track_startable_ids else None,
             },
         )
 
@@ -116,7 +152,7 @@ def resolve_start_mode(
             "Starting the next workout-type exposure off schedule requires acknowledgement",
             {
                 "expected_session_id": expected_session_id,
-                "next_session_id": next_track_session_id,
+                "selected_session_id": payload.session_id,
             },
         )
     if acknowledgement.expected_session_id != expected_session_id:
@@ -258,6 +294,21 @@ class MobileExecutionRepository:
                 """,
                 (current_microcycle_id, current_microcycle_id, plan_run_id, as_of),
             )
+            # Startability depends on every occurrence of a track, including executed ones
+            # outside the current microcycle, so it is read separately from the summaries.
+            track_sessions = await self._fetch_all(
+                connection,
+                """
+                SELECT session.id AS session_id,
+                       session.workout_unit_track_id AS workout_track_id,
+                       session.status::text AS status,
+                       session_mc.ordinal AS microcycle_ordinal
+                FROM exec.workout_sessions AS session
+                JOIN exec.microcycles AS session_mc ON session_mc.id = session.microcycle_id
+                WHERE session.plan_run_id = %s
+                """,
+                (plan_run_id,),
+            )
             for session in sessions:
                 session["prescription_version"] = (
                     await self._prescription_version(connection, session["session_id"])
@@ -309,6 +360,7 @@ class MobileExecutionRepository:
                 "run": run,
                 "microcycle": microcycle,
                 "sessions": sessions,
+                "track_sessions": track_sessions,
                 "recent": recent,
             }
 
@@ -1397,29 +1449,29 @@ class MobileExecutionRepository:
                     """,
                     (session["plan_run_id"], payload.started_at.date()),
                 )
-                next_track = await self._fetch_optional(
+                track_sessions = await self._fetch_all(
                     connection,
                     """
-                    SELECT candidate.id
+                    SELECT candidate.id AS session_id,
+                           candidate.workout_unit_track_id AS workout_track_id,
+                           candidate.status::text AS status,
+                           candidate_mc.ordinal AS microcycle_ordinal
                     FROM exec.workout_sessions AS candidate
                     JOIN exec.microcycles AS candidate_mc
                       ON candidate_mc.id = candidate.microcycle_id
                     WHERE candidate.plan_run_id = %s
                       AND candidate.workout_unit_track_id = %s
-                      AND candidate.status IN ('scheduled', 'missed')
                     ORDER BY candidate_mc.ordinal, candidate.id
-                    LIMIT 1
                     FOR UPDATE OF candidate
                     """,
                     (session["plan_run_id"], session["workout_unit_track_id"]),
                 )
                 expected_session_id = cast(int, expected["id"]) if expected else None
-                next_track_session_id = cast(int, next_track["id"]) if next_track else None
                 start_mode = resolve_start_mode(
                     payload,
                     session_status=cast(str, session["session_status"]),
                     expected_session_id=expected_session_id,
-                    next_track_session_id=next_track_session_id,
+                    track_startable_ids=startable_session_ids(list(track_sessions)),
                 )
                 if session["prescription_id"] is None:
                     raise invalid("prescription_missing", "The workout prescription is not ready")
