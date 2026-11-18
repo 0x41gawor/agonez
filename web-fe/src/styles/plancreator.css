@@ -1249,8 +1249,64 @@
 }
 
 .loading-cycle-editor {
+  position: relative;
   display: grid;
   gap: 5px;
+}
+
+/* Beside a set the cycle is only its pattern; the steps open over the row, so the
+   row's height no longer follows the number of microcycles in the cycle. */
+.loading-cycle-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 33px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--inputBg);
+  color: var(--text2);
+  font-size: 9px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.loading-cycle-trigger:hover {
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.loading-cycle-trigger b {
+  color: var(--text);
+  font-size: 10px;
+}
+
+.loading-cycle-popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  right: 0;
+  display: grid;
+  gap: 7px;
+  width: 238px;
+  padding: 10px;
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  background: var(--panel2);
+  box-shadow: var(--shadow);
+}
+
+/* A cycle may run to 52 microcycles, so the list scrolls inside the popover
+   rather than growing it off the screen. */
+.loading-cycle-popover .loading-cycle-steps {
+  display: grid;
+  gap: 5px;
+  max-height: 216px;
+  overflow-y: auto;
+}
+
+.loading-cycle-popover .loading-cycle-add {
+  justify-self: start;
 }
 
 .loading-cycle-toggle,

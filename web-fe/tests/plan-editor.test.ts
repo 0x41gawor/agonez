@@ -632,7 +632,10 @@ describe('PlanEditor', () => {
     const cycleSteps = wrapper.findAll('.set-loading-control .loading-cycle-steps select')
     await cycleSteps[1]!.setValue('high_load')
     expect(slot.variants[0]?.sets[0]?.loading_cycle).toEqual(['low_load', 'high_load'])
-    expect(wrapper.get('.set-loading-control .loading-cycle-heading').text()).toContain('L·H')
+    // Beside a set the cycle shows only its pattern; the steps live in the popover.
+    expect(wrapper.get('.set-loading-control .loading-cycle-trigger').text()).toContain('L·H')
+    await wrapper.get('.set-loading-control .loading-cycle-trigger').trigger('click')
+    expect(wrapper.find('.set-loading-control .loading-cycle-popover').exists()).toBe(false)
   })
 
   it('uses the slot loading control as a bulk replacement for every set', async () => {
