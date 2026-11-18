@@ -79,16 +79,25 @@ describe('day icon set', () => {
 })
 
 describe('day icon picker', () => {
-  it('chooses an icon, and clears it when the same one is pressed again', async () => {
+  it('keeps the icons out of the way until the trigger is pressed', async () => {
     const wrapper = mount(DayIconPicker, { props: { modelValue: null as DayIcon | null } })
 
+    expect(wrapper.findAll('.day-icon-option')).toHaveLength(0)
+    expect(wrapper.get('.day-icon-trigger').text()).toBe('No icon')
+
+    await wrapper.get('.day-icon-trigger').trigger('click')
+    // Every icon, plus the way back to no icon at all.
+    expect(wrapper.findAll('.day-icon-option')).toHaveLength(DAY_ICONS.length + 1)
+
     await wrapper.get('button[aria-label="Push"]').trigger('click')
-    expect(wrapper.props('modelValue')).toBe(null)
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['push'])
+    expect(wrapper.findAll('.day-icon-option')).toHaveLength(0)
+  })
 
-    await wrapper.setProps({ modelValue: 'push' })
-    expect(wrapper.get('button[aria-label="Push"]').attributes('aria-checked')).toBe('true')
+  it('clears the icon when the chosen one is pressed again', async () => {
+    const wrapper = mount(DayIconPicker, { props: { modelValue: 'push' as DayIcon | null } })
 
+    await wrapper.get('.day-icon-trigger').trigger('click')
     await wrapper.get('button[aria-label="Push"]').trigger('click')
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([null])
   })

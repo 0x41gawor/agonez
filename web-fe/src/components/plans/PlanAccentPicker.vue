@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { PLAN_ACCENTS, type PlanAccent } from '@/api/plan-types'
+import { useDismissablePopover } from '@/composables/useDismissablePopover'
 
 const model = defineModel<PlanAccent | null>({ required: true })
 const { t } = useI18n()
-
-const open = ref(false)
-const root = ref<HTMLElement | null>(null)
+const { open, setRoot, toggle } = useDismissablePopover()
 
 const accentLabel = (accent: PlanAccent): string => t(`plans.accents.${accent}`)
 
@@ -16,34 +14,10 @@ function choose(accent: PlanAccent | null): void {
   model.value = accent
   open.value = false
 }
-
-function closeOnOutside(event: MouseEvent): void {
-  if (root.value && !root.value.contains(event.target as Node)) open.value = false
-}
-
-function closeOnEscape(event: KeyboardEvent): void {
-  if (event.key === 'Escape') open.value = false
-}
-
-// The listeners only exist while the palette is open, so a closed picker costs nothing.
-watch(open, (isOpen) => {
-  if (isOpen) {
-    document.addEventListener('pointerdown', closeOnOutside)
-    document.addEventListener('keydown', closeOnEscape)
-  } else {
-    document.removeEventListener('pointerdown', closeOnOutside)
-    document.removeEventListener('keydown', closeOnEscape)
-  }
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', closeOnOutside)
-  document.removeEventListener('keydown', closeOnEscape)
-})
 </script>
 
 <template>
-  <div ref="root" class="accent-picker">
+  <div :ref="setRoot" class="accent-picker">
     <button
       type="button"
       class="accent-trigger"
@@ -53,7 +27,7 @@ onBeforeUnmount(() => {
       :aria-haspopup="true"
       :title="model ? accentLabel(model) : $t('plans.editor.accentNone')"
       :aria-label="$t('plans.editor.accent')"
-      @click="open = !open"
+      @click="toggle"
     >
       <span class="accent-trigger-dot" aria-hidden="true" />
       <span class="accent-trigger-name">{{ model ? accentLabel(model) : $t('plans.editor.accentNone') }}</span>
