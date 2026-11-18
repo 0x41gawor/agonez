@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { PLAN_ACCENTS, type PlanAccent } from '@/api/plan-types'
@@ -6,45 +7,130 @@ import { PLAN_ACCENTS, type PlanAccent } from '@/api/plan-types'
 const model = defineModel<PlanAccent | null>({ required: true })
 const { t } = useI18n()
 
+const open = ref(false)
+const root = ref<HTMLElement | null>(null)
+
 const accentLabel = (accent: PlanAccent): string => t(`plans.accents.${accent}`)
 
-function choose(accent: PlanAccent): void {
-  model.value = model.value === accent ? null : accent
+function choose(accent: PlanAccent | null): void {
+  model.value = accent
+  open.value = false
 }
+
+function closeOnOutside(event: MouseEvent): void {
+  if (root.value && !root.value.contains(event.target as Node)) open.value = false
+}
+
+function closeOnEscape(event: KeyboardEvent): void {
+  if (event.key === 'Escape') open.value = false
+}
+
+// The listeners only exist while the palette is open, so a closed picker costs nothing.
+watch(open, (isOpen) => {
+  if (isOpen) {
+    document.addEventListener('pointerdown', closeOnOutside)
+    document.addEventListener('keydown', closeOnEscape)
+  } else {
+    document.removeEventListener('pointerdown', closeOnOutside)
+    document.removeEventListener('keydown', closeOnEscape)
+  }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', closeOnOutside)
+  document.removeEventListener('keydown', closeOnEscape)
+})
 </script>
 
 <template>
-  <div class="accent-picker" role="radiogroup" :aria-label="$t('plans.editor.accent')">
-    <button
-      v-for="accent in PLAN_ACCENTS"
-      :key="accent"
-      type="button"
-      class="accent-swatch"
-      role="radio"
-      :class="{ chosen: model === accent }"
-      :data-accent="accent"
-      :aria-checked="model === accent"
-      :title="accentLabel(accent)"
-      :aria-label="accentLabel(accent)"
-      @click="choose(accent)"
-    />
+  <div ref="root" class="accent-picker">
     <button
       type="button"
-      class="accent-swatch accent-none"
-      role="radio"
-      :class="{ chosen: model === null }"
-      :aria-checked="model === null"
-      :title="$t('plans.editor.accentNone')"
-      :aria-label="$t('plans.editor.accentNone')"
-      @click="model = null"
+      class="accent-trigger"
+      :data-accent="model ?? undefined"
+      :class="{ unset: model === null }"
+      :aria-expanded="open"
+      :aria-haspopup="true"
+      :title="model ? accentLabel(model) : $t('plans.editor.accentNone')"
+      :aria-label="$t('plans.editor.accent')"
+      @click="open = !open"
     >
-      <span aria-hidden="true">×</span>
+      <span class="accent-trigger-dot" aria-hidden="true" />
+      <span class="accent-trigger-name">{{ model ? accentLabel(model) : $t('plans.editor.accentNone') }}</span>
     </button>
+
+    <div v-if="open" class="accent-popover" role="dialog" :aria-label="$t('plans.editor.accent')">
+      <button
+        v-for="accent in PLAN_ACCENTS"
+        :key="accent"
+        type="button"
+        class="accent-swatch"
+        :data-accent="accent"
+        :class="{ chosen: model === accent }"
+        :title="accentLabel(accent)"
+        :aria-label="accentLabel(accent)"
+        @click="choose(accent)"
+      />
+      <button
+        type="button"
+        class="accent-swatch accent-none"
+        :class="{ chosen: model === null }"
+        :title="$t('plans.editor.accentNone')"
+        :aria-label="$t('plans.editor.accentNone')"
+        @click="choose(null)"
+      ><span aria-hidden="true">×</span></button>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.accent-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.accent-picker { position: relative; display: inline-block; }
+
+.accent-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 11px 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--inputBg);
+  color: var(--text2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.accent-trigger:hover { border-color: var(--border2); color: var(--text); }
+.accent-trigger:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.accent-trigger-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--planAccent, var(--accent));
+}
+.accent-trigger.unset .accent-trigger-dot {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--border2) 0 3px,
+    transparent 3px 6px
+  );
+  border: 1px solid var(--border2);
+}
+
+.accent-popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 22px);
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  background: var(--panel2);
+  box-shadow: var(--shadow);
+}
+
 .accent-swatch {
   width: 22px;
   height: 22px;
@@ -53,12 +139,12 @@ function choose(accent: PlanAccent): void {
   border-radius: 50%;
   background: var(--planAccent, var(--accent));
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition: transform 120ms ease;
 }
-.accent-swatch:hover { transform: scale(1.1); }
+.accent-swatch:hover { transform: scale(1.12); }
 .accent-swatch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .accent-swatch.chosen {
-  box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--planAccent, var(--text2));
+  box-shadow: 0 0 0 2px var(--panel2), 0 0 0 3.5px var(--planAccent, var(--text2));
 }
 .accent-none {
   display: grid;

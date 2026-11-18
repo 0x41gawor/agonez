@@ -58,33 +58,48 @@ async function removePicture(): Promise<void> {
 </script>
 
 <template>
-  <div class="plan-cover-editor">
-    <button
-      type="button"
-      class="plan-cover-preview"
-      :disabled="busy"
-      :aria-label="$t('plans.editor.coverChoose')"
-      @click="choosePicture"
-    >
-      <img v-if="previewSrc" :src="previewSrc" :alt="$t('plans.editor.coverAlt', { name: planName })" />
-      <span v-else class="plan-cover-empty mono" aria-hidden="true">
-        P{{ String(planId).padStart(3, '0') }}
-      </span>
-      <span v-if="busy" class="plan-cover-busy">{{ $t('plans.editor.coverWorking') }}</span>
-    </button>
-    <div class="plan-cover-actions">
-      <button class="plan-cover-action" type="button" :disabled="busy" @click="choosePicture">
-        {{ model ? $t('plans.editor.coverReplace') : $t('plans.editor.coverChoose') }}
+  <div class="plan-cover">
+    <div class="plan-cover-frame">
+      <button
+        type="button"
+        class="plan-cover-preview"
+        :disabled="busy"
+        :title="model ? $t('plans.editor.coverReplace') : $t('plans.editor.coverChoose')"
+        :aria-label="model ? $t('plans.editor.coverReplace') : $t('plans.editor.coverChoose')"
+        @click="choosePicture"
+      >
+        <img v-if="previewSrc" :src="previewSrc" :alt="$t('plans.editor.coverAlt', { name: planName })" />
+        <span v-else class="plan-cover-empty mono" aria-hidden="true">
+          P{{ String(planId).padStart(3, '0') }}
+        </span>
+        <span class="plan-cover-hint" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20h4.5L19 9.5a2.1 2.1 0 0 0-3-3L5.5 17 4 20z" />
+          </svg>
+        </span>
       </button>
+
       <button
         v-if="model"
-        class="plan-cover-action danger"
         type="button"
+        class="plan-cover-delete"
         :disabled="busy"
+        :title="$t('plans.editor.coverRemove')"
+        :aria-label="$t('plans.editor.coverRemove')"
         @click="removePicture"
-      >{{ $t('plans.editor.coverRemove') }}</button>
-      <p v-if="error" class="field-error">{{ error }}</p>
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4.5 6.5h15" />
+          <path d="M9.5 6.5V4.8h5v1.7" />
+          <path d="M6.6 6.5l.9 12.1c.1.9.8 1.6 1.7 1.6h5.6c.9 0 1.6-.7 1.7-1.6l.9-12.1" />
+        </svg>
+      </button>
+
+      <span v-if="busy" class="plan-cover-busy">{{ $t('plans.editor.coverWorking') }}</span>
     </div>
+
+    <p v-if="error" class="field-error">{{ error }}</p>
+
     <input
       ref="fileInput"
       class="visually-hidden"
@@ -96,14 +111,15 @@ async function removePicture(): Promise<void> {
 </template>
 
 <style scoped>
-.plan-cover-editor { display: flex; align-items: flex-start; gap: 12px; }
+.plan-cover { display: grid; gap: 5px; justify-items: start; }
+.plan-cover-frame { position: relative; width: 76px; height: 76px; }
+
 .plan-cover-preview {
   position: relative;
   display: grid;
   place-items: center;
-  width: 76px;
-  height: 76px;
-  flex: none;
+  width: 100%;
+  height: 100%;
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -115,28 +131,56 @@ async function removePicture(): Promise<void> {
 .plan-cover-preview:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .plan-cover-preview img { width: 100%; height: 100%; object-fit: cover; }
 .plan-cover-empty { font-size: 12px; color: var(--planAccent, var(--accent)); letter-spacing: 0.04em; }
+
+/* The controls stay out of the way until the cover is pointed at. */
+.plan-cover-hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 58%, transparent);
+  color: var(--text);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.plan-cover-hint svg { width: 20px; height: 20px; }
+.plan-cover-frame:hover .plan-cover-hint,
+.plan-cover-preview:focus-visible .plan-cover-hint { opacity: 1; }
+
+.plan-cover-delete {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  color: var(--rec);
+  opacity: 0;
+  transition: opacity 120ms ease, border-color 120ms ease;
+  cursor: pointer;
+}
+.plan-cover-delete svg { width: 14px; height: 14px; }
+.plan-cover-delete:hover { border-color: var(--rec); }
+.plan-cover-delete:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.plan-cover-frame:hover .plan-cover-delete,
+.plan-cover-delete:focus-visible { opacity: 1; }
+
 .plan-cover-busy {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--panel) 78%, transparent);
   font-size: 11px;
   color: var(--text2);
 }
-.plan-cover-actions { display: grid; gap: 4px; align-content: start; }
-.plan-cover-action {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--accent);
-  font-size: 12px;
-  text-align: left;
-  text-decoration: underline;
-  cursor: pointer;
-}
-.plan-cover-action:disabled { color: var(--text3); cursor: default; }
-.plan-cover-action.danger { color: var(--rec); }
+
 .visually-hidden {
   position: absolute;
   width: 1px;

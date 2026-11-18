@@ -706,6 +706,7 @@
 }
 
 .plan-accent-field {
+  justify-items: start;
   max-width: 230px;
 }
 

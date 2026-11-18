@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
 import { plansApi } from '@/api/plans'
-import { DAY_ICONS, PLAN_ACCENTS, type DayIcon, type PlanSummary } from '@/api/plan-types'
+import { DAY_ICONS, PLAN_ACCENTS, type DayIcon, type PlanAccent, type PlanSummary } from '@/api/plan-types'
 import DayIconPicker from '@/components/plans/DayIconPicker.vue'
+import PlanAccentPicker from '@/components/plans/PlanAccentPicker.vue'
 import { COVER_MAX_EDGE, coverDimensions } from '@/features/plans/cover-image'
 import { DAY_ICON_GLYPHS, DAY_ICON_ORDER } from '@/features/plans/day-icons'
 import { i18n } from '@/i18n'
@@ -90,6 +91,23 @@ describe('day icon picker', () => {
 
     await wrapper.get('button[aria-label="Push"]').trigger('click')
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([null])
+  })
+})
+
+describe('accent picker', () => {
+  it('keeps the palette out of the way until the swatch is pressed', async () => {
+    const wrapper = mount(PlanAccentPicker, { props: { modelValue: null as PlanAccent | null } })
+
+    expect(wrapper.findAll('.accent-swatch')).toHaveLength(0)
+    expect(wrapper.get('.accent-trigger').text()).toBe('No accent')
+
+    await wrapper.get('.accent-trigger').trigger('click')
+    // Twelve colours and the way back to no accent at all.
+    expect(wrapper.findAll('.accent-swatch')).toHaveLength(PLAN_ACCENTS.length + 1)
+
+    await wrapper.get('button[aria-label="Teal"]').trigger('click')
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['teal'])
+    expect(wrapper.findAll('.accent-swatch')).toHaveLength(0)
   })
 })
 

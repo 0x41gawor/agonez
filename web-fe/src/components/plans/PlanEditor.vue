@@ -61,10 +61,10 @@ const exerciseUnits = computed<ExerciseUnitOption[]>(() => model.value.days.flat
           :plan-id="model.id"
           :plan-name="model.name"
         />
-        <label class="field plan-accent-field">
+        <div class="field plan-accent-field">
           <span class="field-label">{{ $t('plans.editor.accent') }}</span>
           <PlanAccentPicker v-model="model.accent" />
-        </label>
+        </div>
       </div>
       <div class="form-grid plan-fields">
         <label class="field">
