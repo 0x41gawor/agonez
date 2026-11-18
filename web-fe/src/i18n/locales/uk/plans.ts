@@ -1,8 +1,10 @@
 export default {
   plans: {
+    accents: { amber: 'Бурштин', clay: 'Глина', rust: 'Іржа', olive: 'Олива', sage: 'Шавлія', teal: 'Бірюза', ocean: 'Океан', indigo: 'Індиго', violet: 'Фіолет', plum: 'Слива', rose: 'Троянда', slate: 'Сланець' },
     title: 'Мої плани',
     creator: 'Конструктор плану',
     list: {
+      coverAlt: 'Обкладинка плану {name}',
       subtitle: 'Створи стабільну структуру кожного тренувального мікроциклу.',
       importJson: 'Імпортувати JSON', newPlan: '+ Новий план', newDraft: 'Нова чернетка',
       createTitle: 'Створити план тренувань', planName: 'Назва плану', description: 'Опис',
@@ -34,6 +36,10 @@ export default {
       loadError: 'Не вдалося завантажити план',
     },
     editor: {
+      accent: 'Колір акценту', accentNone: 'Без акценту',
+      coverChoose: 'Вибрати зображення', coverReplace: 'Замінити зображення', coverRemove: 'Видалити зображення',
+      coverWorking: 'Завантаження…', coverAlt: 'Обкладинка плану {name}',
+      coverUnreadable: 'Не вдалося прочитати цей файл як зображення', coverFailed: 'Не вдалося зберегти зображення',
       definition: 'Визначення плану', identity: 'Ідентичність мікроциклу', revision: 'Чернетка r{revision} · v{version}',
       planName: 'Назва плану', description: 'Опис', descriptionPlaceholder: 'Мета тренувань і контекст плану',
       orderedMicrocycle: 'Упорядкований мікроцикл', trainingDays: 'Тренувальні дні: {count}', startStructure: 'Почни будувати структуру плану',
@@ -53,6 +59,8 @@ export default {
       },
     },
     day: {
+      icon: 'Піктограма дня', iconNone: 'Без піктограми', iconClear: 'Очистити',
+      icons: { bed: 'Вихідний', recharge: 'Відновлення', sleep: 'Сон', full_body: 'Усе тіло', upper: 'Верх тіла', lower: 'Низ тіла', push: 'Жим', pull: 'Тяга', legs: 'Ноги', glutes: 'Сідниці', calves: 'Литки', chest: 'Груди', back: 'Спина', shoulders: 'Плечі', arms: 'Руки', core: 'Кор', cardio: 'Кардіо', liss: 'LISS', hiit: 'HIIT', conditioning: 'Кондиція', mobility: 'Мобільність', rest: 'Відпочинок', deload: 'Розвантаження', test: 'Тест', sport: 'Спорт' },
       dayNumber: 'День {number}', flexible: 'Гнучкий день', flexibleUnassigned: 'Гнучкий / без дня тижня',
       rest: 'День відпочинку', slots: 'Слоти: {count}', duplicate: 'Дублювати день', moveUp: 'Перемістити день вище',
       moveDown: 'Перемістити день нижче', remove: 'Видалити день', name: 'Назва дня', namePlaceholder: 'Push A', weekday: 'День тижня',

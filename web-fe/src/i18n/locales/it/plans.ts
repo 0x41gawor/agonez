@@ -1,8 +1,10 @@
 export default {
   plans: {
+    accents: { amber: 'Ambra', clay: 'Argilla', rust: 'Ruggine', olive: 'Oliva', sage: 'Salvia', teal: 'Foglia di tè', ocean: 'Oceano', indigo: 'Indaco', violet: 'Viola', plum: 'Prugna', rose: 'Rosa', slate: 'Ardesia' },
     title: 'I miei piani',
     creator: 'Creazione piano',
     list: {
+      coverAlt: 'Copertina di {name}',
       subtitle: 'Costruisci la struttura stabile di ogni microciclo di allenamento.',
       importJson: 'Importa JSON', newPlan: '+ Nuovo piano', newDraft: 'Nuova bozza',
       createTitle: 'Crea un piano di allenamento', planName: 'Nome del piano', description: 'Descrizione',
@@ -34,6 +36,10 @@ export default {
       loadError: 'Impossibile caricare il piano',
     },
     editor: {
+      accent: 'Colore d’accento', accentNone: 'Nessun accento',
+      coverChoose: 'Scegli un’immagine', coverReplace: 'Sostituisci immagine', coverRemove: 'Rimuovi immagine',
+      coverWorking: 'Caricamento…', coverAlt: 'Copertina di {name}',
+      coverUnreadable: 'Non è stato possibile leggere il file come immagine', coverFailed: 'Non è stato possibile salvare l’immagine',
       definition: 'Definizione del piano', identity: 'Identità del microciclo', revision: 'Bozza r{revision} · v{version}',
       planName: 'Nome del piano', description: 'Descrizione', descriptionPlaceholder: 'Obiettivo di allenamento e contesto del piano',
       orderedMicrocycle: 'Microciclo ordinato', trainingDays: 'Giorni di allenamento: {count}', startStructure: 'Inizia la struttura del piano',
@@ -53,6 +59,8 @@ export default {
       },
     },
     day: {
+      icon: 'Icona del giorno', iconNone: 'Nessuna icona', iconClear: 'Cancella',
+      icons: { bed: 'Giorno libero', recharge: 'Recupero', sleep: 'Sonno', full_body: 'Corpo intero', upper: 'Parte alta', lower: 'Parte bassa', push: 'Spinta', pull: 'Trazione', legs: 'Gambe', glutes: 'Glutei', calves: 'Polpacci', chest: 'Petto', back: 'Schiena', shoulders: 'Spalle', arms: 'Braccia', core: 'Core', cardio: 'Cardio', liss: 'LISS', hiit: 'HIIT', conditioning: 'Condizionamento', mobility: 'Mobilità', rest: 'Riposo', deload: 'Scarico', test: 'Test', sport: 'Sport' },
       dayNumber: 'Giorno {number}', flexible: 'Giorno flessibile', flexibleUnassigned: 'Flessibile / non assegnato',
       rest: 'Giorno di riposo', slots: 'Slot: {count}', duplicate: 'Duplica giorno', moveUp: 'Sposta giorno su',
       moveDown: 'Sposta giorno giù', remove: 'Rimuovi giorno', name: 'Nome del giorno', namePlaceholder: 'Push A', weekday: 'Giorno della settimana',

@@ -53,6 +53,8 @@ export function planArtifact(lockVersion = 4): PlanDraftArtifact {
     lock_version: lockVersion,
     name: 'PPLPP',
     description: 'Five-day microcycle',
+    accent: null,
+    image_url: null,
     days: [
       {
         id: 31,
@@ -60,6 +62,7 @@ export function planArtifact(lockVersion = 4): PlanDraftArtifact {
         weekday: 1,
         name: 'Push A',
         description: null,
+        icon: null,
         workout_unit: {
           id: 41,
           name: 'Push A workout',

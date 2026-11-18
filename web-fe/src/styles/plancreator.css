@@ -113,8 +113,29 @@
   border: 1px solid var(--border2);
   border-radius: 9px;
   background: var(--panel2);
-  color: var(--accent);
+  color: var(--planAccent, var(--accent));
   font-size: 10px;
+}
+
+.plan-card-mark.has-cover {
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--planAccent, var(--border2)) 40%, var(--border2));
+}
+
+.plan-card-mark.has-cover img {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+}
+
+/* The accent marks the card's edge: present enough to group plans at a glance,
+   quiet enough not to compete with the plan's own name. */
+.plan-card[data-accent]::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--planAccent);
 }
 
 .plan-card-link strong,
@@ -676,6 +697,18 @@
   margin-top: 16px;
 }
 
+.plan-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.plan-accent-field {
+  max-width: 230px;
+}
+
 .plan-fields .plan-description {
   grid-column: auto;
 }
@@ -828,7 +861,7 @@
   border: 1px solid var(--border2);
   border-radius: 7px;
   background: var(--panel2);
-  color: var(--accent);
+  color: var(--planAccent, var(--accent));
   font-size: 9.5px;
 }
 
@@ -863,6 +896,10 @@
 .day-fields {
   grid-template-columns: minmax(180px, 1fr) 190px minmax(220px, 1.4fr);
   margin-bottom: 16px;
+}
+
+.day-icon-field {
+  grid-column: 1 / -1;
 }
 
 .workout-editor {
@@ -2045,6 +2082,10 @@
 
   .day-fields {
     grid-template-columns: minmax(0, 1fr) 180px;
+  }
+
+  .plan-identity {
+    gap: 16px;
   }
 
   .day-description {

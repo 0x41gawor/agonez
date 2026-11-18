@@ -1,8 +1,10 @@
 export default {
   plans: {
+    accents: { amber: 'Bärnsten', clay: 'Lera', rust: 'Rost', olive: 'Oliv', sage: 'Salvia', teal: 'Blågrön', ocean: 'Ocean', indigo: 'Indigo', violet: 'Violett', plum: 'Plommon', rose: 'Rosa', slate: 'Skiffer' },
     title: 'Mina planer',
     creator: 'Planskapare',
     list: {
+      coverAlt: 'Omslag för {name}',
       subtitle: 'Bygg den stabila strukturen för varje träningsmikrocykel.',
       importJson: 'Importera JSON', newPlan: '+ Ny plan', newDraft: 'Nytt utkast',
       createTitle: 'Skapa en träningsplan', planName: 'Planens namn', description: 'Beskrivning',
@@ -34,6 +36,10 @@ export default {
       loadError: 'Planen kunde inte laddas',
     },
     editor: {
+      accent: 'Accentfärg', accentNone: 'Ingen accent',
+      coverChoose: 'Välj en bild', coverReplace: 'Byt bild', coverRemove: 'Ta bort bild',
+      coverWorking: 'Laddar upp…', coverAlt: 'Omslag för {name}',
+      coverUnreadable: 'Filen kunde inte läsas som en bild', coverFailed: 'Bilden kunde inte sparas',
       definition: 'Plandefinition', identity: 'Mikrocykelns identitet', revision: 'Utkast r{revision} · v{version}',
       planName: 'Planens namn', description: 'Beskrivning', descriptionPlaceholder: 'Träningssyfte och sammanhang för planen',
       orderedMicrocycle: 'Ordnad mikrocykel', trainingDays: 'Träningsdagar: {count}', startStructure: 'Börja bygga planens struktur',
@@ -53,6 +59,8 @@ export default {
       },
     },
     day: {
+      icon: 'Dagsikon', iconNone: 'Ingen ikon', iconClear: 'Rensa',
+      icons: { bed: 'Ledig dag', recharge: 'Återhämtning', sleep: 'Sömn', full_body: 'Helkropp', upper: 'Överkropp', lower: 'Underkropp', push: 'Press', pull: 'Drag', legs: 'Ben', glutes: 'Säte', calves: 'Vader', chest: 'Bröst', back: 'Rygg', shoulders: 'Axlar', arms: 'Armar', core: 'Bål', cardio: 'Kondition', liss: 'LISS', hiit: 'HIIT', conditioning: 'Kondis', mobility: 'Rörlighet', rest: 'Vila', deload: 'Deload', test: 'Test', sport: 'Sport' },
       dayNumber: 'Dag {number}', flexible: 'Flexibel dag', flexibleUnassigned: 'Flexibel / ej tilldelad',
       rest: 'Vilodag', slots: 'Block: {count}', duplicate: 'Duplicera dag', moveUp: 'Flytta dagen uppåt',
       moveDown: 'Flytta dagen nedåt', remove: 'Ta bort dag', name: 'Dagens namn', namePlaceholder: 'Push A', weekday: 'Veckodag',

@@ -4,6 +4,8 @@ import { useI18n } from 'vue-i18n'
 import type { ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
 import DayEditor from '@/components/plans/DayEditor.vue'
+import PlanAccentPicker from '@/components/plans/PlanAccentPicker.vue'
+import PlanCoverEditor from '@/components/plans/PlanCoverEditor.vue'
 import {
   createDay,
   duplicateDay,
@@ -44,7 +46,7 @@ const exerciseUnits = computed<ExerciseUnitOption[]>(() => model.value.days.flat
 </script>
 
 <template>
-  <div class="plan-editor">
+  <div class="plan-editor" :data-accent="model.accent ?? undefined">
     <section class="plan-overview panel">
       <div class="plan-overview-heading">
         <div>
@@ -52,6 +54,17 @@ const exerciseUnits = computed<ExerciseUnitOption[]>(() => model.value.days.flat
           <h2>{{ $t('plans.editor.identity') }}</h2>
         </div>
         <span class="mono revision-chip">{{ $t('plans.editor.revision', { revision: model.revision_no, version: model.lock_version }) }}</span>
+      </div>
+      <div class="plan-identity">
+        <PlanCoverEditor
+          v-model="model.image_url"
+          :plan-id="model.id"
+          :plan-name="model.name"
+        />
+        <label class="field plan-accent-field">
+          <span class="field-label">{{ $t('plans.editor.accent') }}</span>
+          <PlanAccentPicker v-model="model.accent" />
+        </label>
       </div>
       <div class="form-grid plan-fields">
         <label class="field">

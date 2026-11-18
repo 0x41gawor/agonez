@@ -29,6 +29,53 @@ class ExerciseVariantType(str, Enum):
     FALLBACK = "FALLBACK"
 
 
+class PlanAccent(str, Enum):
+    """A named accent colour. The app maps each name to its own light and dark value."""
+
+    AMBER = "amber"
+    CLAY = "clay"
+    RUST = "rust"
+    OLIVE = "olive"
+    SAGE = "sage"
+    TEAL = "teal"
+    OCEAN = "ocean"
+    INDIGO = "indigo"
+    VIOLET = "violet"
+    PLUM = "plum"
+    ROSE = "rose"
+    SLATE = "slate"
+
+
+class DayIcon(str, Enum):
+    """The goal a training day serves, shown as a glyph. Presentation only."""
+
+    FULL_BODY = "full_body"
+    UPPER = "upper"
+    LOWER = "lower"
+    PUSH = "push"
+    PULL = "pull"
+    LEGS = "legs"
+    GLUTES = "glutes"
+    CALVES = "calves"
+    CHEST = "chest"
+    BACK = "back"
+    SHOULDERS = "shoulders"
+    ARMS = "arms"
+    CORE = "core"
+    CARDIO = "cardio"
+    LISS = "liss"
+    HIIT = "hiit"
+    CONDITIONING = "conditioning"
+    MOBILITY = "mobility"
+    REST = "rest"
+    BED = "bed"
+    RECHARGE = "recharge"
+    SLEEP = "sleep"
+    DELOAD = "deload"
+    TEST = "test"
+    SPORT = "sport"
+
+
 class LoadingMode(str, Enum):
     HIGH_LOAD = "high_load"
     MODERATE_LOAD = "moderate_load"
@@ -273,6 +320,7 @@ class DayDraft(APIModel):
     weekday: int | None = Field(default=None, ge=1, le=7)
     name: str = Field(min_length=1, max_length=200)
     description: str | None = None
+    icon: DayIcon | None = None
     workout_unit: WorkoutUnitDraft | None = None
 
     @field_validator("name")
@@ -288,6 +336,11 @@ class PlanDraftUpdate(APIModel):
     lock_version: int = Field(ge=1)
     name: str = Field(min_length=1, max_length=200)
     description: str | None = None
+    accent: PlanAccent | None = None
+    # The artifact carries the cover so the editor can show it. Accepting it here, and
+    # ignoring it, keeps a GET-then-PUT round trip of a draft valid; the cover itself is
+    # only ever replaced through PUT /plans/{plan_id}/image.
+    image_url: str | None = None
     days: list[DayDraft] = Field(default_factory=list)
 
     @field_validator("name")
@@ -361,6 +414,7 @@ class DayArtifact(APIModel):
     weekday: int | None
     name: str
     description: str | None
+    icon: DayIcon | None
     workout_unit: WorkoutUnitArtifact | None
 
 
@@ -371,6 +425,8 @@ class PlanDraftArtifact(APIModel):
     lock_version: int
     name: str
     description: str | None
+    accent: PlanAccent | None
+    image_url: str | None
     days: list[DayArtifact]
 
 
@@ -388,6 +444,8 @@ class PlanSummary(APIModel):
     id: int
     name: str
     description: str | None
+    accent: PlanAccent | None
+    image_url: str | None
     created_at: datetime
     updated_at: datetime
     draft_revision_id: int | None
@@ -427,6 +485,16 @@ class PlanDetail(APIModel):
     id: int
     name: str
     description: str | None
+    accent: PlanAccent | None
+    image_url: str | None
     created_at: datetime
     updated_at: datetime
     revisions: list[RevisionSummary]
+
+
+class PlanImageWritten(APIModel):
+    plan_id: int
+    image_url: str
+    content_type: str
+    byte_size: int
+    updated_at: datetime

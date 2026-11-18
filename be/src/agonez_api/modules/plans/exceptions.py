@@ -14,6 +14,12 @@ class PlanDraftNotFoundError(PlanError):
         super().__init__(f"Plan {plan_id} has no draft revision")
 
 
+class PlanImageNotFoundError(PlanError):
+    def __init__(self, plan_id: int) -> None:
+        self.plan_id = plan_id
+        super().__init__(f"Plan {plan_id} has no cover image")
+
+
 class PlanConflictError(PlanError):
     def __init__(self, *, submitted_lock_version: int, current_lock_version: int) -> None:
         self.submitted_lock_version = submitted_lock_version

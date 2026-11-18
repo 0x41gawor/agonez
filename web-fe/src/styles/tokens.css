@@ -58,6 +58,18 @@
   --execReload: #86d1c4;
   --execRevision: #b48bd6;
   --execRevisionDim: rgba(180, 139, 214, 0.08);
+  --planAmber: #d9a441;
+  --planClay: #d98a62;
+  --planRust: #cf6b4e;
+  --planOlive: #a8b05c;
+  --planSage: #86b58e;
+  --planTeal: #5fb4ad;
+  --planOcean: #5a9fd4;
+  --planIndigo: #7d8fe0;
+  --planViolet: #a98ae0;
+  --planPlum: #c279c0;
+  --planRose: #e0798f;
+  --planSlate: #93a3b0;
 }
 
 :root[data-theme='light'] {
@@ -103,4 +115,33 @@
   --execReload: #28796d;
   --execRevision: #77509a;
   --execRevisionDim: rgba(119, 80, 154, 0.09);
+  --planAmber: #8a6418;
+  --planClay: #a1573a;
+  --planRust: #a8462c;
+  --planOlive: #5f6a1c;
+  --planSage: #3f7a52;
+  --planTeal: #1f7a74;
+  --planOcean: #2a6ca8;
+  --planIndigo: #4a5bb5;
+  --planViolet: #6f4fb0;
+  --planPlum: #8f3d8c;
+  --planRose: #ab3d5c;
+  --planSlate: #566673;
 }
+
+/*
+ * A plan's accent. Every surface that belongs to a plan reads --planAccent and falls
+ * back to the app's own accent, so an unaccented plan looks exactly as it did before.
+ */
+[data-accent='amber'] { --planAccent: var(--planAmber); }
+[data-accent='clay'] { --planAccent: var(--planClay); }
+[data-accent='rust'] { --planAccent: var(--planRust); }
+[data-accent='olive'] { --planAccent: var(--planOlive); }
+[data-accent='sage'] { --planAccent: var(--planSage); }
+[data-accent='teal'] { --planAccent: var(--planTeal); }
+[data-accent='ocean'] { --planAccent: var(--planOcean); }
+[data-accent='indigo'] { --planAccent: var(--planIndigo); }
+[data-accent='violet'] { --planAccent: var(--planViolet); }
+[data-accent='plum'] { --planAccent: var(--planPlum); }
+[data-accent='rose'] { --planAccent: var(--planRose); }
+[data-accent='slate'] { --planAccent: var(--planSlate); }

@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import { plansApi } from '@/api/plans'
 import type { PlanAIImportDocument } from '@/api/plan-export-types'
 import type { PlanDraftArtifact, PlanSummary } from '@/api/plan-types'
+import { mediaUrl } from '@/api/url'
 import ErrorState from '@/components/common/ErrorState.vue'
 import PlanImportDialog from '@/components/plans/PlanImportDialog.vue'
 import {
@@ -219,9 +220,22 @@ onMounted(() => void loadPlans())
       @retry="loadPlans"
     />
     <div v-else-if="plans.length" class="plan-card-grid">
-      <article v-for="plan in plans" :key="plan.id" class="plan-card panel">
+      <article
+        v-for="plan in plans"
+        :key="plan.id"
+        class="plan-card panel"
+        :data-accent="plan.accent ?? undefined"
+      >
         <RouterLink :to="{ name: 'plan-editor', params: { planId: plan.id } }" class="plan-card-link">
-          <span class="plan-card-mark mono">P{{ String(plan.id).padStart(3, '0') }}</span>
+          <span class="plan-card-mark" :class="{ 'has-cover': plan.image_url }">
+            <img
+              v-if="plan.image_url"
+              :src="mediaUrl(plan.image_url) ?? undefined"
+              :alt="$t('plans.list.coverAlt', { name: plan.name })"
+              loading="lazy"
+            />
+            <span v-else class="mono">P{{ String(plan.id).padStart(3, '0') }}</span>
+          </span>
           <span>
             <strong>{{ plan.name }}</strong>
             <small>{{ plan.description || $t('common.noDescription') }}</small>

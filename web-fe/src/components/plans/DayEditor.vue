@@ -4,6 +4,8 @@ import { useI18n } from 'vue-i18n'
 
 import type { ProgressionModelCatalogItem } from '@/api/plan-types'
 import type { ExerciseCatalogItem, MuscleListItem } from '@/api/types'
+import DayIconMark from '@/components/plans/DayIconMark.vue'
+import DayIconPicker from '@/components/plans/DayIconPicker.vue'
 import WorkoutUnitEditor from '@/components/plans/WorkoutUnitEditor.vue'
 import {
   createWorkout,
@@ -65,7 +67,10 @@ function handleShortcut(event: KeyboardEvent): void {
   <article class="day-editor panel" @keydown="handleShortcut">
     <header class="day-header">
       <button class="day-toggle" type="button" :aria-expanded="expanded" @click="expanded = !expanded">
-        <span class="day-number mono">D{{ String(index + 1).padStart(2, '0') }}</span>
+        <span class="day-number" :class="{ 'has-icon': model.icon }">
+          <DayIconMark v-if="model.icon" :icon="model.icon" :size="20" />
+          <span v-else class="mono">D{{ String(index + 1).padStart(2, '0') }}</span>
+        </span>
         <span>
           <strong>{{ model.name || $t('plans.day.dayNumber', { number: index + 1 }) }}</strong>
           <small>{{ weekdayLabel }} · {{ model.workout_unit ? $t('plans.day.slots', { count: model.workout_unit.exercise_slots.length }) : $t('plans.day.rest') }}</small>
@@ -102,6 +107,10 @@ function handleShortcut(event: KeyboardEvent): void {
           <span class="field-label">{{ $t('plans.day.description') }}</span>
           <input v-model="model.description" class="text-input" :placeholder="$t('plans.day.descriptionPlaceholder')" />
         </label>
+        <div class="field day-icon-field">
+          <span class="field-label">{{ $t('plans.day.icon') }}</span>
+          <DayIconPicker v-model="model.icon" />
+        </div>
       </div>
 
       <WorkoutUnitEditor

@@ -14,6 +14,7 @@ from agonez_api.modules.plans.exceptions import (
     PlanConflictError,
     PlanDomainValidationError,
     PlanDraftNotFoundError,
+    PlanImageNotFoundError,
     PlanNotFoundError,
 )
 from agonez_api.modules.plans.schemas import PlanCreate, PlanDraftUpdate
@@ -239,7 +240,7 @@ class PlanRepository:
                 source_plan = await self._fetch_optional(
                     connection,
                     """
-                    SELECT id, name, description
+                    SELECT id, name, description, accent::text AS accent
                     FROM plans.workout_plans
                     WHERE id = %s
                     FOR SHARE
@@ -261,11 +262,11 @@ class PlanRepository:
                 plan = await self._fetch_one(
                     connection,
                     """
-                    INSERT INTO plans.workout_plans (name, description)
-                    VALUES (%s, %s)
+                    INSERT INTO plans.workout_plans (name, description, accent)
+                    VALUES (%s, %s, %s)
                     RETURNING id
                     """,
-                    (duplicate_name, source_plan["description"]),
+                    (duplicate_name, source_plan["description"], source_plan["accent"]),
                 )
                 revision = await self._fetch_one(
                     connection,
@@ -276,6 +277,17 @@ class PlanRepository:
                     RETURNING id
                     """,
                     (plan["id"], source.header["revision_id"]),
+                )
+                await self._execute(
+                    connection,
+                    """
+                    INSERT INTO plans.plan_images
+                        (plan_id, content_type, byte_size, checksum, data)
+                    SELECT %s, content_type, byte_size, checksum, data
+                    FROM plans.plan_images
+                    WHERE plan_id = %s
+                    """,
+                    (plan["id"], plan_id),
                 )
                 await self._copy_draft_tree(
                     connection,
@@ -308,8 +320,8 @@ class PlanRepository:
                 connection,
                 """
                 INSERT INTO plans.day_prescriptions
-                    (revision_id, ordinal, weekday, name, description)
-                VALUES (%s, %s, %s, %s, %s)
+                    (revision_id, ordinal, weekday, name, description, icon)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 (
@@ -318,6 +330,7 @@ class PlanRepository:
                     day["weekday"],
                     day["name"],
                     day["description"],
+                    day["icon"],
                 ),
             )
             day_ids[cast(int, day["id"])] = cast(int, copied["id"])
@@ -454,6 +467,8 @@ class PlanRepository:
                     p.id,
                     p.name,
                     p.description,
+                    p.accent::text AS accent,
+                    image.checksum AS image_checksum,
                     p.created_at,
                     p.updated_at,
                     draft.id AS draft_revision_id,
@@ -461,6 +476,7 @@ class PlanRepository:
                 FROM plans.workout_plans AS p
                 LEFT JOIN plans.plan_revisions AS draft
                     ON draft.plan_id = p.id AND draft.status = 'DRAFT'
+                LEFT JOIN plans.plan_images AS image ON image.plan_id = p.id
                 ORDER BY p.updated_at DESC, p.id DESC
                 """,
             )
@@ -491,9 +507,17 @@ class PlanRepository:
             plan = await self._fetch_optional(
                 connection,
                 """
-                SELECT id, name, description, created_at, updated_at
-                FROM plans.workout_plans
-                WHERE id = %s
+                SELECT
+                    p.id,
+                    p.name,
+                    p.description,
+                    p.accent::text AS accent,
+                    image.checksum AS image_checksum,
+                    p.created_at,
+                    p.updated_at
+                FROM plans.workout_plans AS p
+                LEFT JOIN plans.plan_images AS image ON image.plan_id = p.id
+                WHERE p.id = %s
                 """,
                 (plan_id,),
             )
@@ -532,6 +556,67 @@ class PlanRepository:
             )
             if row is None:
                 raise PlanNotFoundError(plan_id)
+
+    async def get_plan_image(self, plan_id: int) -> Row:
+        """Return the stored image bytes with their metadata."""
+        async with self._pool.connection() as connection:
+            row = await self._fetch_optional(
+                connection,
+                """
+                SELECT content_type, byte_size, checksum, data, updated_at
+                FROM plans.plan_images
+                WHERE plan_id = %s
+                """,
+                (plan_id,),
+            )
+            if row is None:
+                raise PlanImageNotFoundError(plan_id)
+            return row
+
+    async def save_plan_image(
+        self,
+        plan_id: int,
+        *,
+        content_type: str,
+        data: bytes,
+        checksum: str,
+    ) -> Row:
+        """Replace the plan's cover image. One image per plan, so this is an upsert."""
+        async with self._pool.connection() as connection:
+            async with connection.transaction():
+                plan = await self._fetch_optional(
+                    connection,
+                    "SELECT id FROM plans.workout_plans WHERE id = %s FOR UPDATE",
+                    (plan_id,),
+                )
+                if plan is None:
+                    raise PlanNotFoundError(plan_id)
+                return await self._fetch_one(
+                    connection,
+                    """
+                    INSERT INTO plans.plan_images
+                        (plan_id, content_type, byte_size, checksum, data)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (plan_id) DO UPDATE
+                    SET content_type = EXCLUDED.content_type,
+                        byte_size = EXCLUDED.byte_size,
+                        checksum = EXCLUDED.checksum,
+                        data = EXCLUDED.data,
+                        updated_at = now()
+                    RETURNING content_type, byte_size, checksum, updated_at
+                    """,
+                    (plan_id, content_type, len(data), checksum, data),
+                )
+
+    async def delete_plan_image(self, plan_id: int) -> None:
+        async with self._pool.connection() as connection:
+            row = await self._fetch_optional(
+                connection,
+                "DELETE FROM plans.plan_images WHERE plan_id = %s RETURNING plan_id",
+                (plan_id,),
+            )
+            if row is None:
+                raise PlanImageNotFoundError(plan_id)
 
     async def get_draft(self, plan_id: int) -> DraftRows:
         async with self._pool.connection() as connection:
@@ -671,10 +756,18 @@ class PlanRepository:
                     connection,
                     """
                     UPDATE plans.workout_plans
-                    SET name = %s, description = %s, updated_at = now()
+                    SET name = %s,
+                        description = %s,
+                        accent = %s,
+                        updated_at = now()
                     WHERE id = %s
                     """,
-                    (payload.name, payload.description, plan_id),
+                    (
+                        payload.name,
+                        payload.description,
+                        payload.accent.value if payload.accent else None,
+                        plan_id,
+                    ),
                 )
 
                 existing_variant_ids = [row["id"] for row in existing.variants]
@@ -869,21 +962,41 @@ class PlanRepository:
                 connection,
                 """
                 INSERT INTO plans.day_prescriptions
-                    (revision_id, ordinal, weekday, name, description)
-                VALUES (%s, %s, %s, %s, %s)
+                    (revision_id, ordinal, weekday, name, description, icon)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
-                (revision_id, day.ordinal, day.weekday, day.name, day.description),
+                (
+                    revision_id,
+                    day.ordinal,
+                    day.weekday,
+                    day.name,
+                    day.description,
+                    day.icon.value if day.icon else None,
+                ),
             )
             return cast(int, row["id"])
         await self._execute(
             connection,
             """
             UPDATE plans.day_prescriptions
-            SET revision_id = %s, ordinal = %s, weekday = %s, name = %s, description = %s
+            SET revision_id = %s,
+                ordinal = %s,
+                weekday = %s,
+                name = %s,
+                description = %s,
+                icon = %s
             WHERE id = %s
             """,
-            (revision_id, day.ordinal, day.weekday, day.name, day.description, day.id),
+            (
+                revision_id,
+                day.ordinal,
+                day.weekday,
+                day.name,
+                day.description,
+                day.icon.value if day.icon else None,
+                day.id,
+            ),
         )
         return cast(int, day.id)
 
@@ -1086,12 +1199,15 @@ class PlanRepository:
                 p.id,
                 p.name,
                 p.description,
+                p.accent::text AS accent,
+                image.checksum AS image_checksum,
                 revision.id AS revision_id,
                 revision.revision_no,
                 revision.lock_version
             FROM plans.workout_plans AS p
             JOIN plans.plan_revisions AS revision
                 ON revision.plan_id = p.id AND revision.status = 'DRAFT'
+            LEFT JOIN plans.plan_images AS image ON image.plan_id = p.id
             WHERE p.id = %s
             """,
             (plan_id,),
@@ -1102,7 +1218,7 @@ class PlanRepository:
         days = await self._fetch_all(
             connection,
             """
-            SELECT id, revision_id, ordinal, weekday, name, description
+            SELECT id, revision_id, ordinal, weekday, name, description, icon::text AS icon
             FROM plans.day_prescriptions
             WHERE revision_id = %s
             ORDER BY ordinal, id

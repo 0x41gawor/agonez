@@ -1,7 +1,9 @@
 export default {
   plans: {
+    accents: { amber: 'Ambre', clay: 'Argile', rust: 'Rouille', olive: 'Olive', sage: 'Sauge', teal: 'Sarcelle', ocean: 'Océan', indigo: 'Indigo', violet: 'Violet', plum: 'Prune', rose: 'Rose', slate: 'Ardoise' },
     title: 'Mes plans', creator: 'Créateur de plan',
     list: {
+      coverAlt: 'Couverture de {name}',
       subtitle: "Construisez la structure stable de chaque microcycle d’entraînement.", importJson: 'Importer JSON', newPlan: '+ Nouveau plan',
       newDraft: 'Nouveau brouillon', createTitle: "Créer un plan d’entraînement", planName: 'Nom du plan', description: 'Description',
       descriptionPlaceholder: "Intention d’entraînement facultative", creating: 'Création…', createAndOpen: 'Créer et ouvrir',
@@ -28,6 +30,10 @@ export default {
       exportFallbackError: "Impossible d’exporter le plan enregistré.", loading: "Chargement de l’éditeur de plan", loadError: 'Impossible de charger le plan',
     },
     editor: {
+      accent: 'Couleur d’accent', accentNone: 'Aucun accent',
+      coverChoose: 'Choisir une image', coverReplace: 'Remplacer l’image', coverRemove: 'Retirer l’image',
+      coverWorking: 'Envoi…', coverAlt: 'Couverture de {name}',
+      coverUnreadable: 'Ce fichier n’a pas pu être lu comme une image', coverFailed: 'L’image n’a pas pu être enregistrée',
       definition: 'Définition du plan', identity: 'Identité du microcycle', revision: 'Brouillon r{revision} · v{version}',
       planName: 'Nom du plan', description: 'Description', descriptionPlaceholder: "Intention d’entraînement et contexte du plan",
       orderedMicrocycle: 'Microcycle ordonné', trainingDays: '{count} jours d’entraînement', startStructure: 'Commencer la structure du plan',
@@ -46,6 +52,8 @@ export default {
       },
     },
     day: {
+      icon: 'Icône du jour', iconNone: 'Aucune icône', iconClear: 'Effacer',
+      icons: { bed: 'Jour de repos', recharge: 'Récupération', sleep: 'Sommeil', full_body: 'Corps entier', upper: 'Haut du corps', lower: 'Bas du corps', push: 'Poussée', pull: 'Tirage', legs: 'Jambes', glutes: 'Fessiers', calves: 'Mollets', chest: 'Pectoraux', back: 'Dos', shoulders: 'Épaules', arms: 'Bras', core: 'Gainage', cardio: 'Cardio', liss: 'LISS', hiit: 'HIIT', conditioning: 'Conditionnement', mobility: 'Mobilité', rest: 'Repos', deload: 'Décharge', test: 'Test', sport: 'Sport' },
       dayNumber: 'Jour {number}', flexible: 'Jour flexible', flexibleUnassigned: 'Flexible / non attribué', rest: 'Jour de repos',
       slots: '{count} emplacements', duplicate: 'Dupliquer le jour', moveUp: 'Monter le jour', moveDown: 'Descendre le jour', remove: 'Supprimer le jour',
       name: 'Nom du jour', namePlaceholder: 'Push A', weekday: 'Jour de la semaine', description: 'Description',

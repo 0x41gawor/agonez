@@ -85,12 +85,31 @@ export interface WorkoutUnitDraft {
   exercise_slots: ExerciseSlotDraft[]
 }
 
+/** Named accent colours. The app renders each one differently per theme. */
+export const PLAN_ACCENTS = [
+  'amber', 'clay', 'rust', 'olive', 'sage', 'teal',
+  'ocean', 'indigo', 'violet', 'plum', 'rose', 'slate',
+] as const
+
+export type PlanAccent = (typeof PLAN_ACCENTS)[number]
+
+/** The goal a training day serves, shown as a glyph. Presentation only. */
+export const DAY_ICONS = [
+  'full_body', 'upper', 'lower', 'push', 'pull', 'legs',
+  'glutes', 'calves', 'chest', 'back', 'shoulders', 'arms',
+  'core', 'cardio', 'liss', 'hiit', 'conditioning', 'mobility',
+  'rest', 'bed', 'recharge', 'sleep', 'deload', 'test', 'sport',
+] as const
+
+export type DayIcon = (typeof DAY_ICONS)[number]
+
 export interface DayDraft {
   id: number | null
   ordinal: number
   weekday: number | null
   name: string
   description: string | null
+  icon: DayIcon | null
   workout_unit: WorkoutUnitDraft | null
 }
 
@@ -101,10 +120,14 @@ export interface PlanDraftUpdate {
   lock_version: number
   name: string
   description: string | null
+  accent: PlanAccent | null
   days: DayDraft[]
 }
 
-export type PlanDraftArtifact = PlanDraftUpdate
+/** The artifact adds the cover image, which is uploaded separately, not saved with the draft. */
+export type PlanDraftArtifact = PlanDraftUpdate & {
+  image_url: string | null
+}
 
 export interface PlanCreate {
   name: string
@@ -115,6 +138,8 @@ export interface PlanSummary {
   id: number
   name: string
   description: string | null
+  accent: PlanAccent | null
+  image_url: string | null
   created_at: string
   updated_at: string
   draft_revision_id: number | null
@@ -123,6 +148,14 @@ export interface PlanSummary {
 
 export interface PlanListResponse {
   items: PlanSummary[]
+}
+
+export interface PlanImageWritten {
+  plan_id: number
+  image_url: string
+  content_type: string
+  byte_size: number
+  updated_at: string
 }
 
 export interface RevisionSummary {
@@ -140,6 +173,8 @@ export interface PlanDetail {
   id: number
   name: string
   description: string | null
+  accent: PlanAccent | null
+  image_url: string | null
   created_at: string
   updated_at: string
   revisions: RevisionSummary[]

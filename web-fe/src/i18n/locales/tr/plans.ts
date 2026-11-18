@@ -1,8 +1,10 @@
 export default {
   plans: {
+    accents: { amber: 'Kehribar', clay: 'Kil', rust: 'Pas', olive: 'Zeytin', sage: 'Adaçayı', teal: 'Teal', ocean: 'Okyanus', indigo: 'Çivit', violet: 'Mor', plum: 'Erik', rose: 'Gül', slate: 'Arduvaz' },
     title: 'Planlarım',
     creator: 'Plan Oluşturucu',
     list: {
+      coverAlt: '{name} kapağı',
       subtitle: 'Her antrenman mikro döngüsünün kararlı yapısını oluşturun.',
       importJson: 'JSON içe aktar',
       newPlan: '+ Yeni plan',
@@ -68,6 +70,10 @@ export default {
       loadError: 'Plan yüklenemedi',
     },
     editor: {
+      accent: 'Vurgu rengi', accentNone: 'Vurgu yok',
+      coverChoose: 'Bir görsel seç', coverReplace: 'Görseli değiştir', coverRemove: 'Görseli kaldır',
+      coverWorking: 'Yükleniyor…', coverAlt: '{name} kapağı',
+      coverUnreadable: 'Bu dosya bir görsel olarak okunamadı', coverFailed: 'Görsel kaydedilemedi',
       definition: 'Plan tanımı',
       identity: 'Mikro döngü kimliği',
       revision: 'Taslak r{revision} · v{version}',
@@ -95,6 +101,8 @@ export default {
       },
     },
     day: {
+      icon: 'Gün simgesi', iconNone: 'Simge yok', iconClear: 'Temizle',
+      icons: { bed: 'İzin günü', recharge: 'Toparlanma', sleep: 'Uyku', full_body: 'Tüm vücut', upper: 'Üst vücut', lower: 'Alt vücut', push: 'İtiş', pull: 'Çekiş', legs: 'Bacaklar', glutes: 'Kalça', calves: 'Baldırlar', chest: 'Göğüs', back: 'Sırt', shoulders: 'Omuzlar', arms: 'Kollar', core: 'Merkez', cardio: 'Kardiyo', liss: 'LISS', hiit: 'HIIT', conditioning: 'Kondisyon', mobility: 'Mobilite', rest: 'Dinlenme', deload: 'Deload', test: 'Test', sport: 'Spor' },
       dayNumber: 'Gün {number}',
       flexible: 'Esnek gün',
       flexibleUnassigned: 'Esnek / atanmamış',

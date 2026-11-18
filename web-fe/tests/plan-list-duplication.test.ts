@@ -20,6 +20,8 @@ const source: PlanSummary = {
   id: 11,
   name: 'PPLPP',
   description: 'Five-day microcycle',
+  accent: null,
+  image_url: null,
   created_at: '2026-08-20T10:00:00Z',
   updated_at: '2026-08-21T10:00:00Z',
   draft_revision_id: 21,

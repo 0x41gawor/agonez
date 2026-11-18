@@ -95,6 +95,21 @@ export async function putJson<T>(path: string, body: unknown, signal?: AbortSign
   return requestJson<T>(path, request)
 }
 
+/** Upload a single binary body, such as an image, as the whole request. */
+export async function putBinary<T>(
+  path: string,
+  body: Blob,
+  signal?: AbortSignal,
+): Promise<T> {
+  const request: RequestInit = {
+    method: 'PUT',
+    headers: { Accept: 'application/json', 'Content-Type': body.type },
+    body,
+  }
+  if (signal) request.signal = signal
+  return requestJson<T>(path, request)
+}
+
 export async function patchJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
   const request: RequestInit = {
     method: 'PATCH',

@@ -121,6 +121,7 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
                 "weekday": 1,
                 "name": "Push A",
                 "description": "Primary session",
+                "icon": "push",
             }
         ],
         workout_units=[
@@ -207,7 +208,7 @@ async def test_copy_draft_tree_remaps_every_parent_and_catalog_reference() -> No
 
     inserted_parameters = [params for _, params in inserts]
     assert inserted_parameters[:3] == [
-        (99, 0, 1, "Push A", "Primary session"),
+        (99, 0, 1, "Push A", "Primary session", "push"),
         (101, "Push A", None, "Warm up", None),
         (
             102,

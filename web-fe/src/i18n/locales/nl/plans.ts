@@ -1,8 +1,10 @@
 export default {
   plans: {
+    accents: { amber: 'Amber', clay: 'Klei', rust: 'Roest', olive: 'Olijf', sage: 'Salie', teal: 'Blauwgroen', ocean: 'Oceaan', indigo: 'Indigo', violet: 'Violet', plum: 'Pruim', rose: 'Roze', slate: 'Leisteen' },
     title: 'Mijn plannen',
     creator: 'Planbouwer',
     list: {
+      coverAlt: 'Omslag van {name}',
       subtitle: 'Bouw de vaste structuur van elke trainingsmicrocyclus.',
       importJson: 'JSON importeren', newPlan: '+ Nieuw plan', newDraft: 'Nieuw concept',
       createTitle: 'Een trainingsplan maken', planName: 'Naam van het plan', description: 'Beschrijving',
@@ -34,6 +36,10 @@ export default {
       loadError: 'Het plan kon niet worden geladen',
     },
     editor: {
+      accent: 'Accentkleur', accentNone: 'Geen accent',
+      coverChoose: 'Kies een afbeelding', coverReplace: 'Afbeelding vervangen', coverRemove: 'Afbeelding verwijderen',
+      coverWorking: 'Uploaden…', coverAlt: 'Omslag van {name}',
+      coverUnreadable: 'Dit bestand kon niet als afbeelding worden gelezen', coverFailed: 'De afbeelding kon niet worden opgeslagen',
       definition: 'Plandefinitie', identity: 'Identiteit van de microcyclus', revision: 'Concept r{revision} · v{version}',
       planName: 'Naam van het plan', description: 'Beschrijving', descriptionPlaceholder: 'Trainingsdoel en context van het plan',
       orderedMicrocycle: 'Geordende microcyclus', trainingDays: 'Trainingsdagen: {count}', startStructure: 'Begin met de structuur van het plan',
@@ -53,6 +59,8 @@ export default {
       },
     },
     day: {
+      icon: 'Dagpictogram', iconNone: 'Geen pictogram', iconClear: 'Wissen',
+      icons: { bed: 'Vrije dag', recharge: 'Herstel', sleep: 'Slaap', full_body: 'Hele lichaam', upper: 'Bovenlichaam', lower: 'Onderlichaam', push: 'Duwen', pull: 'Trekken', legs: 'Benen', glutes: 'Bilspieren', calves: 'Kuiten', chest: 'Borst', back: 'Rug', shoulders: 'Schouders', arms: 'Armen', core: 'Core', cardio: 'Cardio', liss: 'LISS', hiit: 'HIIT', conditioning: 'Conditie', mobility: 'Mobiliteit', rest: 'Rust', deload: 'Deload', test: 'Test', sport: 'Sport' },
       dayNumber: 'Dag {number}', flexible: 'Flexibele dag', flexibleUnassigned: 'Flexibel / niet toegewezen',
       rest: 'Rustdag', slots: 'Slots: {count}', duplicate: 'Dag dupliceren', moveUp: 'Dag omhoog verplaatsen',
       moveDown: 'Dag omlaag verplaatsen', remove: 'Dag verwijderen', name: 'Naam van de dag', namePlaceholder: 'Push A', weekday: 'Weekdag',

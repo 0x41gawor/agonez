@@ -1,8 +1,10 @@
 export default {
   plans: {
+    accents: { amber: 'Amber', clay: 'Clay', rust: 'Rust', olive: 'Olive', sage: 'Sage', teal: 'Teal', ocean: 'Ocean', indigo: 'Indigo', violet: 'Violet', plum: 'Plum', rose: 'Rose', slate: 'Slate' },
     title: 'My Plans',
     creator: 'PlanCreator',
     list: {
+      coverAlt: 'Cover of {name}',
       subtitle: 'Build the stable structure of each training microcycle.',
       importJson: 'Import JSON',
       newPlan: '+ New plan',
@@ -68,6 +70,10 @@ export default {
       loadError: 'The plan could not be loaded',
     },
     editor: {
+      accent: 'Accent colour', accentNone: 'No accent',
+      coverChoose: 'Choose a picture', coverReplace: 'Replace picture', coverRemove: 'Remove picture',
+      coverWorking: 'Uploading…', coverAlt: 'Cover of {name}',
+      coverUnreadable: 'That file could not be read as a picture', coverFailed: 'The picture could not be saved',
       definition: 'Plan definition',
       identity: 'Microcycle identity',
       revision: 'Draft r{revision} · v{version}',
@@ -95,6 +101,8 @@ export default {
       },
     },
     day: {
+      icon: 'Day icon', iconNone: 'No icon', iconClear: 'Clear',
+      icons: { bed: 'Day off', recharge: 'Recovery', sleep: 'Sleep', full_body: 'Full body', upper: 'Upper body', lower: 'Lower body', push: 'Push', pull: 'Pull', legs: 'Legs', glutes: 'Glutes', calves: 'Calves', chest: 'Chest', back: 'Back', shoulders: 'Shoulders', arms: 'Arms', core: 'Core', cardio: 'Cardio', liss: 'LISS', hiit: 'HIIT', conditioning: 'Conditioning', mobility: 'Mobility', rest: 'Rest', deload: 'Deload', test: 'Test', sport: 'Sport' },
       dayNumber: 'Day {number}',
       flexible: 'Flexible day',
       flexibleUnassigned: 'Flexible / unassigned',

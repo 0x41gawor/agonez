@@ -41,6 +41,8 @@ export interface EditorDay extends Omit<DayDraft, 'workout_unit'>, EditorIdentit
 export interface PlanEditorState
   extends Omit<PlanDraftUpdate, 'days'> {
   days: EditorDay[]
+  /** Shown in the editor and replaced by its own upload, so it never makes the draft dirty. */
+  image_url: string | null
 }
 
 export interface PlanValidationIssue {
@@ -129,6 +131,8 @@ export function toPlanEditorState(artifact: PlanDraftArtifact): PlanEditorState 
     lock_version: artifact.lock_version,
     name: artifact.name,
     description: artifact.description,
+    accent: artifact.accent,
+    image_url: artifact.image_url,
     days: artifact.days.map(editorDay),
   }
 }
@@ -141,12 +145,14 @@ export function toPlanDraftUpdate(editor: PlanEditorState): PlanDraftUpdate {
     lock_version: editor.lock_version,
     name: editor.name,
     description: editor.description,
+    accent: editor.accent,
     days: editor.days.map((day, dayIndex) => ({
       id: day.id,
       ordinal: dayIndex,
       weekday: day.weekday,
       name: day.name,
       description: day.description,
+      icon: day.icon,
       workout_unit: day.workout_unit
         ? {
             id: day.workout_unit.id,
@@ -203,6 +209,7 @@ export function createDay(ordinal: number): EditorDay {
     weekday: null,
     name: i18n.global.t('plans.editor.defaultDay', { number: ordinal + 1 }),
     description: null,
+    icon: null,
     workout_unit: null,
   }
 }

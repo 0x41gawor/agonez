@@ -1,9 +1,10 @@
-import { deleteRequest, getJson, postJson, putJson } from './client'
+import { deleteRequest, getJson, postJson, putBinary, putJson } from './client'
 import type {
   PlanCreate,
   PlanDetail,
   PlanDraftArtifact,
   PlanDraftUpdate,
+  PlanImageWritten,
   PlanListResponse,
   ProgressionModelCatalogResponse,
 } from './plan-types'
@@ -30,6 +31,10 @@ export const plansApi = {
     postJson<PlanDraftArtifact>(`/api/plans/${planId}/duplicate`, {}, signal),
   detail: (planId: number, signal?: AbortSignal) =>
     getJson<PlanDetail>(`/api/plans/${planId}`, undefined, signal),
+  uploadImage: (planId: number, image: Blob, signal?: AbortSignal) =>
+    putBinary<PlanImageWritten>(`/api/plans/${planId}/image`, image, signal),
+  deleteImage: (planId: number, signal?: AbortSignal) =>
+    deleteRequest(`/api/plans/${planId}/image`, signal),
   draft: (planId: number, signal?: AbortSignal) =>
     getJson<PlanDraftArtifact>(`/api/plans/${planId}/draft`, undefined, signal),
   saveDraft: (planId: number, payload: PlanDraftUpdate, signal?: AbortSignal) =>

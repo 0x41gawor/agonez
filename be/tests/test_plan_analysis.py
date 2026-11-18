@@ -96,6 +96,7 @@ def _draft(
                 "weekday": weekdays[index],
                 "name": "Rest" if slots is None else f"Day {index + 1}",
                 "description": None,
+                "icon": None,
                 "workout_unit": (
                     None
                     if slots is None
@@ -118,6 +119,8 @@ def _draft(
             "lock_version": 55,
             "name": "Analysis test",
             "description": None,
+            "accent": None,
+            "image_url": None,
             "days": days,
         }
     )

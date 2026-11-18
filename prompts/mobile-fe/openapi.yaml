@@ -607,6 +607,93 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/plans/{plan_id}/image:
+    get:
+      tags:
+      - Plans
+      summary: Get Plan Image
+      operationId: get_plan_image_api_plans__plan_id__image_get
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      - name: If-None-Match
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: If-None-Match
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            image/webp: {}
+            image/png: {}
+            image/jpeg: {}
+        '304':
+          description: The cached image is current
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Plans
+      summary: Put Plan Image
+      description: Replace the plan's cover image. The body is the image itself; supported types are image/webp,
+        image/png and image/jpeg, up to 1500000 bytes.
+      operationId: put_plan_image_api_plans__plan_id__image_put
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanImageWritten'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Plans
+      summary: Delete Plan Image
+      operationId: delete_plan_image_api_plans__plan_id__image_delete
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          title: Plan Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/plans/{plan_id}/draft:
     get:
       tags:
@@ -3913,6 +4000,10 @@ components:
           - type: string
           - type: 'null'
           title: Description
+        icon:
+          anyOf:
+          - $ref: '#/components/schemas/DayIcon'
+          - type: 'null'
         workout_unit:
           anyOf:
           - $ref: '#/components/schemas/WorkoutUnitArtifact'
@@ -3925,6 +4016,7 @@ components:
       - weekday
       - name
       - description
+      - icon
       - workout_unit
       title: DayArtifact
     DayColumn:
@@ -3978,6 +4070,10 @@ components:
           - type: string
           - type: 'null'
           title: Description
+        icon:
+          anyOf:
+          - $ref: '#/components/schemas/DayIcon'
+          - type: 'null'
         workout_unit:
           anyOf:
           - $ref: '#/components/schemas/WorkoutUnitDraft'
@@ -3988,6 +4084,33 @@ components:
       - ordinal
       - name
       title: DayDraft
+    DayIcon:
+      type: string
+      enum:
+      - full_body
+      - upper
+      - lower
+      - push
+      - pull
+      - legs
+      - glutes
+      - calves
+      - chest
+      - back
+      - shoulders
+      - arms
+      - core
+      - cardio
+      - liss
+      - hiit
+      - conditioning
+      - mobility
+      - rest
+      - deload
+      - test
+      - sport
+      title: DayIcon
+      description: The goal a training day serves, shown as a glyph. Presentation only.
     DiagnosticSeverity:
       type: string
       enum:
@@ -7134,6 +7257,23 @@ components:
       - reps
       - rir
       title: PlanAIImportSet
+    PlanAccent:
+      type: string
+      enum:
+      - amber
+      - clay
+      - rust
+      - olive
+      - sage
+      - teal
+      - ocean
+      - indigo
+      - violet
+      - plum
+      - rose
+      - slate
+      title: PlanAccent
+      description: A named accent colour. The app maps each name to its own light and dark value.
     PlanAnalysisRequest:
       properties:
         resolution_context:
@@ -7271,6 +7411,15 @@ components:
           - type: string
           - type: 'null'
           title: Description
+        accent:
+          anyOf:
+          - $ref: '#/components/schemas/PlanAccent'
+          - type: 'null'
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
         created_at:
           type: string
           format: date-time
@@ -7290,6 +7439,8 @@ components:
       - id
       - name
       - description
+      - accent
+      - image_url
       - created_at
       - updated_at
       - revisions
@@ -7316,6 +7467,15 @@ components:
           - type: string
           - type: 'null'
           title: Description
+        accent:
+          anyOf:
+          - $ref: '#/components/schemas/PlanAccent'
+          - type: 'null'
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
         days:
           items:
             $ref: '#/components/schemas/DayArtifact'
@@ -7330,6 +7490,8 @@ components:
       - lock_version
       - name
       - description
+      - accent
+      - image_url
       - days
       title: PlanDraftArtifact
     PlanDraftUpdate:
@@ -7360,6 +7522,15 @@ components:
           - type: string
           - type: 'null'
           title: Description
+        accent:
+          anyOf:
+          - $ref: '#/components/schemas/PlanAccent'
+          - type: 'null'
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
         days:
           items:
             $ref: '#/components/schemas/DayDraft'
@@ -7381,6 +7552,33 @@ components:
       additionalProperties: false
       type: object
       title: PlanExportRequest
+    PlanImageWritten:
+      properties:
+        plan_id:
+          type: integer
+          title: Plan Id
+        image_url:
+          type: string
+          title: Image Url
+        content_type:
+          type: string
+          title: Content Type
+        byte_size:
+          type: integer
+          title: Byte Size
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      additionalProperties: false
+      type: object
+      required:
+      - plan_id
+      - image_url
+      - content_type
+      - byte_size
+      - updated_at
+      title: PlanImageWritten
     PlanListResponse:
       properties:
         items:
@@ -7709,6 +7907,15 @@ components:
           - type: string
           - type: 'null'
           title: Description
+        accent:
+          anyOf:
+          - $ref: '#/components/schemas/PlanAccent'
+          - type: 'null'
+        image_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Image Url
         created_at:
           type: string
           format: date-time
@@ -7733,6 +7940,8 @@ components:
       - id
       - name
       - description
+      - accent
+      - image_url
       - created_at
       - updated_at
       - draft_revision_id

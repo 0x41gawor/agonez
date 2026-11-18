@@ -13,6 +13,8 @@ def test_ai_export_is_small_and_uses_the_resolved_basic_plan() -> None:
             "lock_version": 55,
             "name": "Push and rest",
             "description": "Not exported",
+            "accent": None,
+            "image_url": None,
             "days": [
                 {
                     "id": 100,
@@ -20,6 +22,7 @@ def test_ai_export_is_small_and_uses_the_resolved_basic_plan() -> None:
                     "weekday": 1,
                     "name": "Push A",
                     "description": None,
+                    "icon": None,
                     "workout_unit": {
                         "id": 200,
                         "name": "Push workout",
@@ -91,6 +94,7 @@ def test_ai_export_is_small_and_uses_the_resolved_basic_plan() -> None:
                     "weekday": 2,
                     "name": "Rest",
                     "description": None,
+                    "icon": None,
                     "workout_unit": None,
                 },
             ],

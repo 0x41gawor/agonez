@@ -700,7 +700,7 @@ describe('PlanEditor', () => {
     expect(payload.days[0]?.workout_unit?.exercise_slots[0]?.variants[0]?.sets[0]?.id).toBe(71)
     expect(payload.days[0]?.workout_unit?.exercise_slots[0]?.variants[0]?.sets[0]?.reps).toEqual({ min: 6, max: 8, semantics: 'undefined' })
 
-    const roundTripped = toPlanDraftUpdate(toPlanEditorState(payload))
+    const roundTripped = toPlanDraftUpdate(toPlanEditorState({ ...payload, image_url: null }))
     expect(roundTripped).toEqual(payload)
   })
 

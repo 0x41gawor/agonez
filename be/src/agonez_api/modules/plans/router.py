@@ -11,11 +11,13 @@ from agonez_api.modules.plans.analysis.schemas import (
     PlanExportRequest,
 )
 from agonez_api.modules.plans.analysis.service import PlanAnalysisService
+from agonez_api.modules.plans.images import MAX_IMAGE_BYTES
 from agonez_api.modules.plans.schemas import (
     PlanCreate,
     PlanDetail,
     PlanDraftArtifact,
     PlanDraftUpdate,
+    PlanImageWritten,
     PlanListResponse,
     ProgressionModelCatalogResponse,
 )
@@ -106,6 +108,67 @@ async def delete_plan(
     service: Annotated[PlanService, Depends(get_plan_service)],
 ) -> Response:
     await service.delete_plan(plan_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/{plan_id}/image",
+    response_class=Response,
+    responses={
+        200: {"content": {"image/webp": {}, "image/png": {}, "image/jpeg": {}}},
+        304: {"description": "The cached image is current"},
+    },
+)
+async def get_plan_image(
+    plan_id: PlanId,
+    service: Annotated[PlanService, Depends(get_plan_service)],
+    if_none_match: Annotated[str | None, Header(alias="If-None-Match")] = None,
+) -> Response:
+    image = await service.get_plan_image(plan_id)
+    etag = f'"{image["checksum"]}"'
+    # The URL carries the checksum, so a cached body is only ever the right one.
+    headers = {"ETag": etag, "Cache-Control": "private, max-age=31536000, immutable"}
+    if if_none_match and etag in {value.strip() for value in if_none_match.split(",")}:
+        return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers=headers)
+    return Response(
+        content=bytes(image["data"]),
+        media_type=cast(str, image["content_type"]),
+        headers=headers,
+    )
+
+
+@router.put(
+    "/{plan_id}/image",
+    response_model=PlanImageWritten,
+    description=(
+        "Replace the plan's cover image. The body is the image itself; supported types "
+        f"are image/webp, image/png and image/jpeg, up to {MAX_IMAGE_BYTES} bytes."
+    ),
+)
+async def put_plan_image(
+    plan_id: PlanId,
+    request: Request,
+    service: Annotated[PlanService, Depends(get_plan_service)],
+) -> PlanImageWritten:
+    """Replace the plan's cover image.
+
+    The image is the whole request body rather than a multipart part: one file, no
+    other fields, and no extra dependency to parse it.
+    """
+    body = await request.body()
+    return await service.save_plan_image(
+        plan_id,
+        content_type=request.headers.get("Content-Type"),
+        data=body,
+    )
+
+
+@router.delete("/{plan_id}/image", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_plan_image(
+    plan_id: PlanId,
+    service: Annotated[PlanService, Depends(get_plan_service)],
+) -> Response:
+    await service.delete_plan_image(plan_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

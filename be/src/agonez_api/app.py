@@ -37,6 +37,7 @@ from agonez_api.modules.plans.exceptions import (
     PlanConflictError,
     PlanDomainValidationError,
     PlanDraftNotFoundError,
+    PlanImageNotFoundError,
     PlanNotFoundError,
 )
 from agonez_api.modules.plans.repository import PlanRepository
@@ -169,6 +170,7 @@ def create_app(
 
     app.add_exception_handler(PlanNotFoundError, handle_plan_not_found)
     app.add_exception_handler(PlanDraftNotFoundError, handle_plan_not_found)
+    app.add_exception_handler(PlanImageNotFoundError, handle_plan_not_found)
 
     @app.exception_handler(PlanConflictError)
     async def handle_plan_conflict(

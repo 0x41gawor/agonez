@@ -1,8 +1,10 @@
 export default {
   plans: {
+    accents: { amber: 'Bursztyn', clay: 'Glina', rust: 'Rdza', olive: 'Oliwka', sage: 'Szałwia', teal: 'Morski', ocean: 'Ocean', indigo: 'Indygo', violet: 'Fiolet', plum: 'Śliwka', rose: 'Róż', slate: 'Łupek' },
     title: 'Moje plany',
     creator: 'Kreator planu',
     list: {
+      coverAlt: 'Okładka planu {name}',
       subtitle: 'Zbuduj stabilną strukturę każdego mikrocyklu treningowego.',
       importJson: 'Importuj JSON', newPlan: '+ Nowy plan', newDraft: 'Nowy szkic',
       createTitle: 'Utwórz plan treningowy', planName: 'Nazwa planu', description: 'Opis',
@@ -34,6 +36,10 @@ export default {
       loadError: 'Nie udało się załadować planu',
     },
     editor: {
+      accent: 'Kolor akcentu', accentNone: 'Bez akcentu',
+      coverChoose: 'Wybierz zdjęcie', coverReplace: 'Zmień zdjęcie', coverRemove: 'Usuń zdjęcie',
+      coverWorking: 'Przesyłanie…', coverAlt: 'Okładka planu {name}',
+      coverUnreadable: 'Nie udało się odczytać tego pliku jako obrazu', coverFailed: 'Nie udało się zapisać zdjęcia',
       definition: 'Definicja planu', identity: 'Tożsamość mikrocyklu', revision: 'Szkic r{revision} · v{version}',
       planName: 'Nazwa planu', description: 'Opis', descriptionPlaceholder: 'Cel treningowy i kontekst planu',
       orderedMicrocycle: 'Uporządkowany mikrocykl', trainingDays: 'Liczba dni treningowych: {count}', startStructure: 'Zacznij budować strukturę',
@@ -53,6 +59,8 @@ export default {
       },
     },
     day: {
+      icon: 'Ikona dnia', iconNone: 'Bez ikony', iconClear: 'Wyczyść',
+      icons: { bed: 'Dzień wolny', recharge: 'Regeneracja', sleep: 'Sen', full_body: 'Całe ciało', upper: 'Góra ciała', lower: 'Dół ciała', push: 'Push', pull: 'Pull', legs: 'Nogi', glutes: 'Pośladki', calves: 'Łydki', chest: 'Klatka', back: 'Plecy', shoulders: 'Barki', arms: 'Ramiona', core: 'Core', cardio: 'Cardio', liss: 'LISS', hiit: 'HIIT', conditioning: 'Kondycja', mobility: 'Mobilność', rest: 'Odpoczynek', deload: 'Deload', test: 'Test', sport: 'Sport' },
       dayNumber: 'Dzień {number}', flexible: 'Dzień elastyczny', flexibleUnassigned: 'Elastyczny / nieprzypisany',
       rest: 'Dzień odpoczynku', slots: 'Liczba slotów: {count}', duplicate: 'Duplikuj dzień', moveUp: 'Przesuń dzień w górę',
       moveDown: 'Przesuń dzień w dół', remove: 'Usuń dzień', name: 'Nazwa dnia', namePlaceholder: 'Push A', weekday: 'Dzień tygodnia',

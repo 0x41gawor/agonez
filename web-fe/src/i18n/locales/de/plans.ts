@@ -1,7 +1,9 @@
 export default {
   plans: {
+    accents: { amber: 'Bernstein', clay: 'Ton', rust: 'Rost', olive: 'Oliv', sage: 'Salbei', teal: 'Petrol', ocean: 'Ozean', indigo: 'Indigo', violet: 'Violett', plum: 'Pflaume', rose: 'Rosé', slate: 'Schiefer' },
     title: 'Meine Pläne', creator: 'Planersteller',
     list: {
+      coverAlt: 'Titelbild von {name}',
       subtitle: 'Baue die stabile Struktur jedes Trainingsmikrozyklus auf.', importJson: 'JSON importieren', newPlan: '+ Neuer Plan',
       newDraft: 'Neuer Entwurf', createTitle: 'Trainingsplan erstellen', planName: 'Planname', description: 'Beschreibung',
       descriptionPlaceholder: 'Optionales Trainingsziel', creating: 'Wird erstellt…', createAndOpen: 'Erstellen und öffnen',
@@ -27,6 +29,10 @@ export default {
       exportFallbackError: 'Der gespeicherte Plan konnte nicht exportiert werden.', loading: 'Planeditor wird geladen', loadError: 'Der Plan konnte nicht geladen werden',
     },
     editor: {
+      accent: 'Akzentfarbe', accentNone: 'Kein Akzent',
+      coverChoose: 'Bild wählen', coverReplace: 'Bild ersetzen', coverRemove: 'Bild entfernen',
+      coverWorking: 'Wird geladen…', coverAlt: 'Titelbild von {name}',
+      coverUnreadable: 'Diese Datei ließ sich nicht als Bild lesen', coverFailed: 'Das Bild konnte nicht gespeichert werden',
       definition: 'Plandefinition', identity: 'Mikrozyklus-Identität', revision: 'Entwurf r{revision} · v{version}',
       planName: 'Planname', description: 'Beschreibung', descriptionPlaceholder: 'Trainingsziel und Plankontext',
       orderedMicrocycle: 'Geordneter Mikrozyklus', trainingDays: '{count} Trainingstage', startStructure: 'Planstruktur beginnen',
@@ -45,6 +51,8 @@ export default {
       },
     },
     day: {
+      icon: 'Tagessymbol', iconNone: 'Kein Symbol', iconClear: 'Löschen',
+      icons: { bed: 'Freier Tag', recharge: 'Erholung', sleep: 'Schlaf', full_body: 'Ganzkörper', upper: 'Oberkörper', lower: 'Unterkörper', push: 'Drücken', pull: 'Ziehen', legs: 'Beine', glutes: 'Gesäß', calves: 'Waden', chest: 'Brust', back: 'Rücken', shoulders: 'Schultern', arms: 'Arme', core: 'Rumpf', cardio: 'Cardio', liss: 'LISS', hiit: 'HIIT', conditioning: 'Kondition', mobility: 'Mobilität', rest: 'Ruhetag', deload: 'Deload', test: 'Test', sport: 'Sport' },
       dayNumber: 'Tag {number}', flexible: 'Flexibler Tag', flexibleUnassigned: 'Flexibel / nicht zugewiesen', rest: 'Ruhetag',
       slots: '{count} Slots', duplicate: 'Tag duplizieren', moveUp: 'Tag nach oben', moveDown: 'Tag nach unten', remove: 'Tag entfernen',
       name: 'Tagesname', namePlaceholder: 'Push A', weekday: 'Wochentag', description: 'Beschreibung', descriptionPlaceholder: 'Optionaler Tagesfokus',

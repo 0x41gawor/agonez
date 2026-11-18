@@ -26,6 +26,7 @@ describe('usePlanDraft save orchestration', () => {
     state.draft.value!.name = 'Edited plan'
     vi.mocked(plansApi.saveDraft).mockImplementation(async (_planId, payload) => ({
       ...payload,
+      image_url: null,
       lock_version: payload.lock_version + 1,
     }))
 

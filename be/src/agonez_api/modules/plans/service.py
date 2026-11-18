@@ -1,7 +1,8 @@
 from typing import Any, cast
 
 from agonez_api.modules.plans.analysis.schemas import PlanAIImportDocument
-from agonez_api.modules.plans.repository import DraftRows, PlanRepository
+from agonez_api.modules.plans.images import checksum, image_url, validate_image
+from agonez_api.modules.plans.repository import DraftRows, PlanRepository, Row
 from agonez_api.modules.plans.schemas import (
     DayArtifact,
     ExerciseSlotArtifact,
@@ -10,6 +11,7 @@ from agonez_api.modules.plans.schemas import (
     PlanDetail,
     PlanDraftArtifact,
     PlanDraftUpdate,
+    PlanImageWritten,
     PlanListResponse,
     PlanSummary,
     ProgressionModelCatalogItem,
@@ -35,7 +37,9 @@ class PlanService:
 
     async def list_plans(self) -> PlanListResponse:
         rows = await self._repository.list_plans()
-        return PlanListResponse(items=[PlanSummary.model_validate(row) for row in rows])
+        return PlanListResponse(
+            items=[PlanSummary.model_validate(self._with_image_url(row)) for row in rows]
+        )
 
     async def list_progression_models(
         self,
@@ -49,9 +53,50 @@ class PlanService:
     async def get_plan(self, plan_id: int) -> PlanDetail:
         plan, revisions = await self._repository.get_plan(plan_id)
         return PlanDetail(
-            **plan,
+            **self._with_image_url(plan),
             revisions=[RevisionSummary.model_validate(row) for row in revisions],
         )
+
+    async def get_plan_image(self, plan_id: int) -> Row:
+        return await self._repository.get_plan_image(plan_id)
+
+    async def save_plan_image(
+        self,
+        plan_id: int,
+        *,
+        content_type: str | None,
+        data: bytes,
+    ) -> PlanImageWritten:
+        confirmed = validate_image(content_type, data)
+        digest = checksum(data)
+        written = await self._repository.save_plan_image(
+            plan_id,
+            content_type=confirmed,
+            data=data,
+            checksum=digest,
+        )
+        url = image_url(plan_id, digest)
+        assert url is not None  # a freshly written image always has a checksum
+        return PlanImageWritten(
+            plan_id=plan_id,
+            image_url=url,
+            content_type=cast(str, written["content_type"]),
+            byte_size=cast(int, written["byte_size"]),
+            updated_at=written["updated_at"],
+        )
+
+    async def delete_plan_image(self, plan_id: int) -> None:
+        await self._repository.delete_plan_image(plan_id)
+
+    @staticmethod
+    def _with_image_url(row: Row) -> Row:
+        """Replace the stored checksum with the public URL clients should request."""
+        plan = {key: value for key, value in row.items() if key != "image_checksum"}
+        plan["image_url"] = image_url(
+            cast(int, row["id"]),
+            cast("str | None", row.get("image_checksum")),
+        )
+        return plan
 
     async def delete_plan(self, plan_id: int) -> None:
         await self._repository.delete_plan(plan_id)
@@ -159,6 +204,7 @@ class PlanService:
                 weekday=day["weekday"],
                 name=day["name"],
                 description=day["description"],
+                icon=day["icon"],
                 workout_unit=units_by_day.get(cast(int, day["id"])),
             )
             for day in rows.days
@@ -171,5 +217,7 @@ class PlanService:
             lock_version=header["lock_version"],
             name=header["name"],
             description=header["description"],
+            accent=header["accent"],
+            image_url=image_url(header["id"], header["image_checksum"]),
             days=days,
         )

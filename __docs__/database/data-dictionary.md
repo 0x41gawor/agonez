@@ -177,7 +177,29 @@ Purpose: stable plan aggregate root.
 | `id` | identity `integer PK` | Plan identity |
 | `name` | `varchar(200) NOT NULL`, nonblank | Display name |
 | `description` | `text NULL` | Optional prose |
+| `accent` | `plans.plan_accent NULL` (`0016`) | Named accent colour; NULL renders in the app's own accent |
 | `created_at`, `updated_at` | `timestamptz NOT NULL` | Audit timestamps; saves update `updated_at` |
+
+Presentation only: `accent` never reaches analysis, execution or the AI export contract.
+
+## `plans.plan_images` (added by `0016`)
+
+Purpose: the plan's cover picture, one row per plan. Held here rather than under `MEDIA_ROOT`,
+which is the curated Atlas library and is mounted read-only; a cover is plan data the API owns
+and the ordinary database backup already carries. Its own table keeps the bytes out of every
+plan listing.
+
+| Column | Type | Meaning |
+| --- | --- | --- |
+| `plan_id` | `integer PK FK`, cascade | Owning plan; deleting the plan drops the image |
+| `content_type` | `varchar(60) NOT NULL`, CHECK | One of `image/webp`, `image/png`, `image/jpeg` |
+| `byte_size` | `integer NOT NULL`, CHECK | 1–1 500 000, and CHECKed equal to `octet_length(data)` |
+| `checksum` | `char(64) NOT NULL`, CHECK hex | SHA-256 of the bytes; serves as the ETag and the URL's `?v=` |
+| `data` | `bytea NOT NULL` | The image itself |
+| `updated_at` | `timestamptz NOT NULL` | Last replacement |
+
+The size ceiling sits below the proxy's 2 MB body limit so an oversized upload is refused by the
+API with a readable message rather than by nginx with a bare 413.
 
 ## `plans.plan_revisions`
 
@@ -206,6 +228,7 @@ Purpose: zero-based ordered microcycle day. Unique (`revision_id`, `ordinal`), d
 | `name` | varchar(200) NOT NULL nonblank | Label | N/A |
 | `description` | text NULL | Prose | N/A |
 | `weekday` | smallint NULL, 1–7 | ISO weekday display metadata | Dimensionless |
+| `icon` | `plans.day_icon NULL` (`0016`) | The goal the day serves, drawn as a glyph; presentation only | Dimensionless |
 
 ## `plans.workout_unit_prescriptions`
 
