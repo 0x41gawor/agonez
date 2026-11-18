@@ -616,6 +616,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteSave => 'Save note';
 
   @override
+  String get noteExerciseSavedA11y => 'Exercise note, saved';
+
+  @override
   String get setupNoteTitle => 'My setup';
 
   @override

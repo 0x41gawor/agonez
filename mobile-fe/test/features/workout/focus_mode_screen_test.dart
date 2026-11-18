@@ -309,6 +309,97 @@ void main() {
     });
   });
 
+  group('notes after an exercise', () {
+    const squatSetup = FocusSetupNote(
+      exerciseTrackId: 10,
+      exerciseId: 18,
+      text: 'Seat 2, K13',
+    );
+
+    Future<void> openOutline(WidgetTester tester) async {
+      await tester.tap(find.byKey(const Key('focus-outline')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a finished exercise takes a note from the outline', (
+      tester,
+    ) async {
+      FocusExerciseViewModel? noted;
+      String? savedNote;
+      await _pumpFocus(
+        tester,
+        _squatThenLegCurl(squatDone: true, squatSetup: squatSetup),
+        _callbacks(
+          onExerciseNoteChanged: (exercise, comment) async {
+            noted = exercise;
+            savedNote = comment;
+          },
+        ),
+      );
+
+      await openOutline(tester);
+      await tester.tap(find.byKey(const Key('outline-note-squat')));
+      await tester.pumpAndSettle();
+      // The sheet names the exercise, which is no longer on screen.
+      expect(find.textContaining('Barbell squat · '), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'Knees caved on set 2');
+      await tester.tap(find.text('Save note'));
+      await tester.pumpAndSettle();
+
+      expect(noted?.id, 'squat');
+      expect(savedNote, 'Knees caved on set 2');
+    });
+
+    testWidgets('a finished exercise opens its setup from the outline', (
+      tester,
+    ) async {
+      FocusExerciseViewModel? noted;
+      String? savedText;
+      await _pumpFocus(
+        tester,
+        _squatThenLegCurl(squatDone: true, squatSetup: squatSetup),
+        _callbacks(
+          onExerciseNoteChanged: (_, _) async {},
+          onSetupNoteChanged: (exercise, text) async {
+            noted = exercise;
+            savedText = text;
+          },
+        ),
+      );
+
+      await openOutline(tester);
+      await tester.tap(find.byKey(const Key('outline-setup-squat')));
+      await tester.pumpAndSettle();
+      expect(find.text('Seat 2, K13'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'Seat 3, K13');
+      await tester.tap(find.text('Save setup'));
+      await tester.pumpAndSettle();
+
+      expect(noted?.id, 'squat');
+      expect(savedText, 'Seat 3, K13');
+    });
+
+    testWidgets('an exercise not finished offers no notes in the outline', (
+      tester,
+    ) async {
+      await _pumpFocus(
+        tester,
+        _squatThenLegCurl(squatStarted: true, squatSetup: squatSetup),
+        _callbacks(
+          onExerciseNoteChanged: (_, _) async {},
+          onSetupNoteChanged: (_, _) async {},
+        ),
+      );
+
+      await openOutline(tester);
+
+      // The squat is under way and the leg curl still ahead.
+      expect(find.byKey(const Key('outline-note-squat')), findsNothing);
+      expect(find.byKey(const Key('outline-setup-squat')), findsNothing);
+      expect(find.byKey(const Key('outline-note-leg-curl')), findsNothing);
+    });
+  });
+
   group('my setup', () {
     const saved = FocusSetupNote(
       exerciseTrackId: 10,
@@ -456,7 +547,14 @@ FocusWorkoutViewModel _workout({
 );
 
 /// Barbell squat planned first, leg curl second; the squat is current.
-FocusWorkoutViewModel _squatThenLegCurl({bool squatStarted = false}) {
+/// With [squatDone], both squat sets are recorded and the leg curl is
+/// current.
+FocusWorkoutViewModel _squatThenLegCurl({
+  bool squatStarted = false,
+  bool squatDone = false,
+  String? squatNote,
+  FocusSetupNote? squatSetup,
+}) {
   FocusSetViewModel squatSet(int ordinal, {bool recorded = false}) =>
       FocusSetViewModel(
         id: 'squat-set-$ordinal',
@@ -486,9 +584,11 @@ FocusWorkoutViewModel _squatThenLegCurl({bool squatStarted = false}) {
         performedOrdinal: 0,
         loadStepKg: 2.5,
         defaultRestSeconds: 180,
+        exerciseComment: squatNote,
+        setupNote: squatSetup,
         sets: [
-          squatSet(0, recorded: squatStarted),
-          squatSet(1),
+          squatSet(0, recorded: squatStarted || squatDone),
+          squatSet(1, recorded: squatDone),
         ],
       ),
       const FocusExerciseViewModel(
@@ -515,8 +615,8 @@ FocusWorkoutViewModel _squatThenLegCurl({bool squatStarted = false}) {
         ],
       ),
     ],
-    currentExerciseIndex: 0,
-    currentSetIndex: squatStarted ? 1 : 0,
+    currentExerciseIndex: squatDone ? 1 : 0,
+    currentSetIndex: squatStarted && !squatDone ? 1 : 0,
     syncStatus: WorkoutSyncStatus.saved,
     syncLabel: 'Saved',
   );
@@ -528,10 +628,12 @@ FocusWorkoutCallbacks _callbacks({
   Future<void> Function(FocusExerciseViewModel)? onDoNow,
   Future<void> Function(FocusExerciseViewModel, FocusSetViewModel)? onUndoSet,
   Future<void> Function(FocusExerciseViewModel, String?)? onSetupNoteChanged,
+  Future<void> Function(FocusExerciseViewModel, String?)? onExerciseNoteChanged,
 }) => FocusWorkoutCallbacks(
   onMinimise: () {},
   onUndoSet: onUndoSet,
   onSetupNoteChanged: onSetupNoteChanged,
+  onExerciseNoteChanged: onExerciseNoteChanged,
   onConfirmSet: onConfirmSet ?? (_) async {},
   onSkipSet: (_, _) async {},
   onAddExtraSet: (_) async {},

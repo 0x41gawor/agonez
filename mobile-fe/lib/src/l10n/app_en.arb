@@ -265,6 +265,7 @@
   "noteSetPlaceholder": "e.g. Grip slipped on rep 5",
   "noteExercisePlaceholder": "e.g. Using both cables works better",
   "noteSave": "Save note",
+  "noteExerciseSavedA11y": "Exercise note, saved",
   "setupNoteTitle": "My setup",
   "setupNoteSavedA11y": "My setup, saved",
   "setupNoteExplanation": "For {exercise} in this slot, for the rest of this plan run. It stays until you change it.",

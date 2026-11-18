@@ -472,12 +472,29 @@ class _FocusModeScreenState extends State<FocusModeScreen>
   }
 
   Future<void> _showOutline() async {
-    final chosen = await showModalBottomSheet<FocusExerciseViewModel>(
+    final choice = await showModalBottomSheet<_OutlineChoice>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => _OutlineSheet(workout: widget.workout),
+      builder: (context) => _OutlineSheet(
+        workout: widget.workout,
+        canNote: widget.callbacks.onExerciseNoteChanged != null,
+        canSetup: widget.callbacks.onSetupNoteChanged != null,
+      ),
     );
-    if (!mounted || chosen == null) return;
+    if (!mounted || choice == null) return;
+    switch (choice.action) {
+      case _OutlineAction.note:
+        await _showExerciseNote(choice.exercise);
+      case _OutlineAction.setup:
+        await _showSetupNote(choice.exercise);
+      case _OutlineAction.reorder:
+        await _reorder(choice.exercise);
+    }
+  }
+
+  /// Brings [chosen] forward: in place of the untouched current exercise,
+  /// or right after the one in progress.
+  Future<void> _reorder(FocusExerciseViewModel chosen) async {
     if (widget.workout.canPostponeCurrent) {
       await _showPostpone(chosen);
       return;
@@ -695,14 +712,20 @@ class _FocusModeScreenState extends State<FocusModeScreen>
     );
   }
 
-  Future<void> _showExerciseNote() async {
-    final exercise = widget.workout.currentExercise;
+  /// The note of [target], an exercise already done, or else of the
+  /// current one.
+  Future<void> _showExerciseNote([FocusExerciseViewModel? target]) async {
+    final l10n = AppLocalizations.of(context);
+    final exercise = target ?? widget.workout.currentExercise;
     final value = await _showNoteSheet(
-      title: AppLocalizations.of(context).noteExerciseTitle,
-      hint: AppLocalizations.of(context).noteExercisePlaceholder,
+      title: l10n.noteExerciseTitle,
+      hint: l10n.noteExercisePlaceholder,
       initialValue: exercise.exerciseComment,
       suggestions: const [],
-      supportingText: AppLocalizations.of(context).noteExposureOnlyHint,
+      // From the outline, the sheet says which exercise it is for.
+      supportingText: target == null
+          ? l10n.noteExposureOnlyHint
+          : '${exercise.name} · ${l10n.noteExposureOnlyHint}',
     );
     if (!mounted || value == null) return;
     try {
@@ -715,8 +738,10 @@ class _FocusModeScreenState extends State<FocusModeScreen>
     }
   }
 
-  Future<void> _showSetupNote() async {
-    final exercise = widget.workout.currentExercise;
+  /// The setup of [target], an exercise already done, or else of the
+  /// current one.
+  Future<void> _showSetupNote([FocusExerciseViewModel? target]) async {
+    final exercise = target ?? widget.workout.currentExercise;
     final note = exercise.setupNote;
     if (note == null) return;
     final l10n = AppLocalizations.of(context);
