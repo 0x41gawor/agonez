@@ -2003,10 +2003,6 @@
   min-height: 27px;
 }
 
-.set-loading-control .loading-cycle-steps label {
-  grid-template-columns: auto 34px auto;
-}
-
 .set-editor > .field-error {
   grid-column: 2 / -1;
 }
