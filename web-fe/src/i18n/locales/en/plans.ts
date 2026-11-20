@@ -70,6 +70,8 @@ export default {
       loadError: 'The plan could not be loaded',
     },
     editor: {
+      coverView: 'View picture', coverRemoveQuestion: 'Delete this picture?',
+      coverRemoveConfirm: 'Delete', coverRemoveCancel: 'Keep',
       accent: 'Accent colour', accentNone: 'No accent',
       coverChoose: 'Choose a picture', coverReplace: 'Replace picture', coverRemove: 'Remove picture',
       coverWorking: 'Uploading…', coverAlt: 'Cover of {name}',

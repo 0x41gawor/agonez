@@ -36,6 +36,8 @@ export default {
       loadError: 'Не вдалося завантажити план',
     },
     editor: {
+      coverView: 'Переглянути зображення', coverRemoveQuestion: 'Видалити це зображення?',
+      coverRemoveConfirm: 'Видалити', coverRemoveCancel: 'Залишити',
       accent: 'Колір акценту', accentNone: 'Без акценту',
       coverChoose: 'Вибрати зображення', coverReplace: 'Замінити зображення', coverRemove: 'Видалити зображення',
       coverWorking: 'Завантаження…', coverAlt: 'Обкладинка плану {name}',

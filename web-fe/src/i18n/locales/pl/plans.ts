@@ -36,6 +36,8 @@ export default {
       loadError: 'Nie udało się załadować planu',
     },
     editor: {
+      coverView: 'Zobacz zdjęcie', coverRemoveQuestion: 'Usunąć to zdjęcie?',
+      coverRemoveConfirm: 'Usuń', coverRemoveCancel: 'Zachowaj',
       accent: 'Kolor akcentu', accentNone: 'Bez akcentu',
       coverChoose: 'Wybierz zdjęcie', coverReplace: 'Zmień zdjęcie', coverRemove: 'Usuń zdjęcie',
       coverWorking: 'Przesyłanie…', coverAlt: 'Okładka planu {name}',

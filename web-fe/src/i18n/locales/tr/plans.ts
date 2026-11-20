@@ -70,6 +70,8 @@ export default {
       loadError: 'Plan yüklenemedi',
     },
     editor: {
+      coverView: 'Görseli gör', coverRemoveQuestion: 'Bu görsel silinsin mi?',
+      coverRemoveConfirm: 'Sil', coverRemoveCancel: 'Tut',
       accent: 'Vurgu rengi', accentNone: 'Vurgu yok',
       coverChoose: 'Bir görsel seç', coverReplace: 'Görseli değiştir', coverRemove: 'Görseli kaldır',
       coverWorking: 'Yükleniyor…', coverAlt: '{name} kapağı',

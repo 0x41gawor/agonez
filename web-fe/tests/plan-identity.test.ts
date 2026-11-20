@@ -6,6 +6,7 @@ import { plansApi } from '@/api/plans'
 import { DAY_ICONS, PLAN_ACCENTS, type DayIcon, type PlanAccent, type PlanSummary } from '@/api/plan-types'
 import DayIconPicker from '@/components/plans/DayIconPicker.vue'
 import PlanAccentPicker from '@/components/plans/PlanAccentPicker.vue'
+import PlanCoverEditor from '@/components/plans/PlanCoverEditor.vue'
 import { COVER_MAX_EDGE, coverDimensions } from '@/features/plans/cover-image'
 import { DAY_ICON_GLYPHS, DAY_ICON_ORDER } from '@/features/plans/day-icons'
 import { i18n } from '@/i18n'
@@ -17,6 +18,8 @@ vi.mock('@/api/plans', () => ({
     create: vi.fn(),
     duplicate: vi.fn(),
     delete: vi.fn(),
+    uploadImage: vi.fn(),
+    deleteImage: vi.fn(),
   },
 }))
 
@@ -117,6 +120,55 @@ describe('accent picker', () => {
     await wrapper.get('button[aria-label="Teal"]').trigger('click')
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['teal'])
     expect(wrapper.findAll('.accent-swatch')).toHaveLength(0)
+  })
+})
+
+describe('cover editor', () => {
+  const COVER = '/api/plans/15/image?v=abc123'
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  function mountCover() {
+    return mount(PlanCoverEditor, {
+      props: { planId: 15, planName: 'PPLPP', modelValue: COVER },
+    })
+  }
+
+  it('asks before deleting, and deletes nothing until the answer is yes', async () => {
+    const wrapper = mountCover()
+
+    await wrapper.get('button[aria-label="Remove picture"]').trigger('click')
+    expect(plansApi.deleteImage).not.toHaveBeenCalled()
+    expect(wrapper.get('.plan-cover-confirm').text()).toContain('Delete this picture?')
+
+    await wrapper.get('.plan-cover-confirm button:not(.danger)').trigger('click')
+    expect(plansApi.deleteImage).not.toHaveBeenCalled()
+    expect(wrapper.find('.plan-cover-confirm').exists()).toBe(false)
+
+    await wrapper.get('button[aria-label="Remove picture"]').trigger('click')
+    await wrapper.get('.plan-cover-confirm button.danger').trigger('click')
+    await flushPromises()
+    expect(plansApi.deleteImage).toHaveBeenCalledWith(15)
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([null])
+    wrapper.unmount()
+  })
+
+  it('opens the whole picture when the cover is pressed, and never a file dialog', async () => {
+    const wrapper = mountCover()
+    const chooser = vi.spyOn(HTMLInputElement.prototype, 'click')
+
+    await wrapper.get('.plan-cover-preview').trigger('click')
+    const viewer = document.body.querySelector('.plan-cover-viewer')
+    expect(viewer).not.toBeNull()
+    expect(viewer?.querySelector('img')?.getAttribute('src')).toContain(COVER)
+    expect(chooser).not.toHaveBeenCalled()
+
+    // Replacing is its own button, so it cannot be reached by looking.
+    await wrapper.get('button[aria-label="Replace picture"]').trigger('click')
+    expect(chooser).toHaveBeenCalledTimes(1)
+    wrapper.unmount()
   })
 })
 

@@ -29,6 +29,8 @@ export default {
       exportFallbackError: 'No se pudo exportar el plan guardado.', loading: 'Cargando el editor del plan', loadError: 'No se pudo cargar el plan',
     },
     editor: {
+      coverView: 'Ver imagen', coverRemoveQuestion: '¿Eliminar esta imagen?',
+      coverRemoveConfirm: 'Eliminar', coverRemoveCancel: 'Conservar',
       accent: 'Color de acento', accentNone: 'Sin acento',
       coverChoose: 'Elegir imagen', coverReplace: 'Cambiar imagen', coverRemove: 'Quitar imagen',
       coverWorking: 'Subiendo…', coverAlt: 'Portada de {name}',

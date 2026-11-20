@@ -29,6 +29,8 @@ export default {
       exportFallbackError: 'Der gespeicherte Plan konnte nicht exportiert werden.', loading: 'Planeditor wird geladen', loadError: 'Der Plan konnte nicht geladen werden',
     },
     editor: {
+      coverView: 'Bild ansehen', coverRemoveQuestion: 'Dieses Bild löschen?',
+      coverRemoveConfirm: 'Löschen', coverRemoveCancel: 'Behalten',
       accent: 'Akzentfarbe', accentNone: 'Kein Akzent',
       coverChoose: 'Bild wählen', coverReplace: 'Bild ersetzen', coverRemove: 'Bild entfernen',
       coverWorking: 'Wird geladen…', coverAlt: 'Titelbild von {name}',

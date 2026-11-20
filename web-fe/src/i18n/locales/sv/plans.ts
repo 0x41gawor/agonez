@@ -36,6 +36,8 @@ export default {
       loadError: 'Planen kunde inte laddas',
     },
     editor: {
+      coverView: 'Visa bild', coverRemoveQuestion: 'Ta bort den här bilden?',
+      coverRemoveConfirm: 'Ta bort', coverRemoveCancel: 'Behåll',
       accent: 'Accentfärg', accentNone: 'Ingen accent',
       coverChoose: 'Välj en bild', coverReplace: 'Byt bild', coverRemove: 'Ta bort bild',
       coverWorking: 'Laddar upp…', coverAlt: 'Omslag för {name}',

@@ -36,6 +36,8 @@ export default {
       loadError: 'Het plan kon niet worden geladen',
     },
     editor: {
+      coverView: 'Afbeelding bekijken', coverRemoveQuestion: 'Deze afbeelding verwijderen?',
+      coverRemoveConfirm: 'Verwijderen', coverRemoveCancel: 'Behouden',
       accent: 'Accentkleur', accentNone: 'Geen accent',
       coverChoose: 'Kies een afbeelding', coverReplace: 'Afbeelding vervangen', coverRemove: 'Afbeelding verwijderen',
       coverWorking: 'Uploaden…', coverAlt: 'Omslag van {name}',

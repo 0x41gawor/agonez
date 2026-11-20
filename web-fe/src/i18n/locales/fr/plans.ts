@@ -30,6 +30,8 @@ export default {
       exportFallbackError: "Impossible d’exporter le plan enregistré.", loading: "Chargement de l’éditeur de plan", loadError: 'Impossible de charger le plan',
     },
     editor: {
+      coverView: 'Voir l’image', coverRemoveQuestion: 'Supprimer cette image ?',
+      coverRemoveConfirm: 'Supprimer', coverRemoveCancel: 'Conserver',
       accent: 'Couleur d’accent', accentNone: 'Aucun accent',
       coverChoose: 'Choisir une image', coverReplace: 'Remplacer l’image', coverRemove: 'Retirer l’image',
       coverWorking: 'Envoi…', coverAlt: 'Couverture de {name}',

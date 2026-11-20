@@ -36,6 +36,8 @@ export default {
       loadError: 'Impossibile caricare il piano',
     },
     editor: {
+      coverView: 'Vedi immagine', coverRemoveQuestion: 'Eliminare questa immagine?',
+      coverRemoveConfirm: 'Elimina', coverRemoveCancel: 'Mantieni',
       accent: 'Colore d’accento', accentNone: 'Nessun accento',
       coverChoose: 'Scegli un’immagine', coverReplace: 'Sostituisci immagine', coverRemove: 'Rimuovi immagine',
       coverWorking: 'Caricamento…', coverAlt: 'Copertina di {name}',

@@ -36,6 +36,8 @@ export default {
       loadError: 'Não foi possível carregar o plano',
     },
     editor: {
+      coverView: 'Ver imagem', coverRemoveQuestion: 'Excluir esta imagem?',
+      coverRemoveConfirm: 'Excluir', coverRemoveCancel: 'Manter',
       accent: 'Cor de destaque', accentNone: 'Sem destaque',
       coverChoose: 'Escolher imagem', coverReplace: 'Trocar imagem', coverRemove: 'Remover imagem',
       coverWorking: 'Enviando…', coverAlt: 'Capa de {name}',
