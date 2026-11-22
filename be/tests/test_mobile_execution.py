@@ -468,11 +468,18 @@ async def test_fallback_materialization_preserves_analysis_and_fills_missing_slo
                     "source_revision_id": 2,
                 "name": "Push A",
                 "description": None,
-                "warmup_notes": None,
+                "warmup_notes": "Bike 5 min, then two ramp sets.",
                 "stretch_notes": None,
             }
         if "FROM exec.workout_unit_prescriptions" in query:
-            return {"id": 90}
+            # Materialised before the coach wrote the warmup note.
+            return {
+                "id": 90,
+                "name_snapshot": "Push A",
+                "description_snapshot": None,
+                "warmup_notes_snapshot": None,
+                "stretch_notes_snapshot": None,
+            }
         raise AssertionError(query)
 
     queries: list[str] = []
@@ -569,6 +576,15 @@ async def test_fallback_materialization_preserves_analysis_and_fills_missing_slo
         if "INSERT INTO exec.exercise_unit_prescriptions" in query:
             writes.append((query, params))
             return {"id": 102}
+        if "UPDATE exec.workout_unit_prescriptions" in query:
+            writes.append((query, params))
+            return {
+                "id": 90,
+                "name_snapshot": "Push A",
+                "description_snapshot": None,
+                "warmup_notes_snapshot": "Bike 5 min, then two ramp sets.",
+                "stretch_notes_snapshot": None,
+            }
         if "SELECT count(DISTINCT exercise.id)" in query:
             return {
                 "exercise_count": 2,
@@ -598,6 +614,16 @@ async def test_fallback_materialization_preserves_analysis_and_fills_missing_slo
     ]
     set_inserts = [item for item in writes if "INSERT INTO exec.set_prescriptions" in item[0]]
     assert not any("DELETE FROM exec.exercise_unit_prescriptions" in query for query, _ in writes)
+
+    # Prose the coach wrote after the first materialisation still reaches the athlete,
+    # and does so without touching updated_at: prescription_version hashes that column,
+    # so bumping it would fail the next start with prescription_changed.
+    prose_resyncs = [item for item in writes if "SET name_snapshot" in item[0]]
+    assert len(prose_resyncs) == 1
+    assert "warmup_notes_snapshot" in prose_resyncs[0][0]
+    assert "updated_at" not in prose_resyncs[0][0]
+    assert prose_resyncs[0][1] == ("Push A", None, "Bike 5 min, then two ramp sets.", None, 90)
+
     assert len(exercise_inserts) == 1
     assert "'plan_fallback'" in exercise_inserts[0][0]
     assert len(set_inserts) == 1
@@ -665,6 +691,8 @@ async def test_stale_start_includes_fresh_prescription() -> None:
                     "microcycle_ordinal": 4,
                     "microcycle_classification": "normal",
                     "description_snapshot": None,
+                    "warmup_notes_snapshot": "Bike 5 min, then two ramp sets.",
+                    "stretch_notes_snapshot": "Hamstrings and hips, 3 min.",
                     "workout_prescription_comment": None,
                 },
                 "exercises": [],
@@ -834,6 +862,8 @@ def test_setup_notes_reach_the_prescription_without_changing_its_version() -> No
             "microcycle_ordinal": 4,
             "microcycle_classification": "normal",
             "description_snapshot": None,
+            "warmup_notes_snapshot": "Bike 5 min, then two ramp sets.",
+            "stretch_notes_snapshot": "Hamstrings and hips, 3 min.",
             "workout_prescription_comment": None,
             "session_status": "scheduled",
             "plan_run_id": 3,
@@ -903,6 +933,9 @@ def test_setup_notes_reach_the_prescription_without_changing_its_version() -> No
 
     prescription = service._prescription(data)
 
+    # The plan's own prose for the session rides along with it.
+    assert prescription.warmup_notes == "Bike 5 min, then two ramp sets."
+    assert prescription.stretch_notes == "Hamstrings and hips, 3 min."
     assert prescription.prescription_version == "rx-7-abc123"
     notes = prescription.exercises[0].setup_notes
     assert [item.exercise_id for item in notes] == [61, 140]

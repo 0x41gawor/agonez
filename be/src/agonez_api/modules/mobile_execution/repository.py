@@ -410,6 +410,7 @@ class MobileExecutionRepository:
                    mc.ordinal AS microcycle_ordinal,
                    mc.classification::text AS microcycle_classification,
                    workout.id AS prescription_id, workout.description_snapshot,
+                   workout.warmup_notes_snapshot, workout.stretch_notes_snapshot,
                    workout.prescription_comment AS workout_prescription_comment,
                    workout.updated_at AS prescription_updated_at
             FROM exec.workout_sessions AS session
@@ -654,6 +655,41 @@ class MobileExecutionRepository:
                 ),
             )
             changed = True
+        elif any(
+            (
+                workout["name_snapshot"] != session["name"],
+                workout["description_snapshot"] != session["description"],
+                workout["warmup_notes_snapshot"] != session["warmup_notes"],
+                workout["stretch_notes_snapshot"] != session["stretch_notes"],
+            )
+        ):
+            # The exercise rows below already re-read the plan for a session that has
+            # not been performed yet; without this the workout's own prose was the one
+            # thing frozen at first materialisation and could never be corrected.
+            #
+            # Deliberately without touching updated_at, and without setting `changed`:
+            # prescription_version hashes that column, so bumping it here would turn a
+            # typo fixed in a warmup note into `409 prescription_changed` on the next
+            # start. None of these four columns is prescription semantics.
+            workout = await self._fetch_one(
+                connection,
+                """
+                UPDATE exec.workout_unit_prescriptions
+                SET name_snapshot = %s,
+                    description_snapshot = %s,
+                    warmup_notes_snapshot = %s,
+                    stretch_notes_snapshot = %s
+                WHERE id = %s
+                RETURNING *
+                """,
+                (
+                    session["name"],
+                    session["description"],
+                    session["warmup_notes"],
+                    session["stretch_notes"],
+                    workout["id"],
+                ),
+            )
 
         plan_exercises = await self._fetch_all(
             connection,

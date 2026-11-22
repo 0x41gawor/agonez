@@ -211,6 +211,16 @@ Compact list: `[{ id, name, status, starts_on, ends_on, microcycle_count, curren
 
 Returns the coherent prescription payload needed to execute without further reads. The same object is embedded in the workout snapshot (§4.6), frozen at start.
 
+`warmup_notes` and `stretch_notes` are the plan's prose for this workout, beside `plan_comment`
+(the workout's description). All three are nullable and most plans leave them empty, so render
+each only when it has text. They are prose for the athlete to read, never parsed.
+
+They are kept in step with the plan for as long as the session has not been performed: editing a
+warmup note in PlanCreator reaches the next fetch of a `scheduled` or `missed` session. A session
+already completed keeps what it was executed with. **Changing them never changes
+`prescription_version`** — they are not prescription semantics, so a corrected note cannot turn
+into `409 prescription_changed` at start.
+
 ```json
 {
   "session_id": 414,
@@ -220,6 +230,8 @@ Returns the coherent prescription payload needed to execute without further read
   "workout_track_id": 7,
   "microcycle": { "ordinal": 7, "classification": "normal" },
   "plan_comment": null,
+  "warmup_notes": "Bike 5 min, then two ramp sets on the first press.",
+  "stretch_notes": "Pecs and lats against the rack, 3 min.",
   "prescription_comment": null,
   "exercises": [
     {

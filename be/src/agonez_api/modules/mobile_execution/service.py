@@ -443,6 +443,8 @@ class MobileExecutionService:
                 "classification": session["microcycle_classification"],
             },
             plan_comment=session["description_snapshot"],
+            warmup_notes=session["warmup_notes_snapshot"],
+            stretch_notes=session["stretch_notes_snapshot"],
             prescription_comment=session["workout_prescription_comment"],
             exercises=exercises,
         )

@@ -175,6 +175,14 @@ class WorkoutPrescription(APIModel):
     workout_track_id: int
     microcycle: PrescriptionMicrocycle
     plan_comment: str | None
+    warmup_notes: str | None = Field(
+        default=None,
+        description="How the plan says to warm up for this workout. Prose, may be absent.",
+    )
+    stretch_notes: str | None = Field(
+        default=None,
+        description="How the plan says to finish this workout. Prose, may be absent.",
+    )
     prescription_comment: str | None
     exercises: list[PrescriptionExercise]
 

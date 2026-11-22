@@ -4106,6 +4106,9 @@ components:
       - conditioning
       - mobility
       - rest
+      - bed
+      - recharge
+      - sleep
       - deload
       - test
       - sport
@@ -10482,6 +10485,18 @@ components:
           - type: string
           - type: 'null'
           title: Plan Comment
+        warmup_notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Warmup Notes
+          description: How the plan says to warm up for this workout. Prose, may be absent.
+        stretch_notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stretch Notes
+          description: How the plan says to finish this workout. Prose, may be absent.
         prescription_comment:
           anyOf:
           - type: string

@@ -286,6 +286,7 @@ change it. Unlike a performance comment it does not belong to one exposure.
 | `fallback_unavailable` | Implemented, `422` on fallback preparation | The session cannot be mapped safely to its governing plan revision/tracks. |
 | `off_schedule_acknowledgement_required` | Implemented, `422` | The selected next-track exposure is not today's expected session. |
 | `off_schedule_not_applicable` | Implemented, `422` | An acknowledgement was supplied for the expected on-schedule session. |
+| `warmup_notes` / `stretch_notes` | Implemented, prescription payload | The plan's prose for the workout, served from `exec.workout_unit_prescriptions.*_snapshot`. Re-read from the plan while the session is pending; excluded from `prescription_version`. |
 | `not_next_track_exposure` | Implemented, `409` | The selected occurrence skips an earlier scheduled occurrence of its track, or precedes one already executed. Missed occurrences never block. |
 | `schedule_changed` | Implemented, `409` | The acknowledged expected session no longer matches current server state. |
 | `seq_gap` | Implemented, `409` | Includes the authoritative next sequence. |
