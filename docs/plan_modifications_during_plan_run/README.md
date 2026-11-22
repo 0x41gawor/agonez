@@ -53,6 +53,9 @@ path. This design completes that model with the smallest set of changes.
 | 6 | [05-frontend-ux.md](05-frontend-ux.md) | Frontend tasks. |
 | 7 | [06-implementation-roadmap.md](06-implementation-roadmap.md) | Picking up a task. |
 | 8 | [07-test-matrix.md](07-test-matrix.md) | Writing tests; test IDs referenced by tasks. |
+| — | [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | **Before and after every task**: board, decisions Q1–Q5, deviations, environment facts. |
+| — | [AGENT_PROMPTS.md](AGENT_PROMPTS.md) | Starting, reviewing or resuming an agent session; ready-to-paste T0.1 prompt. |
+| — | [handoff/](handoff/) | One handoff note per finished task. |
 
 ## Implementation phases
 
@@ -105,7 +108,9 @@ Details and workarounds: `01` §10.
 
 ## Recommended next action
 
-Assign **T0.1, the DB-backed integration test harness** (`06-implementation-roadmap.md`). Every later
+Assign **T0.1, the DB-backed integration test harness** (`06-implementation-roadmap.md`), using the
+ready-to-paste prompt in [AGENT_PROMPTS.md](AGENT_PROMPTS.md) §5, and track progress in
+[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). Every later
 task depends on verifying lifecycle behaviour against a real schema with real constraints, and none
 exists today. T0.2 (characterisation tests and preflight) and T1.1 (migration 0018) can start as soon
 as it lands, in parallel.
