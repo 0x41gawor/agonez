@@ -67,13 +67,13 @@ path. This design completes that model with the smallest set of changes.
 | 3 Execution reconciliation | Lineage identity everywhere; run-plan state/discard; Apply with rebinding, prescription rebase, dry run; exercise-aware analytics. | T3.1 – T3.5 |
 | 4 Frontend integration | Run plan tab, PlanCreator run context, apply dialog, peripheral updates, translations. | T4.1 – T4.6 |
 | 5 Library promotion | "Save as new plan" via the existing duplicate endpoint. | T5.1, T5.2 |
-| 6 End-to-end validation | Release gates: migration rehearsal before release B; live lifecycle script before release C. | T6.2, T6.1 |
+| 6 End-to-end validation | Gates: migration rehearsal before 0019 merges; live lifecycle script before the UI is enabled. | T6.2, T6.1 |
 
-Release coupling: **0019 (T2.1), new run creation (T2.2) and the identity refactor (T3.1) must ship
-together** (release B). 0018 and the plans refactor (release A) are backward compatible and can ship
-first. Gates: release B is gated by the migration rehearsal T6.2, which uses only release-A/B
-functionality; release C (Apply, Discard, state, analytics, promotion API) is gated by the live
-lifecycle script T6.1; the frontend (release D) ships after C (`06` "Release gates").
+Everything lands on `master` in a fixed order in which **every commit is deployable** (`06`
+"Working on master"): run creation copies plans before migration 0019 converts the old runs, the
+identity refactor follows the conversion, the Apply backend lands dormant, and the UI lands behind
+`RUN_PLAN_UI_ENABLED = false` until the end. Gates: the migration rehearsal T6.2 before 0019 merges;
+the live lifecycle script T6.1 and a manual walkthrough before the UI is enabled.
 
 ## Intentional v1 limitations
 

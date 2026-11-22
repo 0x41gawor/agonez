@@ -59,9 +59,10 @@ ALTER TABLE exec.exercise_unit_tracks ADD COLUMN plan_lineage_key uuid;
 CREATE FUNCTION plans.copy_revision_tree(...) ...;
 ```
 
-### 1.2 Migration `0019_run_plans_convert_legacy_runs.sql` (ships with the new runtime)
+### 1.2 Migration `0019_run_plans_convert_legacy_runs.sql` (lands on `master` after T2.2 and only after the T6.2 rehearsal)
 
-Converts every existing run (§4), then tightens constraints:
+Converts every run with `run_plan_id IS NULL` (§4) — runs created after T2.2 is deployed already own
+a run plan and lineage-keyed tracks and are skipped — then tightens constraints:
 
 ```sql
 ALTER TABLE exec.plan_runs ALTER COLUMN run_plan_id SET NOT NULL;
@@ -74,16 +75,18 @@ ALTER TABLE exec.exercise_unit_tracks
         UNIQUE (workout_unit_track_id, plan_lineage_key);
 
 COMMENT ON COLUMN exec.workout_unit_tracks.logical_key IS
-    'Legacy label. day:N for runs created before 0019, the lineage UUID text afterwards. Identity is plan_lineage_key.';
+    'Label only. day:N for tracks created with the run, the lineage UUID text for tracks created by a run-plan Apply. Identity is plan_lineage_key.';
 COMMENT ON COLUMN exec.exercise_unit_tracks.logical_key IS
-    'Legacy label. slot:N for runs created before 0019, the lineage UUID text afterwards. Identity is plan_lineage_key.';
+    'Label only. slot:N for tracks created with the run, the lineage UUID text for tracks created by a run-plan Apply. Identity is plan_lineage_key.';
 COMMENT ON COLUMN exec.microcycles.plan_revision_id IS
     'Run-plan revision in effect when the microcycle started. The governing revision of a session is the revision of its source_plan_day_id.';
 ```
 
 Why `logical_key` is kept: its unique constraints and the views `exec.workout_session_calendar`,
 `exec.exercise_unit_trace`, `exec.workout_unit_trace`, `exec.performed_load_time_series` expose it.
-New tracks store `plan_lineage_key::text` there so it stays unique even when a removed workout's
+Tracks created at run creation keep the positional label (so the pre-refactor read code keeps
+working while the release is rolled out commit by commit, `06` "Working on master"); tracks created
+by Apply store `plan_lineage_key::text` so the label stays unique even when a removed workout's
 position is reused.
 
 ### 1.3 Existing schema reused unchanged
@@ -231,8 +234,12 @@ Inside the existing transaction, before inserting the run:
      `copy_revision_tree(r1 → r2, false)`.
 3. `_load_revision_tree(r1)` and continue with today's algorithm, except:
    - `initial_plan_revision_id = r1`, `run_plan_id = run plan`, microcycles `plan_revision_id = r1`.
-   - Workout track: `plan_lineage_key = unit.lineage_key`, `logical_key = unit.lineage_key::text`.
-   - Exercise track: `plan_lineage_key = slot.lineage_key`, `logical_key = slot.lineage_key::text`.
+   - Workout track: `plan_lineage_key = unit.lineage_key`, `logical_key = f"day:{day_ordinal}"`
+     (unchanged label).
+   - Exercise track: `plan_lineage_key = slot.lineage_key`, `logical_key = f"slot:{slot_ordinal}"`
+     (unchanged label).
+   - The run header and mobile context keep reading the plan through `initial_plan_revision_id`
+     (which is now the run plan's r1); the new header fields arrive with T3.1.
    - Sessions bind to r1 rows (as today, just different ids).
 4. `PlanRunCreate.plan_revision_id` keeps its name and meaning ("library revision to copy").
    `preview_plan_run` is unchanged.
@@ -326,7 +333,7 @@ Ship as `be/scripts/run_plans_preflight.sql` and embed the same checks at the st
 
 Live data (2026-11-22) passes all five (Audit §4.1).
 
-### 4.2 Algorithm (per run, ordered by `id`)
+### 4.2 Algorithm (per run with `run_plan_id IS NULL`, ordered by `id`)
 
 ```text
 for run R:
@@ -439,9 +446,14 @@ transaction; nothing partial is visible. `dry_run=true` uses `connection.transac
 
 ## 7. Rollback considerations
 
-| Release | Contents | Rollback |
+Work lands on `master` in an order where every commit is deployable (`06` "Working on master").
+Rollback means redeploying an earlier `master` commit; the table says how far back that is safe.
+
+| Step on `master` | Contents | Safe code rollback |
 | --- | --- | --- |
-| A | 0018 + plans refactor | App rollback is safe (0018 is additive; old code ignores the columns; lineage defaults are harmless). |
-| B | 0019 + run creation + identity refactor | App rollback alone is **not** safe (old `create_plan_run` violates `run_plan_id NOT NULL`). Take `db_backup.sh` immediately before deploying; rehearse 0019 on the latest backup. Rollback = forward fix, or restore the backup (loses workouts recorded after deploy), or drop the NOT NULL and run old code temporarily (converted runs stay readable by old code because copies preserve ordinals and old code reads `microcycles.plan_revision_id`). |
-| C | Apply/Discard/state endpoints | App rollback leaves extra RELEASED revisions and rebound sessions; old (release B) code reads them correctly because it already uses session-bound revisions and lineage. |
-| D/E | Frontend, promotion | Independent. |
+| A | 0018, plans refactor (T1.1, T1.2) | Any earlier commit: 0018 is additive; old code ignores the columns; lineage defaults are harmless. |
+| B1 | T2.2 run creation with run plans | Any earlier commit: runs created by T2.2 are ordinary runs to the old code (positional labels, ordinals preserved). |
+| B2 | T2.1 migration 0019 | Back to B1 at most: earlier `create_plan_run` violates `run_plan_id NOT NULL`. Take `db_backup.sh` right before the first deploy that contains 0019; T6.2 rehearses it. Converted runs stay readable by B1 code (positional labels, `microcycles.plan_revision_id` remapped). |
+| B3 | T3.1 identity refactor | Back to B2, as long as no Apply has run (Apply is only reachable after C). |
+| C | T3.2–T3.5 (endpoints dormant until the UI flag is on) | Back to B3 at most once an Apply has created tracks with UUID labels, which pre-T3.1 code cannot parse. |
+| D | Frontend behind `RUN_PLAN_UI_ENABLED` | Flip the constant back to `false`. |

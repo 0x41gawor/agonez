@@ -3,56 +3,65 @@
 Small, testable tasks for independent coding agents. Read `README.md`, then the documents each task
 names. Decisions are referenced as D1–D16 (`01`), tests as T-IDs (`07`).
 
-## Phases and releases
+## Working on master
 
-| Phase | Tasks | Ships in |
-| --- | --- | --- |
-| 0 — Safety net | T0.1, T0.2 | Release A |
-| 1 — Backend foundation | T1.1, T1.2 | Release A |
-| 2 — Migration / compatibility | T2.1, T2.2, T2.3 | Release B (with T3.1) |
-| 3 — Execution reconciliation | T3.1, T3.2, T3.3, T3.4, T3.5 | B (T3.1), C (rest) |
-| 4 — Frontend integration | T4.1 … T4.6 | Release C/D |
-| 5 — Library promotion | T5.1, T5.2 | T5.1 any time after T1.2; T5.2 with D |
-| 6 — End-to-end validation | T6.2 (release-B gate), T6.1 (release-C gate) | Gates, not shipped code |
+All work lands on `master`, in the order below. **Every commit on `master` must be deployable**:
+`./redeploy.sh` builds `master` and the API applies pending migrations at start-up, and you may deploy
+at any time (also for unrelated fixes). Agents still develop in their own git worktree on a
+short-lived task branch; after review (and the gate, where one is listed) the branch is rebased onto
+`master` and fast-forwarded into it. There are no long-lived release branches.
 
-Release coupling (see `02` §7): **B must contain T2.1 + T2.2 + T3.1 together** (0019 makes
-`run_plan_id` NOT NULL and lineage-based reads require converted data).
+Canonical merge order:
 
-### Release gates
-
-Each gate uses only functionality shipped in that release or earlier.
-
-| Release | Contents | Gate before deploy | Gate must not use |
+| # | Task(s) | Why `master` stays deployable | Gate before merging |
 | --- | --- | --- | --- |
-| A | T0.1, T0.2, T1.1, T1.2 (T5.1 optional) | Unit + integration suites green; old runtime works on 0018 (additive). | — |
-| B | T2.1, T2.2, T2.3, T3.1 | **T6.2** — migration rehearsal RB-01…RB-08 (`07` §6b). | Apply, Discard, run-plan endpoints, promotion, frontend. |
-| C | T3.2, T3.3, T3.4, T3.5 (+ T5.1 if not in A) | **T6.1** — live lifecycle E2E-01…06 (`07` §5) against a release-B deployment. | Frontend. |
-| D | T4.1–T4.6, T5.2 | Frontend suites + manual walkthrough of `05` against a release-C deployment (RD-01, `07` §6b). | — |
+| 1 | T0.1 | Tests and scripts only. | — |
+| 2 | T0.2 | Tests and read-only SQL only. | — |
+| 3 | T1.1 | Migration 0018 is additive; the current runtime ignores it. | — |
+| 4 | T1.2 | Additive fields; library behaviour unchanged except the delete-500 fix. | — |
+| 5 | T2.2 | New runs copy their plan; their tracks keep positional labels, so the current read code works on them. | — |
+| 6 | T2.1 + T2.3 (stacked branches, merged together) | 0019 converts only runs without a run plan, keeps positional labels and ordinals: the current read code works on converted runs; T2.2 already sets `run_plan_id`, so NOT NULL holds. | **T6.2** passes on the stacked branch. Take `db_backup.sh` right before the first deploy that contains 0019. |
+| 7 | T3.1 | Every track now has a lineage key. | Re-run T2.3: only additive fields differ. |
+| 8 | T3.5, T3.2 (any order) | Additive analytics fields; new endpoints that no client calls. | — |
+| 9 | T3.3 | Apply service and the un-cancel guard (which only triggers after an Apply); the Apply route is not registered yet. | — |
+| 10 | T3.4 | Registers the Apply route; no client calls it while the UI is hidden. | — |
+| — | T5.1 | Additive; may merge any time after #4. | — |
+| 11 | T4.1 … T4.5, T5.2, T4.6 | All run-plan UI is behind `RUN_PLAN_UI_ENABLED = false` (added by T4.1). | — |
+| 12 | Enable the UI (one-line commit: `RUN_PLAN_UI_ENABLED = true`) | — | **T6.1** and **RD-01** pass. |
 
-## Dependency graph and parallel lanes
+Milestones (names used in the other documents): **A** = #1–4, **B** = #5–7, **C** = #8–10 + T5.1
+(backend complete, dormant), **D** = #11–12 (UI).
+
+Develop in parallel, merge in order: a task may be developed before its predecessors are merged (on a
+branch stacked on theirs, or against mocks), but it is fast-forwarded into `master` only in the order
+above. The second of two parallel branches rebases onto `master` before merging.
+
+### Gates
+
+Each gate uses only functionality that is already on `master` or on the branch being gated.
+
+| Gate | When | Checks | Must not use |
+| --- | --- | --- | --- |
+| **T6.2** | Before T2.1 + T2.3 merge (#6) | RB-01…RB-08 (`07` §6b) | Apply, Discard, run-plan endpoints, promotion, frontend |
+| **T6.1** | Before the UI is enabled (#12) | E2E-01…06 (`07` §5) over HTTP against a deployment of current `master` | Frontend |
+| **RD-01** | Before the UI is enabled (#12) | Manual walkthrough of `05` with `RUN_PLAN_UI_ENABLED = true` in a local build | — |
+
+## Dependencies and parallel lanes
 
 ```text
-T0.1 ─┬─ T0.2 (preflight) ──────────────────────────┐
-      └─ T1.1 ─┬─ T2.1 ─ T2.3 ──────────────────────┤
-               └─ T1.2 ─┬─ T2.2 ─┬─ T3.1 ───────────┴─► T6.2 ══ Release B gate
-                        │        │    │
-                        │        │    ├─ T3.3 ─ T3.4 ─┐
-                        │        │    └─ T3.5 ────────┤
-                        │        └─ T3.2 ─────────────┼─► T6.1 ══ Release C gate (B deployed first)
-                        └─ T5.1 ──────────────────────┘
-
-docs (04) ─ T4.1 ─┬─ T4.2 ─┬─ T4.5 ─ T4.6
-                  ├─ T4.3 ─┤                ══ Release D gate (RD-01, after C)
-                  └─ T4.4 ─┴─ T5.2
+T0.1 ─┬─ T0.2 ─────────────────────────┐
+      └─ T1.1 ─┬─ T1.2 ─ T2.2 ─ T2.1 ─ T2.3 ─► [T6.2] ─► merge #6 ─ T3.1 ─┬─ T3.5
+               │                                                         ├─ T3.2 ─ T3.3 ─ T3.4 ─┐
+               └─ T5.1 (any time after T1.2) ────────────────────────────┘                       │
+docs (04) ─ T4.1 ─┬─ T4.2 ─┬─ T4.5 ─ T4.6                                                         │
+                  ├─ T4.3 ─┤                                                                       │
+                  └─ T4.4 ─┴─ T5.2 ─────────────────────────────► [T6.1 + RD-01] ─► enable UI ◄────┘
 ```
 
-T2.3 needs T2.2 code only for its "after" read-model run; T3.3 also depends on T3.2; T6.2 never
-waits for Phase 3 beyond T3.1.
-
-Parallel-safe pairs (no shared files): T0.2 ∥ T1.1 · T1.2 ∥ T2.1 · T3.2 ∥ T3.1 (T3.2 only adds new
-files + router lines) · T5.1 ∥ Phase 3 · all of Phase 4 ∥ Phase 3 (against contract `04`, mocked API)
-· T4.2 ∥ T4.3 ∥ T4.4 (T4.1 owns `router/index.ts` and the API client). Not parallel: T3.1 → T3.5
-(both edit `execution/service.py`), T3.3 → T3.4 (same new files).
+Parallel-safe pairs (no shared files): T0.2 ∥ T1.1 · T1.2 ∥ T2.1 development (SQL only; merges after
+T2.2) · T3.2 ∥ T3.5 · T5.1 ∥ Phase 3 · all of Phase 4 ∥ Phase 3 (against contract `04`, mocked API) ·
+T4.2 ∥ T4.3 ∥ T4.4 (T4.1 owns `router/index.ts`, the API client and the UI flag). Not parallel:
+T3.1 → T3.5 (both edit `execution/service.py`), T3.3 → T3.4 (same new files).
 
 Frontend i18n rule: every UI task adds its keys to **all 11 locales** (English text copied into
 non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
@@ -194,9 +203,11 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 
 ### T2.1 — Migration 0019: convert legacy runs
 
-- **Objective:** give every existing run its own run plan, remap all `exec` references, backfill
-  lineage, tighten constraints.
-- **Dependencies:** T1.1 (function, columns); T0.2 (preflight).
+- **Objective:** give every run without a run plan (`run_plan_id IS NULL`) its own run plan, remap all
+  `exec` references, backfill lineage, tighten constraints.
+- **Dependencies:** T1.1 (function, columns); T0.2 (preflight); T2.2 merged (it sets `run_plan_id` for
+  new runs, so the NOT NULL constraint holds). SQL can be developed earlier; it merges at step #6
+  together with T2.3, after the T6.2 gate.
 - **Modules/files:** new `migrations/versions/0019_run_plans_convert_legacy_runs.sql`; new
   `be/tests/integration/test_migration_0019.py`.
 - **Exact expected changes:** `02` §1.2 and §4 (preflight `RAISE`, per-run algorithm,
@@ -207,33 +218,37 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
   run 1 has applied revisions r1 (copy of library rev 6) and r2 (copy of rev 25) and a draft r3; runs 3
   and 14 (and 2 and 11) own distinct run plans; library plan fingerprints unchanged; session and
   prescription counts unchanged; `DELETE FROM plans.workout_plans WHERE id = 15` succeeds inside a
-  rolled-back test transaction.
-- **Required tests:** T-MIG-01…09 (`07` §6).
+  rolled-back test transaction; a run created by T2.2 code before the migration is left unchanged;
+  legacy tracks keep their positional `logical_key` labels.
+- **Required tests:** T-MIG-01…09, T-MIG-11 (`07` §6).
 - **Potential regressions:** migration duration (≈ 6 runs, hundreds of rows — seconds); a preflight
-  failure blocks deploy (intended); seed script incompatibility (Q5).
+  failure blocks deploy (intended); seed script incompatibility (Q5). The pre-T3.1 read code must keep
+  working on converted runs (checked by T2.3).
 - **Deliverables:** migration, tests, a short "run before deploy" note in the migration header
   comment (take `db_backup.sh`).
 - **Suggested agent:** backend database agent.
 
 ### T2.2 — Run creation and deletion with run plans
 
-- **Objective:** new runs copy their plan; deleting a run deletes its run plan; run header exposes
-  run/source plan.
-- **Dependencies:** T1.2 (and 0019 present for NOT NULL; develop against 0018).
-- **Modules/files:** `modules/execution/repository.py` (`create_plan_run`, `delete_plan_run`,
-  `list_plan_runs`, `_load_bundle` run query), new `modules/execution/run_plan_repository.py`
-  (`create_run_plan`), `modules/execution/service.py` (`_run_header`), `modules/execution/schemas.py`
-  (header fields), `modules/mobile_execution/repository.py` (`list_plan_runs`, `load_context` run join →
-  run plan); tests `tests/integration/test_run_creation.py`, `tests/test_execution_service.py`.
-- **Exact expected changes:** `02` §3.3 and §3.6; header per `04` §2 (`run.plan` = run plan,
-  `run.source_plan`, `run.current_revision`, `run.has_unapplied_changes`).
-- **API/schema dependencies:** 0018/0019; T1.2 copy + fingerprint.
+- **Objective:** new runs copy their plan; deleting a run deletes its run plan. Must be deployable on
+  0018 alone, with the current (positional) read code.
+- **Dependencies:** T1.2.
+- **Modules/files:** `modules/execution/repository.py` (`create_plan_run`, `delete_plan_run`), new
+  `modules/execution/run_plan_repository.py` (`create_run_plan`); tests
+  `tests/integration/test_run_creation.py`, `tests/test_execution_service.py`.
+- **Exact expected changes:** `02` §3.3 and §3.6. Tracks get `plan_lineage_key` **and keep the
+  positional `day:N`/`slot:N` labels**. `delete_plan_run` deletes the run plan when `run_plan_id` is
+  set (legacy runs have none until 0019). No run-header or mobile-context changes (they move to T3.1);
+  the header keeps reading the plan via `initial_plan_revision_id`, which now points at the run plan, so
+  `run.plan.code` shows the run plan's code until T3.1/T4.5.
+- **API/schema dependencies:** 0018; T1.2 copy + fingerprint.
 - **Acceptance criteria:** after creation: run plan `scope='run'`, r1 RELEASED and r2 DRAFT with
   fingerprints equal to the library draft; tracks carry the copied lineage keys; sessions bound to r1;
   setup notes seeded as before; editing/deleting the library plan afterwards changes nothing in the run;
   two runs from one library plan are independent; deleting a run removes its run plan and leaves the
-  library plan; creating from a run-plan revision → 422 `plan_revision_not_library`. T0.2 tests for
-  R1/R2 now XPASS → remove their xfail markers.
+  library plan; creating from a run-plan revision → 422 `plan_revision_not_library`; overview,
+  analysis queue, timeline, mobile context and fallback/start work for a new run with the unchanged
+  read code. T0.2 tests for R1/R2 now XPASS → remove their xfail markers.
 - **Required tests:** T-INT-RUN-01…08, T-DEL-01, T-DEL-02, T-IMM-04 (`07`); extend the T-IMM-03
   allow-list with the run-plan delete in `delete_plan_run`.
 - **Potential regressions:** preview vs creation counts; mobile context plan name; `RunManagerDialog`
@@ -244,12 +259,14 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 ### T2.3 — Conversion rehearsal and golden comparison
 
 - **Objective:** prove the conversion does not change any Execution read model.
-- **Dependencies:** T2.1; T0.1.
+- **Dependencies:** T2.1 (developed on a branch stacked on T2.1; both merge together at step #6);
+  T0.1.
 - **Modules/files:** new `be/tests/integration/test_migration_golden.py`, helper
   `be/tests/integration/golden.py` (id-insensitive JSON normaliser).
 - **Exact expected changes:** for every run on the restored backup, capture `overview`,
   `analysis/queue`, `timeline`, `workout-traces` (+ each trace), `load-series`, mobile `context` and
-  each pending session's `prescription` **before** 0019 and **after** 0019 using the same code version;
+  each pending session's `prescription` **before** 0019 and **after** 0019 using the same code version
+  (current `master`, i.e. including T2.2);
   compare after removing database ids and fields added by this feature. Re-run after T3.1: expected
   differences are limited to the additive fields of `04` §2.
 - **API/schema dependencies:** 0019.
@@ -277,7 +294,11 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
   lineage join, startability filters in `load_context`/`start_workout`); tests
   `tests/integration/test_identity.py`, updates to `tests/test_execution_service.py`,
   `tests/test_mobile_execution.py`.
-- **Exact expected changes:** `02` §3.4 table, row by row. Grep acceptance: no `_logical_ordinal`
+- **Exact expected changes:** run header and mobile context fields moved here from T2.2 (`04` §2:
+  `run.plan` = run plan, `run.source_plan`, `run.current_revision`, `run.has_unapplied_changes`; files
+  `execution/repository.py` `list_plan_runs`/`_load_bundle` run query, `service.py` `_run_header`,
+  `schemas.py`, `mobile_execution/repository.py` `list_plan_runs`/`load_context`); `02` §3.4 table, row
+  by row. Grep acceptance: no `_logical_ordinal`
   and no `'slot:' ||` / `'day:'` parsing remain in `modules/`.
 - **API/schema dependencies:** 0019 constraints.
 - **Acceptance criteria:** existing tests green (fixtures updated for lineage); a track whose slot is
@@ -294,7 +315,8 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 ### T3.2 — Run-plan state, revision read and discard
 
 - **Objective:** expose run-plan state and history; allow discarding unapplied changes.
-- **Dependencies:** T2.2. Parallel with T3.1.
+- **Dependencies:** T2.2 (code); merges after T3.1 (step #8). Can be developed in parallel with T3.1
+  and T3.5.
 - **Modules/files:** new `modules/execution/run_plan.py` (service), `run_plan_repository.py`
   (state, revision artifact via `PlanRepository.load_revision_rows` + `PlanService.assemble_draft`,
   discard), `modules/execution/run_plan_schemas.py`; `modules/execution/router.py` (3 routes);
@@ -319,7 +341,8 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
   together).
 - **Dependencies:** T3.1, T3.2.
 - **Modules/files:** `modules/execution/run_plan.py`, `run_plan_repository.py`,
-  `run_plan_schemas.py`, `router.py` (apply route); tests `tests/integration/test_apply_sessions.py`,
+  `run_plan_schemas.py` (the Apply **route** is registered by T3.4, so `master` never exposes a partial
+  Apply; T3.3 tests call the service); tests `tests/integration/test_apply_sessions.py`,
   `tests/integration/test_apply_concurrency.py`, `tests/test_run_plan_validation.py` (pure
   `validate_executable`).
 - **Exact expected changes:** cancellation rules of `03` §5.1–§5.3 (never delete, re-date or change
@@ -344,7 +367,8 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 
 - **Objective:** complete Apply with prescription handling, the impact report and dry run.
 - **Dependencies:** T3.3.
-- **Modules/files:** same as T3.3; tests `tests/integration/test_apply_prescriptions.py`,
+- **Modules/files:** same as T3.3, plus the Apply route in `execution/router.py`; tests
+  `tests/integration/test_apply_prescriptions.py`,
   `tests/integration/test_apply_mobile_compat.py`.
 - **Exact expected changes:** `03` §6 algorithm (two-phase ordinal update), impact structure
   `04` §1.3, `dry_run` via `connection.transaction(force_rollback=True)`; event metadata impact
@@ -388,16 +412,20 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 
 ### T4.1 — API client, types, routes and stubs
 
-- **Objective:** typed client for `04`, router entries, empty view stubs so UI tasks can run in
-  parallel.
+- **Objective:** typed client for `04`, router entries, empty view stubs and the UI flag so UI tasks
+  can run in parallel and land on `master` while hidden.
 - **Dependencies:** `04` (contract only).
 - **Modules/files:** `web-fe/src/api/execution.ts`, `execution-types.ts`, `plans.ts`, `plan-types.ts`,
   `src/router/index.ts`, stub `src/views/execution/ExecutionRunPlanView.vue`,
   `src/views/execution/RunPlanEditorView.vue`; `tests/api-client.test.ts`,
   `tests/fixtures/run-plan.ts` (fixtures for state, revision artifact, apply results incl. errors).
-- **Exact expected changes:** `04` §6 types and client methods; `05` §1 routes.
-- **Acceptance criteria:** typecheck/lint/tests green; fixtures cover every `04` example.
-- **Required tests:** T-FE-API-01…03.
+- **Exact expected changes:** `04` §6 types and client methods; `05` §1 routes; new
+  `src/features/execution/run-plan-flag.ts` exporting `RUN_PLAN_UI_ENABLED = false` — the run-plan
+  routes, the Run plan tab and the `/plans/:id` redirect are registered/rendered only when it is
+  `true` (`05` §1).
+- **Acceptance criteria:** typecheck/lint/tests green; fixtures cover every `04` example; with the flag
+  `false` the app behaves exactly as before (no tab, no routes); tests cover both flag values.
+- **Required tests:** T-FE-API-01…03, T-FE-FLAG-01.
 - **Potential regressions:** route ranking between `/execution/runs/:runId/plan/edit` and the parent
   route (test navigation).
 - **Deliverables:** code, fixtures, tests.
@@ -507,24 +535,26 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 
 ## Phase 6 — End-to-end validation
 
-### T6.1 — Live lifecycle scenario (release-C gate)
+### T6.1 — Live lifecycle scenario (gate before enabling the UI)
 
 - **Objective:** destructive acceptance script on a disposable deployment covering the whole feature.
-- **Dependencies:** T3.2, T3.3, T3.4, T3.5, T5.1; runs against a deployment that already passed T6.2
-  (release B). Not a prerequisite of release B.
+- **Dependencies:** T3.2, T3.3, T3.4, T3.5, T5.1 on `master`. Gates step #12 (UI enable) only; it is not
+  a prerequisite of any earlier merge.
 - **Modules/files:** new `be/tests/live_run_plan_scenarios.py` (same style and safety guard as
   `live_mobile_execution_api_scenarios.py`: requires `RUN_PLAN_ALLOW_DESTRUCTIVE_TEST=1`).
 - **Exact expected changes:** scenario E2E-01 … E2E-06 of `07` §5, via HTTP only.
-- **Acceptance criteria:** script passes against a restored-backup deployment with migrations 0018/0019.
+- **Acceptance criteria:** script passes against a disposable deployment of current `master` restored
+  from a recent backup.
 - **Suggested agent:** QA agent.
 
-### T6.2 — Release-B migration rehearsal (release-B gate)
+### T6.2 — Migration 0019 rehearsal (gate before merging T2.1 + T2.3)
 
-- **Objective:** de-risk release B using only release-A/B functionality.
-- **Dependencies:** T0.2 (preflight), T2.1, T2.2, T2.3, T3.1. **No dependency on T6.1, Phase 3 beyond
-  T3.1, promotion or frontend.**
+- **Objective:** de-risk the legacy-run conversion using only what is on `master` plus the T2.1 + T2.3
+  branch.
+- **Dependencies:** T0.2 (preflight) and T2.2 on `master`; the stacked T2.1 + T2.3 branch. **No
+  dependency on T3.1, Phase 3, promotion, frontend or T6.1.**
 - **Exact expected changes:** checklist RB-01…RB-08 (`07` §6b) executed against a scratch container
-  restored from a fresh `db_backup.sh` dump and recorded in the release PR: preflight, migrations
+  restored from a fresh `db_backup.sh` dump and recorded in `handoff/T6.2.md`: preflight, migrations
   0018/0019 with timings, T-MIG and golden tests, run creation/isolation smoke, existing mobile live
   scenario on converted runs, desktop read smoke, rollback drill (`02` §7).
 - **Acceptance criteria:** RB-01…RB-08 pass, no unexpected diffs, timings recorded.
@@ -537,6 +567,7 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 - `ruff`, `mypy` (as configured in `be/pyproject.toml`), `pytest` (unit) and `pytest -m integration`
   green for backend tasks; `npm run lint`, `npm run typecheck`, `npm test` green for frontend tasks.
 - New SQL has comments on new columns and functions (repository convention).
+- `master` stays deployable after the commit (merge order and reasons: "Working on master").
 - No change to unrelated modules; no broad refactors.
 - Any new `UPDATE plans.*` / `DELETE FROM plans.*` statement is added to the T-IMM-03 allow-list with
   a justification that it cannot touch a RELEASED revision (`01` D16).

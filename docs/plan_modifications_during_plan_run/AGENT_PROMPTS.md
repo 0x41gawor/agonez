@@ -11,9 +11,10 @@ deviations) and [`handoff/`](handoff/) (one file per finished task).
 2. Start an agent     new session in its own git WORKTREE; paste the Implementation prompt below.
 3. Review             second session (or /code-review) with the Review prompt.
 4. Fix                send findings back to the implementing session (same context).
-5. Merge              merge the task branch into its integration branch (Releases table); push.
-6. Gate               at the end of a release, run its gate task (T6.2 for B, T6.1 for C) and deploy
-                      yourself from master with ./redeploy.sh.
+5. Gate (if listed)   T6.2 before merge #6 (migration 0019); T6.1 + RD-01 before enabling the UI.
+6. Merge              rebase onto master, fast-forward master in /home/agonez, push
+                      (IMPLEMENTATION_STATUS.md → "Merge order on master" and "Merge rules").
+7. Deploy (optional)  any time, yourself: ./redeploy.sh — master is always deployable.
 ```
 
 Rules of thumb:
@@ -29,14 +30,10 @@ Rules of thumb:
 - If a session is interrupted, start a new one with the Resume prompt; the branch and the status doc
   carry the state.
 
-Base branch per task (fill `{BASE}`):
-
-| Tasks | `{BASE}` |
-| --- | --- |
-| T0.1, T0.2, T1.1, T1.2, T5.1 (if shipped in A) | `master` |
-| T2.1, T2.2, T2.3, T3.1, T6.2 | `release/run-plans-b` (create it from `master` when the first of these starts) |
-| T3.2, T3.3, T3.4, T3.5, T5.1 (if shipped in C), T6.1 | `release/run-plans-c` (from `master` after release B is deployed) |
-| T4.1–T4.6, T5.2 | `release/run-plans-d` (from `master`; rebase onto C when it lands) |
+Base branch (`{BASE}`): always `master`. Exception: a task developed before its predecessor is merged
+stacks on the predecessor's branch (T2.3 always stacks on `impl/T2.1-…`); it is rebased onto `master`
+once the predecessor lands. The merge order in `IMPLEMENTATION_STATUS.md` decides when a branch may be
+fast-forwarded into `master`.
 
 ---
 
@@ -66,6 +63,9 @@ change, check that {BASE} is an ancestor of HEAD; if it is not and you have no c
 SCOPE:
 - Implement exactly {TASK}. Touch only the files the task lists, plus their tests. Do not start later
   tasks.
+- Your commit will be fast-forwarded into `master`, which may be deployed at any moment. It must leave
+  `master` deployable on its own: follow the task's position in the merge order (06 "Working on
+  master") and never depend on code from a task that merges later.
 - The architecture is accepted. Do not redesign it. If the specification is wrong or impossible
   against the real code: make the smallest local adjustment and record it as a deviation, or, if no
   small adjustment exists, stop and explain the problem instead of inventing a different design.
@@ -77,7 +77,7 @@ SAFETY (non-negotiable):
   production API container run on this machine. Never write to them, never run migrations against
   them, never run ./redeploy.sh, never restore a backup into them. Integration tests use only
   AGONEZ_TEST_DATABASE_URL (a disposable container).
-- Migrations that might already be deployed are immutable; fix them with a new migration file.
+- A migration file already on `master` is immutable; fix it with a new migration file.
 - Do not push. Do not modify unrelated code.
 
 DEFINITION OF DONE:
@@ -93,7 +93,8 @@ FINISH:
 2. In IMPLEMENTATION_STATUS.md: update your task row (status `review`, branch, commit, date), the
    "Next up" table, the finished-tasks list, the Decisions log and the Deviations table if they apply.
    If you changed a contract, update the affected section of 02/03/04/05 too.
-3. Commit code, tests, handoff file and status update together. Use a conventional message
+3. Commit code, tests, handoff file and status update together on your task branch (do not merge it
+   into `master` yourself unless asked). Use a conventional message
    ("feat(be): …", "test(be): …", "feat(web-fe): …"); put "{TASK}" in the body.
 4. Final reply: what was done, test results, deviations, open risks, suggested next task.
 ```
@@ -120,8 +121,10 @@ Check, and report findings ranked by severity with file:line:
 4. Invariants in 01 §2 (I1–I10) and D16: no new UPDATE/DELETE on plans.* outside the allow-list;
    executed sessions and athlete cancellations untouched where relevant.
 5. Migrations: commented columns/functions, no destructive data changes outside the specification,
-   safe for the release they belong to.
+   safe at their position in the merge order.
 6. Safety: nothing touches the production DB/containers; no deploy scripts run.
+6a. Deployability: with this branch fast-forwarded into `master`, the app still builds, migrates and
+    serves every existing feature (merge order in 06 "Working on master").
 7. The handoff file and status doc are truthful and complete.
 Run the Definition-of-done commands yourself and include the results. Do not fix anything; only
 report.
@@ -147,17 +150,17 @@ Start by summarising what is already done and what remains.
 | --- | --- |
 | T0.1 | Docker is available; `psql` is not installed on the host — restore the dump with `docker exec -i <container> psql`. Create the dump's owner role (`kartezjusz`) before restoring. The dump already records migrations up to 0017. Keep integration tests opt-in; the default `pytest` run must still show 162 passed. |
 | T0.2 | Write target-behaviour tests marked `xfail(strict=True)` with the fixing task in `reason`. Preflight SQL must be read-only. |
-| T1.1 | Migration 0018 must be additive and safe for the current runtime (release A). Test the copy function against real revisions from the restored backup. |
+| T1.1 | Migration 0018 must be additive and safe for the current runtime. Test the copy function against real revisions from the restored backup. |
 | T1.2 | Introduce the T-IMM-03 static allow-list test listing today's writers. No behaviour change for library plans except the delete-500 fix. |
-| T2.1 | Highest-risk task. Run the conversion only against restored backups in disposable containers. The migration runs in the runner's single transaction: any preflight hit or error must abort it and leave the database unchanged. Follow Q5 for the demo seed. Mandatory review. |
-| T2.2 | Must ship with T2.1 and T3.1 (release B). Follow Q1. |
+| T2.1 | Highest-risk task. Convert only runs with `run_plan_id IS NULL`; keep legacy tracks' positional `logical_key` labels so the pre-T3.1 code keeps working. Merges only after T2.2 and the T6.2 gate (with T2.3 stacked on it). Run the conversion only against restored backups in disposable containers. The migration runs in the runner's single transaction: any preflight hit or error must abort it and leave the database unchanged. Follow Q5 for the demo seed. Mandatory review. |
+| T2.2 | Must be deployable on 0018 with the current positional read code: tracks get `plan_lineage_key` but keep `day:N`/`slot:N` labels; no run-header changes (those belong to T3.1). Follow Q1. |
 | T2.3 | Capture the "before" read models on the same code version with 0018 only, then apply 0019; document the normaliser. |
 | T3.1 | Large but mechanical; finish with the grep guard (T-INT-ID-08) green. Re-run T2.3 afterwards: only additive fields may differ. Mandatory review. |
 | T3.3 | Follow Q2/Q3. Concurrency tests need two real connections and the advisory lock. Mandatory review. |
 | T3.4 | Follow Q4. Dry run must leave every table hash unchanged. Mandatory review. |
-| T4.x | Work against fixtures from T4.1 if the backend is not ready. Add every new i18n key to all 11 locales (English text copied) so the parity test stays green. |
+| T4.x | Everything stays behind `RUN_PLAN_UI_ENABLED` (false) until step #12. Work against fixtures from T4.1 if the backend is not ready. Add every new i18n key to all 11 locales (English text copied) so the parity test stays green. |
 | T6.2 | Prepare the scripted part (preflight, migration timing, T-MIG/golden runs, smoke scripts). Steps needing production access (a fresh `db_backup.sh` dump, the rollback drill decision) are done by the human; the agent writes a checklist report with the commands to run. |
-| T6.1 | Runs only against a disposable deployment restored from a backup with release B applied. The script must refuse to run without `RUN_PLAN_ALLOW_DESTRUCTIVE_TEST=1`. |
+| T6.1 | Runs only against a disposable deployment of current `master` restored from a recent backup. The script must refuse to run without `RUN_PLAN_ALLOW_DESTRUCTIVE_TEST=1`. |
 
 ---
 

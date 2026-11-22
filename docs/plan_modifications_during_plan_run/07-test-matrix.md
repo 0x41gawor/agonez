@@ -182,12 +182,14 @@ Common assertion helper: `snapshot_tables()` (T0.1) hashes ordered rows of the n
 | T-MIG-07 | Library plan fingerprints and `updated_at` unchanged; library plan 15 deletable afterwards. |
 | T-MIG-08 | Row counts of sessions, prescriptions, performances, setup notes, events unchanged. |
 | T-MIG-09 | `public.agonez_0019_reference_map` covers every remapped id. |
+| T-MIG-11 | A run created by T2.2 code before 0019 is skipped by the conversion (row hashes unchanged); legacy tracks keep positional `logical_key` labels; pre-T3.1 read code returns 200 for every converted run. |
 | T-MIG-10 | **Existing plan_run compatibility** — golden comparison (`06` T2.3): identical read models before/after conversion; after T3.1 only additive fields differ. |
 
 ## 6b. Release rehearsal checklists
 
-Release B (T6.2) — uses only release-A/B functionality; no Apply, Discard, run-plan endpoints,
-promotion or frontend:
+Migration 0019 rehearsal (T6.2, gate before T2.1 + T2.3 merge into `master`) — uses only `master`
+(including T2.2) plus the T2.1 + T2.3 branch; no T3.1, Apply, Discard, run-plan endpoints, promotion or
+frontend:
 
 | ID | Check |
 | --- | --- |
@@ -198,18 +200,21 @@ promotion or frontend:
 | RB-05 | Run-creation smoke through the API: create a run from a library plan; edit and then delete that library plan; the run is unaffected (T-INT-RUN-04, T-DEL-01 checks). |
 | RB-06 | `live_mobile_execution_api_scenarios.py` passes against the scratch API on converted runs. |
 | RB-07 | Desktop read smoke: overview, analysis queue, timeline, load series return 200 for every converted run. |
-| RB-08 | Rollback drill per `02` §7 executed and timed. |
+| RB-08 | Rollback drill per `02` §7 (step B2: redeploy the pre-0019 `master` commit against the converted scratch database) executed and timed. |
 
-Release C (T6.1): E2E-01…06 (§5) against a release-B deployment.
+Before enabling the UI (step #12 in `06`):
 
-Release D: RD-01 — manual walkthrough of `05` §2–§7 (tab, editor run context, apply dialog,
-discard, promotion, ended run) against a release-C deployment, plus the frontend suites.
+- T6.1: E2E-01…06 (§5) over HTTP against a disposable deployment of current `master`.
+- RD-01: manual walkthrough of `05` §2–§7 (tab, editor run context, apply dialog, discard, promotion,
+  ended run) in a local build with `RUN_PLAN_UI_ENABLED = true` against current `master`, plus the
+  frontend suites.
 
 ## 7. Frontend tests (vitest)
 
 | ID | Component | Assertion |
 | --- | --- | --- |
 | T-FE-API-01…03 | API client | URLs, bodies (`dry_run`, versions, note), error parsing of exec envelope. |
+| T-FE-FLAG-01 | UI flag | With `RUN_PLAN_UI_ENABLED = false`: no Run plan tab, no run-plan routes, no `/plans/:id` redirect; with `true`: all present. |
 | T-FE-RP-01 | Run Plan tab | Fresh state: no unapplied banner; ownership copy names the source plan. |
 | T-FE-RP-02 | | Unapplied state: banner with Review & apply / Discard. |
 | T-FE-RP-03 | | Source deleted copy. |

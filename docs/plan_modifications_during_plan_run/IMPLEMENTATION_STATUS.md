@@ -14,26 +14,34 @@ Last updated: 2026-11-22 — initial version (design complete, nothing implement
 | --- | --- | --- | --- |
 | 1 | **T0.1** DB-backed integration test harness | — | Ready. No open decision affects it. |
 | 2 | T0.2 characterisation + preflight · T1.1 migration 0018 | each other | After T0.1 is merged. |
-| 3 | T1.2 plans module · T2.1 migration 0019 | each other | T2.1 needs Q5 decided (default applies otherwise). |
+| 3 | T1.2 plans module | T2.1 *development* (merges later, after T2.2 and T6.2) | T2.1 needs Q5 decided (default applies otherwise). |
+| 4 | T2.2 run creation with run plans | — | Needs Q1. |
 
 Update this table whenever a task finishes.
 
 ---
 
-## Releases
+## Merge order on master
 
-A release is deployed by the human only (`./redeploy.sh` from `/home/agonez` on `master`). Agents never
-deploy. Gates: `06-implementation-roadmap.md` → "Release gates".
+Everything lands on `master`, one task at a time, in this order; **every commit on `master` must be
+deployable** (details and reasons: `06-implementation-roadmap.md` → "Working on master"). The human
+deploys with `./redeploy.sh` from `/home/agonez`; agents never deploy.
 
-| Release | Tasks | Integration branch | Gate | Status |
+| # | Task(s) | Gate before merging | Milestone | Merged |
 | --- | --- | --- | --- | --- |
-| A | T0.1, T0.2, T1.1, T1.2 (+ T5.1 optional) | `master` (each task merged after review) | unit + integration suites green | not started |
-| B | T2.1, T2.2, T2.3, T3.1 | `release/run-plans-b` — merge to `master` only after T6.2 passes | T6.2 (RB-01…RB-08) | not started |
-| C | T3.2, T3.3, T3.4, T3.5 (+ T5.1) | `release/run-plans-c`, from `master` after B is deployed | T6.1 (E2E-01…06) | not started |
-| D | T4.1–T4.6, T5.2 | `release/run-plans-d` (development may start early against mocks) | RD-01 + frontend suites | not started |
-
-Why release branches for B–D: `master` is what `redeploy.sh` builds. Merging T2.1 (migration 0019)
-alone would make the next deploy convert production data without the code that needs it.
+| 1 | T0.1 | review | A | |
+| 2 | T0.2 | review | A | |
+| 3 | T1.1 | review | A | |
+| 4 | T1.2 | review | A | |
+| 5 | T2.2 | review | B | |
+| 6 | T2.1 + T2.3 (stacked, merged together) | review + **T6.2**; take `db_backup.sh` before the first deploy containing 0019 | B | |
+| 7 | T3.1 | review (mandatory) + T2.3 re-run | B | |
+| 8 | T3.5, T3.2 | review | C | |
+| 9 | T3.3 | review (mandatory) | C | |
+| 10 | T3.4 | review (mandatory) | C | |
+| — | T5.1 (any time after #4) | review | C | |
+| 11 | T4.1 … T4.5, T5.2, T4.6 (UI hidden: `RUN_PLAN_UI_ENABLED = false`) | review | D | |
+| 12 | Enable the UI (`RUN_PLAN_UI_ENABLED = true`) | **T6.1** + **RD-01** | D | |
 
 ---
 
@@ -47,15 +55,15 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T0.2 | Characterisation tests + preflight | T0.1 | todo | | | |
 | T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | todo | | | |
 | T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | todo | | | |
-| T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2 | todo | | | |
+| T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | todo | | | |
 | T2.2 | Run creation/deletion with run plans | T1.2 | todo | | | |
-| T2.3 | Conversion golden comparison | T2.1, T2.2 | todo | | | |
-| T3.1 | Identity and binding refactor | T2.1, T2.2 | todo | | | |
-| T3.2 | Run-plan state, revision read, discard | T2.2 | todo | | | |
+| T2.3 | Conversion golden comparison | T2.1 (stacked) | todo | | | |
+| T3.1 | Identity and binding refactor (+ run header fields) | T2.1 + T2.3 merged | todo | | | |
+| T3.2 | Run-plan state, revision read, discard | T3.1 merged | todo | | | |
 | T3.3 | Apply: sessions, tracks, validation, concurrency | T3.1, T3.2 | todo | | | |
 | T3.4 | Prescription rebase, impact, dry run | T3.3 | todo | | | |
 | T3.5 | Exercise-identity analytics fixes | T3.1 | todo | | | |
-| T4.1 | Frontend API client, types, routes, stubs | contract `04` | todo | | | |
+| T4.1 | Frontend API client, types, routes, stubs, UI flag | contract `04` | todo | | | |
 | T4.2 | Run Plan tab | T4.1 | todo | | | |
 | T4.3 | PlanCreator run context | T4.1 | todo | | | |
 | T4.4 | Apply dialog | T4.1 | todo | | | |
@@ -63,8 +71,8 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T4.6 | Translations | T4.2–T4.5, T5.2 | todo | | | |
 | T5.1 | Promotion backend (duplicate with body) | T1.2 | todo | | | |
 | T5.2 | Promote dialog | T5.1, T4.1, T4.2 | todo | | | |
-| T6.2 | Release-B migration rehearsal (gate) | T0.2, T2.1, T2.2, T2.3, T3.1 | todo | | | |
-| T6.1 | Live lifecycle scenario (release-C gate) | T3.2–T3.5, T5.1, B deployed | todo | | | |
+| T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | todo | | | |
+| T6.1 | Live lifecycle scenario (gate for #12) | T3.2–T3.5, T5.1 merged | todo | | | |
 
 ---
 
@@ -107,9 +115,14 @@ _None yet._
 
 ## Merge rules
 
-- One task = one branch `impl/<task>-<slug>` = one commit (or a few) = one review.
-- After review, merge the task branch into its integration branch (Releases table). Release-A tasks
-  merge into `master`.
+- One task = one short-lived branch `impl/<task>-<slug>` in its own worktree = one commit (or a few)
+  = one review.
+- After review (and the gate, if the merge-order table lists one): rebase the branch onto `master`, run
+  the suites again, then fast-forward `master` in `/home/agonez` (`git merge --ff-only impl/…`, with a
+  clean working tree there) and push. Then delete the task branch and its worktree.
+- Merge strictly in the merge-order table's order; parallel work waits for its turn.
+- A migration file is immutable once it is on `master` (it may be deployed at any moment); fix it with
+  a new migration.
 - Two parallel branches may both edit the task board above. Adjacent table rows conflict in git:
   resolve by keeping both rows' updates.
 - Docs-only changes (this folder) are safe on `master` at any time: `redeploy.sh` builds only `be/` and
@@ -123,8 +136,8 @@ _None yet._
   API container `be-atlas-api-1`. `./redeploy.sh` builds from the working tree of `/home/agonez`, and
   the API applies pending migrations at start-up. Agents never deploy, never run migrations against
   production and never write to it.
-- **Migrations are immutable once applied** (`migrations/runner.py` refuses changed checksums). After
-  0018 is deployed, fixes need a new migration file.
+- **Migrations are immutable once applied** (`migrations/runner.py` refuses changed checksums). Treat a
+  migration as immutable as soon as it is on `master`.
 - **Agents work in git worktrees, not in `/home/agonez`** (switching branches there changes what a deploy
   would build).
   - Backend in a worktree: `cd <worktree>/be && /home/agonez/be/.venv/bin/python -m pytest`. pytest's

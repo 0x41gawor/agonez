@@ -208,8 +208,11 @@ Each decision follows: repository today → business need → alternatives → d
   `exec.workout_unit_tracks` (unique per run) and `exec.exercise_unit_tracks` (unique per workout
   track). Clients never send lineage keys: draft upserts leave the column untouched for existing ids,
   new rows get the default, copies preserve it. All `_logical_ordinal` parsing is replaced by lineage
-  lookups. `logical_key` becomes a legacy label (new tracks store the lineage UUID text in it to keep
-  the existing unique constraints meaningful).
+  lookups. `logical_key` becomes a label that no code parses: tracks created at run creation keep
+  today's positional `day:N`/`slot:N` (unique at that moment, and readable by the pre-refactor code
+  so every commit on `master` stays deployable); tracks created later by Apply store the lineage
+  UUID text, so a removed workout's position can be reused without violating the unique
+  constraints.
 - **Why:** reorder/insert/remove cannot re-target identity; moving a slot within a workout keeps its
   track; deleting and re-adding is a *new* exercise unit.
 - **Workout identity sits on the workout unit**, not the day: moving a workout to another day keeps
@@ -294,7 +297,9 @@ Detailed in `03-execution-reconciliation.md`. Summary:
 - **Alternatives:** lazy conversion (dual read paths everywhere until each run is touched);
   new-runs-only (legacy runs keep R1–R5 forever and library plans stay undeletable);
   a Python one-off command (non-atomic with the schema change; requires a compatibility layer).
-- **Decision:** a SQL migration converts every existing run in one transaction: create its run plan,
+- **Decision:** a SQL migration converts every existing run that has no run plan yet
+  (`run_plan_id IS NULL`; runs created after the new run-creation code is deployed already have one)
+  in one transaction: create its run plan,
   copy **each** library revision the run uses (run 1 uses two) as applied revisions, create the
   working copy, remap all F2–F13 references via the copy id maps, and backfill lineage keys from track
   bindings (sessions/prescriptions by id first, positional fallback only for never-bound rows).

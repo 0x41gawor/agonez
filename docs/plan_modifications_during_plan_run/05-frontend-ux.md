@@ -29,7 +29,13 @@ and PlanCreator visual language (`exec-*` classes, `panel`, `button`/`button pri
 - Direct visits to `/plans/:planId` for a run plan redirect (`router.replace`) to
   `/execution/runs/<plan_run_id>/plan/edit` once the draft artifact reports `scope: 'run'`.
 
-Router changes (`src/router/index.ts`):
+**Feature flag.** All run-plan UI ships to `master` hidden behind
+`src/features/execution/run-plan-flag.ts` → `export const RUN_PLAN_UI_ENABLED = false` (added by T4.1;
+flipped to `true` in one commit once T6.1 and RD-01 pass, `06` step #12). When `false`: the two routes
+below are not registered, the Run plan tab is not rendered, and `PlanCreatorView` does not redirect
+run plans. No other screen changes behaviour based on the flag.
+
+Router changes (`src/router/index.ts`, only when `RUN_PLAN_UI_ENABLED`):
 
 ```ts
 { path: '/execution/runs/:runId(\\d+)/plan/edit', name: 'execution-run-plan-editor',
