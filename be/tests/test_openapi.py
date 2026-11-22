@@ -104,6 +104,7 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     schemas = app.openapi()["components"]["schemas"]
     catalog_schema = schemas["ExerciseCatalogItem"]
     assert "created_at" not in catalog_schema["properties"]
+    assert "body_part" in catalog_schema["properties"]
     assert "recommended_rep_profile" in catalog_schema["properties"]
     assert "default_load_step_kg" in catalog_schema["properties"]
     assert "recommended_rep_profile" in schemas["ExerciseListItem"]["properties"]

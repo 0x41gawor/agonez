@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { ProgressionModelCatalogItem } from '@/api/plan-types'
@@ -13,10 +13,11 @@ import {
   type ExerciseUnitOption,
   type PlanValidationIssue,
 } from '@/features/plans/editor'
+import type { GlanceEditorTarget } from '@/features/plans/glance'
 
 const model = defineModel<EditorDay>({ required: true })
 const { t } = useI18n()
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   index: number
   count: number
   exercises: ExerciseCatalogItem[]
@@ -25,9 +26,11 @@ withDefaults(defineProps<{
   exerciseUnits?: ExerciseUnitOption[]
   path: string
   issues: PlanValidationIssue[]
+  openTarget?: GlanceEditorTarget | null
 }>(), {
   progressionModels: () => [],
   exerciseUnits: () => [],
+  openTarget: null,
 })
 defineEmits<{
   move: [direction: -1 | 1]
@@ -43,6 +46,11 @@ const weekdayLabel = computed(() =>
     ? t('plans.day.flexible')
     : weekdays.value[model.value.weekday - 1],
 )
+const isOpenTarget = computed(() => props.openTarget?.dayKey === model.value.clientKey)
+
+watch(() => props.openTarget, (target) => {
+  if (target?.dayKey === model.value.clientKey) expanded.value = true
+}, { immediate: true, flush: 'sync' })
 
 function addWorkout(): void {
   model.value.workout_unit = createWorkout(model.value.name)
@@ -64,7 +72,12 @@ function handleShortcut(event: KeyboardEvent): void {
 </script>
 
 <template>
-  <article class="day-editor panel" @keydown="handleShortcut">
+  <article
+    class="day-editor panel"
+    :class="{ 'editor-focus-target': isOpenTarget && !openTarget?.slotKey }"
+    :data-editor-day-key="model.clientKey"
+    @keydown="handleShortcut"
+  >
     <header class="day-header">
       <button class="day-toggle" type="button" :aria-expanded="expanded" @click="expanded = !expanded">
         <span class="day-number" :class="{ 'has-icon': model.icon }">
@@ -123,6 +136,7 @@ function handleShortcut(event: KeyboardEvent): void {
         :exercise-units="exerciseUnits"
         :path="`${path}.workout`"
         :issues="issues"
+        :open-target="openTarget"
         @remove="model.workout_unit = null"
       />
       <div v-else class="rest-day-state">

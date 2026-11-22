@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { LoadingMode, ProgressionModelCatalogItem } from '@/api/plan-types'
@@ -22,6 +22,7 @@ import {
   type ExerciseUnitOption,
   type PlanValidationIssue,
 } from '@/features/plans/editor'
+import type { GlanceEditorTarget } from '@/features/plans/glance'
 
 const model = defineModel<EditorSlot>({ required: true })
 const { t } = useI18n()
@@ -34,9 +35,11 @@ const props = withDefaults(defineProps<{
   exerciseUnits?: ExerciseUnitOption[]
   path: string
   issues: PlanValidationIssue[]
+  openTarget?: GlanceEditorTarget | null
 }>(), {
   progressionModels: () => [],
   exerciseUnits: () => [],
+  openTarget: null,
 })
 defineEmits<{
   move: [direction: -1 | 1]
@@ -91,6 +94,11 @@ const slotCycleModel = computed<LoadingMode[] | null>({
   },
 })
 const translatedRole = computed(() => t(`plans.roles.${model.value.role}`))
+const isOpenTarget = computed(() => props.openTarget?.slotKey === model.value.clientKey)
+
+watch(() => props.openTarget, (target) => {
+  if (target?.slotKey === model.value.clientKey) expanded.value = true
+}, { immediate: true, flush: 'sync' })
 
 function loadingModeLabel(mode: LoadingMode): string {
   return t(`plans.loadingModes.${mode}`)
@@ -167,7 +175,11 @@ function moveFallback(fallbackIndex: number, direction: -1 | 1): void {
 </script>
 
 <template>
-  <article class="slot-editor panel" :class="roleClass">
+  <article
+    class="slot-editor panel"
+    :class="[roleClass, { 'editor-focus-target': isOpenTarget }]"
+    :data-editor-slot-key="model.clientKey"
+  >
     <header class="slot-summary">
       <span class="slot-order mono">{{ index + 1 }}</span>
       <div class="slot-exercise-thumb">

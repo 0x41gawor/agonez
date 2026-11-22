@@ -70,6 +70,7 @@ class ExerciseCatalogItem(APIModel):
     slug: str
     name: str
     name_full: str
+    body_part: str
     target_category: str
     mechanics_tier: str
     resistance_source: str

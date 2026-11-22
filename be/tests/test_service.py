@@ -68,6 +68,7 @@ class FakeRepository:
                 "slug": "dragon_flag",
                 "name": "Dragon Flag",
                 "name_full": "Flat Bench Dragon Flag",
+                "body_part": "Core",
                 "target_category": "Core",
                 "mechanics_tier": "Secondary_Compound",
                 "resistance_source": "Bodyweight",
@@ -178,6 +179,7 @@ async def test_exercise_catalog_returns_all_editor_fields_without_pagination(
 
     assert response.total == 1
     assert response.items[0].slug == "dragon_flag"
+    assert response.items[0].body_part == "Core"
     assert response.items[0].mechanics_tier == "Secondary_Compound"
     assert response.items[0].systemic_propulsive_fcsa_demand == 115
     assert response.items[0].default_load_step_kg == 2.5

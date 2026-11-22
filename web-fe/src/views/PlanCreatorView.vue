@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onBeforeRouteLeave } from 'vue-router'
 
@@ -14,6 +14,7 @@ import { usePlanAnalysis } from '@/composables/usePlanAnalysis'
 import { usePlanDraft } from '@/composables/usePlanDraft'
 import { DEFAULT_PLAN_EXPORT_REQUEST } from '@/features/plans/export'
 import { evaluatePlanGuidance, type PlanGuidanceTarget } from '@/features/plans/guidance'
+import type { GlanceEditorTarget } from '@/features/plans/glance'
 import { useAtlasCatalogStore } from '@/stores/atlasCatalog'
 import { useLocaleStore } from '@/stores/locale'
 import { useProgressionModelStore } from '@/stores/progressionModels'
@@ -26,6 +27,10 @@ const catalog = useAtlasCatalogStore()
 const locale = useLocaleStore()
 const progressionModels = useProgressionModelStore()
 const activeTab = ref<'PLAN' | 'ANALYSIS'>('PLAN')
+const planView = ref<'editor' | 'glance'>(
+  new URLSearchParams(window.location.search).get('view') === 'glance' ? 'glance' : 'editor',
+)
+const planEditor = ref<{ focusEditorTarget: (target: GlanceEditorTarget) => Promise<void> } | null>(null)
 const analysisVisited = ref(false)
 const persistedLockVersion = computed(() => editor.draft.value?.lock_version ?? null)
 const analysis = usePlanAnalysis(numericPlanId, persistedLockVersion, editor.dirty)
@@ -96,6 +101,24 @@ function showAnalysis(): void {
   void analysis.activate()
 }
 
+function replacePlanView(view: 'editor' | 'glance'): void {
+  planView.value = view
+  const url = new URL(window.location.href)
+  if (view === 'glance') url.searchParams.set('view', 'glance')
+  else url.searchParams.delete('view')
+  window.history.replaceState(window.history.state, '', url)
+}
+
+function syncPlanViewFromLocation(): void {
+  planView.value = new URLSearchParams(window.location.search).get('view') === 'glance' ? 'glance' : 'editor'
+}
+
+async function openEditorTarget(target: GlanceEditorTarget): Promise<void> {
+  replacePlanView('editor')
+  await nextTick()
+  await planEditor.value?.focusEditorTarget(target)
+}
+
 function reloadAfterConflict(): void {
   if (!window.confirm(t('plans.creatorView.confirmReload'))) return
   void editor.reloadLatest()
@@ -123,9 +146,13 @@ onBeforeRouteLeave(() => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleShortcut)
+  window.addEventListener('popstate', syncPlanViewFromLocation)
   loadPage()
 })
-onBeforeUnmount(() => window.removeEventListener('keydown', handleShortcut))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleShortcut)
+  window.removeEventListener('popstate', syncPlanViewFromLocation)
+})
 
 watch(() => locale.current, () => {
   void catalog.load(true)
@@ -221,12 +248,16 @@ watch(() => locale.current, () => {
       />
       <template v-else-if="editor.draft.value">
         <PlanEditor
+          ref="planEditor"
           v-show="activeTab === 'PLAN'"
           v-model="editor.draft.value"
+          :plan-view="planView"
           :exercises="catalog.exercises"
           :muscles="catalog.muscles"
           :progression-models="progressionModels.items"
           :issues="editor.validationIssues.value"
+          @update:plan-view="replacePlanView"
+          @open-editor="openEditorTarget"
         />
         <PlanAnalysis
           v-if="analysisVisited"
@@ -260,7 +291,7 @@ watch(() => locale.current, () => {
       @close="exportOpen = false"
     />
     <PlanGuidanceCoach
-      :active="activeTab === 'PLAN'"
+      :active="activeTab === 'PLAN' && planView === 'editor'"
       :items="guidanceItems"
       @review="reviewGuidance"
     />

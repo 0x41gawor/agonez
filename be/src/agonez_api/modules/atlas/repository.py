@@ -189,6 +189,7 @@ class AtlasRepository:
                 e.slug,
                 COALESCE(et.name, e.name) AS name,
                 COALESCE(et.name_full, e.name_full) AS name_full,
+                e.body_part::text AS body_part,
                 e.target_category::text AS target_category,
                 e.mechanics_tier::text AS mechanics_tier,
                 e.resistance_source::text AS resistance_source,
