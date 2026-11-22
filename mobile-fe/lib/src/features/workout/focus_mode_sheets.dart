@@ -70,7 +70,7 @@ class _SheetFrame extends StatelessWidget {
 }
 
 /// What the athlete picked in the outline.
-enum _OutlineAction { reorder, note, setup }
+enum _OutlineAction { reorder, note, setup, warmup }
 
 typedef _OutlineChoice = ({
   FocusExerciseViewModel exercise,
@@ -82,9 +82,13 @@ class _OutlineSheet extends StatelessWidget {
     required this.workout,
     required this.canNote,
     required this.canSetup,
+    this.warmup,
   });
 
   final FocusWorkoutViewModel workout;
+
+  /// How far the plan's warm-up got; null when there is none to open.
+  final ({int done, int total})? warmup;
 
   /// Whether a finished exercise offers its note and its setup. Its sets
   /// stay as recorded; notes do not change what was done.
@@ -99,9 +103,19 @@ class _OutlineSheet extends StatelessWidget {
       title: l10n.workoutOutlineTitle(workout.workoutUnitName),
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-        itemCount: workout.exercises.length,
+        itemCount: workout.exercises.length + (warmup == null ? 0 : 1),
         separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, index) {
+        itemBuilder: (context, row) {
+          if (warmup != null && row == 0) {
+            return _OutlineWarmupRow(
+              warmup: warmup!,
+              onTap: () => Navigator.of(context).pop((
+                exercise: workout.currentExercise,
+                action: _OutlineAction.warmup,
+              )),
+            );
+          }
+          final index = warmup == null ? row : row - 1;
           final exercise = workout.exercises[index];
           final current = index == workout.currentExerciseIndex;
           final state = exercise.isSkipped
@@ -203,6 +217,65 @@ class _OutlineSheet extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// The plan's warm-up, first in the outline as it was in the workout.
+class _OutlineWarmupRow extends StatelessWidget {
+  const _OutlineWarmupRow({required this.warmup, required this.onTap});
+
+  final ({int done, int total}) warmup;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.agonezColors;
+    return InkWell(
+      key: const Key('outline-warmup'),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(color: colors.control),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.local_fire_department_outlined,
+                size: 16,
+                color: colors.goldText,
+              ),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.routineWarmupTitle,
+                    style: AgonezTypography.label.copyWith(
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.routineProgress(warmup.done, warmup.total),
+                    style: AgonezTypography.of(context).bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: colors.textMuted),
+          ],
+        ),
       ),
     );
   }

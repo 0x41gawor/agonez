@@ -622,6 +622,30 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noteSave => 'Zapisz notatkę';
 
   @override
+  String get routineWarmupEyebrow => 'Przed pierwszą serią';
+
+  @override
+  String get routineWarmupTitle => 'Rozgrzewka';
+
+  @override
+  String get routineStretchEyebrow => 'Po ostatniej serii';
+
+  @override
+  String get routineStretchTitle => 'Rozciąganie';
+
+  @override
+  String routineProgress(int done, int total) {
+    return '$done / $total';
+  }
+
+  @override
+  String get routineBackToWorkout => 'Wróć do treningu';
+
+  @override
+  String get routineNotRecorded =>
+      'Odhaczaj po kolei. Ta lista pochodzi z Twojego planu i jest tylko dla Ciebie; nie jest zapisywana.';
+
+  @override
   String get noteExerciseSavedA11y => 'Notatka do ćwiczenia, zapisana';
 
   @override

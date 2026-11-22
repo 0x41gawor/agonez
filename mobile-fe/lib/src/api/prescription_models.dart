@@ -409,6 +409,8 @@ class WorkoutPrescription {
     required this.planComment,
     required this.prescriptionComment,
     required this.exercises,
+    this.warmupNotes,
+    this.stretchNotes,
   });
 
   /// This prescription with each slot's notes replaced by the ones in
@@ -424,6 +426,8 @@ class WorkoutPrescription {
         microcycle: microcycle,
         planComment: planComment,
         prescriptionComment: prescriptionComment,
+        warmupNotes: warmupNotes,
+        stretchNotes: stretchNotes,
         exercises: [
           for (final exercise in exercises)
             exercise.withSetupNotes(
@@ -461,6 +465,9 @@ class WorkoutPrescription {
       requiredJson(json, 'prescription_comment'),
       'prescription_comment',
     ),
+    // Prescriptions cached before the server sent them have neither.
+    warmupNotes: asNullableString(json['warmup_notes'], 'warmup_notes'),
+    stretchNotes: asNullableString(json['stretch_notes'], 'stretch_notes'),
     exercises: decodeList(
       requiredJson(json, 'exercises'),
       (value) => PrescriptionExercise.fromJson(asJsonMap(value, 'exercises[]')),
@@ -478,6 +485,11 @@ class WorkoutPrescription {
   final String? prescriptionComment;
   final List<PrescriptionExercise> exercises;
 
+  /// The plan's words on how to warm up for and stretch after this
+  /// workout; free text, one movement per line by habit.
+  final String? warmupNotes;
+  final String? stretchNotes;
+
   JsonMap toJson() => <String, Object?>{
     'session_id': sessionId,
     'prescription_id': prescriptionId,
@@ -487,6 +499,8 @@ class WorkoutPrescription {
     'microcycle': microcycle.toJson(),
     'plan_comment': planComment,
     'prescription_comment': prescriptionComment,
+    'warmup_notes': warmupNotes,
+    'stretch_notes': stretchNotes,
     'exercises': exercises.map((item) => item.toJson()).toList(growable: false),
   };
 }

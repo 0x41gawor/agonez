@@ -12,6 +12,8 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/hold_to_confirm.dart';
 import '../../widgets/sync_status_pill.dart';
 import '../../workout/load_format.dart';
+import '../../workout/routine_notes.dart';
+import '../../workout/routine_progress.dart';
 import 'focus_workout_models.dart';
 
 part 'focus_mode_header.dart';
@@ -20,6 +22,7 @@ part 'focus_mode_entry.dart';
 part 'focus_mode_sheets.dart';
 part 'focus_mode_atlas_peek.dart';
 part 'focus_mode_entry_sheets.dart';
+part 'focus_mode_routine.dart';
 
 /// The full-screen workout workspace.
 ///
@@ -31,6 +34,7 @@ class FocusModeScreen extends StatefulWidget {
     required this.workout,
     required this.callbacks,
     this.enableHaptics = true,
+    this.warmup,
     this.now,
     super.key,
   });
@@ -38,6 +42,9 @@ class FocusModeScreen extends StatefulWidget {
   final FocusWorkoutViewModel workout;
   final FocusWorkoutCallbacks callbacks;
   final bool enableHaptics;
+
+  /// How far the plan's warm-up got; null when the plan has none.
+  final ({int done, int total})? warmup;
   final DateTime Function()? now;
 
   @override
@@ -436,9 +443,13 @@ class _FocusModeScreenState extends State<FocusModeScreen>
           key: const Key('focus-next-primary'),
           label: hasNext
               ? l10n.workoutStartNext(widget.workout.exercises[nextIndex].name)
+              : widget.callbacks.onOpenStretch != null
+              ? l10n.routineStretchTitle
               : l10n.workoutFinishWorkout,
           onPressed: hasNext
               ? () => widget.callbacks.onCursorChanged?.call(nextIndex, 0)
+              : widget.callbacks.onOpenStretch != null
+              ? _stretchThenFinish
               : _showFinish,
         ),
       );
@@ -477,12 +488,15 @@ class _FocusModeScreenState extends State<FocusModeScreen>
       isScrollControlled: true,
       builder: (context) => _OutlineSheet(
         workout: widget.workout,
+        warmup: widget.callbacks.onOpenWarmup == null ? null : widget.warmup,
         canNote: widget.callbacks.onExerciseNoteChanged != null,
         canSetup: widget.callbacks.onSetupNoteChanged != null,
       ),
     );
     if (!mounted || choice == null) return;
     switch (choice.action) {
+      case _OutlineAction.warmup:
+        widget.callbacks.onOpenWarmup?.call();
       case _OutlineAction.note:
         await _showExerciseNote(choice.exercise);
       case _OutlineAction.setup:
@@ -659,6 +673,22 @@ class _FocusModeScreenState extends State<FocusModeScreen>
     if (!mounted || confirmed != true) return;
     try {
       await action();
+    } catch (_) {
+      if (mounted) _showFailure();
+    }
+  }
+
+  /// Stretching comes after the last set; finishing from there needs no
+  /// second confirmation unless sets are still open.
+  Future<void> _stretchThenFinish() async {
+    final finish = await widget.callbacks.onOpenStretch!();
+    if (!mounted || finish != true) return;
+    if (widget.workout.incompleteSetCount > 0) {
+      await _showFinish();
+      return;
+    }
+    try {
+      await widget.callbacks.onFinish(false);
     } catch (_) {
       if (mounted) _showFailure();
     }

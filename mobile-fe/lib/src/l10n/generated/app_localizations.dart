@@ -1093,6 +1093,48 @@ abstract class AppLocalizations {
   /// **'Save note'**
   String get noteSave;
 
+  /// No description provided for @routineWarmupEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Before the first set'**
+  String get routineWarmupEyebrow;
+
+  /// No description provided for @routineWarmupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm-up'**
+  String get routineWarmupTitle;
+
+  /// No description provided for @routineStretchEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'After the last set'**
+  String get routineStretchEyebrow;
+
+  /// No description provided for @routineStretchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stretching'**
+  String get routineStretchTitle;
+
+  /// No description provided for @routineProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} / {total}'**
+  String routineProgress(int done, int total);
+
+  /// No description provided for @routineBackToWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to workout'**
+  String get routineBackToWorkout;
+
+  /// No description provided for @routineNotRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick them off as you go. This list is from your plan and only for you; it is not recorded.'**
+  String get routineNotRecorded;
+
   /// No description provided for @noteExerciseSavedA11y.
   ///
   /// In en, this message translates to:

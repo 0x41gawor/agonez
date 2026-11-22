@@ -376,6 +376,8 @@ class FocusWorkoutCallbacks {
     this.onOpenFullAtlas,
     this.onSyncDetails,
     this.onResumeHere,
+    this.onOpenWarmup,
+    this.onOpenStretch,
   });
 
   final VoidCallback onMinimise;
@@ -425,4 +427,12 @@ class FocusWorkoutCallbacks {
   final VoidCallback? onOpenFullAtlas;
   final VoidCallback? onSyncDetails;
   final Future<void> Function()? onResumeHere;
+
+  /// Opens the plan's warm-up again, for its ramp-up sets or a look back.
+  final VoidCallback? onOpenWarmup;
+
+  /// Opens the plan's stretching, which comes between the last set and
+  /// finishing; null when the plan has none or it is done. Resolves to true
+  /// when the athlete chose to finish the workout from there.
+  final Future<bool?> Function()? onOpenStretch;
 }

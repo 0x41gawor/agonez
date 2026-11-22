@@ -18,6 +18,8 @@ import '../../errors/user_error_mapper.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../storage/app_database.dart';
 import '../../widgets/sync_status_pill.dart';
+import '../../workout/routine_notes.dart';
+import '../../workout/routine_progress.dart';
 import 'end_workout_launch.dart';
 import 'focus_mode_screen.dart';
 import 'focus_workout_models.dart';
@@ -83,9 +85,51 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
                 .setNumberingStart,
           );
           final runtime = ref.watch(appRuntimeProvider);
+          final warmupGroups = parseRoutineNotes(prescription.warmupNotes);
+          final warmup = _warmup(
+            context,
+            ref,
+            runtime,
+            workout,
+            warmupGroups,
+            viewModel,
+          );
+          if (warmup != null) return warmup;
+          final stretchGroups = parseRoutineNotes(prescription.stretchNotes);
+          // Stretching is done once the athlete has moved on from it; until
+          // the stored progress loads it counts as still to do.
+          final stretchDone =
+              stretchGroups.isNotEmpty &&
+              (ref
+                      .watch(
+                        routineProgressProvider((
+                          workoutId: workout.workoutId,
+                          kind: RoutineKind.stretch,
+                        )),
+                      )
+                      .value
+                      ?.finished ??
+                  false);
+          final warmupProgress = warmupGroups.isEmpty
+              ? null
+              : ref
+                        .watch(
+                          routineProgressProvider((
+                            workoutId: workout.workoutId,
+                            kind: RoutineKind.warmup,
+                          )),
+                        )
+                        .value ??
+                    const RoutineProgress();
           return FocusModeScreen(
             workout: viewModel,
             enableHaptics: runtime.settings.hapticsEnabled,
+            warmup: warmupProgress == null
+                ? null
+                : (
+                    done: warmupProgress.done.length,
+                    total: _itemCount(warmupGroups),
+                  ),
             callbacks: _callbacks(
               context,
               ref,
@@ -94,10 +138,56 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
               prescription,
               localExercises,
               viewModel,
+              warmupGroups,
+              stretchDone ? const [] : stretchGroups,
             ),
           );
         },
       ),
+    );
+  }
+
+  /// The plan's warm-up, while the workout has not begun: no set recorded
+  /// and the athlete not yet moved on from it. Null when there is none to
+  /// show.
+  Widget? _warmup(
+    BuildContext context,
+    WidgetRef ref,
+    AppRuntime runtime,
+    LocalWorkout workout,
+    List<RoutineGroup> groups,
+    FocusWorkoutViewModel model,
+  ) {
+    if (groups.isEmpty ||
+        model.readOnly ||
+        model.exercises.isEmpty ||
+        model.exercises.any((exercise) => exercise.resolvedSetCount > 0)) {
+      return null;
+    }
+    final key = (workoutId: workout.workoutId, kind: RoutineKind.warmup);
+    final progress = ref.watch(routineProgressProvider(key));
+    if (!progress.hasValue && !progress.hasError) return const _FocusLoading();
+    final value = progress.value ?? const RoutineProgress();
+    if (value.finished) return null;
+    final store = RoutineProgressStore(runtime.database);
+    return WorkoutRoutineScreen(
+      key: ValueKey('warmup-${workout.workoutId}'),
+      workout: model,
+      kind: RoutineKind.warmup,
+      groups: groups,
+      progress: value,
+      actionLabel: AppLocalizations.of(
+        context,
+      ).workoutStartNext(model.currentExercise.name),
+      enableHaptics: runtime.settings.hapticsEnabled,
+      onProgressChanged: (next) =>
+          unawaited(store.save(workout.workoutId, RoutineKind.warmup, next)),
+      onAction: (finished) async {
+        await store.save(workout.workoutId, RoutineKind.warmup, finished);
+        ref.invalidate(routineProgressProvider(key));
+      },
+      onMinimise: () => context.go('/home'),
+      onSync: () => unawaited(_showSyncSheet(context, runtime, workout, model)),
     );
   }
 
@@ -109,6 +199,8 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
     WorkoutPrescription prescription,
     List<LocalExercise> localExercises,
     FocusWorkoutViewModel model,
+    List<RoutineGroup> warmupGroups,
+    List<RoutineGroup> stretchGroups,
   ) {
     final repository = runtime.workoutRepository;
     final l10n = AppLocalizations.of(context);
@@ -435,6 +527,28 @@ class ActiveWorkoutFocusScreen extends ConsumerWidget {
         );
         ref.invalidate(workoutExercisesProvider(model.workoutId));
       },
+      onOpenWarmup: warmupGroups.isEmpty
+          ? null
+          : () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => _RoutineRoute(
+                  workout: model,
+                  kind: RoutineKind.warmup,
+                  groups: warmupGroups,
+                ),
+              ),
+            ),
+      onOpenStretch: stretchGroups.isEmpty
+          ? null
+          : () => Navigator.of(context).push<bool>(
+              MaterialPageRoute<bool>(
+                builder: (_) => _RoutineRoute(
+                  workout: model,
+                  kind: RoutineKind.stretch,
+                  groups: stretchGroups,
+                ),
+              ),
+            ),
       onSetupNoteChanged: (exercise, text) async {
         final note = exercise.setupNote;
         if (note == null) return;
@@ -1288,6 +1402,56 @@ Future<void> _showSyncSheet(
       ),
     ),
   );
+}
+
+int _itemCount(List<RoutineGroup> groups) =>
+    groups.fold(0, (count, group) => count + group.items.length);
+
+/// A routine opened over the workout. The warm-up, opened again from the
+/// outline, goes back to the workout. Stretching, opened after the last set,
+/// finishes it: the route then resolves to true.
+class _RoutineRoute extends ConsumerWidget {
+  const _RoutineRoute({
+    required this.workout,
+    required this.kind,
+    required this.groups,
+  });
+
+  final FocusWorkoutViewModel workout;
+  final RoutineKind kind;
+  final List<RoutineGroup> groups;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final runtime = ref.watch(appRuntimeProvider);
+    final key = (workoutId: workout.workoutId, kind: kind);
+    final progress = ref.watch(routineProgressProvider(key));
+    if (!progress.hasValue && !progress.hasError) return const _FocusLoading();
+    final store = RoutineProgressStore(runtime.database);
+    final stretch = kind == RoutineKind.stretch;
+    return WorkoutRoutineScreen(
+      workout: workout,
+      kind: kind,
+      groups: groups,
+      progress: progress.value ?? const RoutineProgress(),
+      actionLabel: stretch
+          ? l10n.workoutFinishWorkout
+          : l10n.routineBackToWorkout,
+      enableHaptics: runtime.settings.hapticsEnabled,
+      onProgressChanged: (next) => unawaited(
+        store
+            .save(workout.workoutId, kind, next)
+            .then((_) => ref.invalidate(routineProgressProvider(key))),
+      ),
+      onAction: (finished) async {
+        if (!stretch) return Navigator.of(context).pop();
+        await store.save(workout.workoutId, kind, finished);
+        if (context.mounted) Navigator.of(context).pop(true);
+      },
+      onMinimise: () => Navigator.of(context).pop(),
+    );
+  }
 }
 
 class _ConflictValue extends StatelessWidget {

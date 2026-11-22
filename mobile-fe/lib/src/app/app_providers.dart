@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/context_models.dart';
 import '../data/mobile_repository.dart';
 import '../storage/app_database.dart';
+import '../workout/routine_progress.dart';
 import 'app_runtime.dart';
 
 final appRuntimeProvider = Provider<AppRuntime>((ref) {
@@ -43,6 +44,15 @@ final workoutNamesProvider = FutureProvider.autoDispose
           .localize(key.workoutId, key.language);
       if (changed) ref.invalidate(workoutExercisesProvider(key.workoutId));
     }, retry: (_, _) => null);
+
+/// What the athlete ticked off in a workout's warm-up or stretching.
+final routineProgressProvider = FutureProvider.autoDispose
+    .family<RoutineProgress, ({String workoutId, RoutineKind kind})>(
+      (ref, key) => RoutineProgressStore(
+        ref.read(appRuntimeProvider).database,
+      ).load(key.workoutId, key.kind),
+      retry: (_, _) => null,
+    );
 
 final planRunsProvider = FutureProvider<List<PlanRunCompact>>((ref) {
   return ref.watch(appRuntimeProvider).mobileRepository.listPlanRuns();

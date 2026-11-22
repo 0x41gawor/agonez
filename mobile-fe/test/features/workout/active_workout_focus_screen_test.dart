@@ -75,6 +75,142 @@ void main() {
     expect(find.text('Workout tab'), findsNothing);
   });
 
+  group('the warm-up', () {
+    const warmupKey = 'routine:warmup:workout-1';
+    String? stored;
+
+    setUp(() {
+      stored = null;
+      when(() => harness.database.readSetting(any())).thenAnswer((
+        invocation,
+      ) async {
+        return invocation.positionalArguments.single == warmupKey
+            ? stored
+            : null;
+      });
+      when(() => harness.database.writeSetting(any(), any())).thenAnswer((
+        invocation,
+      ) async {
+        if (invocation.positionalArguments.first == warmupKey) {
+          stored = invocation.positionalArguments.last as String;
+        }
+      });
+    });
+
+    Future<void> openWorkout(
+      WidgetTester tester, {
+      String? warmupNotes = 'Cardio 3–5 min\nCat Cow 10x',
+      List<LocalSet> sets = const [],
+    }) async {
+      await tester.binding.setSurfaceSize(const Size(412, 915));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final workout = startedLegs().copyWith(
+        prescriptionJson: jsonEncode({
+          ...fixturePrescription.toJson(),
+          'warmup_notes': warmupNotes,
+        }),
+      );
+      harness
+        ..storedWorkout = workout
+        ..streamWorkout(workout);
+      when(() => harness.database.workoutExercises(any())).thenAnswer(
+        (_) async => [
+          LocalExercise(
+            exercisePerformanceId: 'exercise-1',
+            workoutId: workout.workoutId,
+            exercisePrescriptionId:
+                fixturePrescriptionExercise.exercisePrescriptionId,
+            performedOrdinal: 0,
+            mode: 'as_prescribed',
+            serverRev: 0,
+            localRev: 0,
+            updatedAt: DateTime.utc(2026, 11, 22, 17),
+          ),
+        ],
+      );
+      when(
+        () => harness.database.watchWorkoutSets(any()),
+      ).thenAnswer((_) => Stream.value(sets));
+      await tester.pumpWidget(focusApp());
+      for (var frame = 0; frame < 5; frame++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+    }
+
+    testWidgets('comes before the first set, each line a movement', (
+      tester,
+    ) async {
+      await openWorkout(tester);
+
+      expect(find.text('Warm-up'), findsOneWidget);
+      expect(find.text('Cardio'), findsOneWidget);
+      expect(find.text('3–5 min'), findsOneWidget);
+      expect(find.text('Cat Cow'), findsOneWidget);
+      expect(find.text('10×'), findsOneWidget);
+      expect(find.text('0 / 2'), findsOneWidget);
+      expect(find.byKey(const Key('focus-confirm')), findsNothing);
+    });
+
+    testWidgets('keeps what was ticked and starts the first exercise', (
+      tester,
+    ) async {
+      await openWorkout(tester);
+
+      await tester.tap(find.byKey(const Key('routine-item-1')));
+      await tester.pump();
+      expect(find.text('1 / 2'), findsOneWidget);
+      expect(jsonDecode(stored!), {
+        'done': [1],
+        'finished': false,
+      });
+
+      await tester.tap(find.byKey(const Key('routine-action')));
+      for (var frame = 0; frame < 5; frame++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      expect(jsonDecode(stored!), {
+        'done': [1],
+        'finished': true,
+      });
+      expect(find.text('Warm-up'), findsNothing);
+      expect(find.byKey(const Key('focus-confirm')), findsOneWidget);
+    });
+
+    testWidgets('is not in the way once a set is recorded', (tester) async {
+      await openWorkout(
+        tester,
+        sets: [
+          LocalSet(
+            setPerformanceId: 'set-1',
+            workoutId: 'workout-1',
+            exercisePerformanceId: 'exercise-1',
+            exercisePrescriptionId:
+                fixturePrescriptionExercise.exercisePrescriptionId,
+            prescribedSetId: fixtureSet.setPrescriptionId,
+            ordinal: 0,
+            status: 'performed',
+            loadKg: 80,
+            repetitions: 7,
+            rir: 2,
+            serverRev: 1,
+            localRev: 1,
+            updatedAt: DateTime.utc(2026, 11, 22, 17, 5),
+          ),
+        ],
+      );
+
+      expect(find.text('Warm-up'), findsNothing);
+    });
+
+    testWidgets('is not there when the plan has none', (tester) async {
+      await openWorkout(tester, warmupNotes: null);
+
+      expect(find.text('Warm-up'), findsNothing);
+      expect(find.byKey(const Key('focus-confirm')), findsOneWidget);
+    });
+  });
+
   group('a start the server refused', () {
     Future<void> openSyncSheet(WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(412, 915));

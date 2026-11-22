@@ -5,17 +5,19 @@ class _FocusTopBar extends StatelessWidget {
     required this.workout,
     required this.now,
     required this.onMinimise,
-    required this.onOutline,
-    required this.onActions,
     required this.onSync,
+    this.onOutline,
+    this.onActions,
   });
 
   final FocusWorkoutViewModel workout;
   final DateTime now;
   final VoidCallback onMinimise;
-  final VoidCallback onOutline;
-  final VoidCallback onActions;
   final VoidCallback? onSync;
+
+  /// Null hides the outline and actions, as on a routine screen.
+  final VoidCallback? onOutline;
+  final VoidCallback? onActions;
 
   @override
   Widget build(BuildContext context) {
@@ -59,18 +61,22 @@ class _FocusTopBar extends StatelessWidget {
               label: workout.syncLabel,
               onPressed: onSync,
             ),
-            IconButton(
-              key: const Key('focus-outline'),
-              tooltip: l10n.workoutOutline,
-              onPressed: onOutline,
-              icon: const Icon(Icons.format_list_bulleted_rounded, size: 21),
-            ),
-            IconButton(
-              key: const Key('focus-actions'),
-              tooltip: l10n.workoutActions,
-              onPressed: onActions,
-              icon: const Icon(Icons.more_horiz),
-            ),
+            if (onOutline != null)
+              IconButton(
+                key: const Key('focus-outline'),
+                tooltip: l10n.workoutOutline,
+                onPressed: onOutline,
+                icon: const Icon(Icons.format_list_bulleted_rounded, size: 21),
+              ),
+            if (onActions != null)
+              IconButton(
+                key: const Key('focus-actions'),
+                tooltip: l10n.workoutActions,
+                onPressed: onActions,
+                icon: const Icon(Icons.more_horiz),
+              )
+            else
+              const SizedBox(width: 12),
           ],
         ),
       ),

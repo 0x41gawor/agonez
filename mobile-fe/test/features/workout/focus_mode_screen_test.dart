@@ -400,6 +400,95 @@ void main() {
     });
   });
 
+  group('stretching after the last set', () {
+    testWidgets('takes the place of finishing, which it then does', (
+      tester,
+    ) async {
+      final finished = <bool>[];
+      await _pumpFocus(
+        tester,
+        _allDone(),
+        _callbacks(
+          onOpenStretch: () async => true,
+          onFinish: (acknowledged) async => finished.add(acknowledged),
+        ),
+
+        width: 700,
+      );
+
+      expect(find.text('Stretching'), findsOneWidget);
+      expect(find.text('Finish workout'), findsNothing);
+      await tester.tap(find.byKey(const Key('focus-next-primary')));
+      await tester.pumpAndSettle();
+
+      // Nothing is asked twice: finishing from stretching finishes.
+      expect(finished, [false]);
+      expect(find.byKey(const Key('focus-finish-confirm')), findsNothing);
+    });
+
+    testWidgets('leaving it without finishing keeps the workout open', (
+      tester,
+    ) async {
+      final finished = <bool>[];
+      await _pumpFocus(
+        tester,
+        _allDone(),
+        _callbacks(
+          onOpenStretch: () async => null,
+          onFinish: (acknowledged) async => finished.add(acknowledged),
+        ),
+
+        width: 700,
+      );
+
+      await tester.tap(find.byKey(const Key('focus-next-primary')));
+      await tester.pumpAndSettle();
+
+      expect(finished, isEmpty);
+      expect(find.text('Stretching'), findsOneWidget);
+    });
+
+    testWidgets('without any, the last set leads to finishing', (tester) async {
+      await _pumpFocus(tester, _allDone(), _callbacks(), width: 700);
+
+      expect(find.text('Stretching'), findsNothing);
+      await tester.tap(find.byKey(const Key('focus-next-primary')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('focus-finish-confirm')), findsOneWidget);
+    });
+  });
+
+  group('the warm-up in the outline', () {
+    testWidgets('opens again, with how far it got', (tester) async {
+      var opened = 0;
+      await _pumpFocus(
+        tester,
+        _squatThenLegCurl(squatStarted: true),
+        _callbacks(onOpenWarmup: () => opened++),
+        warmup: (done: 3, total: 9),
+      );
+
+      await tester.tap(find.byKey(const Key('focus-outline')));
+      await tester.pumpAndSettle();
+      expect(find.text('Warm-up'), findsOneWidget);
+      expect(find.text('3 / 9'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('outline-warmup')));
+      await tester.pumpAndSettle();
+
+      expect(opened, 1);
+    });
+
+    testWidgets('is not there when the plan has none', (tester) async {
+      await _pumpFocus(tester, _squatThenLegCurl(), _callbacks());
+
+      await tester.tap(find.byKey(const Key('focus-outline')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('outline-warmup')), findsNothing);
+    });
+  });
+
   group('my setup', () {
     const saved = FocusSetupNote(
       exerciseTrackId: 10,
@@ -483,11 +572,13 @@ Future<void> _hold(WidgetTester tester) async {
 Future<void> _pumpFocus(
   WidgetTester tester,
   FocusWorkoutViewModel workout,
-  FocusWorkoutCallbacks callbacks,
-) async {
+  FocusWorkoutCallbacks callbacks, {
+  ({int done, int total})? warmup,
+  double width = 390,
+}) async {
   // A phone-sized view, so sheets sized from the screen height get a phone's.
   tester.view
-    ..physicalSize = const Size(390, 844)
+    ..physicalSize = Size(width, 844)
     ..devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
@@ -498,6 +589,7 @@ Future<void> _pumpFocus(
       home: FocusModeScreen(
         workout: workout,
         callbacks: callbacks,
+        warmup: warmup,
         now: () => DateTime.utc(2026, 10, 10, 17, 1),
       ),
     ),
@@ -547,6 +639,39 @@ FocusWorkoutViewModel _workout({
 );
 
 /// Barbell squat planned first, leg curl second; the squat is current.
+/// One exercise, its only set recorded: the workout's last set is behind it.
+FocusWorkoutViewModel _allDone() => FocusWorkoutViewModel(
+  workoutId: 'workout-id',
+  workoutUnitName: 'Legs',
+  startedAt: DateTime.utc(2026, 10, 10, 17),
+  exercises: const [
+    FocusExerciseViewModel(
+      id: 'squat',
+      name: 'Barbell squat',
+      roleLabel: 'Primary',
+      plannedOrdinal: 1,
+      performedOrdinal: 0,
+      loadStepKg: 2.5,
+      defaultRestSeconds: 180,
+      sets: [
+        FocusSetViewModel(
+          id: 'squat-set-0',
+          ordinal: 0,
+          number: 1,
+          status: FocusSetStatus.recorded,
+          loadKg: 80,
+          repetitions: 7,
+          rir: 2,
+        ),
+      ],
+    ),
+  ],
+  currentExerciseIndex: 0,
+  currentSetIndex: 1,
+  syncStatus: WorkoutSyncStatus.saved,
+  syncLabel: 'Saved',
+);
+
 /// With [squatDone], both squat sets are recorded and the leg curl is
 /// current.
 FocusWorkoutViewModel _squatThenLegCurl({
@@ -629,7 +754,12 @@ FocusWorkoutCallbacks _callbacks({
   Future<void> Function(FocusExerciseViewModel, FocusSetViewModel)? onUndoSet,
   Future<void> Function(FocusExerciseViewModel, String?)? onSetupNoteChanged,
   Future<void> Function(FocusExerciseViewModel, String?)? onExerciseNoteChanged,
+  VoidCallback? onOpenWarmup,
+  Future<bool?> Function()? onOpenStretch,
+  Future<void> Function(bool)? onFinish,
 }) => FocusWorkoutCallbacks(
+  onOpenWarmup: onOpenWarmup,
+  onOpenStretch: onOpenStretch,
   onMinimise: () {},
   onUndoSet: onUndoSet,
   onSetupNoteChanged: onSetupNoteChanged,
@@ -640,5 +770,5 @@ FocusWorkoutCallbacks _callbacks({
   onSkipExercise: (_) async {},
   onReorderExercise: onReorderExercise ?? (_) async {},
   onDoNow: onDoNow ?? (_) async {},
-  onFinish: (_) async {},
+  onFinish: onFinish ?? (_) async {},
 );

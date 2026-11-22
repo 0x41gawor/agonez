@@ -616,6 +616,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteSave => 'Save note';
 
   @override
+  String get routineWarmupEyebrow => 'Before the first set';
+
+  @override
+  String get routineWarmupTitle => 'Warm-up';
+
+  @override
+  String get routineStretchEyebrow => 'After the last set';
+
+  @override
+  String get routineStretchTitle => 'Stretching';
+
+  @override
+  String routineProgress(int done, int total) {
+    return '$done / $total';
+  }
+
+  @override
+  String get routineBackToWorkout => 'Back to workout';
+
+  @override
+  String get routineNotRecorded =>
+      'Tick them off as you go. This list is from your plan and only for you; it is not recorded.';
+
+  @override
   String get noteExerciseSavedA11y => 'Exercise note, saved';
 
   @override
