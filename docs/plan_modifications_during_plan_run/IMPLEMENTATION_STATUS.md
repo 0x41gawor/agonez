@@ -4,7 +4,8 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-25 — T0.1 merged (#1); `mypy src` green again. Next: T0.2 ∥ T1.1.
+Last updated: 2026-11-25 — T0.2 in review (preflight: zero rows). Next: review and merge T0.2 (#2),
+then T1.1 (#3).
 
 ---
 
@@ -12,9 +13,9 @@ Last updated: 2026-11-25 — T0.1 merged (#1); `mypy src` green again. Next: T0.
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | **T0.2** characterisation + preflight · **T1.1** migration 0018 | each other | Ready. Merge T0.2 (#2) before T1.1 (#3). Read [handoff/T0.1.md](handoff/T0.1.md) first. |
+| 1 | Review **T0.2** (merge #2) · **T1.1** migration 0018 (merge #3) | each other | T0.2 is in review; merge it before T1.1. T1.1 reads [handoff/T0.1.md](handoff/T0.1.md) first. |
 | 2 | T1.2 plans module | T2.1 *development* (merges later, after T2.2 and T6.2) | T2.1 needs Q5 decided (default applies otherwise). |
-| 3 | T2.2 run creation with run plans | — | Needs Q1. |
+| 3 | T2.2 run creation with run plans | — | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)). |
 
 Update this table whenever a task finishes.
 
@@ -51,7 +52,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | Task | Title | Depends on | Status | Branch | Commit | Updated |
 | --- | --- | --- | --- | --- | --- | --- |
 | T0.1 | DB-backed integration test harness | — | done | `impl/T0.1-integration-harness` (deleted) | `dcda3c9` | 2026-11-25 |
-| T0.2 | Characterisation tests + preflight | T0.1 | ready | | | 2026-11-25 |
+| T0.2 | Characterisation tests + preflight | T0.1 | review | `impl/T0.2-characterisation-preflight` | branch head | 2026-11-25 |
 | T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | ready | | | 2026-11-25 |
 | T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | todo | | | |
 | T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | todo | | | |
@@ -99,6 +100,9 @@ update the affected document section.
 | Date | Task | Doc § | Deviation | Reason | Docs updated? |
 | --- | --- | --- | --- | --- | --- |
 | 2026-11-25 | T0.1 | 06 T0.1 | `snapshot_tables` is async, has an optional `where` filter and prefixes the row count; the harness only accepts a database container started by `test_db.sh` | Async harness connection; run-filtered snapshots; never touch another database | Not needed (handoff/T0.1.md) |
+| 2026-11-25 | T0.2 | 06 T0.2, T2.2, T3.1; 07 T-REG | All six characterisation tests are `fixed by T2.2`; T2.2 removes every marker, T3.1 none | They edit the library plan, so run isolation alone fixes R1–R5 as written (verified with simulated isolation) | No (handoff/T0.2.md) |
+| 2026-11-25 | T0.2 | 02 §4.1 | The preflight audits only runs without `run_plan_id` | 0019 converts only those; new runs must not block a deploy | No (handoff/T0.2.md) |
+| 2026-11-25 | T0.2 | 06 T0.2 | Preflight verified on the 2026-11-25 dump, not 2026-11-19 | The harness restores the newest dump | Not needed |
 
 ---
 
@@ -111,6 +115,8 @@ conflicts. Before starting, an agent reads the handoff files of every task its o
 Finished tasks:
 
 - [T0.1](handoff/T0.1.md) — DB-backed integration test harness (merged 2026-11-25, `dcda3c9`).
+- [T0.2](handoff/T0.2.md) — characterisation tests and 0019 preflight (in review; preflight returns
+  zero rows on the 2026-11-25 dump).
 
 ## Merge rules
 
@@ -144,8 +150,9 @@ Finished tasks:
     `/home/agonez/be/src`. Lint: `/home/agonez/be/.venv/bin/ruff check .`, types:
     `/home/agonez/be/.venv/bin/mypy src`.
   - Frontend in a worktree: run `npm ci` in `<worktree>/web-fe` first (`node_modules` is not shared).
-- Baseline suites (2026-11-25): backend 164 passed, 4 skipped (the integration tests, without the
-  URL); `pytest -m integration` 4 passed; web 166 passed. `ruff` and `mypy src` are green (the
+- Baseline suites (2026-11-25, with T0.2): backend 164 passed, 21 skipped (the integration tests,
+  without the URL); `pytest -m integration` 15 passed, 6 xfailed; web 166 passed. `ruff` and
+  `mypy src` are green (the
   `plans/schemas.py:97` type error that T0.1 reported was fixed on `master` right after the merge).
 - Integration tests: `eval "$(scripts/test_db.sh)"`, `pytest -m integration`, `scripts/test_db.sh stop`
   (from `be/`; details in `be/README.md`).
