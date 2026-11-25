@@ -132,4 +132,23 @@ describe('PlanCreator Analysis tab integration', () => {
     expect(wrapper.get('.plan-export-preview').text()).toContain('Barbell Bench Press')
     expect(wrapper.get('.plan-export-preview').text()).toContain('"rir": "RIR2"')
   })
+
+  it('links At a glance through the view query while preserving unrelated parameters', async () => {
+    window.history.replaceState({}, '', '/plans/11?source=coach')
+    const wrapper = mountView()
+    await flushPromises()
+
+    const viewButtons = wrapper.findAll('.plan-view-switch button')
+    await viewButtons[1]!.trigger('click')
+    expect(window.location.search).toBe('?source=coach&view=glance')
+    expect(wrapper.get('.plan-glance').isVisible()).toBe(true)
+    expect(wrapper.get('.plan-creator-content').classes()).toContain('glance-workspace-active')
+
+    await viewButtons[0]!.trigger('click')
+    expect(window.location.search).toBe('?source=coach')
+    expect(wrapper.get('#plan-days').isVisible()).toBe(true)
+    expect(wrapper.get('.plan-creator-content').classes()).not.toContain('glance-workspace-active')
+    wrapper.unmount()
+    window.history.replaceState({}, '', '/')
+  })
 })

@@ -116,6 +116,7 @@ async def test_exercise_catalog_is_complete_lightweight_and_sorted() -> None:
     repository._fetch_all = fetch_all  # type: ignore[method-assign]
     await repository.list_exercise_catalog(locale="es")
 
+    assert "e.body_part::text AS body_part" in captured_query
     assert "e.target_category::text AS target_category" in captured_query
     assert "e.mechanics_tier::text AS mechanics_tier" in captured_query
     assert "eng.systemic_propulsive_fcsa_demand" in captured_query

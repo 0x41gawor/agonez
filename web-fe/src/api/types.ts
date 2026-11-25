@@ -40,6 +40,7 @@ export type ExerciseCatalogItem = Pick<
   | 'slug'
   | 'name'
   | 'name_full'
+  | 'body_part'
   | 'target_category'
   | 'mechanics_tier'
   | 'resistance_source'

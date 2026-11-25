@@ -13,6 +13,7 @@ import {
   type ExerciseUnitOption,
   type PlanValidationIssue,
 } from '@/features/plans/editor'
+import type { GlanceEditorTarget } from '@/features/plans/glance'
 
 const model = defineModel<EditorWorkoutUnit>({ required: true })
 withDefaults(defineProps<{
@@ -22,9 +23,11 @@ withDefaults(defineProps<{
   exerciseUnits?: ExerciseUnitOption[]
   path: string
   issues: PlanValidationIssue[]
+  openTarget?: GlanceEditorTarget | null
 }>(), {
   progressionModels: () => [],
   exerciseUnits: () => [],
+  openTarget: null,
 })
 defineEmits<{ remove: [] }>()
 
@@ -99,6 +102,7 @@ defineExpose({ addSlot })
         :exercise-units="exerciseUnits"
         :path="`${path.replace('.workout', '')}.slots.${slot.clientKey}`"
         :issues="issues"
+        :open-target="openTarget"
         @move="moveOrdered(model.exercise_slots, index, $event)"
         @duplicate="duplicateSlot(model.exercise_slots, index)"
         @remove="removeOrdered(model.exercise_slots, index)"
