@@ -38,6 +38,9 @@ addopts = "-q"
 pythonpath = ["src"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "integration: needs the disposable PostgreSQL from scripts/test_db.sh (skipped without AGONEZ_TEST_DATABASE_URL)",
+]
 
 [tool.ruff]
 target-version = "py310"

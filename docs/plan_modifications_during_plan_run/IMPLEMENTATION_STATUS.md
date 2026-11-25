@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-22 — initial version (design complete, nothing implemented).
+Last updated: 2026-11-25 — T0.1 implemented, waiting for review.
 
 ---
 
@@ -12,7 +12,7 @@ Last updated: 2026-11-22 — initial version (design complete, nothing implement
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | **T0.1** DB-backed integration test harness | — | Ready. No open decision affects it. |
+| 1 | **T0.1** review, then merge (#1) | — | Branch `impl/T0.1-integration-harness`; see [handoff/T0.1.md](handoff/T0.1.md). `mypy src` already fails on `master`. |
 | 2 | T0.2 characterisation + preflight · T1.1 migration 0018 | each other | After T0.1 is merged. |
 | 3 | T1.2 plans module | T2.1 *development* (merges later, after T2.2 and T6.2) | T2.1 needs Q5 decided (default applies otherwise). |
 | 4 | T2.2 run creation with run plans | — | Needs Q1. |
@@ -51,7 +51,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 
 | Task | Title | Depends on | Status | Branch | Commit | Updated |
 | --- | --- | --- | --- | --- | --- | --- |
-| T0.1 | DB-backed integration test harness | — | ready | | | 2026-11-22 |
+| T0.1 | DB-backed integration test harness | — | review | `impl/T0.1-integration-harness` | branch tip: `test(be): add DB-backed integration test harness` | 2026-11-25 |
 | T0.2 | Characterisation tests + preflight | T0.1 | todo | | | |
 | T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | todo | | | |
 | T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | todo | | | |
@@ -99,7 +99,7 @@ update the affected document section.
 
 | Date | Task | Doc § | Deviation | Reason | Docs updated? |
 | --- | --- | --- | --- | --- | --- |
-| | | | | | |
+| 2026-11-25 | T0.1 | 06 T0.1 | `snapshot_tables` is async, has an optional `where` filter and prefixes the row count; the harness only accepts a database container started by `test_db.sh` | Async harness connection; run-filtered snapshots; never touch another database | Not needed (handoff/T0.1.md) |
 
 ---
 
@@ -111,7 +111,7 @@ conflicts. Before starting, an agent reads the handoff files of every task its o
 
 Finished tasks:
 
-_None yet._
+- [T0.1](handoff/T0.1.md) — DB-backed integration test harness (2026-11-25, in review).
 
 ## Merge rules
 
@@ -145,7 +145,12 @@ _None yet._
     `/home/agonez/be/src`. Lint: `/home/agonez/be/.venv/bin/ruff check .`, types:
     `/home/agonez/be/.venv/bin/mypy src`.
   - Frontend in a worktree: run `npm ci` in `<worktree>/web-fe` first (`node_modules` is not shared).
-- Baseline suites: backend 162 passed, web 166 passed.
+- Baseline suites: backend 162 passed, web 166 passed. With T0.1 the default backend run also reports
+  the integration tests as skipped.
+- `mypy src` reports 3 errors in `modules/plans/schemas.py:97` on unchanged code (mypy 1.20.2,
+  seen 2026-11-25).
+- Integration tests: `eval "$(scripts/test_db.sh)"`, `pytest -m integration`, `scripts/test_db.sh stop`
+  (from `be/`; details in `be/README.md`).
 - `psql` is not installed on the host. Integration tests restore the newest `agonez_db_backup_*.sql`
   through `psql` inside a disposable `postgres:15` container (T0.1). The dump's owner role is
   `kartezjusz`; it already records migrations up to 0017.

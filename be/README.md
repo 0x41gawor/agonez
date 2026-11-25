@@ -113,6 +113,45 @@ Run checks:
 .venv/bin/pytest
 ```
 
+### Integration tests
+
+Tests in `tests/integration/` run the application against a real, disposable PostgreSQL.
+They are opt-in: without `AGONEZ_TEST_DATABASE_URL` they are skipped. They need Docker,
+the `postgres:15` image and a database dump (`agonez_db_backup_*.sql` in the repository
+root); `psql` is not needed on the host.
+
+```bash
+eval "$(scripts/test_db.sh)"
+```
+
+```bash
+.venv/bin/pytest -m integration
+```
+
+```bash
+scripts/test_db.sh stop
+```
+
+The script starts the container `agonez-it-db` on `127.0.0.1` with a random port and
+password, keeps its data in memory, and exports `AGONEZ_TEST_DATABASE_URL` and
+`AGONEZ_TEST_DB_CONTAINER`. Before connecting, the tests verify that the URL belongs to a
+container started by this script, because they create and drop databases. **Never point
+them at the production database.**
+
+| Variable | Purpose |
+| --- | --- |
+| `AGONEZ_TEST_DB_CONTAINER` | Container name (prefix `agonez-it-`). Set it before running the script to get a separate server, e.g. one per git worktree. |
+| `AGONEZ_TEST_DB_DUMP` | Dump to restore instead of the newest one by file name. |
+
+Once per session the dump is restored into the template database `agonez_it_template`
+(after creating the roles its `OWNER TO` statements name) and pending migrations are
+applied; each test then gets its own clone, so run only one pytest session per container
+at a time (no `pytest-xdist`). Fixtures (`client`, `db`, `clock`, the services) are in
+`tests/integration/conftest.py`; plan, run, workout and snapshot helpers in
+`tests/integration/builders.py`. The `clock` fixture freezes the Execution service's
+`today`; mobile context and run listing still use the real date unless a request passes
+`?date=`.
+
 Apply packaged migrations when running outside Docker:
 
 ```bash
