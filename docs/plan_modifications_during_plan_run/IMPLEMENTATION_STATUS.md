@@ -13,7 +13,7 @@ Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete. Next: T2.2 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
 | 1 | **T2.2** run creation with run plans | T2.1 *development* (merges later, after T2.2 and T6.2) · T5.1 | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)); turns T1.2's interim 409 test into 204 and extends the T-IMM-03 allow-list ([handoff/T1.2.md](handoff/T1.2.md)). |
-| 2 | **T5.1** promotion backend | T2.2, Phase 3 | May merge any time after #4. Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
+| 2 | **T5.1** promotion backend | T2.1 development, Phase 3 | Start after T2.2 merges (#5): T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 need runs that own their plans. The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
 
 Update this table whenever a task finishes.
 
