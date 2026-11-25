@@ -119,7 +119,8 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 - **Modules/files:** new `be/tests/integration/test_lifecycle_characterization.py`,
   `be/scripts/run_plans_preflight.sql`, `be/tests/integration/test_preflight.py`.
 - **Exact expected changes:** tests written as **target behaviour** marked
-  `@pytest.mark.xfail(strict=True, reason="fixed by T2.2/T3.1")`:
+  `@pytest.mark.xfail(strict=True, reason="fixed by T2.2")` (all six edit the library plan, so run
+  isolation fixes them; see `handoff/T0.2.md`):
   - editing a library plan after run creation does not change the run's overview/plan sets (R1);
   - removing a training day from a library plan that has a run returns 2xx (R2);
   - deleting a library plan that has runs returns 204 (R2);
@@ -248,7 +249,8 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
   two runs from one library plan are independent; deleting a run removes its run plan and leaves the
   library plan; creating from a run-plan revision → 422 `plan_revision_not_library`; overview,
   analysis queue, timeline, mobile context and fallback/start work for a new run with the unchanged
-  read code. T0.2 tests for R1/R2 now XPASS → remove their xfail markers.
+  read code. All six T0.2 tests (T-REG-01…06) now XPASS → remove every xfail marker and check each passes for
+  the intended reason.
 - **Required tests:** T-INT-RUN-01…08, T-DEL-01, T-DEL-02, T-IMM-04 (`07`); extend the T-IMM-03
   allow-list with the run-plan delete in `delete_plan_run`.
 - **Potential regressions:** preview vs creation counts; mobile context plan name; `RunManagerDialog`

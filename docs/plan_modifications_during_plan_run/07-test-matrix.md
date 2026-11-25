@@ -36,7 +36,7 @@ Common assertion helper: `snapshot_tables()` (T0.1) hashes ordered rows of the n
 
 | ID | Scenario | Expected |
 | --- | --- | --- |
-| T-REG-01…06 | Characterisation of R1–R5 (T0.2) | xfail today; pass after T2.2/T3.1/T3.4. |
+| T-REG-01…06 | Characterisation of R1–R5 (T0.2) | xfail today; all pass after T2.2 (they edit the library plan). Lineage identity inside a run plan is covered by T-INT-ID. |
 | T-PRE-01 | Preflight on restored backup | Zero rows for all five checks. |
 | T-INT-RUN-01 | Create run | Run plan `scope='run'`, `source_plan_id` = library; r1 RELEASED, r2 DRAFT; both fingerprints equal to library draft. |
 | T-INT-RUN-02 | Create run | Each workout/exercise track `plan_lineage_key` equals the r1 unit/slot lineage; one track per unit/slot with DEFAULT variant. |

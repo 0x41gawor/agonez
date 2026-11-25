@@ -331,7 +331,9 @@ Ship as `be/scripts/run_plans_preflight.sql` and embed the same checks at the st
    handle by a follow-up Apply instead of in SQL).
 5. Two tracks mapping to the same unit/slot within one revision.
 
-Live data (2026-11-22) passes all five (Audit §4.1).
+The checks cover only runs with `run_plan_id IS NULL` (the set 0019 converts), so runs created by
+T2.2 never block a deploy. Live data (2026-11-22) passes all five (Audit §4.1); so does the
+2026-11-25 dump (T0.2).
 
 ### 4.2 Algorithm (per run with `run_plan_id IS NULL`, ordered by `id`)
 
