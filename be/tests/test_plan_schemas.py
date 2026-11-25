@@ -107,7 +107,7 @@ def test_load_step_is_optional_positive_variant_metadata() -> None:
     assert parsed.load_step_kg == 2.5
 
 
-@pytest.mark.parametrize("value", [0, -2.5, 2.555, 1000.1])
+@pytest.mark.parametrize("value", [0, -2.5, 2.555, 1000.1, float("nan"), float("inf")])
 def test_load_step_rejects_invalid_values(value: float) -> None:
     payload = draft_payload()
     variant = payload["days"][0]["workout_unit"]["exercise_slots"][0]["variants"][0]  # type: ignore[index]

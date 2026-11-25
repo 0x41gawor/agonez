@@ -94,7 +94,9 @@ WORKING_SET_ROLES = frozenset(SetRole) - {SetRole.RAMPUP}
 
 
 def _validate_load_step_precision(value: float) -> float:
-    if Decimal(str(value)).as_tuple().exponent < -2:
+    # NaN and infinities have a letter exponent; Field(gt=0, le=1000) rejects them first.
+    exponent = Decimal(str(value)).as_tuple().exponent
+    if not isinstance(exponent, int) or exponent < -2:
         raise ValueError("load_step_kg must have at most 2 decimal places")
     return value
 
