@@ -100,7 +100,7 @@ Details and workarounds: `01` §10.
 
 | ID | Question | Current default in the design | Affects |
 | --- | --- | --- | --- |
-| Q1 | Should run **creation** reject non-executable plans (empty workouts, slots without an exercise, exercises without sets), as Apply does? | Keep today's permissive creation. Only Apply validates. | T2.2 |
+| Q1 | Should run **creation** reject non-executable plans (empty workouts, slots without an exercise, exercises without sets), as Apply does? | **Decided 2026-11-25: yes.** 422 `plan_not_executable` (Apply's rules without the day count); library plans stay permissive. | T2.2 |
 | Q2 | Changing the number of days (microcycle length) of a running plan. | Out of scope for v1. The day count is locked in run context and Apply rejects changes. | T3.3, T4.3 |
 | Q3 | A *recoverable* missed session (one that can still be caught up) is rebound to the new revision, so catching it up runs the current definition. | Rebind. Status, date and adherence stay unchanged. | T3.3 |
 | Q4 | A saved desktop prescription whose set structure changed: discard and report, or carry loads over by set role? | Discard and report, with the dry run showing it beforehand. | T3.4 |

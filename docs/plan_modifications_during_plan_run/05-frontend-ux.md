@@ -256,7 +256,7 @@ Save as a new plan in My Plans
 
 | Screen | Change |
 | --- | --- |
-| `NewPlanRunView.vue` | Replace `execution.newRun.draftWarning` with info text `execution.newRun.copyNotice`: "The run gets its own copy of this plan. Later edits in My Plans won't change it; adjust the run from Execution → Run plan." Hide the revision selector when the plan has a single revision. |
+| `NewPlanRunView.vue` | Replace `execution.newRun.draftWarning` with info text `execution.newRun.copyNotice`: "The run gets its own copy of this plan. Later edits in My Plans won't change it; adjust the run from Execution → Run plan." Hide the revision selector when the plan has a single revision. On 422 `plan_not_executable`, list the issues (workout/exercise names from the paths) with a link to the plan in My Plans (Q1). |
 | `PlanListView.vue` | No change (backend filters run plans). |
 | Overview / Timeline | Microcycle revision tick already exists (`revision_changed_here`, `r{plan_revision_no}`); label the `plan_revision_changed` event "Run plan modified" and link it to the Run Plan tab. When un-cancelling a session returns 409 `session_workout_removed`, show `execution.runPlan.cannotUncancel` inline. |
 | `LoadsChart.vue` / `LoadPerSetStrip.vue` | Break the line where `point.exercise_id` changes; tooltip shows the exercise name; legend shows the latest exercise. |

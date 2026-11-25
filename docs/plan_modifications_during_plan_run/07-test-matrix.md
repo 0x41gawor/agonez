@@ -27,7 +27,7 @@ Common assertion helper: `snapshot_tables()` (T0.1) hashes ordered rows of the n
 | T-UNIT-FP-03 | same | Changing a slot lineage key ⇒ different (delete + re-add is a change). |
 | T-UNIT-FP-04 | same | Plan name/description/accent ignored. |
 | T-UNIT-FP-05 | same | Reordering exercises (ordinal swap) ⇒ different. |
-| T-UNIT-VAL-01…06 | `validate_executable` | One test per issue code (`03` §3), each with correct `path`, `day_ordinal`, `slot_ordinal`. |
+| T-UNIT-VAL-01…06 | `validate_executable` (T2.2) | One test per issue code (`03` §3), each with correct `path`, `day_ordinal`, `slot_ordinal`. |
 | T-UNIT-PRX-01 | rebase decision function | Returns `None`/`slot_removed`/`exercise_changed`/`set_structure_changed` for the four cases; equal role lists of different rep ranges ⇒ compatible. |
 | T-UNIT-DEF-01 | `_next_prescription` defaults | Basis exercise ≠ target exercise ⇒ both default arrays all `null`. |
 | T-UNIT-LS-01 | `_load_series` | Points carry `exercise_id`; `delta_pct` uses the trailing segment of the latest exercise. |
@@ -42,10 +42,11 @@ Common assertion helper: `snapshot_tables()` (T0.1) hashes ordered rows of the n
 | T-INT-RUN-02 | Create run | Each workout/exercise track `plan_lineage_key` equals the r1 unit/slot lineage; one track per unit/slot with DEFAULT variant. |
 | T-INT-RUN-03 | Create run | All sessions bound to r1 rows; microcycles reference r1; counts equal preview. |
 | T-INT-RUN-04 | **Source isolation** | After creation, PUT library draft (rename exercise, change sets, delete a day): run plan fingerprints, run overview and next-prescription plan sets unchanged; the library save succeeds (no FK error). |
-| T-INT-RUN-05 | **Source isolation (reverse)** | PUT run-plan draft + Apply: library draft fingerprint and `updated_at` unchanged. |
-| T-INT-RUN-06 | **Run-to-run isolation** | Two runs from one library plan; modify + apply run A: run B fingerprints, sessions and prescriptions unchanged (`snapshot_tables` filtered by run B). |
+| T-INT-RUN-05 | **Source isolation (reverse)** | PUT run-plan draft + Apply: library draft fingerprint and `updated_at` unchanged. T2.2 tests the run-plan draft half; the Apply half lands with T3.3. |
+| T-INT-RUN-06 | **Run-to-run isolation** | Two runs from one library plan; modify + apply run A: run B fingerprints, sessions and prescriptions unchanged (`snapshot_tables` filtered by run B). T2.2 tests the run-plan draft half; the Apply half lands with T3.3. |
 | T-INT-RUN-07 | Delete run | Run plan, its revisions and children gone; library plan intact; promoted plans keep `source_plan_id = NULL`. |
 | T-INT-RUN-08 | Create from run-plan revision | 422 `plan_revision_not_library`. |
+| T-INT-RUN-09 | Create from a non-executable library revision (Q1) | 422 `plan_not_executable`; one issue per problem with `code`, `path`, ordinals; no plan, run, track or session row created (`snapshot_tables`). `day_count_changed` never reported. |
 | T-INT-ID-01 | Reordered slots (synthetic second revision) | Each exercise track resolves to the same exercise. |
 | T-INT-ID-02 | Inserted slot at position 0 | Existing tracks keep their exercises; the new slot maps to no existing track. |
 | T-INT-ID-03 | Track absent from current revision | Overview 200; trace `retired: true`; excluded from analysis queue. |

@@ -206,7 +206,7 @@ Errors: `404 plan_run_not_found`, `409 run_plan_not_modifiable`, `409 draft_vers
 
 | Endpoint | Change | Compatibility |
 | --- | --- | --- |
-| `POST /api/v1/exec/plan-runs` | `plan_revision_id` must belong to a **library** plan (`422 plan_revision_not_library`). The run receives its own copy (revision 1 applied + working copy). Response unchanged in shape (overview). | Additive behaviour; same request. |
+| `POST /api/v1/exec/plan-runs` | `plan_revision_id` must belong to a **library** plan (`422 plan_revision_not_library`). The revision must be executable (`03` §3 without the day-count rule): otherwise `422 plan_not_executable` with the same `issues` list as Apply's `run_plan_not_executable` (Q1). The run receives its own copy (revision 1 applied + working copy). Response unchanged in shape (overview). | Additive behaviour; same request. |
 | `GET /api/v1/exec/plan-runs/preview` | Unchanged (reads the library revision). | — |
 | `GET /api/v1/exec/plan-runs`, `…/{id}/overview` (run header) | `run.plan` = the **run plan** `{plan_id, code, name}` (same text as before until renamed). New: `run.source_plan: {plan_id, code, name} \| null`, `run.current_revision: {plan_revision_id, revision_no}`, `run.has_unapplied_changes: bool`. `initial_revision` now points at run-plan revision 1. | Additive except `plan_id`/`code` now identify the run plan. Web FE updated in T4.5. |
 | `DELETE /api/v1/exec/plan-runs/{id}` | Also deletes the run plan. Plans promoted from it survive (`source_plan_id` → NULL). | Same contract. |

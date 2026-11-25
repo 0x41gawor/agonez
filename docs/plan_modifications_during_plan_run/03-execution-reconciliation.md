@@ -90,11 +90,11 @@ the last microcycle.
 
 ---
 
-## 3. Executability validation (Apply only)
+## 3. Executability validation (Apply and run creation)
 
 | Code | Rule | Why |
 | --- | --- | --- |
-| `day_count_changed` | `len(days) == run.microcycle_duration_days` | D13: microcycle dates derive from it. |
+| `day_count_changed` | `len(days) == run.microcycle_duration_days` (Apply only) | D13: microcycle dates derive from it. |
 | `no_workouts` | At least one day has a workout unit. | A run without sessions is meaningless. |
 | `workout_without_exercises` | Every workout unit has ≥ 1 slot. | Fallback preparation rejects empty workouts (`mobile_execution/repository.py:754`). |
 | `slot_without_exercise` | Every slot has exactly one DEFAULT variant. | No track/prescription can be built otherwise (`:767`). |
@@ -103,7 +103,13 @@ the last microcycle.
 
 Each issue carries `{code, path, day_ordinal, slot_ordinal, message}`; `path` uses the PlanCreator
 convention (`days.<ordinal>.workout_unit.exercise_slots.<ordinal>`) so the editor can highlight it.
-Library plans and run creation keep today's permissive rules (open question Q1).
+One pure function, `validate_executable(rows, *, expected_day_count=None)` in
+`modules/plans/executability.py`, serves both callers (built by T2.2, reused by T3.3):
+
+- **Apply** passes the run's `microcycle_duration_days`; any issue → 422 `run_plan_not_executable`.
+- **Run creation** (Q1, decided 2026-11-25) passes no day count, so `day_count_changed` never fires;
+  any issue → 422 `plan_not_executable` with the same `issues` list, and nothing is created.
+- **Library plans stay permissive**: My Plans can still save unfinished plans.
 
 ---
 

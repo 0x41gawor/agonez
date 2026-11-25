@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete; Q5 decided. Next: T2.2 (needs Q1) ∥ T2.1 development; T5.1 after T2.2.
+Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete; Q1 and Q5 decided. Next: T2.2 ∥ T2.1 development; T5.1 after T2.2.
 
 ---
 
@@ -12,7 +12,7 @@ Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete; Q5 decided.
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | **T2.2** run creation with run plans | T2.1 development | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)); turns T1.2's interim 409 test into 204 and extends the T-IMM-03 allow-list ([handoff/T1.2.md](handoff/T1.2.md)). |
+| 1 | **T2.2** run creation with run plans | T2.1 development | Q1 decided: build `validate_executable` and reject non-executable revisions at creation. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)); turns T1.2's interim 409 test into 204 and extends the T-IMM-03 allow-list ([handoff/T1.2.md](handoff/T1.2.md)). |
 | 2 | **T2.1** migration 0019 (development) | T2.2 | Q5 decided (guard the seed). Merges together with T2.3 at #6, only after T2.2 is merged and the T6.2 rehearsal passed. Mandatory review. Read [handoff/T0.2.md](handoff/T0.2.md) (embed the preflight) and [handoff/T1.1.md](handoff/T1.1.md). |
 | 3 | T5.1 promotion backend | Phase 3 | Start after T2.2 merges (#5): T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 need runs that own their plans. The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
 
@@ -82,7 +82,7 @@ that point, the agent applies the documented default and records it here.
 
 | ID | Question (short) | Default | Decision | Date | Needed by |
 | --- | --- | --- | --- | --- | --- |
-| Q1 | Reject non-executable plans at run creation? | No (only Apply validates) | open | | T2.2 |
+| Q1 | Reject non-executable plans at run creation? | No (only Apply validates) | **Yes, reject**: 422 `plan_not_executable` with Apply's issue list (no day-count rule); library plans stay permissive. T2.2 builds `validate_executable`, T3.3 reuses it | 2026-11-25 | T2.2 |
 | Q2 | Microcycle length changes out of scope for v1? | Yes | open | | T3.3, T4.3 |
 | Q3 | Rebind recoverable missed sessions? | Yes | open | | T3.3 |
 | Q4 | Analysis prescription with changed set structure: discard or carry loads by role? | Discard and report | open | | T3.4 |

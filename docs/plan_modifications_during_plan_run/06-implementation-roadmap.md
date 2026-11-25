@@ -235,8 +235,10 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
   0018 alone, with the current (positional) read code.
 - **Dependencies:** T1.2.
 - **Modules/files:** `modules/execution/repository.py` (`create_plan_run`, `delete_plan_run`), new
-  `modules/execution/run_plan_repository.py` (`create_run_plan`); tests
-  `tests/integration/test_run_creation.py`, `tests/test_execution_service.py`.
+  `modules/execution/run_plan_repository.py` (`create_run_plan`), new
+  `modules/plans/executability.py` (`validate_executable`, `03` §3; Q1); tests
+  `tests/integration/test_run_creation.py`, `tests/test_execution_service.py`,
+  `tests/test_run_plan_validation.py`.
 - **Exact expected changes:** `02` §3.3 and §3.6. Tracks get `plan_lineage_key` **and keep the
   positional `day:N`/`slot:N` labels**. `delete_plan_run` deletes the run plan when `run_plan_id` is
   set (legacy runs have none until 0019). No run-header or mobile-context changes (they move to T3.1);
@@ -247,11 +249,13 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
   fingerprints equal to the library draft; tracks carry the copied lineage keys; sessions bound to r1;
   setup notes seeded as before; editing/deleting the library plan afterwards changes nothing in the run;
   two runs from one library plan are independent; deleting a run removes its run plan and leaves the
-  library plan; creating from a run-plan revision → 422 `plan_revision_not_library`; overview,
+  library plan; creating from a run-plan revision → 422 `plan_revision_not_library`; creating from a
+  non-executable revision → 422 `plan_not_executable` with issue paths and nothing created; overview,
   analysis queue, timeline, mobile context and fallback/start work for a new run with the unchanged
   read code. All six T0.2 tests (T-REG-01…06) now XPASS → remove every xfail marker and check each passes for
   the intended reason.
-- **Required tests:** T-INT-RUN-01…08, T-DEL-01, T-DEL-02, T-IMM-04 (`07`); extend the T-IMM-03
+- **Required tests:** T-INT-RUN-01…09 (for 05/06 only the run-plan draft half; their Apply half
+  belongs to T3.3), T-UNIT-VAL-01…06, T-DEL-01, T-DEL-02, T-IMM-04 (`07`); extend the T-IMM-03
   allow-list with the run-plan delete in `delete_plan_run`.
 - **Potential regressions:** preview vs creation counts; mobile context plan name; `RunManagerDialog`
   delete flow (still single call).
@@ -345,8 +349,8 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 - **Modules/files:** `modules/execution/run_plan.py`, `run_plan_repository.py`,
   `run_plan_schemas.py` (the Apply **route** is registered by T3.4, so `master` never exposes a partial
   Apply; T3.3 tests call the service); tests `tests/integration/test_apply_sessions.py`,
-  `tests/integration/test_apply_concurrency.py`, `tests/test_run_plan_validation.py` (pure
-  `validate_executable`).
+  `tests/integration/test_apply_concurrency.py` (`validate_executable` and its unit tests exist since
+  T2.2; Apply passes the run's day count).
 - **Exact expected changes:** cancellation rules of `03` §5.1–§5.3 (never delete, re-date or change
   the status of a `cancelled` session); un-cancel guard in `execution/repository.py:update_session_status`
   (`02` §3.4, 409 `session_workout_removed`); pseudocode `03` §2 (steps 0–4 except `rebase_prescription`, which is a
@@ -358,7 +362,7 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
   post-apply invariants 1, 2, 4, 5, 6, 7 (`03` §12); idempotent replay returns `already_applied`;
   two concurrent Applies → exactly one new revision; Apply and mobile start interleaved → consistent
   outcome either way.
-- **Required tests:** T-INT-AP-01…17, T-CONC-01…05, T-API-AP-01, T-API-AP-02; extend the T-IMM-03 allow-list with Apply's draft
+- **Required tests:** T-INT-AP-01…17, the Apply half of T-INT-RUN-05/06, T-CONC-01…05, T-API-AP-01, T-API-AP-02; extend the T-IMM-03 allow-list with Apply's draft
   renumbering.
 - **Potential regressions:** advisory-lock contention with mobile start (short transactions);
   timeline display for re-dated sessions.

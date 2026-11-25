@@ -225,6 +225,8 @@ Inside the existing transaction, before inserting the run:
 1. Load the source revision; require its plan `scope = 'library'` → else 422
    `plan_revision_not_library`. Lock the source plan `FOR SHARE` (as `duplicate_plan` does) for a
    consistent snapshot.
+   Then `validate_executable(load_revision_rows(source))` (`03` §3, without the day-count rule) →
+   any issue: 422 `plan_not_executable` `{issues}`, nothing created (Q1, decided 2026-11-25).
 2. `RunPlanRepository.create_run_plan`:
    - `INSERT workout_plans (scope='run', name, description, accent, source_plan_id = source plan)`;
      copy `plan_images` row.
