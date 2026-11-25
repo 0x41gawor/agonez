@@ -25,7 +25,7 @@ Canonical merge order:
 | 8 | T3.5, T3.2 (any order) | Additive analytics fields; new endpoints that no client calls. | — |
 | 9 | T3.3 | Apply service and the un-cancel guard (which only triggers after an Apply); the Apply route is not registered yet. | — |
 | 10 | T3.4 | Registers the Apply route; no client calls it while the UI is hidden. | — |
-| — | T5.1 | Additive; may merge any time after #4. | — |
+| — | T5.1 | Additive; may merge any time after #5 (its promotion and deletion tests need runs that own their plans). | — |
 | 11 | T4.1 … T4.5, T5.2, T4.6 | All run-plan UI is behind `RUN_PLAN_UI_ENABLED = false` (added by T4.1). | — |
 | 12 | Enable the UI (one-line commit: `RUN_PLAN_UI_ENABLED = true`) | — | **T6.1** and **RD-01** pass. |
 
@@ -52,14 +52,14 @@ Each gate uses only functionality that is already on `master` or on the branch b
 T0.1 ─┬─ T0.2 ─────────────────────────┐
       └─ T1.1 ─┬─ T1.2 ─ T2.2 ─ T2.1 ─ T2.3 ─► [T6.2] ─► merge #6 ─ T3.1 ─┬─ T3.5
                │                                                         ├─ T3.2 ─ T3.3 ─ T3.4 ─┐
-               └─ T5.1 (any time after T1.2) ────────────────────────────┘                       │
+               └─ T5.1 (after T2.2 merges) ──────────────────────────────┘                       │
 docs (04) ─ T4.1 ─┬─ T4.2 ─┬─ T4.5 ─ T4.6                                                         │
                   ├─ T4.3 ─┤                                                                       │
                   └─ T4.4 ─┴─ T5.2 ─────────────────────────────► [T6.1 + RD-01] ─► enable UI ◄────┘
 ```
 
 Parallel-safe pairs (no shared files): T0.2 ∥ T1.1 · T1.2 ∥ T2.1 development (SQL only; merges after
-T2.2) · T3.2 ∥ T3.5 · T5.1 ∥ Phase 3 · all of Phase 4 ∥ Phase 3 (against contract `04`, mocked API) ·
+T2.2) · T3.2 ∥ T3.5 · T5.1 (after T2.2) ∥ Phase 3 · all of Phase 4 ∥ Phase 3 (against contract `04`, mocked API) ·
 T4.2 ∥ T4.3 ∥ T4.4 (T4.1 owns `router/index.ts`, the API client and the UI flag). Not parallel:
 T3.1 → T3.5 (both edit `execution/service.py`), T3.3 → T3.4 (same new files).
 
@@ -508,7 +508,8 @@ non-English files) so `tests/i18n.test.ts` stays green; T4.6 translates.
 ### T5.1 — Backend: duplicate with name and source revision
 
 - **Objective:** promotion via `POST /api/plans/{id}/duplicate` (`04` §4).
-- **Dependencies:** T1.2.
+- **Dependencies:** T1.2, and T2.2 merged: T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 need runs that
+  own their plans. The Apply half of T-INT-PR-03 needs T3.3 and is covered by E2E-05 (T6.1).
 - **Modules/files:** `modules/plans/router.py`, `service.py`, `repository.py`, `schemas.py`
   (`PlanDuplicateRequest`); tests `tests/integration/test_promotion.py`, `tests/test_plan_schemas.py`,
   `tests/test_openapi.py`.

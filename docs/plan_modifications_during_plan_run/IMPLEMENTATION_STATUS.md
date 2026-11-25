@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete. Next: T2.2 (needs Q1) ∥ T5.1 ∥ T2.1 development (needs Q5).
+Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete; Q5 decided. Next: T2.2 (needs Q1) ∥ T2.1 development; T5.1 after T2.2.
 
 ---
 
@@ -12,8 +12,9 @@ Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete. Next: T2.2 
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | **T2.2** run creation with run plans | T2.1 *development* (merges later, after T2.2 and T6.2) · T5.1 | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)); turns T1.2's interim 409 test into 204 and extends the T-IMM-03 allow-list ([handoff/T1.2.md](handoff/T1.2.md)). |
-| 2 | **T5.1** promotion backend | T2.1 development, Phase 3 | Start after T2.2 merges (#5): T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 need runs that own their plans. The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
+| 1 | **T2.2** run creation with run plans | T2.1 development | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)); turns T1.2's interim 409 test into 204 and extends the T-IMM-03 allow-list ([handoff/T1.2.md](handoff/T1.2.md)). |
+| 2 | **T2.1** migration 0019 (development) | T2.2 | Q5 decided (guard the seed). Merges together with T2.3 at #6, only after T2.2 is merged and the T6.2 rehearsal passed. Mandatory review. Read [handoff/T0.2.md](handoff/T0.2.md) (embed the preflight) and [handoff/T1.1.md](handoff/T1.1.md). |
+| 3 | T5.1 promotion backend | Phase 3 | Start after T2.2 merges (#5): T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 need runs that own their plans. The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
 
 Update this table whenever a task finishes.
 
@@ -37,7 +38,7 @@ deploys with `./redeploy.sh` from `/home/agonez`; agents never deploy.
 | 8 | T3.5, T3.2 | review | C | |
 | 9 | T3.3 | review (mandatory) | C | |
 | 10 | T3.4 | review (mandatory) | C | |
-| — | T5.1 (any time after #4) | review | C | |
+| — | T5.1 (any time after #5) | review | C | |
 | 11 | T4.1 … T4.5, T5.2, T4.6 (UI hidden: `RUN_PLAN_UI_ENABLED = false`) | review | D | |
 | 12 | Enable the UI (`RUN_PLAN_UI_ENABLED = true`) | **T6.1** + **RD-01** | D | |
 
@@ -53,7 +54,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T0.2 | Characterisation tests + preflight | T0.1 | done | `impl/T0.2-characterisation-preflight` (deleted) | `e99336e` | 2026-11-25 |
 | T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | done | `impl/T1.1-run-plans-schema` (deleted) | `e66f5b4` | 2026-11-25 |
 | T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | done | `impl/T1.2-plans-module` (deleted) | `64ce51f` | 2026-11-25 |
-| T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | todo | | | |
+| T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | ready (development) | | | 2026-11-25 |
 | T2.2 | Run creation/deletion with run plans | T1.2 | ready | | | 2026-11-25 |
 | T2.3 | Conversion golden comparison | T2.1 (stacked) | todo | | | |
 | T3.1 | Identity and binding refactor (+ run header fields) | T2.1 + T2.3 merged | todo | | | |
@@ -67,7 +68,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T4.4 | Apply dialog | T4.1 | todo | | | |
 | T4.5 | Peripheral Execution updates | T4.2, T3.5 | todo | | | |
 | T4.6 | Translations | T4.2–T4.5, T5.2 | todo | | | |
-| T5.1 | Promotion backend (duplicate with body) | T1.2 | ready | | | 2026-11-25 |
+| T5.1 | Promotion backend (duplicate with body) | T1.2, T2.2 merged | todo | | | 2026-11-25 |
 | T5.2 | Promote dialog | T5.1, T4.1, T4.2 | todo | | | |
 | T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | todo | | | |
 | T6.1 | Live lifecycle scenario (gate for #12) | T3.2–T3.5, T5.1 merged | todo | | | |
@@ -85,7 +86,7 @@ that point, the agent applies the documented default and records it here.
 | Q2 | Microcycle length changes out of scope for v1? | Yes | open | | T3.3, T4.3 |
 | Q3 | Rebind recoverable missed sessions? | Yes | open | | T3.3 |
 | Q4 | Analysis prescription with changed set structure: discard or carry loads by role? | Discard and report | open | | T3.4 |
-| Q5 | Demo seed `0001_execution_demo.sql` after 0019 | Guard it so it refuses to run | open | | T2.1 |
+| Q5 | Demo seed `0001_execution_demo.sql` after 0019 | Guard it so it refuses to run | **Default**: guard the seed so it refuses to run once 0019 is applied; plan 6's revision 25 stays | 2026-11-25 | T2.1 |
 
 ---
 
@@ -123,6 +124,19 @@ Finished tasks:
 - [T1.2](handoff/T1.2.md) — plans module run-plan aware: `load_revision_rows`, `copy_revision`,
   `definition_fingerprint`, scope guards, artifact fields, T-IMM-03 allow-list (merged 2026-11-25,
   `64ce51f`).
+
+## Where things are recorded
+
+Nothing lives only in a chat. Whoever learns something that changes what a later agent must do
+writes it down here or in the design, in the same commit:
+
+| What | Where |
+| --- | --- |
+| Progress, order, "start X only after Y" | "Next up", the task board and the merge-order table in this file; 06 if a task's dependencies change |
+| A decision on an open question | Decisions log in this file (and the affected doc section) |
+| Code that intentionally differs from the design | Deviations table in this file; the affected doc section if a contract changes |
+| Instructions for one specific later task | `AGENT_PROMPTS.md` §4 task notes, or "Next up" notes |
+| What a finished task built, how to use it, pitfalls | `handoff/<task>.md` |
 
 ## Merge rules
 

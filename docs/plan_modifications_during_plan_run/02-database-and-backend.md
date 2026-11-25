@@ -441,7 +441,7 @@ transaction; nothing partial is visible. `dry_run=true` uses `connection.transac
   sessions may change or disappear (existing error paths), sessions of removed workouts stop being
   startable, new workouts appear.
 - `migrations/seeds/0001_execution_demo.sql` binds a run directly to library revisions and must not be
-  run after 0019 (add a guard or retire it — open question Q5). `live_*_scenarios.py` scripts that
+  run after 0019 (Q5, decided 2026-11-25: guard it so it refuses to run once 0019 is applied). `live_*_scenarios.py` scripts that
   look up the demo run by name still work on a converted backup.
 
 ---
