@@ -219,7 +219,10 @@ watch(() => locale.current, () => {
       </nav>
     </div>
 
-    <main class="page-wrap plan-creator-content">
+    <main
+      class="page-wrap plan-creator-content"
+      :class="{ 'glance-workspace-active': activeTab === 'PLAN' && planView === 'glance' }"
+    >
       <div v-if="editor.conflict.value" class="conflict-banner" role="alert">
         <div>
           <strong>{{ $t('plans.creatorView.conflictTitle') }}</strong>

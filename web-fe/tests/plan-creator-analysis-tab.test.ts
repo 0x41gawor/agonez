@@ -142,10 +142,12 @@ describe('PlanCreator Analysis tab integration', () => {
     await viewButtons[1]!.trigger('click')
     expect(window.location.search).toBe('?source=coach&view=glance')
     expect(wrapper.get('.plan-glance').isVisible()).toBe(true)
+    expect(wrapper.get('.plan-creator-content').classes()).toContain('glance-workspace-active')
 
     await viewButtons[0]!.trigger('click')
     expect(window.location.search).toBe('?source=coach')
     expect(wrapper.get('#plan-days').isVisible()).toBe(true)
+    expect(wrapper.get('.plan-creator-content').classes()).not.toContain('glance-workspace-active')
     wrapper.unmount()
     window.history.replaceState({}, '', '/')
   })

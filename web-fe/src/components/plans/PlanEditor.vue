@@ -71,6 +71,22 @@ async function focusEditorTarget(target: GlanceEditorTarget): Promise<void> {
   focusTarget.focus({ preventScroll: true })
 }
 
+function findTargetSlots(target: GlanceEditorTarget) {
+  return model.value.days.find((day) => day.clientKey === target.dayKey)
+    ?.workout_unit?.exercise_slots
+}
+
+function renameGlanceSlot(target: GlanceEditorTarget, name: string): void {
+  const slot = findTargetSlots(target)?.find((item) => item.clientKey === target.slotKey)
+  if (slot) slot.name = name.trim() || null
+}
+
+function moveGlanceSlot(target: GlanceEditorTarget, direction: -1 | 1): void {
+  const slots = findTargetSlots(target)
+  const index = slots?.findIndex((item) => item.clientKey === target.slotKey) ?? -1
+  if (slots && index >= 0) moveOrdered(slots, index, direction)
+}
+
 defineExpose({ focusEditorTarget })
 </script>
 
@@ -167,6 +183,8 @@ defineExpose({ focusEditorTarget })
       :exercises="exercises"
       :active="planView === 'glance'"
       @open-editor="emit('openEditor', $event)"
+      @rename-slot="renameGlanceSlot"
+      @move-slot="moveGlanceSlot"
     />
   </div>
 </template>

@@ -368,6 +368,11 @@
   padding-top: 18px;
 }
 
+.plan-creator-content.glance-workspace-active {
+  width: calc(100vw - 32px);
+  max-width: none;
+}
+
 .conflict-banner,
 .plan-inline-error,
 .plan-inline-success {
@@ -2767,7 +2772,7 @@
   box-shadow: 0 0 0 6px var(--accentDim);
 }
 
-.plan-glance { min-width: 0; }
+.plan-glance { min-width: 0; width: 100%; }
 .glance-heading { align-items: flex-end; margin: 18px 0 14px; }
 .glance-heading h2 { margin: 2px 0 0; color: var(--text); }
 .glance-readonly {
@@ -2855,23 +2860,27 @@
 
 .glance-board {
   display: flex;
-  max-height: calc(100vh - 250px);
-  min-height: 310px;
+  height: max(
+    calc(100dvh - 320px),
+    calc(104px + var(--glance-max-slots) * var(--glance-slot-row-height))
+  );
+  min-height: 420px;
   gap: 7px;
   margin-top: 10px;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
   overscroll-behavior: contain;
   scrollbar-color: var(--border2) var(--bg2);
 }
 
 .glance-day {
-  flex: 0 0 244px;
-  min-width: 244px;
+  flex: 1 0 214px;
+  min-width: 214px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg2);
 }
-.glance-day.rest { flex-basis: 112px; min-width: 112px; }
+.glance-day.rest { flex: .42 0 92px; min-width: 92px; }
 .glance-day-header {
   position: sticky;
   z-index: 3;
@@ -2932,7 +2941,7 @@
   --glance-color: var(--glance-color-dark);
   position: relative;
   display: grid;
-  grid-template-columns: 3px minmax(0, 1fr) 24px;
+  grid-template-columns: 3px minmax(0, 1fr) 38px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 5px;
@@ -2969,27 +2978,67 @@
 .glance-code { color: var(--glance-color); font-size: 7.5px; text-align: center; }
 .glance-set-count { display: grid; color: var(--text); font-size: 10px; text-align: center; }
 .glance-set-count small { color: var(--text3); font-size: 7px; }
-.glance-trace {
+.glance-slot-actions {
   display: grid;
-  width: 24px;
-  min-height: 100%;
-  place-items: center;
-  border: 0;
+  grid-template-columns: repeat(2, 19px);
   border-left: 1px solid var(--border);
+}
+.glance-slot-actions > button,
+.glance-slot-rename > button {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   background: transparent;
   color: var(--text3);
-  font-size: 15px;
+  font: inherit;
+  font-size: 9px;
   cursor: pointer;
+}
+.glance-slot-actions > button:nth-child(even) { border-right: 0; }
+.glance-slot-actions > button:nth-child(n + 3) { border-bottom: 0; }
+.glance-slot-actions > button:hover:not(:disabled),
+.glance-slot-rename > button:hover { background: var(--accentDim); color: var(--accent2); }
+.glance-slot-actions > button:disabled { cursor: default; opacity: .22; }
+.glance-slot-rename {
+  display: grid;
+  min-width: 0;
+  grid-column: 2 / 4;
+  grid-template-columns: 20px minmax(0, 1fr) 24px 24px;
+  align-items: stretch;
+}
+.glance-slot-rename .glance-slot-order { align-self: center; padding-left: 6px; }
+.glance-slot-rename .text-input {
+  min-width: 0;
+  height: 30px;
+  align-self: center;
+  padding: 4px 6px;
+  font-size: 10px;
+}
+.glance-slot-rename > button { border-bottom: 0; border-left: 1px solid var(--border); border-right: 0; }
+.glance-trace {
+  font-size: 15px;
 }
 .glance-trace:hover,
 .glance-trace[aria-pressed='true'] { background: var(--accentDim); color: var(--accent2); }
 
-.glance-matrix-wrap { max-height: calc(100vh - 265px); margin-top: 10px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
-.glance-matrix { min-width: 900px; width: 100%; border-collapse: collapse; background: var(--bg2); font-size: 9px; }
+.glance-matrix-wrap {
+  height: max(calc(100dvh - 310px), calc(92px + var(--glance-matrix-rows) * 55px));
+  min-height: 420px;
+  margin-top: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.glance-matrix { min-width: 1160px; width: 100%; border-collapse: collapse; background: var(--bg2); font-size: 9px; }
 .glance-matrix th,
 .glance-matrix td { min-width: 94px; height: 44px; padding: 5px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; }
 .glance-matrix thead th { position: sticky; z-index: 4; top: 0; background: var(--panel); }
-.glance-matrix th:first-child { position: sticky; z-index: 3; left: 0; min-width: 190px; background: var(--panel); text-align: left; }
+.glance-matrix th:first-child { position: sticky; z-index: 3; left: 0; min-width: 250px; background: var(--panel); text-align: left; }
 .glance-matrix thead th:first-child { z-index: 5; }
 .glance-matrix thead button,
 .glance-matrix tbody th button { display: grid; width: 100%; gap: 2px; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
@@ -3028,7 +3077,8 @@
   .glance-heading { align-items: flex-start; flex-direction: column; }
   .glance-toolbar { align-items: flex-start; flex-direction: column; }
   .glance-control-group { align-items: flex-start; flex-direction: column; }
-  .glance-board { max-height: calc(100vh - 220px); }
+  .plan-creator-content.glance-workspace-active { width: calc(100vw - 16px); }
+  .glance-board { height: max(calc(100dvh - 220px), calc(104px + var(--glance-max-slots) * var(--glance-slot-row-height))); }
 }
 
 @media (prefers-reduced-motion: reduce) {
