@@ -134,6 +134,38 @@ const TAXONOMY: Record<GlanceLens, TaxonomyRow[]> = {
   mechanicsTier: MECHANICS,
 }
 
+export const GLANCE_BODY_PART_ORDER = ['Upper', 'Lower', 'Core'] as const
+
+// Product-level anatomical order for recurrence rows. Within each body part,
+// concrete muscle regions run from larger to smaller; broad movement buckets
+// follow the muscle-specific lower-body categories.
+export const GLANCE_TARGET_CATEGORY_SIZE_ORDER = {
+  Upper: [
+    'Back_3D',
+    'Back_V',
+    'Chest_Sternal',
+    'Chest_Clav_AD',
+    'Upper_Traps',
+    'Anterior_Delt',
+    'Lateral_Delt',
+    'Posterior_Delt',
+    'Triceps',
+    'Biceps',
+    'Forearms',
+    'Neck',
+  ],
+  Lower: [
+    'Glutes',
+    'Quads',
+    'Hamstrings',
+    'Calves',
+    'Hip_AF',
+    'Global_P',
+    'Lower_P',
+  ],
+  Core: ['Core'],
+} as const
+
 const UNCLASSIFIED: GlanceClassification = {
   key: '__unclassified', label: 'Unclassified', code: '—', dark: '#70747C', light: '#777B82',
   order: 999, unclassified: true,
@@ -143,6 +175,27 @@ const WARMUP_ROLES = new Set<SetRole>(['rampup'])
 
 function normalizeEnum(value: string): string {
   return value.trim().replaceAll('-', '_').toLocaleLowerCase()
+}
+
+const BODY_PART_RANK = new Map<string, number>(
+  GLANCE_BODY_PART_ORDER.map((value, index) => [normalizeEnum(value), index]),
+)
+const TARGET_CATEGORY_SIZE_RANK = new Map<string, number>(
+  Object.values(GLANCE_TARGET_CATEGORY_SIZE_ORDER)
+    .flat()
+    .map((value, index) => [normalizeEnum(value), index]),
+)
+
+export function compareGlanceGroupsByAnatomy(left: GlanceGroup, right: GlanceGroup): number {
+  const leftSlot = left.occurrences[0]?.slot
+  const rightSlot = right.occurrences[0]?.slot
+  const leftBody = BODY_PART_RANK.get(normalizeEnum(leftSlot?.classes.bodyPart ?? '')) ?? 999
+  const rightBody = BODY_PART_RANK.get(normalizeEnum(rightSlot?.classes.bodyPart ?? '')) ?? 999
+  if (leftBody !== rightBody) return leftBody - rightBody
+
+  const leftTarget = TARGET_CATEGORY_SIZE_RANK.get(normalizeEnum(leftSlot?.classes.targetCategory ?? '')) ?? 999
+  const rightTarget = TARGET_CATEGORY_SIZE_RANK.get(normalizeEnum(rightSlot?.classes.targetCategory ?? '')) ?? 999
+  return leftTarget - rightTarget
 }
 
 function hashIndex(value: string, length: number): number {

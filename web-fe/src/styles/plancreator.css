@@ -2829,12 +2829,12 @@
   border-radius: 5px;
   background: color-mix(in srgb, var(--glance-color) 8%, var(--panel));
   color: var(--text2);
-  font-size: 9px;
+  font-size: clamp(9px, .4vw, 10px);
   cursor: pointer;
 }
 :root[data-theme='light'] .glance-legend-chip { --glance-color: var(--glance-color-light); }
 .glance-legend-chip > i { width: 5px; align-self: stretch; border-radius: 2px; background: var(--glance-color); }
-.glance-legend-chip > span { color: var(--glance-color); font-size: 8px; }
+.glance-legend-chip > span { color: var(--glance-color); font-size: clamp(8px, .35vw, 9px); }
 .glance-legend-chip > strong { color: var(--text); font-weight: 550; }
 .glance-legend-chip > small { color: var(--text3); }
 .glance-legend-chip.active { border-color: var(--focus); outline: 1px solid var(--focus); }
@@ -3034,7 +3034,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
 }
-.glance-matrix { min-width: 1160px; width: 100%; border-collapse: collapse; background: var(--bg2); font-size: 9px; }
+.glance-matrix { min-width: 1160px; width: 100%; border-collapse: collapse; background: var(--bg2); font-size: clamp(9px, .44vw, 11px); }
 .glance-matrix th,
 .glance-matrix td { min-width: 94px; height: 44px; padding: 5px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; }
 .glance-matrix thead th { position: sticky; z-index: 4; top: 0; background: var(--panel); }
@@ -3043,7 +3043,8 @@
 .glance-matrix thead button,
 .glance-matrix tbody th button { display: grid; width: 100%; gap: 2px; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .glance-matrix thead button span,
-.glance-matrix tbody th button span { color: var(--text3); font-size: 8px; }
+.glance-matrix tbody th button span { color: var(--text3); font-size: clamp(8px, .36vw, 9px); }
+.glance-matrix tbody th button[aria-pressed='true'] { color: var(--accent2); }
 .glance-matrix tbody tr.dimmed { opacity: .3; }
 .matrix-occurrences { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
 .matrix-occurrence {
@@ -3060,17 +3061,24 @@
   background: color-mix(in srgb, var(--glance-color) 13%, var(--panel));
   color: var(--text);
   font-family: 'Geist Mono', monospace;
+  font-size: inherit;
   cursor: pointer;
 }
 :root[data-theme='light'] .matrix-occurrence { --glance-color: var(--glance-color-light); }
-.matrix-occurrence small { color: var(--text3); font-size: 6px; }
+.matrix-occurrence small { color: var(--text3); font-size: clamp(6px, .28vw, 7px); }
 .matrix-occurrence.selected { outline: 2px solid var(--focus); outline-offset: 1px; }
 .matrix-occurrence.dimmed { opacity: .3; }
 .matrix-total { display: grid; gap: 1px; color: var(--text); }
-.matrix-total span { color: var(--text3); font-size: 7px; }
+.matrix-total span { color: var(--text3); font-size: clamp(7px, .32vw, 8px); }
 .glance-matrix tfoot th,
 .glance-matrix tfoot td { position: sticky; z-index: 2; bottom: 0; background: var(--panel); color: var(--text2); }
 .glance-matrix tfoot th:first-child { z-index: 4; }
+
+@media (min-width: 1800px) {
+  .glance-matrix th,
+  .glance-matrix td { height: 48px; padding: 7px; }
+  .matrix-occurrence { min-width: 32px; min-height: 32px; padding: 4px; }
+}
 
 @media (max-width: 760px) {
   .plan-view-switch-row,

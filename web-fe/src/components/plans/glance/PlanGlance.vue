@@ -16,9 +16,11 @@ import DayIconMark from '@/components/plans/DayIconMark.vue'
 import {
   buildGlanceModel,
   buildLegend,
+  compareGlanceGroupsByAnatomy,
   resolveClassification,
   type GlanceClassification,
   type GlanceEditorTarget,
+  type GlanceGroup,
   type GlanceLens,
   type GlanceSlot,
 } from '@/features/plans/glance'
@@ -41,8 +43,8 @@ type GlanceMode = 'days' | 'matrix'
 const mode = ref<GlanceMode>('days')
 const lens = ref<GlanceLens>('targetCategory')
 const showReps = ref(false)
-const rowOrder = ref<'alphabetical' | 'frequency'>('alphabetical')
-const tracedSlotName = ref<string | null>(null)
+const rowOrder = ref<'appearance' | 'alphabetical' | 'anatomical' | 'frequency'>('appearance')
+const selectedSlotNames = ref<string[]>([])
 const selectedCategoryKeys = ref<string[]>([])
 const editingSlotKey = ref<string | null>(null)
 const editingSlotName = ref('')
@@ -54,16 +56,22 @@ const matrixRows = computed(() => {
   const rows = [...model.value.groups]
   const alphabetical = (left: { name: string }, right: { name: string }) =>
     left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: 'base' })
-  rows.sort(rowOrder.value === 'frequency'
-    ? (left, right) => right.occurrences.length - left.occurrences.length || alphabetical(left, right)
-    : alphabetical)
+  if (rowOrder.value === 'alphabetical') rows.sort(alphabetical)
+  if (rowOrder.value === 'anatomical') {
+    rows.sort((left, right) => compareGlanceGroupsByAnatomy(left, right) || alphabetical(left, right))
+  }
+  if (rowOrder.value === 'frequency') {
+    rows.sort((left, right) => right.occurrences.length - left.occurrences.length || alphabetical(left, right))
+  }
   return rows
 })
-const selectedGroup = computed(() => {
-  return tracedSlotName.value
-    ? model.value.groups.find((group) => group.name === tracedSlotName.value) ?? null
-    : null
-})
+const selectedGroups = computed(() => model.value.groups.filter((group) => selectedSlotNames.value.includes(group.name)))
+const selectedGroupSummary = computed(() => ({
+  labels: selectedGroups.value.map((group) => group.name).join(' + '),
+  occurrences: selectedGroups.value.reduce((total, group) => total + group.occurrences.length, 0),
+  days: new Set(selectedGroups.value.flatMap((group) => group.occurrences.map((item) => item.day.key))).size,
+  sets: selectedGroups.value.reduce((total, group) => total + group.workingSets, 0),
+}))
 const selectedCategories = computed(() => legend.value.filter((item) => selectedCategoryKeys.value.includes(item.key)))
 const selectedCategorySummary = computed(() => ({
   labels: selectedCategories.value.map((item) => item.label).join(' + '),
@@ -135,29 +143,55 @@ function dayLabel(index: number, weekday: number | null): string {
   return weekday == null ? t('plans.glance.dayNumber', { number: index + 1 }) : `D${index + 1} · ${weekdayShort(weekday)}`
 }
 
-function traceSlot(name: string): void {
-  tracedSlotName.value = tracedSlotName.value === name ? null : name
+function isAdditiveSelection(event?: MouseEvent): boolean {
+  return Boolean(event?.ctrlKey || event?.metaKey)
+}
+
+function traceSlot(name: string, event?: MouseEvent): void {
+  if (isAdditiveSelection(event)) {
+    selectedSlotNames.value = selectedSlotNames.value.includes(name)
+      ? selectedSlotNames.value.filter((item) => item !== name)
+      : [...selectedSlotNames.value, name]
+  } else {
+    selectedSlotNames.value = selectedSlotNames.value.length === 1 && selectedSlotNames.value[0] === name
+      ? []
+      : [name]
+  }
   selectedCategoryKeys.value = []
 }
 
-function toggleCategory(key: string): void {
-  tracedSlotName.value = null
-  selectedCategoryKeys.value = selectedCategoryKeys.value.includes(key)
-    ? selectedCategoryKeys.value.filter((item) => item !== key)
-    : [...selectedCategoryKeys.value, key]
+function toggleCategory(key: string, event?: MouseEvent): void {
+  selectedSlotNames.value = []
+  if (isAdditiveSelection(event)) {
+    selectedCategoryKeys.value = selectedCategoryKeys.value.includes(key)
+      ? selectedCategoryKeys.value.filter((item) => item !== key)
+      : [...selectedCategoryKeys.value, key]
+  } else {
+    selectedCategoryKeys.value = selectedCategoryKeys.value.length === 1 && selectedCategoryKeys.value[0] === key
+      ? []
+      : [key]
+  }
 }
 
 function slotState(slot: GlanceSlot): { selected: boolean; dimmed: boolean; unclassified: boolean } {
   const category = classification(slot)
-  const hasSelection = tracedSlotName.value != null || selectedCategoryKeys.value.length > 0
-  const selected = tracedSlotName.value != null
-    ? tracedSlotName.value === slot.name
+  const hasSelection = selectedSlotNames.value.length > 0 || selectedCategoryKeys.value.length > 0
+  const selected = selectedSlotNames.value.length > 0
+    ? selectedSlotNames.value.includes(slot.name)
     : selectedCategoryKeys.value.includes(category.key)
   return {
     selected,
     dimmed: hasSelection && !selected,
     unclassified: Boolean(category.unclassified),
   }
+}
+
+function groupMatchesSelection(group: GlanceGroup): boolean {
+  if (selectedSlotNames.value.length) return selectedSlotNames.value.includes(group.name)
+  if (selectedCategoryKeys.value.length) {
+    return group.occurrences.some((item) => selectedCategoryKeys.value.includes(classification(item.slot).key))
+  }
+  return true
 }
 
 function tooltip(slot: GlanceSlot, dayName: string): string {
@@ -176,7 +210,7 @@ function tooltip(slot: GlanceSlot, dayName: string): string {
 
 function clearSelection(event?: KeyboardEvent): void {
   if (event && (!props.active || event.key !== 'Escape')) return
-  tracedSlotName.value = null
+  selectedSlotNames.value = []
   selectedCategoryKeys.value = []
   cancelRename()
 }
@@ -185,9 +219,8 @@ watch(lens, () => {
   selectedCategoryKeys.value = []
 })
 watch(model, (next) => {
-  if (tracedSlotName.value && !next.groups.some((group) => group.name === tracedSlotName.value)) {
-    tracedSlotName.value = null
-  }
+  const presentSlotNames = new Set(next.groups.map((group) => group.name))
+  selectedSlotNames.value = selectedSlotNames.value.filter((name) => presentSlotNames.has(name))
   const presentCategories = new Set(legend.value.map((item) => item.key))
   selectedCategoryKeys.value = selectedCategoryKeys.value.filter((key) => presentCategories.has(key))
 })
@@ -237,7 +270,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', clearSelection))
       <div v-if="mode === 'matrix'" class="glance-control-group">
         <span class="field-label">{{ $t('plans.glance.rowOrder') }}</span>
         <div class="glance-segmented">
+          <button type="button" :class="{ active: rowOrder === 'appearance' }" @click="rowOrder = 'appearance'">{{ $t('plans.glance.firstAppearance') }}</button>
           <button type="button" :class="{ active: rowOrder === 'alphabetical' }" @click="rowOrder = 'alphabetical'">{{ $t('plans.glance.alphabetical') }}</button>
+          <button type="button" :class="{ active: rowOrder === 'anatomical' }" @click="rowOrder = 'anatomical'">{{ $t('plans.glance.anatomical') }}</button>
           <button type="button" :class="{ active: rowOrder === 'frequency' }" @click="rowOrder = 'frequency'">{{ $t('plans.glance.frequency') }}</button>
         </div>
       </div>
@@ -252,7 +287,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', clearSelection))
         :class="{ active: selectedCategoryKeys.includes(item.key), unclassified: item.unclassified }"
         :style="categoryStyle(item)"
         :aria-pressed="selectedCategoryKeys.includes(item.key)"
-        @click="toggleCategory(item.key)"
+        :title="$t('plans.glance.selectCategory', { name: item.label })"
+        @click="toggleCategory(item.key, $event)"
       >
         <i aria-hidden="true" />
         <span class="mono">{{ item.code }}</span>
@@ -261,15 +297,21 @@ onBeforeUnmount(() => window.removeEventListener('keydown', clearSelection))
       </button>
     </div>
 
-    <div v-if="selectedGroup || selectedCategories.length" class="glance-focus" aria-live="polite">
-      <div v-if="selectedGroup">
+    <div v-if="selectedGroups.length || selectedCategories.length" class="glance-focus" aria-live="polite">
+      <div v-if="selectedGroups.length">
         <span class="eyebrow">{{ $t('plans.glance.tracing') }}</span>
-        <strong>{{ selectedGroup.name }}</strong>
-        <span>{{ $t('plans.glance.traceSummary', {
-          occurrences: selectedGroup.occurrences.length,
-          days: selectedGroup.dayCount,
-          sets: selectedGroup.workingSets,
-          gaps: selectedGroup.gaps,
+        <strong>{{ selectedGroupSummary.labels }}</strong>
+        <span v-if="selectedGroups.length === 1">{{ $t('plans.glance.traceSummary', {
+          occurrences: selectedGroups[0]?.occurrences.length,
+          days: selectedGroups[0]?.dayCount,
+          sets: selectedGroups[0]?.workingSets,
+          gaps: selectedGroups[0]?.gaps,
+        }) }}</span>
+        <span v-else>{{ $t('plans.glance.multiTraceSummary', {
+          names: selectedGroups.length,
+          occurrences: selectedGroupSummary.occurrences,
+          days: selectedGroupSummary.days,
+          sets: selectedGroupSummary.sets,
         }) }}</span>
       </div>
       <div v-else>
@@ -389,10 +431,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', clearSelection))
               <button
                 type="button"
                 class="glance-trace"
-                :title="$t('plans.glance.traceName', { name: slot.name })"
-                :aria-label="$t('plans.glance.traceName', { name: slot.name })"
-                :aria-pressed="tracedSlotName === slot.name"
-                @click="traceSlot(slot.name)"
+                :title="$t('plans.glance.traceNameMulti', { name: slot.name })"
+                :aria-label="$t('plans.glance.traceNameMulti', { name: slot.name })"
+                :aria-pressed="selectedSlotNames.includes(slot.name)"
+                @click="traceSlot(slot.name, $event)"
               >⌁</button>
             </div>
           </article>
@@ -415,9 +457,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', clearSelection))
           </tr>
         </thead>
         <tbody>
-          <tr v-for="group in matrixRows" :key="group.name" :class="{ dimmed: tracedSlotName != null && tracedSlotName !== group.name }">
+          <tr v-for="group in matrixRows" :key="group.name" :class="{ dimmed: !groupMatchesSelection(group) }">
             <th scope="row">
-              <button type="button" :aria-pressed="tracedSlotName === group.name" @click="traceSlot(group.name)">
+              <button
+                type="button"
+                class="glance-matrix-row-select"
+                :title="$t('plans.glance.traceNameMulti', { name: group.name })"
+                :aria-label="$t('plans.glance.traceNameMulti', { name: group.name })"
+                :aria-pressed="selectedSlotNames.includes(group.name)"
+                @click="traceSlot(group.name, $event)"
+              >
                 <strong>{{ group.name }}</strong>
                 <span>{{ group.occurrences.length }}× · {{ group.gaps }}</span>
               </button>
