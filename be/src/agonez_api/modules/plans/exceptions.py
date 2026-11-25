@@ -34,3 +34,25 @@ class PlanDomainValidationError(PlanError):
     def __init__(self, detail: str) -> None:
         self.detail = detail
         super().__init__(detail)
+
+
+class PlanRevisionNotFoundError(PlanError):
+    def __init__(self, revision_id: int) -> None:
+        self.revision_id = revision_id
+        super().__init__(f"Plan revision {revision_id} was not found")
+
+
+class PlanScopeError(PlanError):
+    """A library-only operation was requested for a run plan."""
+
+    def __init__(self, detail: str) -> None:
+        self.detail = detail
+        super().__init__(detail)
+
+
+class PlanInUseError(PlanError):
+    """The plan's rows are still referenced by a plan run (RESTRICT foreign keys)."""
+
+    def __init__(self, plan_id: int) -> None:
+        self.plan_id = plan_id
+        super().__init__(f"Plan {plan_id} is still used by a plan run")

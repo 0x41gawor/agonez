@@ -38,7 +38,10 @@ from agonez_api.modules.plans.exceptions import (
     PlanDomainValidationError,
     PlanDraftNotFoundError,
     PlanImageNotFoundError,
+    PlanInUseError,
     PlanNotFoundError,
+    PlanRevisionNotFoundError,
+    PlanScopeError,
 )
 from agonez_api.modules.plans.repository import PlanRepository
 from agonez_api.modules.plans.router import router as plans_router
@@ -171,6 +174,17 @@ def create_app(
     app.add_exception_handler(PlanNotFoundError, handle_plan_not_found)
     app.add_exception_handler(PlanDraftNotFoundError, handle_plan_not_found)
     app.add_exception_handler(PlanImageNotFoundError, handle_plan_not_found)
+    app.add_exception_handler(PlanRevisionNotFoundError, handle_plan_not_found)
+
+    async def handle_plan_state_conflict(
+        request: Request,
+        exc: Exception,
+    ) -> JSONResponse:
+        del request
+        return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+    app.add_exception_handler(PlanScopeError, handle_plan_state_conflict)
+    app.add_exception_handler(PlanInUseError, handle_plan_state_conflict)
 
     @app.exception_handler(PlanConflictError)
     async def handle_plan_conflict(

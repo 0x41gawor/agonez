@@ -102,7 +102,15 @@ async def get_plan(
     return await service.get_plan(plan_id)
 
 
-@router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{plan_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    description=(
+        "Delete a library plan with its revisions and cover image. A run plan is deleted "
+        "only together with its plan run (409), and so is a library plan whose revisions a "
+        "plan run still uses (409)."
+    ),
+)
 async def delete_plan(
     plan_id: PlanId,
     service: Annotated[PlanService, Depends(get_plan_service)],

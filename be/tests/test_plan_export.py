@@ -15,6 +15,9 @@ def test_ai_export_is_small_and_uses_the_resolved_basic_plan() -> None:
             "description": "Not exported",
             "accent": None,
             "image_url": None,
+            "scope": "library",
+            "source_plan_id": None,
+            "plan_run_id": None,
             "days": [
                 {
                     "id": 100,

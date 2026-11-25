@@ -17,6 +17,13 @@ class PlanRevisionStatus(str, Enum):
     ARCHIVED = "ARCHIVED"
 
 
+class PlanScope(str, Enum):
+    """Who owns a plan: My Plans (``library``) or one plan run (``run``)."""
+
+    LIBRARY = "library"
+    RUN = "run"
+
+
 class ExerciseSlotRole(str, Enum):
     PRIMARY_PROGRESSIVE = "PRIMARY_PROGRESSIVE"
     SECONDARY_PROGRESSIVE = "SECONDARY_PROGRESSIVE"
@@ -343,6 +350,11 @@ class PlanDraftUpdate(APIModel):
     # ignoring it, keeps a GET-then-PUT round trip of a draft valid; the cover itself is
     # only ever replaced through PUT /plans/{plan_id}/image.
     image_url: str | None = None
+    # Read-only artifact fields, accepted and ignored for the same reason: a plan's scope,
+    # origin and owning run never change through the draft.
+    scope: PlanScope | None = None
+    source_plan_id: int | None = None
+    plan_run_id: int | None = None
     days: list[DayDraft] = Field(default_factory=list)
 
     @field_validator("name")
@@ -429,6 +441,9 @@ class PlanDraftArtifact(APIModel):
     description: str | None
     accent: PlanAccent | None
     image_url: str | None
+    scope: PlanScope
+    source_plan_id: int | None
+    plan_run_id: int | None
     days: list[DayArtifact]
 
 
@@ -448,6 +463,8 @@ class PlanSummary(APIModel):
     description: str | None
     accent: PlanAccent | None
     image_url: str | None
+    scope: PlanScope
+    source_plan_id: int | None
     created_at: datetime
     updated_at: datetime
     draft_revision_id: int | None
@@ -489,6 +506,9 @@ class PlanDetail(APIModel):
     description: str | None
     accent: PlanAccent | None
     image_url: str | None
+    scope: PlanScope
+    source_plan_id: int | None
+    plan_run_id: int | None
     created_at: datetime
     updated_at: datetime
     revisions: list[RevisionSummary]

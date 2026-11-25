@@ -112,6 +112,15 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     assert "loading_cycle" in schemas["SetInfraDraft"]["properties"]
     assert "progression_model_slug" in schemas["ExerciseVariantDraft"]["properties"]
     assert "load_step_kg" in schemas["ExerciseVariantDraft"]["properties"]
+    # Run plans (T1.2): additive, read-only artifact fields.
+    assert set(schemas["PlanScope"]["enum"]) == {"library", "run"}
+    for name in ("PlanDraftArtifact", "PlanDetail"):
+        assert {"scope", "source_plan_id", "plan_run_id"} <= set(schemas[name]["required"])
+    assert {"scope", "source_plan_id"} <= set(schemas["PlanSummary"]["required"])
+    assert "plan_run_id" not in schemas["PlanSummary"]["properties"]
+    assert {"scope", "source_plan_id", "plan_run_id"} <= set(
+        schemas["PlanDraftUpdate"]["properties"]
+    )
     assert set(schemas["NextPrescriptionState"]["enum"]) == {
         "editable",
         "blocked",

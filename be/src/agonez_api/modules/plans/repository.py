@@ -1,8 +1,8 @@
 import re
 from dataclasses import dataclass
 from typing import Any, cast
-from uuid import uuid4
 
+from psycopg import errors
 from psycopg.types.json import Jsonb
 
 from agonez_api.core.database import DatabasePool
@@ -15,11 +15,19 @@ from agonez_api.modules.plans.exceptions import (
     PlanDomainValidationError,
     PlanDraftNotFoundError,
     PlanImageNotFoundError,
+    PlanInUseError,
     PlanNotFoundError,
+    PlanRevisionNotFoundError,
+    PlanScopeError,
 )
 from agonez_api.modules.plans.schemas import PlanCreate, PlanDraftUpdate
 
 Row = dict[str, Any]
+
+# Entity -> {source row id: copied row id}, as returned by plans.copy_revision_tree.
+RevisionCopyMap = dict[str, dict[int, int]]
+
+RUN_PLAN_DELETE_DETAIL = "Run plans are deleted together with their plan run"
 
 
 def _import_progression_model_slug(
@@ -31,6 +39,13 @@ def _import_progression_model_slug(
 
 @dataclass(frozen=True)
 class DraftRows:
+    """One revision of a plan as flat rows (the name predates non-draft revisions).
+
+    ``header`` carries the plan's identity fields (``id``, ``name``, ``description``, ``accent``,
+    ``image_checksum``, ``scope``, ``source_plan_id``, ``plan_run_id``) and the revision's
+    (``revision_id``, ``revision_no``, ``lock_version``, ``revision_status``).
+    """
+
     header: Row
     days: list[Row]
     workout_units: list[Row]
@@ -59,8 +74,8 @@ class PlanRepository:
                 plan = await self._fetch_one(
                     connection,
                     """
-                    INSERT INTO plans.workout_plans (name, description)
-                    VALUES (%s, %s)
+                    INSERT INTO plans.workout_plans (name, description, scope)
+                    VALUES (%s, %s, 'library')
                     RETURNING id
                     """,
                     (payload.name, payload.description),
@@ -101,8 +116,8 @@ class PlanRepository:
                 plan = await self._fetch_one(
                     connection,
                     """
-                    INSERT INTO plans.workout_plans (name, description)
-                    VALUES (%s, NULL)
+                    INSERT INTO plans.workout_plans (name, description, scope)
+                    VALUES (%s, NULL, 'library')
                     RETURNING id
                     """,
                     (payload.plan_name,),
@@ -250,10 +265,12 @@ class PlanRepository:
                 if source_plan is None:
                     raise PlanNotFoundError(plan_id)
 
-                source = await self._load_draft_rows(connection, plan_id)
+                source_revision = await self._find_draft_revision(connection, plan_id)
+                # Run plans repeat their library plan's name and are not shown in My Plans,
+                # so only library names make a duplicate name taken.
                 existing_names = await self._fetch_all(
                     connection,
-                    "SELECT name FROM plans.workout_plans",
+                    "SELECT name FROM plans.workout_plans WHERE scope = 'library'",
                 )
                 duplicate_name = self._duplicate_plan_name(
                     cast(str, source_plan["name"]),
@@ -262,8 +279,8 @@ class PlanRepository:
                 plan = await self._fetch_one(
                     connection,
                     """
-                    INSERT INTO plans.workout_plans (name, description, accent)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO plans.workout_plans (name, description, accent, scope)
+                    VALUES (%s, %s, %s, 'library')
                     RETURNING id
                     """,
                     (duplicate_name, source_plan["description"], source_plan["accent"]),
@@ -276,7 +293,7 @@ class PlanRepository:
                     VALUES (%s, 1, 'DRAFT', %s)
                     RETURNING id
                     """,
-                    (plan["id"], source.header["revision_id"]),
+                    (plan["id"], source_revision["id"]),
                 )
                 await self._execute(
                     connection,
@@ -289,10 +306,11 @@ class PlanRepository:
                     """,
                     (plan["id"], plan_id),
                 )
-                await self._copy_draft_tree(
+                await copy_revision(
                     connection,
-                    source,
+                    cast(int, source_revision["id"]),
                     cast(int, revision["id"]),
+                    regenerate_progression_ids=True,
                 )
                 return await self._load_draft_rows(connection, cast(int, plan["id"]))
 
@@ -308,156 +326,6 @@ class PlanRepository:
                 return candidate
             copy_number += 1
 
-    async def _copy_draft_tree(
-        self,
-        connection: Any,
-        source: DraftRows,
-        new_revision_id: int,
-    ) -> None:
-        day_ids: dict[int, int] = {}
-        for day in source.days:
-            copied = await self._fetch_one(
-                connection,
-                """
-                INSERT INTO plans.day_prescriptions
-                    (revision_id, ordinal, weekday, name, description, icon)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (
-                    new_revision_id,
-                    day["ordinal"],
-                    day["weekday"],
-                    day["name"],
-                    day["description"],
-                    day["icon"],
-                ),
-            )
-            day_ids[cast(int, day["id"])] = cast(int, copied["id"])
-
-        unit_ids: dict[int, int] = {}
-        for unit in source.workout_units:
-            copied = await self._fetch_one(
-                connection,
-                """
-                INSERT INTO plans.workout_unit_prescriptions
-                    (day_id, name, description, warmup_notes, stretch_notes)
-                VALUES (%s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (
-                    day_ids[cast(int, unit["day_id"])],
-                    unit["name"],
-                    unit["description"],
-                    unit["warmup_notes"],
-                    unit["stretch_notes"],
-                ),
-            )
-            unit_ids[cast(int, unit["id"])] = cast(int, copied["id"])
-
-        slot_ids: dict[int, int] = {}
-        for slot in source.slots:
-            copied = await self._fetch_one(
-                connection,
-                """
-                INSERT INTO plans.exercise_slots
-                    (
-                        workout_unit_id, ordinal, name, description, goal, role, volume_axis,
-                        loading_mode, loading_cycle
-                    )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
-                RETURNING id
-                """,
-                (
-                    unit_ids[cast(int, slot["workout_unit_id"])],
-                    slot["ordinal"],
-                    slot["name"],
-                    slot["description"],
-                    slot["goal"],
-                    slot["role"],
-                    slot["volume_axis"],
-                    slot.get("loading_mode", "moderate_load"),
-                    slot.get("loading_cycle"),
-                ),
-            )
-            slot_ids[cast(int, slot["id"])] = cast(int, copied["id"])
-
-        for target in source.target_muscles:
-            await self._execute(
-                connection,
-                """
-                INSERT INTO plans.exercise_slot_target_muscles (slot_id, muscle_id)
-                VALUES (%s, %s)
-                """,
-                (
-                    slot_ids[cast(int, target["slot_id"])],
-                    target["muscle_id"],
-                ),
-            )
-
-        variant_ids: dict[int, int] = {}
-        progression_ids: dict[str, str] = {}
-        for variant in source.variants:
-            source_progression_id = str(variant.get("progression_id", uuid4()))
-            copied_progression_id = progression_ids.setdefault(
-                source_progression_id,
-                str(uuid4()),
-            )
-            copied = await self._fetch_one(
-                connection,
-                """
-                INSERT INTO plans.exercise_variants
-                    (
-                        slot_id, ordinal, variant_type, exercise_id,
-                        progression_model_slug, progression_id,
-                        load_step_kg,
-                        active_working_set_min, active_working_set_max
-                    )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (
-                    slot_ids[cast(int, variant["slot_id"])],
-                    variant["ordinal"],
-                    variant["variant_type"],
-                    variant["exercise_id"],
-                    variant.get("progression_model_slug"),
-                    copied_progression_id,
-                    variant.get("load_step_kg"),
-                    variant.get("active_working_set_min"),
-                    variant.get("active_working_set_max"),
-                ),
-            )
-            variant_ids[cast(int, variant["id"])] = cast(int, copied["id"])
-
-        for item in source.sets:
-            await self._fetch_one(
-                connection,
-                """
-                INSERT INTO plans.set_infra_prescriptions
-                    (
-                        exercise_variant_id, ordinal, rep_min, rep_max,
-                        rep_range_semantics, rir, role, load_spec, min_volume_level,
-                        loading_mode, loading_cycle
-                    )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::plans.loading_mode[])
-                RETURNING id
-                """,
-                (
-                    variant_ids[cast(int, item["exercise_variant_id"])],
-                    item["ordinal"],
-                    item["rep_min"],
-                    item["rep_max"],
-                    item.get("rep_range_semantics", "undefined"),
-                    item["rir"],
-                    item.get("role", "working"),
-                    Jsonb(item.get("load_spec", {"kind": "absolute"})),
-                    item["min_volume_level"],
-                    item.get("loading_mode"),
-                    item.get("loading_cycle"),
-                ),
-            )
-
     async def list_plans(self) -> list[Row]:
         async with self._pool.connection() as connection:
             return await self._fetch_all(
@@ -469,6 +337,8 @@ class PlanRepository:
                     p.description,
                     p.accent::text AS accent,
                     image.checksum AS image_checksum,
+                    p.scope::text AS scope,
+                    p.source_plan_id,
                     p.created_at,
                     p.updated_at,
                     draft.id AS draft_revision_id,
@@ -477,6 +347,7 @@ class PlanRepository:
                 LEFT JOIN plans.plan_revisions AS draft
                     ON draft.plan_id = p.id AND draft.status = 'DRAFT'
                 LEFT JOIN plans.plan_images AS image ON image.plan_id = p.id
+                WHERE p.scope = 'library'
                 ORDER BY p.updated_at DESC, p.id DESC
                 """,
             )
@@ -513,10 +384,14 @@ class PlanRepository:
                     p.description,
                     p.accent::text AS accent,
                     image.checksum AS image_checksum,
+                    p.scope::text AS scope,
+                    p.source_plan_id,
+                    run.id AS plan_run_id,
                     p.created_at,
                     p.updated_at
                 FROM plans.workout_plans AS p
                 LEFT JOIN plans.plan_images AS image ON image.plan_id = p.id
+                LEFT JOIN exec.plan_runs AS run ON run.run_plan_id = p.id
                 WHERE p.id = %s
                 """,
                 (plan_id,),
@@ -544,18 +419,39 @@ class PlanRepository:
             return plan, revisions
 
     async def delete_plan(self, plan_id: int) -> None:
+        """Delete a library plan with all its revisions, rows and cover image.
+
+        A run plan is deleted only together with its run (``PlanScopeError``). A library plan
+        whose rows a run still references (runs created before run plans existed) is refused
+        by the RESTRICT foreign keys from ``exec``; that becomes ``PlanInUseError``.
+        """
         async with self._pool.connection() as connection:
-            row = await self._fetch_optional(
-                connection,
-                """
-                DELETE FROM plans.workout_plans
-                WHERE id = %s
-                RETURNING id
-                """,
-                (plan_id,),
-            )
-            if row is None:
-                raise PlanNotFoundError(plan_id)
+            try:
+                async with connection.transaction():
+                    plan = await self._fetch_optional(
+                        connection,
+                        """
+                        SELECT scope::text AS scope
+                        FROM plans.workout_plans
+                        WHERE id = %s
+                        FOR UPDATE
+                        """,
+                        (plan_id,),
+                    )
+                    if plan is None:
+                        raise PlanNotFoundError(plan_id)
+                    if plan["scope"] != "library":
+                        raise PlanScopeError(RUN_PLAN_DELETE_DETAIL)
+                    await self._execute(
+                        connection,
+                        """
+                        DELETE FROM plans.workout_plans
+                        WHERE id = %s AND scope = 'library'
+                        """,
+                        (plan_id,),
+                    )
+            except errors.ForeignKeyViolation as error:
+                raise PlanInUseError(plan_id) from error
 
     async def get_plan_image(self, plan_id: int) -> Row:
         """Return the stored image bytes with their metadata."""
@@ -1191,130 +1087,23 @@ class PlanRepository:
         )
         return cast(int, item.id)
 
-    async def _load_draft_rows(self, connection: Any, plan_id: int) -> DraftRows:
-        header = await self._fetch_optional(
+    async def _find_draft_revision(self, connection: Any, plan_id: int) -> Row:
+        revision = await self._fetch_optional(
             connection,
             """
-            SELECT
-                p.id,
-                p.name,
-                p.description,
-                p.accent::text AS accent,
-                image.checksum AS image_checksum,
-                revision.id AS revision_id,
-                revision.revision_no,
-                revision.lock_version
-            FROM plans.workout_plans AS p
-            JOIN plans.plan_revisions AS revision
-                ON revision.plan_id = p.id AND revision.status = 'DRAFT'
-            LEFT JOIN plans.plan_images AS image ON image.plan_id = p.id
-            WHERE p.id = %s
+            SELECT id
+            FROM plans.plan_revisions
+            WHERE plan_id = %s AND status = 'DRAFT'
             """,
             (plan_id,),
         )
-        if header is None:
+        if revision is None:
             raise PlanDraftNotFoundError(plan_id)
-        revision_id = header["revision_id"]
-        days = await self._fetch_all(
-            connection,
-            """
-            SELECT id, revision_id, ordinal, weekday, name, description, icon::text AS icon
-            FROM plans.day_prescriptions
-            WHERE revision_id = %s
-            ORDER BY ordinal, id
-            """,
-            (revision_id,),
-        )
-        workout_units = await self._fetch_all(
-            connection,
-            """
-            SELECT unit.id, unit.day_id, unit.name, unit.description,
-                   unit.warmup_notes, unit.stretch_notes
-            FROM plans.workout_unit_prescriptions AS unit
-            JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
-            WHERE day.revision_id = %s
-            ORDER BY day.ordinal, unit.id
-            """,
-            (revision_id,),
-        )
-        slots = await self._fetch_all(
-            connection,
-            """
-            SELECT slot.id, slot.workout_unit_id, slot.ordinal, slot.name,
-                   slot.description, slot.goal, slot.role::text AS role, slot.volume_axis,
-                   slot.loading_mode::text AS loading_mode,
-                   CASE WHEN slot.loading_cycle IS NULL THEN NULL ELSE ARRAY(
-                       SELECT mode::text FROM unnest(slot.loading_cycle) AS mode
-                   ) END AS loading_cycle
-            FROM plans.exercise_slots AS slot
-            JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
-            JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
-            WHERE day.revision_id = %s
-            ORDER BY day.ordinal, slot.ordinal, slot.id
-            """,
-            (revision_id,),
-        )
-        target_muscles = await self._fetch_all(
-            connection,
-            """
-            SELECT target.slot_id, target.muscle_id, muscle.slug
-            FROM plans.exercise_slot_target_muscles AS target
-            JOIN core.muscles AS muscle ON muscle.id = target.muscle_id
-            JOIN plans.exercise_slots AS slot ON slot.id = target.slot_id
-            JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
-            JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
-            WHERE day.revision_id = %s
-            ORDER BY target.slot_id, muscle.slug
-            """,
-            (revision_id,),
-        )
-        variants = await self._fetch_all(
-            connection,
-            """
-            SELECT variant.id, variant.slot_id, variant.ordinal,
-                   variant.variant_type::text AS variant_type,
-                   variant.exercise_id, exercise.slug AS exercise_slug,
-                   variant.progression_model_slug, variant.progression_id,
-                   COALESCE(
-                       variant.load_step_kg,
-                       rs_default.default_load_step_kg
-                   ) AS load_step_kg,
-                   variant.active_working_set_min, variant.active_working_set_max
-            FROM plans.exercise_variants AS variant
-            JOIN core.exercises AS exercise ON exercise.id = variant.exercise_id
-            JOIN core.resistance_source_load_defaults AS rs_default
-              ON rs_default.resistance_source = exercise.resistance_source
-            JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id
-            JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
-            JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
-            WHERE day.revision_id = %s
-            ORDER BY variant.slot_id, variant.ordinal, variant.id
-            """,
-            (revision_id,),
-        )
-        sets = await self._fetch_all(
-            connection,
-            """
-            SELECT item.id, item.exercise_variant_id, item.ordinal,
-                   item.rep_min, item.rep_max,
-                   item.rep_range_semantics::text AS rep_range_semantics,
-                   item.rir::text AS rir, item.role::text AS role, item.load_spec,
-                   item.min_volume_level,
-                   item.loading_mode::text AS loading_mode,
-                   CASE WHEN item.loading_cycle IS NULL THEN NULL ELSE ARRAY(
-                       SELECT mode::text FROM unnest(item.loading_cycle) AS mode
-                   ) END AS loading_cycle
-            FROM plans.set_infra_prescriptions AS item
-            JOIN plans.exercise_variants AS variant ON variant.id = item.exercise_variant_id
-            JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id
-            JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
-            JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
-            WHERE day.revision_id = %s
-            ORDER BY item.exercise_variant_id, item.ordinal, item.id
-            """,
-            (revision_id,),
-        )
-        return DraftRows(header, days, workout_units, slots, target_muscles, variants, sets)
+        return revision
+
+    async def _load_draft_rows(self, connection: Any, plan_id: int) -> DraftRows:
+        revision = await self._find_draft_revision(connection, plan_id)
+        return await load_revision_rows(connection, cast(int, revision["id"]))
 
     @staticmethod
     async def _execute(
@@ -1356,3 +1145,173 @@ class PlanRepository:
         async with connection.cursor() as cursor:
             await cursor.execute(query, params)
             return cast(Row | None, await cursor.fetchone())
+
+
+async def load_revision_rows(connection: Any, revision_id: int) -> DraftRows:
+    """Load any revision of any plan (DRAFT or RELEASED) as flat rows.
+
+    The header joins the owning run read-only (``plan_run_id``), so a run plan's editor knows
+    its run. ``load_step_kg`` is the effective value: the stored step, else the default of the
+    exercise's resistance source (a copy keeps the stored NULL; the API shows the same value).
+    """
+    fetch_all = PlanRepository._fetch_all
+    header = await PlanRepository._fetch_optional(
+        connection,
+        """
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.accent::text AS accent,
+            image.checksum AS image_checksum,
+            p.scope::text AS scope,
+            p.source_plan_id,
+            run.id AS plan_run_id,
+            revision.id AS revision_id,
+            revision.revision_no,
+            revision.lock_version,
+            revision.status::text AS revision_status
+        FROM plans.plan_revisions AS revision
+        JOIN plans.workout_plans AS p ON p.id = revision.plan_id
+        LEFT JOIN plans.plan_images AS image ON image.plan_id = p.id
+        LEFT JOIN exec.plan_runs AS run ON run.run_plan_id = p.id
+        WHERE revision.id = %s
+        """,
+        (revision_id,),
+    )
+    if header is None:
+        raise PlanRevisionNotFoundError(revision_id)
+    days = await fetch_all(
+        connection,
+        """
+        SELECT id, revision_id, ordinal, weekday, name, description, icon::text AS icon
+        FROM plans.day_prescriptions
+        WHERE revision_id = %s
+        ORDER BY ordinal, id
+        """,
+        (revision_id,),
+    )
+    workout_units = await fetch_all(
+        connection,
+        """
+        SELECT unit.id, unit.day_id, unit.lineage_key, unit.name, unit.description,
+               unit.warmup_notes, unit.stretch_notes
+        FROM plans.workout_unit_prescriptions AS unit
+        JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
+        WHERE day.revision_id = %s
+        ORDER BY day.ordinal, unit.id
+        """,
+        (revision_id,),
+    )
+    slots = await fetch_all(
+        connection,
+        """
+        SELECT slot.id, slot.workout_unit_id, slot.lineage_key, slot.ordinal, slot.name,
+               slot.description, slot.goal, slot.role::text AS role, slot.volume_axis,
+               slot.loading_mode::text AS loading_mode,
+               CASE WHEN slot.loading_cycle IS NULL THEN NULL ELSE ARRAY(
+                   SELECT mode::text FROM unnest(slot.loading_cycle) AS mode
+               ) END AS loading_cycle
+        FROM plans.exercise_slots AS slot
+        JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
+        JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
+        WHERE day.revision_id = %s
+        ORDER BY day.ordinal, slot.ordinal, slot.id
+        """,
+        (revision_id,),
+    )
+    target_muscles = await fetch_all(
+        connection,
+        """
+        SELECT target.slot_id, target.muscle_id, muscle.slug
+        FROM plans.exercise_slot_target_muscles AS target
+        JOIN core.muscles AS muscle ON muscle.id = target.muscle_id
+        JOIN plans.exercise_slots AS slot ON slot.id = target.slot_id
+        JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
+        JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
+        WHERE day.revision_id = %s
+        ORDER BY target.slot_id, muscle.slug
+        """,
+        (revision_id,),
+    )
+    variants = await fetch_all(
+        connection,
+        """
+        SELECT variant.id, variant.slot_id, variant.ordinal,
+               variant.variant_type::text AS variant_type,
+               variant.exercise_id, exercise.slug AS exercise_slug,
+               variant.progression_model_slug, variant.progression_id,
+               COALESCE(
+                   variant.load_step_kg,
+                   rs_default.default_load_step_kg
+               ) AS load_step_kg,
+               variant.active_working_set_min, variant.active_working_set_max
+        FROM plans.exercise_variants AS variant
+        JOIN core.exercises AS exercise ON exercise.id = variant.exercise_id
+        JOIN core.resistance_source_load_defaults AS rs_default
+          ON rs_default.resistance_source = exercise.resistance_source
+        JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id
+        JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
+        JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
+        WHERE day.revision_id = %s
+        ORDER BY variant.slot_id, variant.ordinal, variant.id
+        """,
+        (revision_id,),
+    )
+    sets = await fetch_all(
+        connection,
+        """
+        SELECT item.id, item.exercise_variant_id, item.ordinal,
+               item.rep_min, item.rep_max,
+               item.rep_range_semantics::text AS rep_range_semantics,
+               item.rir::text AS rir, item.role::text AS role, item.load_spec,
+               item.min_volume_level,
+               item.loading_mode::text AS loading_mode,
+               CASE WHEN item.loading_cycle IS NULL THEN NULL ELSE ARRAY(
+                   SELECT mode::text FROM unnest(item.loading_cycle) AS mode
+               ) END AS loading_cycle
+        FROM plans.set_infra_prescriptions AS item
+        JOIN plans.exercise_variants AS variant ON variant.id = item.exercise_variant_id
+        JOIN plans.exercise_slots AS slot ON slot.id = variant.slot_id
+        JOIN plans.workout_unit_prescriptions AS unit ON unit.id = slot.workout_unit_id
+        JOIN plans.day_prescriptions AS day ON day.id = unit.day_id
+        WHERE day.revision_id = %s
+        ORDER BY item.exercise_variant_id, item.ordinal, item.id
+        """,
+        (revision_id,),
+    )
+    return DraftRows(header, days, workout_units, slots, target_muscles, variants, sets)
+
+
+async def copy_revision(
+    connection: Any,
+    source_revision_id: int,
+    target_revision_id: int,
+    *,
+    regenerate_progression_ids: bool,
+) -> RevisionCopyMap:
+    """Copy a revision's tree into an existing, empty revision with ``plans.copy_revision_tree``.
+
+    Runs in the caller's transaction. Lineage keys are always copied; progression ids are kept,
+    or replaced by fresh ids that preserve sharing. Returns ``{entity: {source id: copy id}}``
+    for ``day``, ``workout_unit``, ``exercise_slot``, ``exercise_variant`` and ``set_infra``.
+    The function raises ``ObjectNotInPrerequisiteState`` for a non-empty target and
+    ``NoDataFound`` for a missing revision.
+    """
+    rows = await PlanRepository._fetch_all(
+        connection,
+        """
+        SELECT entity, source_id, target_id
+        FROM plans.copy_revision_tree(%s::integer, %s::integer, %s::boolean)
+        """,
+        (source_revision_id, target_revision_id, regenerate_progression_ids),
+    )
+    copied: RevisionCopyMap = {
+        entity: {}
+        for entity in ("day", "workout_unit", "exercise_slot", "exercise_variant", "set_infra")
+    }
+    for row in rows:
+        copied.setdefault(cast(str, row["entity"]), {})[cast(int, row["source_id"])] = cast(
+            int, row["target_id"]
+        )
+    return copied

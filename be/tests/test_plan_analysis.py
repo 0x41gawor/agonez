@@ -121,6 +121,9 @@ def _draft(
             "description": None,
             "accent": None,
             "image_url": None,
+            "scope": "library",
+            "source_plan_id": None,
+            "plan_run_id": None,
             "days": days,
         }
     )

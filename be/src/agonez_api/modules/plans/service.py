@@ -219,5 +219,8 @@ class PlanService:
             description=header["description"],
             accent=header["accent"],
             image_url=image_url(header["id"], header["image_checksum"]),
+            scope=header["scope"],
+            source_plan_id=header["source_plan_id"],
+            plan_run_id=header["plan_run_id"],
             days=days,
         )

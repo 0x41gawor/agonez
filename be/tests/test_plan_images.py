@@ -86,7 +86,12 @@ def test_a_draft_artifact_can_be_saved_back_unchanged() -> None:
         description=None,
         accent="teal",  # type: ignore[arg-type]
         image_url="/api/plans/6/image?v=abc123",
+        scope="run",  # type: ignore[arg-type]
+        source_plan_id=4,
+        plan_run_id=12,
         days=[],
     )
     update = PlanDraftUpdate.model_validate(artifact.model_dump())
     assert update.accent is not None and update.accent.value == "teal"
+    # Scope, origin and owning run are read-only: accepted, and never written by save_draft.
+    assert (update.scope, update.source_plan_id, update.plan_run_id) == ("run", 4, 12)

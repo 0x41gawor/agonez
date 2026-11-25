@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-25 — T0.2 (#2) and T1.1 (#3) merged; migration 0018 is on `master`. Next: T1.2.
+Last updated: 2026-11-25 — T1.2 (#4) in review on `impl/T1.2-plans-module`. Next: review and merge T1.2, then T2.2.
 
 ---
 
@@ -12,8 +12,9 @@ Last updated: 2026-11-25 — T0.2 (#2) and T1.1 (#3) merged; migration 0018 is o
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | **T1.2** plans module | T2.1 *development* (merges later, after T2.2 and T6.2) · T5.1 after T1.2 | Ready. Read [handoff/T1.1.md](handoff/T1.1.md) (how to call `copy_revision_tree`, `load_step_kg` note). T2.1 needs Q5 decided (default applies otherwise). |
-| 2 | T2.2 run creation with run plans | — | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)). |
+| 1 | Review and merge **T1.2** (#4) | — | Branch `impl/T1.2-plans-module`; see [handoff/T1.2.md](handoff/T1.2.md). |
+| 2 | T2.2 run creation with run plans | T2.1 *development* (merges later, after T2.2 and T6.2) · T5.1 | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)); turns T1.2's interim 409 test into 204 and extends the T-IMM-03 allow-list ([handoff/T1.2.md](handoff/T1.2.md)). |
+| 3 | T5.1 promotion backend | T2.2, Phase 3 | May merge any time after #4. Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
 
 Update this table whenever a task finishes.
 
@@ -52,9 +53,9 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T0.1 | DB-backed integration test harness | — | done | `impl/T0.1-integration-harness` (deleted) | `dcda3c9` | 2026-11-25 |
 | T0.2 | Characterisation tests + preflight | T0.1 | done | `impl/T0.2-characterisation-preflight` (deleted) | `e99336e` | 2026-11-25 |
 | T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | done | `impl/T1.1-run-plans-schema` (deleted) | `e66f5b4` | 2026-11-25 |
-| T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | ready | | | 2026-11-25 |
+| T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | review | `impl/T1.2-plans-module` | `feat(be): make the plans module run-plan aware …` on `8f84855` | 2026-11-25 |
 | T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | todo | | | |
-| T2.2 | Run creation/deletion with run plans | T1.2 | todo | | | |
+| T2.2 | Run creation/deletion with run plans | T1.2 | ready (after #4 merges) | | | |
 | T2.3 | Conversion golden comparison | T2.1 (stacked) | todo | | | |
 | T3.1 | Identity and binding refactor (+ run header fields) | T2.1 + T2.3 merged | todo | | | |
 | T3.2 | Run-plan state, revision read, discard | T3.1 merged | todo | | | |
@@ -67,7 +68,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T4.4 | Apply dialog | T4.1 | todo | | | |
 | T4.5 | Peripheral Execution updates | T4.2, T3.5 | todo | | | |
 | T4.6 | Translations | T4.2–T4.5, T5.2 | todo | | | |
-| T5.1 | Promotion backend (duplicate with body) | T1.2 | todo | | | |
+| T5.1 | Promotion backend (duplicate with body) | T1.2 | ready (after #4 merges) | | | |
 | T5.2 | Promote dialog | T5.1, T4.1, T4.2 | todo | | | |
 | T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | todo | | | |
 | T6.1 | Live lifecycle scenario (gate for #12) | T3.2–T3.5, T5.1 merged | todo | | | |
@@ -101,6 +102,8 @@ update the affected document section.
 | 2026-11-25 | T0.2 | 06 T0.2, T2.2, T3.1; 07 T-REG | All six characterisation tests are `fixed by T2.2`; T2.2 removes every marker, T3.1 none | They edit the library plan, so run isolation alone fixes R1–R5 as written (verified with simulated isolation) | No (handoff/T0.2.md) |
 | 2026-11-25 | T0.2 | 02 §4.1 | The preflight audits only runs without `run_plan_id` | 0019 converts only those; new runs must not block a deploy | No (handoff/T0.2.md) |
 | 2026-11-25 | T0.2 | 06 T0.2 | Preflight verified on the 2026-11-25 dump, not 2026-11-19 | The harness restores the newest dump | Not needed |
+| 2026-11-25 | T1.2 | 07 T-API-PLANS-03, 04 §2 | Library plan with runs → **409** `PlanInUseError` ("Plan N is still used by a plan run"), not 204; T2.2 turns the test into 204 | Runs reference library rows until T2.2 (new runs) and 0019 (old runs); the task asked for a 4xx instead of 500 | No (handoff/T1.2.md) |
+| 2026-11-25 | T1.2 | 02 §3.1, 07 T-IMM-03 | `load_revision_rows`/`copy_revision` are module-level functions; header adds `revision_status`; `PlanRevisionNotFoundError` (404); fingerprint uses the effective `load_step_kg` and catalog ids, has `include_progression_ids`; T-IMM-03 scans all of `src/agonez_api` and lists `delete_plan_image` and the identity update; duplicate names count library plans only | Execution needs the functions without a repository; a GET→PUT of the editor must not look like an unapplied change; T5.1 compares with fresh progression ids | No (handoff/T1.2.md) |
 | 2026-11-25 | T1.1 | 02 §2 | `copy_revision_tree` also rejects NULL arguments and missing revisions, locks the target revision, raises with SQLSTATEs 22004/P0002/55000; map entities are `day`, `workout_unit`, `exercise_slot`, `exercise_variant`, `set_infra` (target muscles unmapped); tests copy every non-empty template revision (only one is RELEASED) | Defensive, distinguishable errors; §2 SQL is conceptual; the dump has a single RELEASED revision | Not needed (handoff/T1.1.md) |
 
 ---
@@ -118,6 +121,9 @@ Finished tasks:
   preflight returns zero rows on the 2026-11-25 dump).
 - [T1.1](handoff/T1.1.md) — migration 0018 and `plans.copy_revision_tree` (merged 2026-11-25,
   `e66f5b4`; about 15–50 ms at start-up).
+- [T1.2](handoff/T1.2.md) — plans module run-plan aware: `load_revision_rows`, `copy_revision`,
+  `definition_fingerprint`, scope guards, artifact fields, T-IMM-03 allow-list (in review
+  2026-11-25, branch `impl/T1.2-plans-module`).
 
 ## Merge rules
 
@@ -152,7 +158,8 @@ Finished tasks:
     `/home/agonez/be/.venv/bin/mypy src`.
   - Frontend in a worktree: run `npm ci` in `<worktree>/web-fe` first (`node_modules` is not shared).
 - Baseline suites (2026-11-25, after T1.1): backend 164 passed, 29 skipped (the integration tests,
-  without the URL); `pytest -m integration` 23 passed, 6 xfailed; web 166 passed. `ruff` and
+  without the URL); `pytest -m integration` 23 passed, 6 xfailed; web 166 passed. On the T1.2
+  branch: 174 passed, 37 skipped; `pytest -m integration` 31 passed, 6 xfailed. `ruff` and
   `mypy src` are green (the
   `plans/schemas.py:97` type error that T0.1 reported was fixed on `master` right after the merge).
 - Integration tests: `eval "$(scripts/test_db.sh)"`, `pytest -m integration`, `scripts/test_db.sh stop`
