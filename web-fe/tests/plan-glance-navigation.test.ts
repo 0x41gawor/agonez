@@ -103,7 +103,7 @@ describe('Plan at a glance editor navigation', () => {
     wrapper.unmount()
   })
 
-  it('sorts recurrence rows alphabetically by default', async () => {
+  it('offers first-appearance and alphabetical recurrence ordering', async () => {
     const editor = toPlanEditorState(planArtifact())
     editor.days[0]!.workout_unit!.exercise_slots[0]!.name = 'Zulu press'
     addSlot(editor, 'Alpha press', exercise.slug)
@@ -120,7 +120,60 @@ describe('Plan at a glance editor navigation', () => {
 
     await wrapper.findAll('.glance-segmented button')[1]!.trigger('click')
     expect(wrapper.findAll('.glance-matrix tbody th strong').map((item) => item.text()))
+      .toEqual(['Zulu press', 'Alpha press'])
+
+    const nameOrder = wrapper.findAll('button').find((button) => button.text() === 'Name A–Z')
+    await nameOrder!.trigger('click')
+    expect(wrapper.findAll('.glance-matrix tbody th strong').map((item) => item.text()))
       .toEqual(['Alpha press', 'Zulu press'])
+  })
+
+  it('orders recurrence rows by body part and the stored target-size sequence', async () => {
+    const editor = toPlanEditorState(planArtifact())
+    editor.days[0]!.workout_unit!.exercise_slots[0]!.name = 'Upper chest'
+    const gluteExercise = {
+      ...exercise,
+      slug: 'hip_thrust',
+      name: 'Hip Thrust',
+      name_full: 'Barbell Hip Thrust',
+      body_part: 'Lower',
+      target_category: 'Glutes',
+    }
+    const coreExercise = {
+      ...exercise,
+      slug: 'cable_crunch',
+      name: 'Cable Crunch',
+      name_full: 'Kneeling Cable Crunch',
+      body_part: 'Core',
+      target_category: 'Core',
+    }
+    const backExercise = {
+      ...exercise,
+      slug: 'chest_supported_row',
+      name: 'Chest-Supported Row',
+      name_full: 'Chest-Supported Barbell Row',
+      body_part: 'Upper',
+      target_category: 'Back_3D',
+    }
+    addSlot(editor, 'Lower glute', gluteExercise.slug)
+    addSlot(editor, 'Core flexion', coreExercise.slug)
+    addSlot(editor, 'Upper back', backExercise.slug)
+
+    const wrapper = mount(PlanEditor, {
+      props: {
+        modelValue: editor,
+        exercises: [exercise, gluteExercise, coreExercise, backExercise],
+        muscles: [muscle],
+        issues: [],
+        planView: 'glance',
+      },
+    })
+
+    await wrapper.findAll('.glance-segmented button')[1]!.trigger('click')
+    const anatomicalOrder = wrapper.findAll('button').find((button) => button.text() === 'Target anatomy')
+    await anatomicalOrder!.trigger('click')
+    expect(wrapper.findAll('.glance-matrix tbody th strong').map((item) => item.text()))
+      .toEqual(['Upper back', 'Upper chest', 'Lower glute', 'Core flexion'])
   })
 
   it('highlights any combination of classification categories', async () => {
@@ -154,12 +207,46 @@ describe('Plan at a glance editor navigation', () => {
 
     const chips = wrapper.findAll('.glance-legend-chip')
     await chips[0]!.trigger('click')
-    await chips[1]!.trigger('click')
+    await chips[1]!.trigger('click', { ctrlKey: true })
 
     expect(wrapper.findAll('.glance-legend-chip.active')).toHaveLength(2)
     expect(wrapper.findAll('.glance-slot.selected')).toHaveLength(2)
     expect(wrapper.findAll('.glance-slot.dimmed')).toHaveLength(1)
     expect(wrapper.get('.glance-focus strong').text()).toBe('Chest Sternal + Chest Clav AD')
+
+    await wrapper.findAll('.glance-segmented button')[1]!.trigger('click')
+    expect(wrapper.findAll('.matrix-occurrence.selected')).toHaveLength(2)
+    expect(wrapper.findAll('.matrix-occurrence.dimmed')).toHaveLength(1)
+    expect(wrapper.findAll('.glance-matrix tbody tr.dimmed')).toHaveLength(1)
+  })
+
+  it('composes exact slot-name selections with Ctrl or Command in recurrence view', async () => {
+    const editor = toPlanEditorState(planArtifact())
+    editor.days[0]!.workout_unit!.exercise_slots[0]!.name = 'Alpha slot'
+    addSlot(editor, 'Beta slot', exercise.slug)
+    const wrapper = mount(PlanEditor, {
+      props: {
+        modelValue: editor,
+        exercises: [exercise],
+        muscles: [muscle],
+        issues: [],
+        planView: 'glance',
+      },
+    })
+
+    await wrapper.findAll('.glance-segmented button')[1]!.trigger('click')
+    const rowSelectors = wrapper.findAll('.glance-matrix-row-select')
+    await rowSelectors[0]!.trigger('click')
+    await rowSelectors[1]!.trigger('click', { ctrlKey: true })
+
+    expect(wrapper.findAll('.glance-matrix-row-select[aria-pressed="true"]')).toHaveLength(2)
+    expect(wrapper.findAll('.matrix-occurrence.selected')).toHaveLength(2)
+    expect(wrapper.findAll('.glance-matrix tbody tr.dimmed')).toHaveLength(0)
+    expect(wrapper.get('.glance-focus strong').text()).toBe('Alpha slot + Beta slot')
+
+    await rowSelectors[1]!.trigger('click')
+    expect(wrapper.findAll('.glance-matrix-row-select[aria-pressed="true"]')).toHaveLength(1)
+    expect(wrapper.findAll('.glance-matrix tbody tr.dimmed')).toHaveLength(1)
   })
 
   it('renames and reorders slots directly in the live draft', async () => {
