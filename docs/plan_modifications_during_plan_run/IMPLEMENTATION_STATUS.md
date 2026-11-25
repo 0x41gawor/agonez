@@ -4,8 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-25 — T0.2 in review (preflight: zero rows). Next: review and merge T0.2 (#2),
-then T1.1 (#3).
+Last updated: 2026-11-25 — T0.2 (#2) and T1.1 (#3) merged; migration 0018 is on `master`. Next: T1.2.
 
 ---
 
@@ -13,9 +12,8 @@ then T1.1 (#3).
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | Review **T0.2** (merge #2) · **T1.1** migration 0018 (merge #3) | each other | T0.2 is in review; merge it before T1.1. T1.1 reads [handoff/T0.1.md](handoff/T0.1.md) first. |
-| 2 | T1.2 plans module | T2.1 *development* (merges later, after T2.2 and T6.2) | T2.1 needs Q5 decided (default applies otherwise). |
-| 3 | T2.2 run creation with run plans | — | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)). |
+| 1 | **T1.2** plans module | T2.1 *development* (merges later, after T2.2 and T6.2) · T5.1 after T1.2 | Ready. Read [handoff/T1.1.md](handoff/T1.1.md) (how to call `copy_revision_tree`, `load_step_kg` note). T2.1 needs Q5 decided (default applies otherwise). |
+| 2 | T2.2 run creation with run plans | — | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)). |
 
 Update this table whenever a task finishes.
 
@@ -30,8 +28,8 @@ deploys with `./redeploy.sh` from `/home/agonez`; agents never deploy.
 | # | Task(s) | Gate before merging | Milestone | Merged |
 | --- | --- | --- | --- | --- |
 | 1 | T0.1 | review | A | ✓ `dcda3c9` 2026-11-25 |
-| 2 | T0.2 | review | A | |
-| 3 | T1.1 | review | A | |
+| 2 | T0.2 | review | A | ✓ `e99336e` 2026-11-25 |
+| 3 | T1.1 | review | A | ✓ `e66f5b4` 2026-11-25 |
 | 4 | T1.2 | review | A | |
 | 5 | T2.2 | review | B | |
 | 6 | T2.1 + T2.3 (stacked, merged together) | review + **T6.2**; take `db_backup.sh` before the first deploy containing 0019 | B | |
@@ -52,9 +50,9 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | Task | Title | Depends on | Status | Branch | Commit | Updated |
 | --- | --- | --- | --- | --- | --- | --- |
 | T0.1 | DB-backed integration test harness | — | done | `impl/T0.1-integration-harness` (deleted) | `dcda3c9` | 2026-11-25 |
-| T0.2 | Characterisation tests + preflight | T0.1 | review | `impl/T0.2-characterisation-preflight` | branch head | 2026-11-25 |
-| T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | review | `impl/T1.1-run-plans-schema` | branch head | 2026-11-25 |
-| T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | todo | | | |
+| T0.2 | Characterisation tests + preflight | T0.1 | done | `impl/T0.2-characterisation-preflight` (deleted) | `e99336e` | 2026-11-25 |
+| T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | done | `impl/T1.1-run-plans-schema` (deleted) | `e66f5b4` | 2026-11-25 |
+| T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | ready | | | 2026-11-25 |
 | T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | todo | | | |
 | T2.2 | Run creation/deletion with run plans | T1.2 | todo | | | |
 | T2.3 | Conversion golden comparison | T2.1 (stacked) | todo | | | |
@@ -116,9 +114,10 @@ conflicts. Before starting, an agent reads the handoff files of every task its o
 Finished tasks:
 
 - [T0.1](handoff/T0.1.md) — DB-backed integration test harness (merged 2026-11-25, `dcda3c9`).
-- [T0.2](handoff/T0.2.md) — characterisation tests and 0019 preflight (in review; preflight returns
-  zero rows on the 2026-11-25 dump).
-- [T1.1](handoff/T1.1.md) — migration 0018 and `plans.copy_revision_tree` (in review 2026-11-25).
+- [T0.2](handoff/T0.2.md) — characterisation tests and 0019 preflight (merged 2026-11-25, `e99336e`;
+  preflight returns zero rows on the 2026-11-25 dump).
+- [T1.1](handoff/T1.1.md) — migration 0018 and `plans.copy_revision_tree` (merged 2026-11-25,
+  `e66f5b4`; about 15–50 ms at start-up).
 
 ## Merge rules
 
@@ -152,8 +151,8 @@ Finished tasks:
     `/home/agonez/be/src`. Lint: `/home/agonez/be/.venv/bin/ruff check .`, types:
     `/home/agonez/be/.venv/bin/mypy src`.
   - Frontend in a worktree: run `npm ci` in `<worktree>/web-fe` first (`node_modules` is not shared).
-- Baseline suites (2026-11-25, with T0.2): backend 164 passed, 21 skipped (the integration tests,
-  without the URL); `pytest -m integration` 15 passed, 6 xfailed; web 166 passed. `ruff` and
+- Baseline suites (2026-11-25, after T1.1): backend 164 passed, 29 skipped (the integration tests,
+  without the URL); `pytest -m integration` 23 passed, 6 xfailed; web 166 passed. `ruff` and
   `mypy src` are green (the
   `plans/schemas.py:97` type error that T0.1 reported was fixed on `master` right after the merge).
 - Integration tests: `eval "$(scripts/test_db.sh)"`, `pytest -m integration`, `scripts/test_db.sh stop`
