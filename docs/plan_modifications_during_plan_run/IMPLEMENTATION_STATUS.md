@@ -53,7 +53,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | --- | --- | --- | --- | --- | --- | --- |
 | T0.1 | DB-backed integration test harness | — | done | `impl/T0.1-integration-harness` (deleted) | `dcda3c9` | 2026-11-25 |
 | T0.2 | Characterisation tests + preflight | T0.1 | review | `impl/T0.2-characterisation-preflight` | branch head | 2026-11-25 |
-| T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | ready | | | 2026-11-25 |
+| T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | review | `impl/T1.1-run-plans-schema` | branch head | 2026-11-25 |
 | T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | todo | | | |
 | T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | todo | | | |
 | T2.2 | Run creation/deletion with run plans | T1.2 | todo | | | |
@@ -103,6 +103,7 @@ update the affected document section.
 | 2026-11-25 | T0.2 | 06 T0.2, T2.2, T3.1; 07 T-REG | All six characterisation tests are `fixed by T2.2`; T2.2 removes every marker, T3.1 none | They edit the library plan, so run isolation alone fixes R1–R5 as written (verified with simulated isolation) | No (handoff/T0.2.md) |
 | 2026-11-25 | T0.2 | 02 §4.1 | The preflight audits only runs without `run_plan_id` | 0019 converts only those; new runs must not block a deploy | No (handoff/T0.2.md) |
 | 2026-11-25 | T0.2 | 06 T0.2 | Preflight verified on the 2026-11-25 dump, not 2026-11-19 | The harness restores the newest dump | Not needed |
+| 2026-11-25 | T1.1 | 02 §2 | `copy_revision_tree` also rejects NULL arguments and missing revisions, locks the target revision, raises with SQLSTATEs 22004/P0002/55000; map entities are `day`, `workout_unit`, `exercise_slot`, `exercise_variant`, `set_infra` (target muscles unmapped); tests copy every non-empty template revision (only one is RELEASED) | Defensive, distinguishable errors; §2 SQL is conceptual; the dump has a single RELEASED revision | Not needed (handoff/T1.1.md) |
 
 ---
 
@@ -117,6 +118,7 @@ Finished tasks:
 - [T0.1](handoff/T0.1.md) — DB-backed integration test harness (merged 2026-11-25, `dcda3c9`).
 - [T0.2](handoff/T0.2.md) — characterisation tests and 0019 preflight (in review; preflight returns
   zero rows on the 2026-11-25 dump).
+- [T1.1](handoff/T1.1.md) — migration 0018 and `plans.copy_revision_tree` (in review 2026-11-25).
 
 ## Merge rules
 
