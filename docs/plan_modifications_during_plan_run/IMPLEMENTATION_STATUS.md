@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-25 — T1.2 (#4) in review on `impl/T1.2-plans-module`. Next: review and merge T1.2, then T2.2.
+Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete. Next: T2.2 (needs Q1) ∥ T5.1 ∥ T2.1 development (needs Q5).
 
 ---
 
@@ -12,9 +12,8 @@ Last updated: 2026-11-25 — T1.2 (#4) in review on `impl/T1.2-plans-module`. Ne
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | Review and merge **T1.2** (#4) | — | Branch `impl/T1.2-plans-module`; see [handoff/T1.2.md](handoff/T1.2.md). |
-| 2 | T2.2 run creation with run plans | T2.1 *development* (merges later, after T2.2 and T6.2) · T5.1 | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)); turns T1.2's interim 409 test into 204 and extends the T-IMM-03 allow-list ([handoff/T1.2.md](handoff/T1.2.md)). |
-| 3 | T5.1 promotion backend | T2.2, Phase 3 | May merge any time after #4. Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
+| 1 | **T2.2** run creation with run plans | T2.1 *development* (merges later, after T2.2 and T6.2) · T5.1 | Needs Q1. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)); turns T1.2's interim 409 test into 204 and extends the T-IMM-03 allow-list ([handoff/T1.2.md](handoff/T1.2.md)). |
+| 2 | **T5.1** promotion backend | T2.2, Phase 3 | May merge any time after #4. Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
 
 Update this table whenever a task finishes.
 
@@ -31,7 +30,7 @@ deploys with `./redeploy.sh` from `/home/agonez`; agents never deploy.
 | 1 | T0.1 | review | A | ✓ `dcda3c9` 2026-11-25 |
 | 2 | T0.2 | review | A | ✓ `e99336e` 2026-11-25 |
 | 3 | T1.1 | review | A | ✓ `e66f5b4` 2026-11-25 |
-| 4 | T1.2 | review | A | |
+| 4 | T1.2 | review | A | ✓ `64ce51f` 2026-11-25 |
 | 5 | T2.2 | review | B | |
 | 6 | T2.1 + T2.3 (stacked, merged together) | review + **T6.2**; take `db_backup.sh` before the first deploy containing 0019 | B | |
 | 7 | T3.1 | review (mandatory) + T2.3 re-run | B | |
@@ -53,9 +52,9 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T0.1 | DB-backed integration test harness | — | done | `impl/T0.1-integration-harness` (deleted) | `dcda3c9` | 2026-11-25 |
 | T0.2 | Characterisation tests + preflight | T0.1 | done | `impl/T0.2-characterisation-preflight` (deleted) | `e99336e` | 2026-11-25 |
 | T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | done | `impl/T1.1-run-plans-schema` (deleted) | `e66f5b4` | 2026-11-25 |
-| T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | review | `impl/T1.2-plans-module` | `feat(be): make the plans module run-plan aware …` on `8f84855` | 2026-11-25 |
+| T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | done | `impl/T1.2-plans-module` (deleted) | `64ce51f` | 2026-11-25 |
 | T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | todo | | | |
-| T2.2 | Run creation/deletion with run plans | T1.2 | ready (after #4 merges) | | | |
+| T2.2 | Run creation/deletion with run plans | T1.2 | ready | | | 2026-11-25 |
 | T2.3 | Conversion golden comparison | T2.1 (stacked) | todo | | | |
 | T3.1 | Identity and binding refactor (+ run header fields) | T2.1 + T2.3 merged | todo | | | |
 | T3.2 | Run-plan state, revision read, discard | T3.1 merged | todo | | | |
@@ -68,7 +67,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T4.4 | Apply dialog | T4.1 | todo | | | |
 | T4.5 | Peripheral Execution updates | T4.2, T3.5 | todo | | | |
 | T4.6 | Translations | T4.2–T4.5, T5.2 | todo | | | |
-| T5.1 | Promotion backend (duplicate with body) | T1.2 | ready (after #4 merges) | | | |
+| T5.1 | Promotion backend (duplicate with body) | T1.2 | ready | | | 2026-11-25 |
 | T5.2 | Promote dialog | T5.1, T4.1, T4.2 | todo | | | |
 | T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | todo | | | |
 | T6.1 | Live lifecycle scenario (gate for #12) | T3.2–T3.5, T5.1 merged | todo | | | |
@@ -122,8 +121,8 @@ Finished tasks:
 - [T1.1](handoff/T1.1.md) — migration 0018 and `plans.copy_revision_tree` (merged 2026-11-25,
   `e66f5b4`; about 15–50 ms at start-up).
 - [T1.2](handoff/T1.2.md) — plans module run-plan aware: `load_revision_rows`, `copy_revision`,
-  `definition_fingerprint`, scope guards, artifact fields, T-IMM-03 allow-list (in review
-  2026-11-25, branch `impl/T1.2-plans-module`).
+  `definition_fingerprint`, scope guards, artifact fields, T-IMM-03 allow-list (merged 2026-11-25,
+  `64ce51f`).
 
 ## Merge rules
 
@@ -157,11 +156,10 @@ Finished tasks:
     `/home/agonez/be/src`. Lint: `/home/agonez/be/.venv/bin/ruff check .`, types:
     `/home/agonez/be/.venv/bin/mypy src`.
   - Frontend in a worktree: run `npm ci` in `<worktree>/web-fe` first (`node_modules` is not shared).
-- Baseline suites (2026-11-25, after T1.1): backend 164 passed, 29 skipped (the integration tests,
-  without the URL); `pytest -m integration` 23 passed, 6 xfailed; web 166 passed. On the T1.2
-  branch: 174 passed, 37 skipped; `pytest -m integration` 31 passed, 6 xfailed. `ruff` and
-  `mypy src` are green (the
-  `plans/schemas.py:97` type error that T0.1 reported was fixed on `master` right after the merge).
+- Baseline suites (2026-11-25, after T1.2): backend 174 passed, 37 skipped (the integration tests,
+  without the URL); `pytest -m integration` 31 passed, 6 xfailed (the T0.2 tests); web 166 passed.
+  `ruff` and `mypy src` are green.
+- Production runs migration 0018 (applied 2026-11-25 21:42 UTC, verified read-only).
 - Integration tests: `eval "$(scripts/test_db.sh)"`, `pytest -m integration`, `scripts/test_db.sh stop`
   (from `be/`; details in `be/README.md`).
 - `psql` is not installed on the host. Integration tests restore the newest `agonez_db_backup_*.sql`
