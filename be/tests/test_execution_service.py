@@ -6,8 +6,10 @@ import pytest
 
 from agonez_api.modules.execution.errors import ExecutionAPIError
 from agonez_api.modules.execution.repository import ExecutionRepository, RevisionTree, RunBundle
-from agonez_api.modules.execution.schemas import ExercisePrescriptionPut
+from agonez_api.modules.execution.run_plan_repository import not_executable
+from agonez_api.modules.execution.schemas import ExercisePrescriptionPut, PlanRunCreate
 from agonez_api.modules.execution.service import ExecutionService
+from agonez_api.modules.plans.executability import ExecutabilityIssue
 
 
 def revision_tree() -> RevisionTree:
@@ -209,3 +211,73 @@ async def test_delete_plan_run_forwards_the_in_progress_override(force: bool) ->
     await service.delete_plan_run(7, force=force)
 
     assert calls == [(7, force)]
+
+
+@pytest.mark.asyncio
+async def test_create_plan_run_rejects_invalid_microcycle_count_before_database_access() -> None:
+    repository = ExecutionRepository(cast(Any, None))
+    payload = PlanRunCreate.model_validate(
+        {
+            "plan_revision_id": 31,
+            "name": "Run",
+            "starts_on": "2026-10-27",
+            "microcycle_count": 53,
+        }
+    )
+
+    with pytest.raises(ExecutionAPIError) as caught:
+        await repository.create_plan_run(payload, as_of=date(2026, 10, 27))
+
+    assert caught.value.code == "invalid_microcycle_count"
+
+
+@pytest.mark.asyncio
+async def test_create_plan_run_returns_the_overview_of_the_created_run() -> None:
+    calls: list[tuple[int, date]] = []
+    overview = object()
+
+    class Recorder:
+        async def create_plan_run(self, payload: PlanRunCreate, *, as_of: date) -> int:
+            calls.append((payload.plan_revision_id, as_of))
+            return 7
+
+    class Service(ExecutionService):
+        async def get_overview(self, plan_run_id: int) -> Any:
+            assert plan_run_id == 7
+            return overview
+
+    service = Service(cast(Any, Recorder()), today=lambda: date(2026, 10, 27))
+    payload = PlanRunCreate.model_validate(
+        {"plan_revision_id": 31, "name": "Run", "starts_on": "2026-10-27", "microcycle_count": 2}
+    )
+
+    assert await service.create_plan_run(payload) is overview
+    assert calls == [(31, date(2026, 10, 27))]
+
+
+def test_not_executable_error_carries_a_summary_and_every_issue() -> None:
+    issues = [
+        ExecutabilityIssue(
+            "workout_without_exercises",
+            "days.2.workout_unit",
+            2,
+            None,
+            'Day 3 "Core": the workout has no exercises.',
+        ),
+        ExecutabilityIssue(
+            "exercise_without_sets",
+            "days.0.workout_unit.exercise_slots.1",
+            0,
+            1,
+            'Day 1 "Upper", exercise 2: the exercise has no sets.',
+        ),
+    ]
+
+    error = not_executable("plan_not_executable", issues)
+
+    assert (error.status_code, error.code) == (422, "plan_not_executable")
+    assert error.message == (
+        'This plan cannot be started yet. Day 3 "Core": the workout has no exercises. '
+        'Day 1 "Upper", exercise 2: the exercise has no sets.'
+    )
+    assert error.details == {"issues": [issue.as_dict() for issue in issues]}

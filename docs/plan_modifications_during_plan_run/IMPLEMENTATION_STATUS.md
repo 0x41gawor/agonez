@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete; Q1 and Q5 decided. Next: T2.2 ∥ T2.1 development; T5.1 after T2.2.
+Last updated: 2026-11-28 — T2.2 in review (`impl/T2.2-run-creation`): new runs own their run plan; all six T0.2 xfails removed. Next: review + merge T2.2 (#5); T2.1 development continues; T5.1 after #5.
 
 ---
 
@@ -12,9 +12,9 @@ Last updated: 2026-11-25 — T1.2 merged (#4): milestone A complete; Q1 and Q5 d
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | **T2.2** run creation with run plans | T2.1 development | Q1 decided: build `validate_executable` and reject non-executable revisions at creation. Removes **all six** T0.2 xfail markers ([handoff/T0.2.md](handoff/T0.2.md)); turns T1.2's interim 409 test into 204 and extends the T-IMM-03 allow-list ([handoff/T1.2.md](handoff/T1.2.md)). |
-| 2 | **T2.1** migration 0019 (development) | T2.2 | Q5 decided (guard the seed). Merges together with T2.3 at #6, only after T2.2 is merged and the T6.2 rehearsal passed. Mandatory review. Read [handoff/T0.2.md](handoff/T0.2.md) (embed the preflight) and [handoff/T1.1.md](handoff/T1.1.md). |
-| 3 | T5.1 promotion backend | Phase 3 | Start after T2.2 merges (#5): T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 need runs that own their plans. The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
+| 1 | **Review + merge T2.2** (#5) | T2.1 development | Branch `impl/T2.2-run-creation`, [handoff/T2.2.md](handoff/T2.2.md). After the merge, library plans whose runs were created through the API are deletable (204). Library plan 6 (demo, also in production) is not executable: new runs from it get 422 `plan_not_executable` (Q1). |
+| 2 | **T2.1** migration 0019 (development) | T2.2 review | Q5 decided (guard the seed). Merges together with T2.3 at #6, only after T2.2 is merged and the T6.2 rehearsal passed. Mandatory review. Read [handoff/T0.2.md](handoff/T0.2.md) (embed the preflight), [handoff/T1.1.md](handoff/T1.1.md) and [handoff/T2.2.md](handoff/T2.2.md) (run plans without a run may exist; the demo run's revisions are not executable and must still convert). |
+| 3 | T5.1 promotion backend | Phase 3 | Start after T2.2 merges (#5): T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 need runs that own their plans (helpers in `tests/integration/test_run_creation.py`). The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. |
 
 Update this table whenever a task finishes.
 
@@ -55,7 +55,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | done | `impl/T1.1-run-plans-schema` (deleted) | `e66f5b4` | 2026-11-25 |
 | T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | done | `impl/T1.2-plans-module` (deleted) | `64ce51f` | 2026-11-25 |
 | T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | ready (development) | | | 2026-11-25 |
-| T2.2 | Run creation/deletion with run plans | T1.2 | ready | | | 2026-11-25 |
+| T2.2 | Run creation/deletion with run plans | T1.2 | review | `impl/T2.2-run-creation` | `feat(be): give every new run its own run plan` (on `407323b`) | 2026-11-28 |
 | T2.3 | Conversion golden comparison | T2.1 (stacked) | todo | | | |
 | T3.1 | Identity and binding refactor (+ run header fields) | T2.1 + T2.3 merged | todo | | | |
 | T3.2 | Run-plan state, revision read, discard | T3.1 merged | todo | | | |
@@ -68,7 +68,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T4.4 | Apply dialog | T4.1 | todo | | | |
 | T4.5 | Peripheral Execution updates | T4.2, T3.5 | todo | | | |
 | T4.6 | Translations | T4.2–T4.5, T5.2 | todo | | | |
-| T5.1 | Promotion backend (duplicate with body) | T1.2, T2.2 merged | todo | | | 2026-11-25 |
+| T5.1 | Promotion backend (duplicate with body) | T1.2, T2.2 merged | todo (ready once #5 merges) | | | 2026-11-28 |
 | T5.2 | Promote dialog | T5.1, T4.1, T4.2 | todo | | | |
 | T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | todo | | | |
 | T6.1 | Live lifecycle scenario (gate for #12) | T3.2–T3.5, T5.1 merged | todo | | | |
@@ -104,6 +104,9 @@ update the affected document section.
 | 2026-11-25 | T0.2 | 06 T0.2 | Preflight verified on the 2026-11-25 dump, not 2026-11-19 | The harness restores the newest dump | Not needed |
 | 2026-11-25 | T1.2 | 07 T-API-PLANS-03, 04 §2 | Library plan with runs → **409** `PlanInUseError` ("Plan N is still used by a plan run"), not 204; T2.2 turns the test into 204 | Runs reference library rows until T2.2 (new runs) and 0019 (old runs); the task asked for a 4xx instead of 500 | No (handoff/T1.2.md) |
 | 2026-11-25 | T1.2 | 02 §3.1, 07 T-IMM-03 | `load_revision_rows`/`copy_revision` are module-level functions; header adds `revision_status`; `PlanRevisionNotFoundError` (404); fingerprint uses the effective `load_step_kg` and catalog ids, has `include_progression_ids`; T-IMM-03 scans all of `src/agonez_api` and lists `delete_plan_image` and the identity update; duplicate names count library plans only | Execution needs the functions without a repository; a GET→PUT of the editor must not look like an unapplied change; T5.1 compares with fresh progression ids | No (handoff/T1.2.md) |
+| 2026-11-28 | T2.2 | 02 §3.2, §3.3 | `RunPlanRepository.lock_library_source` (step 1 of §3.3) + `create_run_plan(connection, *, source: Row)` instead of `source_revision_id`; `not_executable(code, issues)` beside them; the repository is built by `ExecutionRepository`, not `app.py` | Read the source once under its `FOR SHARE` lock; one error builder for creation and Apply | No (handoff/T2.2.md) |
+| 2026-11-28 | T2.2 | 03 §3, 04 §2 | Issue paths: plan-level `days`, workout `days.<d>.workout_unit`, slot and set issues at the slot path; error `message` summarises the first three issues; `plan_revision_not_library` has `details {plan_revision_id, plan_id}`; unknown revision stays 404 `plan_revision_not_found` | The New Run screen shows `message` as is; the documented path prefix is what the editor maps | No (handoff/T2.2.md) |
+| 2026-11-28 | T2.2 | 06 T2.2 (tests) | `live_execution_api_scenarios.py` starts its throwaway run from an executable copy of the demo plan; T1.1's `test_existing_rows_and_todays_writers_get_the_defaults` now expects run creation to write `run_plan_id` and track keys | Demo plan 6 is not executable (Q1); the old test pinned pre-T2.2 creation | No (handoff/T2.2.md) |
 | 2026-11-25 | T1.1 | 02 §2 | `copy_revision_tree` also rejects NULL arguments and missing revisions, locks the target revision, raises with SQLSTATEs 22004/P0002/55000; map entities are `day`, `workout_unit`, `exercise_slot`, `exercise_variant`, `set_infra` (target muscles unmapped); tests copy every non-empty template revision (only one is RELEASED) | Defensive, distinguishable errors; §2 SQL is conceptual; the dump has a single RELEASED revision | Not needed (handoff/T1.1.md) |
 
 ---
@@ -124,6 +127,9 @@ Finished tasks:
 - [T1.2](handoff/T1.2.md) — plans module run-plan aware: `load_revision_rows`, `copy_revision`,
   `definition_fingerprint`, scope guards, artifact fields, T-IMM-03 allow-list (merged 2026-11-25,
   `64ce51f`).
+- [T2.2](handoff/T2.2.md) — every new run owns a run plan (r1 RELEASED, r2 DRAFT);
+  `validate_executable` and 422 `plan_not_executable`; deleting a run deletes its run plan; all six
+  T0.2 tests pass (in review 2026-11-28, branch `impl/T2.2-run-creation`).
 
 ## Where things are recorded
 
@@ -173,6 +179,12 @@ writes it down here or in the design, in the same commit:
 - Baseline suites (2026-11-25, after T1.2): backend 174 passed, 37 skipped (the integration tests,
   without the URL); `pytest -m integration` 31 passed, 6 xfailed (the T0.2 tests); web 166 passed.
   `ruff` and `mypy src` are green.
+- On the T2.2 branch (2026-11-28, dump `agonez_db_backup_2026-11-28.sql`): backend 189 passed, 50
+  skipped; `pytest -m integration` 49 passed, 1 skipped (T1.1's rollback test: the newest dump
+  already records 0018), no xfails. `ruff` and `mypy src` green.
+- Library plan 6 (the demo plan; revisions 6 and RELEASED 25) has 5 DEFAULT variants without sets,
+  so it is not executable: from T2.2 on, runs cannot be started from it. Every other library
+  revision and every revision a real run uses is executable (checked on the 2026-11-28 dump).
 - Production runs migration 0018 (applied 2026-11-25 21:42 UTC, verified read-only).
 - Integration tests: `eval "$(scripts/test_db.sh)"`, `pytest -m integration`, `scripts/test_db.sh stop`
   (from `be/`; details in `be/README.md`).

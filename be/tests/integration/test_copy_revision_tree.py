@@ -220,7 +220,11 @@ async def test_existing_rows_and_todays_writers_get_the_defaults(
     db: AsyncConnection,
     clock: FrozenClock,
 ) -> None:
-    """0018 is invisible to today's code: its inserts work unchanged and get the defaults."""
+    """0018 is invisible to the plans code: its inserts work unchanged and get the defaults.
+
+    Run creation writes the new columns since T2.2: the run owns a run plan and its tracks
+    carry lineage keys, while the library plan it was created from keeps the defaults.
+    """
     before = await (
         await db.execute(
             """
@@ -280,7 +284,9 @@ async def test_existing_rows_and_todays_writers_get_the_defaults(
         await db.execute(
             """
             SELECT plan.scope::text AS scope, plan.source_plan_id,
-                   run.run_plan_id, run.run_plan_scope::text AS run_plan_scope,
+                   run_plan.scope::text AS run_plan_scope_in_plans,
+                   run_plan.source_plan_id AS run_plan_source,
+                   run.run_plan_scope::text AS run_plan_scope,
                    (SELECT count(*) FROM exec.workout_unit_tracks AS track
                     WHERE track.plan_run_id = run.id AND track.plan_lineage_key IS NULL)
                        AS unkeyed_workout_tracks,
@@ -289,6 +295,7 @@ async def test_existing_rows_and_todays_writers_get_the_defaults(
                        AS unkeyed_exercise_tracks
             FROM exec.plan_runs AS run
             JOIN plans.workout_plans AS plan ON plan.id = %s
+            JOIN plans.workout_plans AS run_plan ON run_plan.id = run.run_plan_id
             WHERE run.id = %s
             """,
             (plan["id"], run_id),
@@ -297,10 +304,11 @@ async def test_existing_rows_and_todays_writers_get_the_defaults(
     assert created == {
         "scope": "library",
         "source_plan_id": None,
-        "run_plan_id": None,
+        "run_plan_scope_in_plans": "run",
+        "run_plan_source": plan["id"],
         "run_plan_scope": "run",
-        "unkeyed_workout_tracks": 1,
-        "unkeyed_exercise_tracks": 1,
+        "unkeyed_workout_tracks": 0,
+        "unkeyed_exercise_tracks": 0,
     }
     listed = expect(await client.get("/api/plans"))
     assert plan["id"] in {item["id"] for item in listed["items"]}

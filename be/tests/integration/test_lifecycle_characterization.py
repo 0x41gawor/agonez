@@ -1,12 +1,12 @@
 """Characterisation of the run lifecycle defects R1-R5 (T-REG-01..06).
 
 Each test states the behaviour we want for one defect of
-``docs/plan_modifications_during_plan_run/00-current-state-audit.md`` section 6 and is
-expected to fail today. The markers are strict: once a fix lands the test passes, which fails
-the run until the fixing task removes the marker.
+``docs/plan_modifications_during_plan_run/00-current-state-audit.md`` section 6. They were
+strict xfails (T0.2) until T2.2 gave every new run its own copy of the plan: each edits the
+library plan, so run isolation fixes all of them. They now guard against a regression.
 
-Only the assertions about the defect may count as the expected failure. Set-up runs inside
-``setting_up()``, which turns its assertion errors into ``SetupFailed``.
+Set-up runs inside ``setting_up()``, which turns its assertion errors into ``SetupFailed``,
+so a broken precondition is told apart from the defect coming back.
 """
 
 from collections.abc import AsyncIterator, Iterator
@@ -39,7 +39,7 @@ DEVICE_HEADERS = {"X-Agonez-Device-Id": str(DEVICE_ID)}
 
 
 class SetupFailed(Exception):
-    """A precondition broke. Deliberately not an AssertionError, so no xfail absorbs it."""
+    """A precondition broke. Not an AssertionError, so it is told apart from the defect."""
 
 
 @contextmanager
@@ -174,7 +174,6 @@ async def _definition_seen_by_run(
     }
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="fixed by T2.2")
 async def test_reg_01_library_edit_leaves_run_definition_unchanged(
     client: httpx.AsyncClient,
     clock: FrozenClock,
@@ -200,7 +199,6 @@ async def test_reg_01_library_edit_leaves_run_definition_unchanged(
     assert after == before
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="fixed by T2.2")
 async def test_reg_02_library_training_day_can_be_removed(
     client: httpx.AsyncClient,
     lenient_client: httpx.AsyncClient,
@@ -219,7 +217,6 @@ async def test_reg_02_library_training_day_can_be_removed(
     assert await _overview(client, library_run.run_id) == before
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="fixed by T2.2")
 async def test_reg_03_library_plan_with_runs_can_be_deleted(
     client: httpx.AsyncClient,
     lenient_client: httpx.AsyncClient,
@@ -238,7 +235,6 @@ async def test_reg_03_library_plan_with_runs_can_be_deleted(
         assert after[key] == before[key]
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="fixed by T2.2")
 async def test_reg_04_library_slot_reorder_keeps_every_track_exercise(
     client: httpx.AsyncClient,
     library_run: LibraryRun,
@@ -259,7 +255,6 @@ async def test_reg_04_library_slot_reorder_keeps_every_track_exercise(
     assert await _trainable(client, today) == trainable
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="fixed by T2.2")
 async def test_reg_05_added_library_slot_keeps_next_session_startable(
     client: httpx.AsyncClient,
     clock: FrozenClock,
@@ -307,7 +302,6 @@ async def test_reg_05_added_library_slot_keeps_next_session_startable(
     )
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="fixed by T2.2")
 async def test_reg_06_deleted_unprescribed_slot_keeps_overview_readable(
     client: httpx.AsyncClient,
     db: AsyncConnection,

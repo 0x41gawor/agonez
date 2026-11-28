@@ -15,6 +15,7 @@ from agonez_api.modules.execution.domain import (
     version_of,
 )
 from agonez_api.modules.execution.errors import conflict, invalid, not_found
+from agonez_api.modules.execution.run_plan_repository import RunPlanRepository
 from agonez_api.modules.execution.schemas import (
     EventCreate,
     EventPatch,
@@ -66,6 +67,7 @@ class ExecutionRepository:
 
     def __init__(self, pool: DatabasePool) -> None:
         self._pool = pool
+        self._run_plans = RunPlanRepository(pool)
 
     async def reconcile(self, plan_run_id: int | None, as_of: date) -> None:
         """Apply date-owned lifecycle transitions without background infrastructure."""
@@ -167,8 +169,8 @@ class ExecutionRepository:
             connection,
             """
             SELECT workout.id, workout.day_id, day.ordinal AS day_ordinal,
-                   workout.name, workout.description, workout.warmup_notes,
-                   workout.stretch_notes
+                   workout.lineage_key, workout.name, workout.description,
+                   workout.warmup_notes, workout.stretch_notes
             FROM plans.workout_unit_prescriptions AS workout
             JOIN plans.day_prescriptions AS day ON day.id = workout.day_id
             WHERE day.revision_id = %s
@@ -179,8 +181,8 @@ class ExecutionRepository:
         slots = await self._fetch_all(
             connection,
             """
-            SELECT slot.id, slot.workout_unit_id, slot.ordinal, slot.name,
-                   slot.description, slot.goal, slot.role::text AS role,
+            SELECT slot.id, slot.workout_unit_id, slot.lineage_key, slot.ordinal,
+                   slot.name, slot.description, slot.goal, slot.role::text AS role,
                    slot.volume_axis
             FROM plans.exercise_slots AS slot
             JOIN plans.workout_unit_prescriptions AS workout
@@ -268,21 +270,30 @@ class ExecutionRepository:
             )
         async with self._pool.connection() as connection:
             async with connection.transaction():
-                tree = await self._load_revision_tree(connection, payload.plan_revision_id)
+                # The run executes its own copy of the plan (02 §3.3): r1 RELEASED is what
+                # it trains, r2 DRAFT its working copy. Everything below binds to r1; the
+                # tracks keep their positional labels for the current read code (T3.1).
+                source = await self._run_plans.lock_library_source(
+                    connection, payload.plan_revision_id
+                )
+                run_plan = await self._run_plans.create_run_plan(connection, source=source)
+                revision_id = run_plan.released_revision_id
+                tree = await self._load_revision_tree(connection, revision_id)
                 duration = len(tree.days)
                 run = await self._fetch_one(
                     connection,
                     """
                     INSERT INTO exec.plan_runs (
-                        name, initial_plan_revision_id, starts_on,
+                        name, initial_plan_revision_id, run_plan_id, starts_on,
                         microcycle_count, microcycle_duration_days, status
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                     """,
                     (
                         payload.name.strip(),
-                        payload.plan_revision_id,
+                        revision_id,
+                        run_plan.plan_id,
                         payload.starts_on,
                         payload.microcycle_count,
                         duration,
@@ -308,7 +319,7 @@ class ExecutionRepository:
                             ordinal,
                             starts,
                             starts + (projection_end(starts, 1, duration) - starts),
-                            payload.plan_revision_id,
+                            revision_id,
                         ),
                     )
                     microcycle_ids[ordinal] = cast(int, inserted["id"])
@@ -335,13 +346,14 @@ class ExecutionRepository:
                         connection,
                         """
                         INSERT INTO exec.workout_unit_tracks (
-                            plan_run_id, logical_key, name, description
-                        ) VALUES (%s, %s, %s, %s)
+                            plan_run_id, logical_key, plan_lineage_key, name, description
+                        ) VALUES (%s, %s, %s, %s, %s)
                         RETURNING id
                         """,
                         (
                             run_id,
                             f"day:{workout['day_ordinal']}",
+                            workout["lineage_key"],
                             workout["name"],
                             workout["description"],
                         ),
@@ -358,14 +370,15 @@ class ExecutionRepository:
                             """
                             INSERT INTO exec.exercise_unit_tracks (
                                 plan_run_id, workout_unit_track_id, logical_key,
-                                name, source_progression_id
-                            ) VALUES (%s, %s, %s, %s, %s)
+                                plan_lineage_key, name, source_progression_id
+                            ) VALUES (%s, %s, %s, %s, %s, %s)
                             RETURNING id
                             """,
                             (
                                 run_id,
                                 workout_track_id,
                                 f"slot:{slot['ordinal']}",
+                                slot["lineage_key"],
                                 slot["name"] or variant["exercise_name"],
                                 variant["progression_id"],
                             ),
@@ -899,7 +912,7 @@ class ExecutionRepository:
             async with connection.transaction():
                 current = await self._fetch_optional(
                     connection,
-                    "SELECT id FROM exec.plan_runs WHERE id = %s FOR UPDATE",
+                    "SELECT id, run_plan_id FROM exec.plan_runs WHERE id = %s FOR UPDATE",
                     (plan_run_id,),
                 )
                 if current is None:
@@ -935,6 +948,16 @@ class ExecutionRepository:
                     "DELETE FROM exec.plan_runs WHERE id = %s",
                     (plan_run_id,),
                 )
+                # The run owned its run plan (02 §3.6); no exec row references it any more.
+                # Its revisions and child rows cascade; plans promoted from it keep their
+                # rows and lose only source_plan_id (SET NULL). Legacy runs have none until
+                # migration 0019 converts them.
+                if current["run_plan_id"] is not None:
+                    await self._execute(
+                        connection,
+                        "DELETE FROM plans.workout_plans WHERE id = %s AND scope = 'run'",
+                        (current["run_plan_id"],),
+                    )
 
     async def save_exercise_prescription(
         self,

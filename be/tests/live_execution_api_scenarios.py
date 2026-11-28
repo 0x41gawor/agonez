@@ -10,7 +10,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, cast
 
 BASE_URL = os.getenv("EXEC_API_BASE_URL", "http://127.0.0.1:8000")
 DEMO_RUN = "Execution Demo — PPL Upper Focus 2026"
@@ -47,6 +47,35 @@ def expect(
     actual, response = request(method, path, payload)
     assert actual == status, (method, path, actual, response)
     return response
+
+
+def executable_library_copy(overview: dict[str, Any]) -> dict[str, Any]:
+    """A throwaway library plan to start a run from: the demo run's plan, made executable.
+
+    Runs are created from library plans only, and only from executable revisions
+    (``plan_not_executable`` otherwise). The demo plan has exercises without sets, and a
+    run that owns its run plan (T2.2, migration 0019) points at that run plan, so the
+    script copies the library plan and drops the slots a run could not train.
+    """
+    plan = expect("GET", f"/api/plans/{overview['run']['plan']['plan_id']}", 200)
+    if plan.get("scope", "library") != "library":
+        assert plan["source_plan_id"] is not None, "the demo run's library plan was deleted"
+        plan = expect("GET", f"/api/plans/{plan['source_plan_id']}", 200)
+    draft = expect("POST", f"/api/plans/{plan['id']}/duplicate", 201)
+    for day in draft["days"]:
+        unit = day["workout_unit"]
+        if unit is None:
+            continue
+        unit["exercise_slots"] = [
+            slot
+            for slot in unit["exercise_slots"]
+            if any(item["variant_type"] == "DEFAULT" and item["sets"] for item in slot["variants"])
+        ]
+        for ordinal, slot in enumerate(unit["exercise_slots"]):
+            slot["ordinal"] = ordinal
+        if not unit["exercise_slots"]:
+            day["workout_unit"] = None
+    return cast(dict[str, Any], expect("PUT", f"/api/plans/{draft['id']}/draft", 200, draft))
 
 
 def main() -> None:
@@ -118,12 +147,13 @@ def main() -> None:
         f"{base}/load-series?{urllib.parse.urlencode({'metric': 'top_set_load'})}",
         200,
     )
+    throwaway_plan = executable_library_copy(overview)
     created = expect(
         "POST",
         "/api/v1/exec/plan-runs",
         201,
         {
-            "plan_revision_id": overview["run"]["initial_revision"]["plan_revision_id"],
+            "plan_revision_id": throwaway_plan["revision_id"],
             "name": "Live delete scenario run",
             "starts_on": str(date.fromisoformat(runs["as_of"]) + timedelta(days=400)),
             "microcycle_count": 2,
@@ -133,6 +163,8 @@ def main() -> None:
     expect("DELETE", f"/api/v1/exec/plan-runs/{throwaway_id}", 204)
     missing = expect("DELETE", f"/api/v1/exec/plan-runs/{throwaway_id}", 404)
     assert missing["error"]["code"] == "plan_run_not_found"
+    # The run took its own copy of the plan: the library plan is unused and can go.
+    expect("DELETE", f"/api/plans/{throwaway_plan['id']}", 204)
     remaining = expect("GET", "/api/v1/exec/plan-runs", 200)
     assert all(item["plan_run_id"] != throwaway_id for item in remaining["items"])
     assert any(item["plan_run_id"] == run_id for item in remaining["items"])

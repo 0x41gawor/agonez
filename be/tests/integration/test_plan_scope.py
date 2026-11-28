@@ -1,9 +1,9 @@
 """The plans module with run-scope plans (T1.2): loader, copy, fingerprint, scope guards.
 
-T-API-PLANS-01…05 (``07`` §3) and the T1.2 acceptance criteria (``06``). Run plans are made
-by hand here (run creation copies plans from T2.2 on): a ``scope = 'run'`` plan with a RELEASED
-revision 1 and a DRAFT revision 2, both copied with ``copy_revision``, optionally bound to a
-run created from the library plan.
+T-API-PLANS-01…05 (``07`` §3) and the T1.2 acceptance criteria (``06``). A run plan bound to
+a run comes from real run creation (T2.2, ``run_with_plan``); a run plan without a run, which
+the API never leaves behind, is made by hand (``make_run_plan``): a ``scope = 'run'`` plan with
+a RELEASED revision 1 and a DRAFT revision 2, both copied with ``copy_revision``.
 """
 
 import copy
@@ -94,20 +94,31 @@ async def make_run_plan(
     return RunPlan(plan["id"], released["id"], draft["id"])
 
 
-async def bind_to_new_run(
+async def run_with_plan(
     client: httpx.AsyncClient,
     db: AsyncConnection,
     library: dict[str, Any],
-    run_plan: RunPlan,
     clock: FrozenClock,
-) -> int:
-    """A run created from the library plan whose ``run_plan_id`` is set by hand (T2.2's job)."""
+) -> tuple[int, RunPlan]:
+    """A run created from the library plan through the API, and the run plan it owns."""
     overview = await make_run(client, library["revision_id"], clock.today, 1)
     run_id = int(overview["run"]["plan_run_id"])
-    await db.execute(
-        "UPDATE exec.plan_runs SET run_plan_id = %s WHERE id = %s", (run_plan.plan_id, run_id)
-    )
-    return run_id
+    row = await (
+        await db.execute(
+            """
+            SELECT run.run_plan_id,
+                   (SELECT id FROM plans.plan_revisions
+                    WHERE plan_id = run.run_plan_id AND status = 'RELEASED') AS released_id,
+                   (SELECT id FROM plans.plan_revisions
+                    WHERE plan_id = run.run_plan_id AND status = 'DRAFT') AS draft_id
+            FROM exec.plan_runs AS run
+            WHERE run.id = %s
+            """,
+            (run_id,),
+        )
+    ).fetchone()
+    assert row is not None and row["run_plan_id"] is not None
+    return run_id, RunPlan(row["run_plan_id"], row["released_id"], row["draft_id"])
 
 
 async def fingerprint(db: AsyncConnection, revision_id: int, **options: bool) -> str:
@@ -164,8 +175,7 @@ async def test_api_plans_02_run_plan_is_not_deleted_through_the_plans_api(
 ) -> None:
     """T-API-PLANS-02: 409 with the documented detail, with or without its run."""
     unbound = await make_run_plan(db, library)
-    bound = await make_run_plan(db, library)
-    await bind_to_new_run(client, db, library, bound, clock)
+    _, bound = await run_with_plan(client, db, library, clock)
 
     for run_plan in (unbound, bound):
         response = await client.delete(f"/api/plans/{run_plan.plan_id}")
@@ -182,30 +192,46 @@ async def test_api_plans_02_run_plan_is_not_deleted_through_the_plans_api(
     assert (await client.delete("/api/plans/987654")).status_code == 404
 
 
-async def test_api_plans_03_library_plan_with_runs_is_refused_instead_of_500(
+async def test_api_plans_03_library_plan_with_runs_is_deleted(
     client: httpx.AsyncClient,
     db: AsyncConnection,
     library: dict[str, Any],
     clock: FrozenClock,
 ) -> None:
-    """T-API-PLANS-03, interim (T1.2): 409, not 500, while a run still uses the plan's rows.
+    """T-API-PLANS-03: 204 for a plan whose runs were created through the API (T2.2).
 
-    The matrix expects 204: runs stop referencing library rows when run creation copies the
-    plan (T2.2, new runs) and when 0019 converts the old runs (T2.1). T2.2 turns this into 204.
+    Such runs reference only their own run plan. A legacy run (``run_plan_id`` NULL, bound
+    to the library rows) still refuses the delete with 409 until migration 0019 converts it.
+    Deep checks of the run afterwards: T-DEL-01 in ``test_run_creation.py``.
     """
+    legacy = expect(await client.post(f"/api/plans/{library['id']}/duplicate"), 201)
     overview = await make_run(client, library["revision_id"], clock.today, 1)
     run_id = overview["run"]["plan_run_id"]
 
-    response = await client.delete(f"/api/plans/{library['id']}")
+    expect(await client.delete(f"/api/plans/{library['id']}"), 204)
 
-    assert response.status_code == 409, response.text
-    assert response.json() == {"detail": f"Plan {library['id']} is still used by a plan run"}
-    assert expect(await client.get(f"/api/plans/{library['id']}/draft")) == library
+    assert (await client.get(f"/api/plans/{library['id']}")).status_code == 404
     after = expect(await client.get(f"/api/v1/exec/plan-runs/{run_id}/overview"))
     assert after["microcycles"] == overview["microcycles"]
 
+    # A legacy run, as every run created before T2.2: it references the library revision
+    # itself (initial_plan_revision_id, RESTRICT) and owns no run plan.
+    await db.execute(
+        """
+        INSERT INTO exec.plan_runs (
+            name, initial_plan_revision_id, starts_on, microcycle_count,
+            microcycle_duration_days
+        ) VALUES ('Legacy run', %s, %s, 1, 3)
+        """,
+        (legacy["revision_id"], clock.today),
+    )
+    response = await client.delete(f"/api/plans/{legacy['id']}")
+    assert response.status_code == 409, response.text
+    assert response.json() == {"detail": f"Plan {legacy['id']} is still used by a plan run"}
+    assert expect(await client.get(f"/api/plans/{legacy['id']}/draft")) == legacy
+
     # A library plan without runs is deleted as before.
-    unused = expect(await client.post(f"/api/plans/{library['id']}/duplicate"), 201)
+    unused = expect(await client.post(f"/api/plans/{legacy['id']}/duplicate"), 201)
     expect(await client.delete(f"/api/plans/{unused['id']}"), 204)
     assert (await client.get(f"/api/plans/{unused['id']}")).status_code == 404
 
@@ -217,8 +243,7 @@ async def test_api_plans_04_run_plan_draft_round_trip(
     clock: FrozenClock,
 ) -> None:
     """T-API-PLANS-04: GET→PUT of a run plan's draft with the new fields; they are read-only."""
-    run_plan = await make_run_plan(db, library)
-    run_id = await bind_to_new_run(client, db, library, run_plan, clock)
+    run_id, run_plan = await run_with_plan(client, db, library, clock)
     released_before = await read_tree(db, run_plan.released_id)
     released_fingerprint = await fingerprint(db, run_plan.released_id)
 
@@ -294,8 +319,7 @@ async def test_loader_reads_any_revision_and_fingerprints_follow_lineage(
     clock: FrozenClock,
 ) -> None:
     """Acceptance (``06`` T1.2): fingerprint is id-insensitive and lineage-sensitive."""
-    run_plan = await make_run_plan(db, library)
-    run_id = await bind_to_new_run(client, db, library, run_plan, clock)
+    run_id, run_plan = await run_with_plan(client, db, library, clock)
 
     released = await load_revision_rows(db, run_plan.released_id)
     assert released.header["revision_status"] == "RELEASED"

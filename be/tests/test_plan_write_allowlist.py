@@ -91,6 +91,14 @@ ALLOWED: dict[str, dict[str, str]] = {
     f"{REPOSITORY}::PlanRepository.delete_plan_image": {
         "DELETE FROM plans.plan_images": "cover image: plan-level, not revision-scoped (D14)",
     },
+    "modules/execution/repository.py::ExecutionRepository.delete_plan_run": {
+        "DELETE FROM plans.workout_plans": (
+            "the deleted run's own run plan only (id = its run_plan_id AND scope = 'run'), "
+            "after the run and its sessions are gone in the same transaction; its RELEASED "
+            "revisions go with their run, never one by one (02 §3.6); RESTRICT FKs refuse it "
+            "while any exec row still references the plan"
+        ),
+    },
 }
 
 
