@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-28 — #6 (T2.1 + T2.3 + T6.2 docs, `e1a0dee`) **deployed** 17:18 UTC: 0019 applied, the 7 legacy runs own run plans P027…P033, post-deploy checks pass (reference map 7/8/63/45/322/322/683, no NULL `run_plan_id` or lineage key, read smoke 660 × 200). Next: T3.1 ∥ T5.1. 2026-11-28: **T5.1 in review** (`impl/T5.1-promotion-duplicate`, `feb3cfb`).
+Last updated: 2026-11-28 — T5.1 merged (`8400aac`, promotion via duplicate; not on the numbered path). Earlier today: #6 (T2.1 + T2.3 + T6.2 docs, `e1a0dee`) deployed 17:18 UTC, post-deploy checks passed (handoff/T6.2.md). Next: T3.1 (in development), then #8 T3.5 ∥ T3.2.
 
 ---
 
@@ -13,8 +13,8 @@ Last updated: 2026-11-28 — #6 (T2.1 + T2.3 + T6.2 docs, `e1a0dee`) **deployed*
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
 | 1 | ~~Deploy #6~~ | — | Deployed 2026-11-28 17:18 UTC; checks per [handoff/T6.2.md](handoff/T6.2.md) passed. The runner's "Applying database migration" INFO line is not printed (logging is configured after the migration step); `agonez_schema_migrations` is the check. Rollback: redeploy `e79fc1d`, never older than `227d3ce`. |
-| 2 | **Review T5.1** promotion backend | T3.1 | In review: `impl/T5.1-promotion-duplicate`, `feb3cfb` ([handoff/T5.1.md](handoff/T5.1.md)). No migration; `04` unchanged. The Apply half of T-INT-PR-03 waits for T3.3 (E2E-05, T6.1). Not on the merge path: merge when reviewed (any order with T3.1; both may touch this file, T5.1 also edits `test_int_run_07_…`). |
-| 3 | **T3.1** (#7) | T5.1 | Ready now. Before changing code, save the golden baseline on `master` (handoff/T2.3.md "For the next tasks → T3.1"); re-run against it afterwards, only the additive fields of `04` §2 may differ. Mandatory review. |
+| 2 | ~~T5.1~~ promotion backend | — | Merged `8400aac` 2026-11-28 ([handoff/T5.1.md](handoff/T5.1.md)); no migration. T3.1 rebases on it (shared file: `tests/integration/test_run_creation.py`). |
+| 3 | **T3.1** (#7) | — | In development; rebase on `8400aac` (T5.1; shared file `tests/integration/test_run_creation.py`). Before changing code, save the golden baseline on `master` (handoff/T2.3.md "For the next tasks → T3.1"); re-run against it afterwards, only the additive fields of `04` §2 may differ. Mandatory review. |
 
 Update this table whenever a task finishes.
 
@@ -76,7 +76,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T4.4 | Apply dialog | T4.1 | todo | | | |
 | T4.5 | Peripheral Execution updates | T4.2, T3.5 | todo | | | |
 | T4.6 | Translations | T4.2–T4.5, T5.2 | todo | | | |
-| T5.1 | Promotion backend (duplicate with body) | T1.2, T2.2 merged | review | `impl/T5.1-promotion-duplicate` | `feb3cfb` | 2026-11-28 |
+| T5.1 | Promotion backend (duplicate with body) | T1.2, T2.2 merged | done | `impl/T5.1-promotion-duplicate` (deleted) | `feb3cfb`, merged `8400aac` | 2026-11-28 |
 | T5.2 | Promote dialog | T5.1, T4.1, T4.2 | todo | | | |
 | T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | done | `impl/T6.2-rehearsal` (deleted) | merged in `e1a0dee` (#6) | 2026-11-28 |
 | T6.1 | Live lifecycle scenario (gate for #12) | T3.2–T3.5, T5.1 merged | todo | | | |
@@ -202,8 +202,8 @@ writes it down here or in the design, in the same commit:
     `/home/agonez/be/src`. Lint: `/home/agonez/be/.venv/bin/ruff check .`, types:
     `/home/agonez/be/.venv/bin/mypy src`.
   - Frontend in a worktree: run `npm ci` in `<worktree>/web-fe` first (`node_modules` is not shared).
-- Baseline suites (2026-11-28, after #6 = T2.1 + T2.3, dump `agonez_db_backup_2026-11-28.sql`): backend
-  189 passed, 69 skipped (the integration tests, without the URL); `pytest -m integration` 68 passed,
+- Baseline suites (2026-11-28, after T5.1 = #6 + promotion, dump `agonez_db_backup_2026-11-28.sql`): backend
+  199 passed, 83 skipped (the integration tests, without the URL); `pytest -m integration` 82 passed,
   1 skipped (T1.1's rollback test: the newest dump already records 0018), no xfails; the golden test
   adds about 2.5 min. Web 166 passed. `ruff` and `mypy src` are green.
 - Pre-existing defects found by T6.2 (outside this feature, no task in this plan): run overview
