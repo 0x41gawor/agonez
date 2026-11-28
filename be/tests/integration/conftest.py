@@ -7,16 +7,25 @@ migrations are applied on top; every test then gets its own clone of that templa
 
 The harness creates and drops databases, so before it opens any connection it checks that the
 URL points at a container started by ``scripts/test_db.sh``.
+
+A test marked ``@pytest.mark.before_migration("<version>.sql")`` gets a clone of the newest dump
+that does not record that migration, with only the packaged migrations before it applied: the
+database a deploy of that migration starts from (``apply_migrations`` then runs it).
 """
 
 import asyncio
+import importlib.util
 import os
 import re
+import shutil
 import subprocess
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import date
+from functools import cache
+from importlib.resources import files
 from pathlib import Path
+from unittest import mock
 from uuid import uuid4
 
 import httpx
@@ -29,6 +38,7 @@ from psycopg.conninfo import conninfo_to_dict, make_conninfo
 from agonez_api.app import create_app
 from agonez_api.core.config import Settings
 from agonez_api.core.database import DatabasePool, create_database_pool, open_database_pool
+from agonez_api.migrations import runner
 from agonez_api.migrations.runner import run_migrations
 from agonez_api.modules.execution.repository import ExecutionRepository
 from agonez_api.modules.execution.service import ExecutionService
@@ -51,6 +61,18 @@ REPOSITORY_ROOT = INTEGRATION_DIR.parents[2]
 
 # A Monday after the data in the dumps, so runs created by tests start in a known week.
 FROZEN_TODAY = date(2027, 1, 4)
+
+# Migration 0019 converts the runs of the dumps (T2.1); test_preflight.py and the migration
+# tests need a dump taken before it.
+RUN_PLAN_CONVERSION = "0019_run_plans_convert_legacy_runs.sql"
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers",
+        "before_migration(version): the test database is the newest dump without that "
+        "migration, with only the packaged migrations before it applied",
+    )
 
 
 @pytest.hookimpl(tryfirst=True)  # before `-m` deselects by marker
@@ -164,6 +186,68 @@ def _dump_path() -> Path:
     return dumps[-1]
 
 
+@cache
+def _recorded_migrations(dump: Path) -> frozenset[str]:
+    """The versions in the dump's ``public.agonez_schema_migrations`` table."""
+    versions: set[str] = set()
+    with dump.open(encoding="utf-8") as lines:
+        for line in lines:
+            if line.startswith("COPY public.agonez_schema_migrations "):
+                break
+        for line in lines:
+            if line.startswith("\\."):
+                break
+            versions.add(line.split("\t", 1)[0])
+    return frozenset(versions)
+
+
+def _dump_without(version: str) -> Path:
+    """The newest dump that does not record ``version`` yet (or the ``DUMP_ENV`` override).
+
+    Tests of a migration need data from before it; this keeps them on such a dump after a
+    backup taken once the migration is deployed has been committed.
+    """
+    override = os.environ.get(DUMP_ENV)
+    candidates = (
+        [_dump_path()]
+        if override
+        else sorted(REPOSITORY_ROOT.glob(DUMP_PATTERN), key=lambda item: item.name, reverse=True)
+    )
+    for dump in candidates:
+        if version not in _recorded_migrations(dump):
+            return dump
+    where = f"{DUMP_ENV} ({override})" if override else f"{DUMP_PATTERN} in {REPOSITORY_ROOT}"
+    pytest.fail(f"No dump without {version}: {where}", pytrace=False)
+
+
+def _packaged_migrations() -> dict[str, Path]:
+    root = Path(str(files("agonez_api.migrations").joinpath("versions")))
+    return {path.name: path for path in sorted(root.iterdir()) if path.name.endswith(".sql")}
+
+
+async def apply_migrations(settings: Settings, work_dir: Path, *, through: str | None) -> None:
+    """The real runner, given only the packaged migrations up to and including ``through``.
+
+    ``through=None`` applies none (it only creates the bookkeeping table). The files are copied
+    byte for byte, so their checksums match when the full runner sees the database later.
+    """
+    packaged = _packaged_migrations()
+    if through is not None and through not in packaged:
+        pytest.fail(f"{through} is not a packaged migration", pytrace=False)
+    versions = work_dir / "versions"
+    versions.mkdir(parents=True)
+    for name, path in packaged.items():
+        if through is not None and name <= through:
+            shutil.copyfile(path, versions / name)
+    with mock.patch.object(runner, "files", lambda _package: work_dir):
+        await runner.run_migrations(settings)
+
+
+def _migration_before(version: str) -> str | None:
+    earlier = [name for name in _packaged_migrations() if name < version]
+    return earlier[-1] if earlier else None
+
+
 def _dump_owner_roles(dump: Path) -> set[str]:
     statement = re.compile(r"^ALTER .* OWNER TO (\w+);$")
     with dump.open(encoding="utf-8") as lines:
@@ -203,38 +287,143 @@ def database_server() -> DatabaseServer:
     return _verified_server()
 
 
+def _create_from_dump(server: DatabaseServer, dump: Path, database: str) -> None:
+    """(Re)create ``database`` as a plain restore of ``dump``, owner roles included."""
+    with server.connect_admin() as admin:
+        for role in sorted(_dump_owner_roles(dump)):
+            if admin.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone():
+                continue
+            admin.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
+        _drop_database(admin, database)
+        admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(database)))
+    _restore(server, dump, database)
+
+
+# Pre-T2.2 stand-in. Migration 0019 makes exec.plan_runs.run_plan_id and the tracks'
+# plan_lineage_key NOT NULL, and the run creation of master before T2.2 sets neither. Until this
+# branch is rebased onto T2.2, these triggers give such a run an empty run plan and its tracks
+# random lineage keys, so that the tests creating runs keep running on converted data; the runs
+# stay bound to library rows exactly as before. Inert for rows that carry the values. Installed
+# only while T2.2's module is absent; delete it together with ``_install_pre_t22_stand_in``
+# when rebasing onto T2.2 (handoff/T2.1.md).
+PRE_T22_STAND_IN = """
+CREATE FUNCTION public.agonez_it_pre_t22_run_plan() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.run_plan_id IS NULL THEN
+        INSERT INTO plans.workout_plans (name, description, accent, scope, source_plan_id)
+        SELECT plan.name, plan.description, plan.accent, 'run', plan.id
+        FROM plans.plan_revisions AS revision
+        JOIN plans.workout_plans AS plan ON plan.id = revision.plan_id
+        WHERE revision.id = NEW.initial_plan_revision_id
+        RETURNING id INTO NEW.run_plan_id;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE FUNCTION public.agonez_it_pre_t22_track_key() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    NEW.plan_lineage_key := coalesce(NEW.plan_lineage_key, gen_random_uuid());
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER agonez_it_pre_t22_run_plan BEFORE INSERT ON exec.plan_runs
+    FOR EACH ROW EXECUTE FUNCTION public.agonez_it_pre_t22_run_plan();
+CREATE TRIGGER agonez_it_pre_t22_track_key BEFORE INSERT ON exec.workout_unit_tracks
+    FOR EACH ROW EXECUTE FUNCTION public.agonez_it_pre_t22_track_key();
+CREATE TRIGGER agonez_it_pre_t22_track_key BEFORE INSERT ON exec.exercise_unit_tracks
+    FOR EACH ROW EXECUTE FUNCTION public.agonez_it_pre_t22_track_key();
+"""
+T22_MODULE = "agonez_api.modules.execution.run_plan_repository"  # 02 §3.2, created by T2.2
+
+
+def _install_pre_t22_stand_in(settings: Settings) -> None:
+    if importlib.util.find_spec(T22_MODULE) is not None:
+        return
+    with psycopg.connect(settings.database_dsn, autocommit=True) as connection:
+        required = connection.execute(
+            """
+            SELECT attnotnull FROM pg_attribute
+            WHERE attrelid = 'exec.plan_runs'::regclass AND attname = 'run_plan_id'
+            """
+        ).fetchone()
+        if required is not None and required[0]:
+            connection.execute(PRE_T22_STAND_IN)
+
+
 @pytest.fixture(scope="session")
 def template_database(
     database_server: DatabaseServer,
     tmp_path_factory: pytest.TempPathFactory,
 ) -> Iterator[str]:
     """Restored dump plus pending migrations. One pytest session per container at a time."""
-    dump = _dump_path()
-    with database_server.connect_admin() as admin:
-        for role in sorted(_dump_owner_roles(dump)):
-            if admin.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone():
-                continue
-            admin.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
-        _drop_database(admin, TEMPLATE_DATABASE)
-        admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(TEMPLATE_DATABASE)))
     try:
-        _restore(database_server, dump, TEMPLATE_DATABASE)
-        runtime_root = tmp_path_factory.mktemp("template")
-        asyncio.run(run_migrations(database_server.settings(TEMPLATE_DATABASE, runtime_root)))
+        _create_from_dump(database_server, _dump_path(), TEMPLATE_DATABASE)
+        settings = database_server.settings(TEMPLATE_DATABASE, tmp_path_factory.mktemp("template"))
+        asyncio.run(run_migrations(settings))
+        _install_pre_t22_stand_in(settings)
         yield TEMPLATE_DATABASE
     finally:
         with database_server.connect_admin() as admin:
             _drop_database(admin, TEMPLATE_DATABASE)
 
 
+@pytest.fixture(scope="session")
+def migration_templates(
+    database_server: DatabaseServer,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[Callable[[str], str]]:
+    """``template_before(version)``: the template a ``before_migration`` test is cloned from.
+
+    Built on first use: the newest dump without ``version``, plus every packaged migration
+    before it (through the real runner). Dropped at the end of the session.
+    """
+    built: dict[str, str] = {}
+
+    def template_before(version: str) -> str:
+        if version not in built:
+            name = f"agonez_it_before_{version.split('_', 1)[0]}"
+            try:
+                _create_from_dump(database_server, _dump_without(version), name)
+                settings = database_server.settings(name, tmp_path_factory.mktemp(name))
+                asyncio.run(
+                    apply_migrations(
+                        settings,
+                        tmp_path_factory.mktemp(f"{name}_versions"),
+                        through=_migration_before(version),
+                    )
+                )
+            except BaseException:
+                with database_server.connect_admin() as admin:
+                    _drop_database(admin, name)
+                raise
+            built[version] = name
+        return built[version]
+
+    try:
+        yield template_before
+    finally:
+        with database_server.connect_admin() as admin:
+            for name in built.values():
+                _drop_database(admin, name)
+
+
 @pytest.fixture
-def database_name(database_server: DatabaseServer, template_database: str) -> Iterator[str]:
-    """A fresh clone of the template, dropped after the test."""
+def database_name(
+    request: pytest.FixtureRequest,
+    database_server: DatabaseServer,
+) -> Iterator[str]:
+    """A fresh clone of the template (or of a ``before_migration`` one), dropped afterwards."""
+    marker = request.node.get_closest_marker("before_migration")
+    if marker is None:
+        template = request.getfixturevalue("template_database")
+    else:
+        (version,) = marker.args
+        template = request.getfixturevalue("migration_templates")(version)
     name = f"agonez_it_{uuid4().hex[:12]}"
     with database_server.connect_admin() as admin:
         admin.execute(
             sql.SQL("CREATE DATABASE {} TEMPLATE {}").format(
-                sql.Identifier(name), sql.Identifier(template_database)
+                sql.Identifier(name), sql.Identifier(template)
             )
         )
     try:

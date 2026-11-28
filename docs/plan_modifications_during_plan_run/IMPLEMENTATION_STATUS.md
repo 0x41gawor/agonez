@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-28 — T2.2 merged (#5, `227d3ce`): new runs own their run plan; all six T0.2 xfails removed. Next: T2.1 development ∥ T5.1.
+Last updated: 2026-11-28 — T2.1 developed (migration 0019, branch `impl/T2.1-convert-legacy-runs`), in review. T2.2 merged (#5, `227d3ce`). Next: T2.1 review and rebase ∥ T5.1; then T2.3, T6.2.
 
 ---
 
@@ -12,9 +12,9 @@ Last updated: 2026-11-28 — T2.2 merged (#5, `227d3ce`): new runs own their run
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | **T2.1** migration 0019 (development) | T5.1 | Q5 decided (guard the seed). Merges together with T2.3 at #6, only after the T6.2 rehearsal passed (T2.2 is merged). Mandatory review. Read [handoff/T0.2.md](handoff/T0.2.md) (embed the preflight), [handoff/T1.1.md](handoff/T1.1.md) and [handoff/T2.2.md](handoff/T2.2.md) (run plans without a run may exist; the demo run's revisions are not executable and must still convert). Rebase onto `227d3ce` before review. |
+| 1 | **T2.1** review (mandatory), then rebase | T5.1 | Developed on `impl/T2.1-convert-legacy-runs` ([handoff/T2.1.md](handoff/T2.1.md)). Rebase onto `master`, **delete the pre-T2.2 stand-in** in `tests/integration/conftest.py`, switch `test_migration_0019.py::t22_style_run` to T2.2's real run creation, re-run the suites. Merges with T2.3 at #6 after the T6.2 rehearsal. |
 | 2 | **T5.1** promotion backend | T2.1 development | Ready now (#5 merged). T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 use runs that own their plans (helpers `create_run`, `plan_snapshot` and the promoted-plan setup of `test_int_run_07_…` in `tests/integration/test_run_creation.py`). The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. Not on the merge path: merge when reviewed. |
-| 3 | T2.3, then T6.2 | — | T2.3 stacks on the finished T2.1 branch; T6.2 rehearses 0019 on that branch (create its smoke run from an executable plan, not demo plan 6). Both gate #6. |
+| 3 | T2.3, then T6.2 | — | T2.3 stacks on the finished T2.1 branch; T6.2 rehearses 0019 on that branch (create its smoke run from an executable plan, not demo plan 6). Both gate #6. T2.3 uses T2.1's `before_migration(RUN_PLAN_CONVERSION)` marker and `apply_migrations(…, through=RUN_PLAN_CONVERSION)` (handoff/T2.1.md "For the next tasks"). |
 
 Update this table whenever a task finishes.
 
@@ -54,9 +54,9 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T0.2 | Characterisation tests + preflight | T0.1 | done | `impl/T0.2-characterisation-preflight` (deleted) | `e99336e` | 2026-11-25 |
 | T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | done | `impl/T1.1-run-plans-schema` (deleted) | `e66f5b4` | 2026-11-25 |
 | T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | done | `impl/T1.2-plans-module` (deleted) | `64ce51f` | 2026-11-25 |
-| T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | ready (development) | | | 2026-11-25 |
+| T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | review | `impl/T2.1-convert-legacy-runs` | branch head (adds `handoff/T2.1.md`) | 2026-11-28 |
 | T2.2 | Run creation/deletion with run plans | T1.2 | done | `impl/T2.2-run-creation` (deleted) | `227d3ce` | 2026-11-28 |
-| T2.3 | Conversion golden comparison | T2.1 (stacked) | todo | | | |
+| T2.3 | Conversion golden comparison | T2.1 (stacked) | ready (stack on `impl/T2.1-…`) | | | 2026-11-28 |
 | T3.1 | Identity and binding refactor (+ run header fields) | T2.1 + T2.3 merged | todo | | | |
 | T3.2 | Run-plan state, revision read, discard | T3.1 merged | todo | | | |
 | T3.3 | Apply: sessions, tracks, validation, concurrency | T3.1, T3.2 | todo | | | |
@@ -107,6 +107,10 @@ update the affected document section.
 | 2026-11-28 | T2.2 | 02 §3.2, §3.3 | `RunPlanRepository.lock_library_source` (step 1 of §3.3) + `create_run_plan(connection, *, source: Row)` instead of `source_revision_id`; `not_executable(code, issues)` beside them; the repository is built by `ExecutionRepository`, not `app.py` | Read the source once under its `FOR SHARE` lock; one error builder for creation and Apply | No (handoff/T2.2.md) |
 | 2026-11-28 | T2.2 | 03 §3, 04 §2 | Issue paths: plan-level `days`, workout `days.<d>.workout_unit`, slot and set issues at the slot path; error `message` summarises the first three issues; `plan_revision_not_library` has `details {plan_revision_id, plan_id}`; unknown revision stays 404 `plan_revision_not_found` | The New Run screen shows `message` as is; the documented path prefix is what the editor maps | No (handoff/T2.2.md) |
 | 2026-11-28 | T2.2 | 06 T2.2 (tests) | `live_execution_api_scenarios.py` starts its throwaway run from an executable copy of the demo plan; T1.1's `test_existing_rows_and_todays_writers_get_the_defaults` now expects run creation to write `run_plan_id` and track keys | Demo plan 6 is not executable (Q1); the old test pinned pre-T2.2 creation | No (handoff/T2.2.md) |
+| 2026-11-28 | T2.1 | 06 T2.1 | Test-only **pre-T2.2 stand-in**: the integration template gets `BEFORE INSERT` triggers giving a run without `run_plan_id` an empty run plan and tracks without key a random one, installed only while T2.2's `run_plan_repository` module is absent; delete when rebasing onto T2.2 | 0019 makes both columns NOT NULL and `master`'s pre-T2.2 run creation sets neither: every test creating a run failed | No (handoff/T2.1.md) |
+| 2026-11-28 | T2.1 | 06 T1.1, 07 | `test_existing_rows_and_todays_writers_get_the_defaults` and `test_run_ownership_constraints` (T1.1) run on the pre-0019 database (`before_migration` marker) | They assert the state between 0018 and 0019, which 0019 ends by design | Not needed |
+| 2026-11-28 | T2.1 | 06 T2.1, 07 T-MIG | Verified on the 2026-11-28 dump (newest, records 0018) and 2026-11-25, not 2026-11-19; same 7 legacy runs and acceptance facts, no id adjusted. "Before 0019" dumps are chosen dynamically: newest dump whose migrations table lacks 0019 | The harness restores the newest dump; a converted backup committed later must not break the tests | Not needed |
+| 2026-11-28 | T2.1 | 02 §4.2, §4.3 | 0019 also locks the plans/exec tables (EXCLUSIVE); the reference map records `workout_plan` and `plan_revision` rows too (not the draft copy), PK + entity CHECK; `released_at` = midnight UTC of the first microcycle start; raises if a run's revisions span two plans; verification requires every F1–F13 reference of **every** run to lie in the run's own run plan | Conceptual SQL made concrete; fail safe on unexpected data | No (handoff/T2.1.md) |
 | 2026-11-25 | T1.1 | 02 §2 | `copy_revision_tree` also rejects NULL arguments and missing revisions, locks the target revision, raises with SQLSTATEs 22004/P0002/55000; map entities are `day`, `workout_unit`, `exercise_slot`, `exercise_variant`, `set_infra` (target muscles unmapped); tests copy every non-empty template revision (only one is RELEASED) | Defensive, distinguishable errors; §2 SQL is conceptual; the dump has a single RELEASED revision | Not needed (handoff/T1.1.md) |
 
 ---
@@ -130,6 +134,9 @@ Finished tasks:
 - [T2.2](handoff/T2.2.md) — every new run owns a run plan (r1 RELEASED, r2 DRAFT);
   `validate_executable` and 422 `plan_not_executable`; deleting a run deletes its run plan; all six
   T0.2 tests pass (merged 2026-11-28, `227d3ce`).
+- [T2.1](handoff/T2.1.md) — migration 0019 (legacy runs → run plans), seed guard (Q5),
+  `before_migration` test marker (developed 2026-11-28 on `impl/T2.1-convert-legacy-runs`, in
+  review, **not merged**; about 0.35 s at start-up on the 2026-11-28 dump).
 
 ## Where things are recorded
 
@@ -187,7 +194,11 @@ writes it down here or in the design, in the same commit:
 - Since T2.2, each new run's header and the Run manager show the run plan's own code (a new
   `P0xx`, same name) until T3.1/T4.5; each run plan uses a plan id, so new My Plans codes skip
   numbers.
-- Production runs migration 0018 (applied 2026-11-25 21:42 UTC, verified read-only).
+- Production runs migration 0018 (applied 2026-11-25 21:42 UTC, verified read-only). The newest
+  committed dump, `agonez_db_backup_2026-11-28.sql`, records 0018 (so T1.1's rollback test skips
+  on it) and still holds the 7 legacy runs.
+- The demo seed `migrations/seeds/0001_execution_demo.sql` has not run on the current schema since
+  0009 (`client_uuid`); since T2.1 it also refuses to run once 0019 is recorded.
 - Integration tests: `eval "$(scripts/test_db.sh)"`, `pytest -m integration`, `scripts/test_db.sh stop`
   (from `be/`; details in `be/README.md`).
 - `psql` is not installed on the host. Integration tests restore the newest `agonez_db_backup_*.sql`

@@ -2,6 +2,7 @@
 
 The audit runs against the restored backup *without* pending migrations: the state a human
 checks before deploying 0019, so the result keeps its meaning once 0019 exists in the package.
+The backup is the newest one that does not record 0019 yet.
 
 The detection tests prove that "zero rows" is not vacuous. Each builds a small legacy run of
 its own with SQL (once runs copy their plan, the application can no longer create one), breaks
@@ -18,10 +19,11 @@ import psycopg
 import pytest
 from conftest import (
     INTEGRATION_DIR,
+    RUN_PLAN_CONVERSION,
     DatabaseServer,
     _drop_database,
     _dump_owner_roles,
-    _dump_path,
+    _dump_without,
     _restore,
 )
 from psycopg import sql
@@ -35,8 +37,11 @@ STARTS_ON = date(2027, 1, 4)
 
 @pytest.fixture(scope="module")
 def backup_template(database_server: DatabaseServer) -> Iterator[str]:
-    """The newest dump as it is, with no packaged migration applied on top."""
-    dump = _dump_path()
+    """The newest dump without 0019 as it is, with no packaged migration applied on top.
+
+    A dump that records 0019 has no legacy runs left to audit (and rejects the SQL-built ones).
+    """
+    dump = _dump_without(RUN_PLAN_CONVERSION)
     with database_server.connect_admin() as admin:
         for role in sorted(_dump_owner_roles(dump)):
             if admin.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone():

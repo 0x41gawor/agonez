@@ -23,7 +23,14 @@ from builders import (
     rest,
     training,
 )
-from conftest import DatabaseServer, FrozenClock, _drop_database, _dump_path, _restore
+from conftest import (
+    RUN_PLAN_CONVERSION,
+    DatabaseServer,
+    FrozenClock,
+    _drop_database,
+    _dump_path,
+    _restore,
+)
 from plan_trees import (
     assert_complete_copy,
     assert_regenerated_progression_ids,
@@ -215,6 +222,8 @@ async def test_refuses_a_non_empty_or_missing_target(
     assert all(not nodes for nodes in (await read_tree(db, empty_target)).values())
 
 
+# The state between 0018 and 0019 (0019 converts the runs and tightens the constraints).
+@pytest.mark.before_migration(RUN_PLAN_CONVERSION)
 async def test_existing_rows_and_todays_writers_get_the_defaults(
     client: httpx.AsyncClient,
     db: AsyncConnection,
@@ -315,6 +324,8 @@ async def test_existing_rows_and_todays_writers_get_the_defaults(
     expect(await client.get(f"/api/v1/exec/plan-runs/{run_id}/overview"))
 
 
+# The state between 0018 and 0019 (0019 converts the runs and tightens the constraints).
+@pytest.mark.before_migration(RUN_PLAN_CONVERSION)
 async def test_run_ownership_constraints(
     client: httpx.AsyncClient,
     db: AsyncConnection,

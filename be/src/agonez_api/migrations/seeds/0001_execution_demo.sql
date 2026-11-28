@@ -1,3 +1,5 @@
+-- Execution demo seed (see __docs__/execution/mock-data.md). Not run by the migration runner.
+-- Refuses to run once migration 0019 (run plans for every run) is applied: decision Q5.
 BEGIN;
 
 DO $$
@@ -52,6 +54,23 @@ DECLARE
     etu_snapshot jsonb;
     copied_day_count integer;
 BEGIN
+    -- Q5 (docs/plan_modifications_during_plan_run): this seed binds a run directly to library
+    -- plan revisions. Migration 0019 gave every run its own run plan and requires one, so the
+    -- seed must not run on a database that has 0019. (Nested IF: the inner query is only
+    -- planned once the table is known to exist.)
+    IF to_regclass('public.agonez_schema_migrations') IS NOT NULL THEN
+        IF EXISTS (
+            SELECT 1
+            FROM public.agonez_schema_migrations
+            WHERE version = '0019_run_plans_convert_legacy_runs.sql'
+        ) THEN
+            RAISE EXCEPTION
+                'Execution demo seed refused: migration 0019_run_plans_convert_legacy_runs.sql is applied'
+                USING HINT = 'The seed binds a run to library plan revisions, which runs no longer '
+                             'do. Nothing was changed.';
+        END IF;
+    END IF;
+
     SELECT plan.id, revision.id
     INTO source_plan_id, source_revision_id
     FROM plans.workout_plans AS plan
