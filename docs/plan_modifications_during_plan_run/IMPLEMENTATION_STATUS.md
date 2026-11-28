@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-28 — T2.3 (golden comparison across 0019) in review on `impl/T2.3-golden-comparison`, stacked on T2.1: no unexpected difference on the 2026-11-28 and 2026-11-25 dumps. Next: T6.2 rehearsal; T5.1.
+Last updated: 2026-11-28 — T6.2 (migration 0019 rehearsal) in review on `impl/T6.2-rehearsal` (on `impl/T2.3-golden-comparison`): RB-01…RB-08 pass on the 15:10 dump, 0019 ≈ 0.4 s, rollback to `e79fc1d` works; two pre-existing defects outside 0019 found (handoff/T6.2.md). Next: merge #6 (T2.1 + T2.3 + T6.2 docs); T5.1.
 
 ---
 
@@ -12,9 +12,9 @@ Last updated: 2026-11-28 — T2.3 (golden comparison across 0019) in review on `
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | **T6.2** migration 0019 rehearsal | T5.1 | On `impl/T2.3-golden-comparison` (contains T2.1), once the T2.1 fix round and T2.3 have passed review. Gates #6. Fresh dump that does not record 0019: run T-MIG, preflight and golden tests with `AGONEZ_TEST_DB_DUMP` and `-s` ([handoff/T2.3.md](handoff/T2.3.md) "For the next tasks"); create the smoke run from an executable plan, not demo plan 6. |
+| 1 | **Merge #6** = T2.1 + T2.3 (+ T6.2 docs) | T5.1 | Gate passed (T6.2 in review). Fast-forward `master` to `impl/T6.2-rehearsal` (= `e79fc1d` + T2.1 + T2.3 + T6.2 docs) after review of T2.1's fix round, T2.3 and T6.2. The human deploys per [handoff/T6.2.md](handoff/T6.2.md) "Deploy #6": read-only preflight, `./db_backup.sh`, push, `./redeploy.sh`, read-only checks; rollback = redeploy `e79fc1d`, never past `227d3ce`. |
 | 2 | **T5.1** promotion backend | T2.1 development | Ready now (#5 merged). T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 use runs that own their plans (helpers `create_run`, `plan_snapshot` and the promoted-plan setup of `test_int_run_07_…` in `tests/integration/test_run_creation.py`). The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. Not on the merge path: merge when reviewed. |
-| — | Reviews: T2.1 fix round, T2.3 | T6.2 preparation | T2.1: the migration passed review; the fix commit `test(be): run the 0019 tests on T2.2's run creation` removed the pre-T2.2 stand-in. T2.3: test-only commit on top ([handoff/T2.3.md](handoff/T2.3.md)). Both merge together at #6 after T6.2. |
+| — | Reviews: T2.1 fix round, T2.3, T6.2 | T5.1 | T2.1: the migration passed review; the fix commit `test(be): run the 0019 tests on T2.2's run creation` removed the pre-T2.2 stand-in. T2.3: test-only commit on top ([handoff/T2.3.md](handoff/T2.3.md)). T6.2: docs-only commit on top ([handoff/T6.2.md](handoff/T6.2.md)). All three merge together at #6. |
 
 Update this table whenever a task finishes.
 
@@ -23,6 +23,8 @@ Update this table whenever a task finishes.
 | Follow-up | When | Notes |
 | --- | --- | --- |
 | Drop `public.agonez_0019_reference_map` with a new migration | One release after #6 (0019 deployed) | Kept for verification and a manual reverse remap (`02` §4.2, handoff/T2.1.md). No task in `06` owns it yet; plain table, no FKs. |
+| Overview 500 when the latest workout has a mobile-added exercise (`execution/service.py:1596`, `LatestExposureExercise.exercise_trace_id` is NULL) | Soon; independent of the feature | Pre-existing, latent (0 such rows in production on 2026-11-28); found by T6.2 RB-06/07, identical before 0019 |
+| Fix `live_mobile_execution_api_scenarios.py` (read-ahead marks sessions missed; `snapshot["exercises"]` → `["performance"]["exercises"]`; needs saved prescriptions) | Before the next use of the script (T6.1, §8 regression) | Patch in `handoff/T6.2-scripts/live_mobile_t62.diff` |
 
 ---
 
@@ -39,7 +41,7 @@ deploys with `./redeploy.sh` from `/home/agonez`; agents never deploy.
 | 3 | T1.1 | review | A | ✓ `e66f5b4` 2026-11-25 |
 | 4 | T1.2 | review | A | ✓ `64ce51f` 2026-11-25 |
 | 5 | T2.2 | review | B | ✓ `227d3ce` 2026-11-28 |
-| 6 | T2.1 + T2.3 (stacked, merged together) | review + **T6.2**; take `db_backup.sh` before the first deploy containing 0019 | B | |
+| 6 | T2.1 + T2.3 (stacked, merged together; + T6.2 docs) | review + **T6.2** (passed 2026-11-28, [handoff/T6.2.md](handoff/T6.2.md)); take `db_backup.sh` before the first deploy containing 0019 | B | |
 | 7 | T3.1 | review (mandatory) + T2.3 re-run | B | |
 | 8 | T3.5, T3.2 | review | C | |
 | 9 | T3.3 | review (mandatory) | C | |
@@ -76,7 +78,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T4.6 | Translations | T4.2–T4.5, T5.2 | todo | | | |
 | T5.1 | Promotion backend (duplicate with body) | T1.2, T2.2 merged | ready | | | 2026-11-28 |
 | T5.2 | Promote dialog | T5.1, T4.1, T4.2 | todo | | | |
-| T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | ready (on `impl/T2.3-…`) | | | 2026-11-28 |
+| T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | review | `impl/T6.2-rehearsal` | on T2.3 `55d281c`; 1 commit (`docs(plans): T6.2 rehearsal …`) | 2026-11-28 |
 | T6.1 | Live lifecycle scenario (gate for #12) | T3.2–T3.5, T5.1 merged | todo | | | |
 
 ---
@@ -119,6 +121,7 @@ update the affected document section.
 | 2026-11-28 | T2.1 | 02 §4.2, §4.3 | 0019 also locks the plans/exec tables (EXCLUSIVE); the reference map records `workout_plan` and `plan_revision` rows too (not the draft copy), PK + entity CHECK; `released_at` = midnight UTC of the first microcycle start; raises if a run's revisions span two plans; verification requires every F1–F13 reference of **every** run to lie in the run's own run plan | Conceptual SQL made concrete; fail safe on unexpected data | No (handoff/T2.1.md) |
 | 2026-11-25 | T1.1 | 02 §2 | `copy_revision_tree` also rejects NULL arguments and missing revisions, locks the target revision, raises with SQLSTATEs 22004/P0002/55000; map entities are `day`, `workout_unit`, `exercise_slot`, `exercise_variant`, `set_infra` (target muscles unmapped); tests copy every non-empty template revision (only one is RELEASED) | Defensive, distinguishable errors; §2 SQL is conceptual; the dump has a single RELEASED revision | Not needed (handoff/T1.1.md) |
 | 2026-11-28 | T2.3 | 06 T2.3, 07 T-MIG-10 | The normaliser keeps ids: exec ids compared exactly, plan-row ids translated through the 0019 reference map; expected differences are an allow-list of path + exact change. Reads more than listed (also `exec` tables and views). The re-run after T3.1 compares with a saved baseline (`AGONEZ_GOLDEN_SAVE` / `_BASELINE`) | Dropping ids would not prove the remap; T3.1 code cannot read a database without 0019 | Not needed (handoff/T2.3.md) |
+| 2026-11-28 | T6.2 | 07 §6b RB-03, RB-06 | RB-03 applied only 0019 (0018 already on the dump, as in production). RB-06 passes only with a patched copy of `live_mobile_execution_api_scenarios.py` (`handoff/T6.2-scripts/live_mobile_t62.diff`) after saving prescriptions; the unpatched script fails identically before 0019 | The script is stale (read-ahead marks sessions missed; wrong snapshot key); real runs have few saved prescriptions | Not needed (handoff/T6.2.md) |
 
 ---
 
@@ -147,6 +150,9 @@ Finished tasks:
 - [T2.3](handoff/T2.3.md) — golden comparison of all Execution and mobile reads across 0019
   (`golden.py`, T-MIG-10; 2026-11-28 on `impl/T2.3-golden-comparison`, stacked on T2.1, **not
   merged**).
+- [T6.2](handoff/T6.2.md) — migration 0019 rehearsal: RB-01…RB-08 pass on the 2026-11-28 15:10
+  dump (0019 ≈ 0.4 s with fsync; rollback to `e79fc1d` rehearsed; deploy steps for #6), 2026-11-28
+  on `impl/T6.2-rehearsal`, **not merged**.
 
 ## Where things are recorded
 
@@ -211,6 +217,8 @@ writes it down here or in the design, in the same commit:
   `pytest -m integration` 66 passed, 1 skipped (67 passed on the 2026-11-25 dump).
 - On the T2.3 branch (2026-11-28): backend 189 passed, 69 skipped; `pytest -m integration`
   68 passed, 1 skipped in about 3 min (the golden test takes about 2.5 min of it).
+- On the T6.2 branch (2026-11-28, docs only on top of T2.3): backend 189 passed, 69 skipped;
+  `pytest -m integration` 68 passed, 1 skipped in 189 s; `ruff`, `mypy src` green.
 - The demo seed `migrations/seeds/0001_execution_demo.sql` has not run on the current schema since
   0009 (`client_uuid`); since T2.1 it also refuses to run once 0019 is recorded.
 - Integration tests: `eval "$(scripts/test_db.sh)"`, `pytest -m integration`, `scripts/test_db.sh stop`

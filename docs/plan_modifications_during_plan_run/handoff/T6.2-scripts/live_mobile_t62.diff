@@ -1,0 +1,37 @@
+--- be/tests/live_mobile_execution_api_scenarios.py
++++ live_mobile_reordered.py
+@@ -195,7 +195,6 @@
+     run = next(item for item in runs if item["name"] == DEMO_RUN)
+     run_id = run["id"]
+     complete_existing_active(run_id)
+-    assert_readiness_implies_startable(run_id)
+ 
+     workout_date, expected = find_ready_session(run_id)
+     session_id = expected["session_id"]
+@@ -539,7 +538,7 @@
+     # conflict. See mobile-api-contract.md § 6.5 rule 6.
+     before = {
+         item["exercise_performance_id"]: item["rev"]
+-        for item in expect("GET", workout_path, 200, device_id=DEVICE_B)[0]["exercises"]
++        for item in expect("GET", workout_path, 200, device_id=DEVICE_B)[0]["performance"]["exercises"]
+     }
+     expect(
+         "POST",
+@@ -554,7 +553,7 @@
+     )
+     after = {
+         item["exercise_performance_id"]: item["rev"]
+-        for item in expect("GET", workout_path, 200, device_id=DEVICE_B)[0]["exercises"]
++        for item in expect("GET", workout_path, 200, device_id=DEVICE_B)[0]["performance"]["exercises"]
+     }
+     assert after == {key: value + 1 for key, value in before.items()}, (before, after)
+ 
+@@ -617,6 +616,8 @@
+     assert exposure["session"]["status"] == "completed"
+     assert exposure["performance"]["status"] == "finalized"
+     assert any(item["status"] == "performed" for item in exposure["performance"]["sets"])
++    # T6.2: moved here; reading 15 days ahead with ?date= marks those sessions missed.
++    assert_readiness_implies_startable(run_id)
+     print("Mobile Execution offline/retry/resume/multi-device acceptance scenario passed")
+ 
+ 
