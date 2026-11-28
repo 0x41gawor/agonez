@@ -274,7 +274,8 @@ Response `201 PlanDraftArtifact` of the **new library plan**:
 ```
 
 Semantics: new `scope='library'` plan, copied tree with **fresh progression ids**, cover image
-copied, `based_on_revision_id = source revision`, `source_plan_id = plan_id`. Independent of the run
+copied, `based_on_revision_id = source revision`, `source_plan_id = plan_id` when the source is a run
+plan (a library→library duplicate keeps `source_plan_id` null, as today). Independent of the run
 and immediately usable in `POST /api/v1/exec/plan-runs`.
 
 Errors: `404 {"detail": "Plan 41 was not found"}`; `422 {"detail": "source_revision_id 99 does not
