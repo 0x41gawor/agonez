@@ -28,8 +28,10 @@ from builders import (
     SlotSpec,
     exercise_slugs,
     expect,
+    finalize_session,
     make_library_plan,
     rest,
+    run_sessions,
     snapshot_tables,
     table_names,
     training,
@@ -43,7 +45,8 @@ from conftest import (
 )
 from plan_trees import Tree, bodies, read_tree
 from psycopg import AsyncConnection, errors, sql
-from test_plan_scope import bind_to_new_run, make_run_plan
+from test_plan_scope import make_run_plan
+from test_run_creation import CreatedRun, create_run, plan_snapshot
 
 from agonez_api.core.config import Settings
 from agonez_api.modules.plans.fingerprint import definition_fingerprint
@@ -761,19 +764,43 @@ async def test_mig_09_reference_map_covers_every_remapped_id(
 # --- T-MIG-11 ---------------------------------------------------------------------------------
 
 
-async def t22_style_run(
-    client: httpx.AsyncClient, db: AsyncConnection, clock: FrozenClock
-) -> tuple[int, int]:
-    """A run as T2.2's creation leaves it: run plan r1/r2, bound to r1, keyed tracks.
+# Every exec table by the run its rows belong to, for row hashes of one run.
+OWNED_BY_RUN: dict[str, str] = {
+    **RUN_OF,
+    "exec.workout_unit_performances": _SESSION_OF_WORKOUT.format(
+        "row_.workout_unit_prescription_id"
+    ),
+    "exec.mobile_sync_ops": _SESSION_OF_WORKOUT.format(
+        "(SELECT wupf.workout_unit_prescription_id FROM exec.workout_unit_performances AS wupf"
+        " WHERE wupf.id = row_.workout_unit_performance_id)"
+    ),
+    "exec.set_performances": _SESSION_OF_WORKOUT.format(
+        "(SELECT wupf.workout_unit_prescription_id FROM exec.exercise_unit_performances AS eupf"
+        " JOIN exec.workout_unit_performances AS wupf"
+        " ON wupf.id = eupf.workout_unit_performance_id"
+        " WHERE eupf.id = row_.exercise_unit_performance_id)"
+    ),
+    "exec.exercise_setup_notes": (
+        "(SELECT et.plan_run_id FROM exec.exercise_unit_tracks AS et"
+        " WHERE et.id = row_.exercise_unit_track_id)"
+    ),
+}
 
-    Built by SQL from a run of today's creation (T2.2 is not on this branch); after the rebase
-    onto T2.2, create it through the API instead.
+
+async def run_created_before_0019(
+    client: httpx.AsyncClient, db: AsyncConnection, clock: FrozenClock
+) -> tuple[CreatedRun, int]:
+    """A run made by T2.2's creation (``POST /api/v1/exec/plan-runs``), one workout finished.
+
+    The finished workout gives it prescriptions and performances (F6-F11) of its own run plan.
+    Also returns a run plan without a run (``handoff/T2.2.md``: tests and a rollback can leave
+    one behind), which 0019 must leave alone as well.
     """
     press, row, squat = await exercise_slugs(db, 3)
     library = await make_library_plan(
         client,
         PlanSpec(
-            name="T2.2 style plan",
+            name="Run created before 0019",
             days=(
                 training("Upper", SlotSpec(press), SlotSpec(row)),
                 rest(),
@@ -781,61 +808,10 @@ async def t22_style_run(
             ),
         ),
     )
-    run_plan = await make_run_plan(db, library)
-    run_id = await bind_to_new_run(client, db, library, run_plan, clock)
-    first = run_plan.released_id
-    await db.execute(
-        "UPDATE exec.plan_runs SET initial_plan_revision_id = %s WHERE id = %s", (first, run_id)
-    )
-    await db.execute(
-        "UPDATE exec.microcycles SET plan_revision_id = %s WHERE plan_run_id = %s", (first, run_id)
-    )
-    await db.execute(
-        """
-        UPDATE exec.workout_sessions AS ws
-        SET source_plan_day_id = copy_day.id, source_plan_workout_unit_id = copy_unit.id
-        FROM plans.day_prescriptions AS old_day, plans.day_prescriptions AS copy_day,
-             plans.workout_unit_prescriptions AS copy_unit
-        WHERE ws.plan_run_id = %(run)s AND old_day.id = ws.source_plan_day_id
-          AND copy_day.revision_id = %(revision)s AND copy_day.ordinal = old_day.ordinal
-          AND copy_unit.day_id = copy_day.id
-        """,
-        {"run": run_id, "revision": first},
-    )
-    await db.execute(
-        """
-        UPDATE exec.workout_unit_tracks AS wt SET plan_lineage_key = wu.lineage_key
-        FROM plans.day_prescriptions AS dp
-        JOIN plans.workout_unit_prescriptions AS wu ON wu.day_id = dp.id
-        WHERE wt.plan_run_id = %(run)s AND dp.revision_id = %(revision)s
-          AND wt.logical_key = 'day:' || dp.ordinal
-        """,
-        {"run": run_id, "revision": first},
-    )
-    await db.execute(
-        """
-        UPDATE exec.exercise_unit_tracks AS et SET plan_lineage_key = es.lineage_key
-        FROM exec.workout_unit_tracks AS wt, plans.workout_unit_prescriptions AS wu,
-             plans.exercise_slots AS es
-        WHERE et.plan_run_id = %(run)s AND wt.id = et.workout_unit_track_id
-          AND wu.lineage_key = wt.plan_lineage_key AND es.workout_unit_id = wu.id
-          AND et.logical_key = 'slot:' || es.ordinal
-          AND wu.day_id IN (SELECT id FROM plans.day_prescriptions WHERE revision_id = %(revision)s)
-        """,
-        {"run": run_id, "revision": first},
-    )
-    unkeyed = await fetch_all(
-        db,
-        """
-        SELECT id FROM exec.workout_unit_tracks WHERE plan_run_id = %s AND plan_lineage_key IS NULL
-        UNION ALL
-        SELECT id FROM exec.exercise_unit_tracks WHERE plan_run_id = %s AND plan_lineage_key IS NULL
-        """,
-        run_id,
-        run_id,
-    )
-    assert unkeyed == []
-    return run_id, run_plan.plan_id
+    run = await create_run(client, db, library["revision_id"], clock)
+    first = run_sessions(run.overview)[0]
+    await finalize_session(client, first["session_id"], clock.today)
+    return run, (await make_run_plan(db, library)).plan_id
 
 
 async def read_models(client: httpx.AsyncClient, run_id: int, clock: FrozenClock) -> dict[str, Any]:
@@ -883,37 +859,30 @@ async def test_mig_11_owned_runs_are_skipped_and_converted_runs_stay_readable(
     clock: FrozenClock,
     tmp_path: Path,
 ) -> None:
-    """T-MIG-11."""
-    owned_run, owned_plan = await t22_style_run(client, db, clock)
+    """T-MIG-11, with a run created by T2.2's real run creation before the migration."""
+    owned, orphan_plan = await run_created_before_0019(client, db, clock)
     legacy = await legacy_run_ids(db)
-    assert owned_run not in legacy
-    exec_tables = await table_names(db, "exec")
-    plans_tables = await table_names(db, "plans")
-    owned_rows: dict[str, tuple[str, tuple[Any, ...]]] = {
-        table: (f"{RUN_OF[table]} = %s", (owned_run,)) for table in exec_tables if table in RUN_OF
+    assert owned.run_id not in legacy
+    assert set(await table_names(db, "exec")) == set(OWNED_BY_RUN), "an exec table is missing"
+    owned_rows = {
+        table: (f"{run_of} = %s", (owned.run_id,)) for table, run_of in OWNED_BY_RUN.items()
     }
-    owned_plan_rows = {
-        "plans.workout_plans": ("row_.id = %s", (owned_plan,)),
-        "plans.plan_revisions": ("row_.plan_id = %s", (owned_plan,)),
-        "plans.day_prescriptions": (
-            "row_.revision_id IN (SELECT id FROM plans.plan_revisions WHERE plan_id = %s)",
-            (owned_plan,),
-        ),
-        "plans.workout_unit_prescriptions": (
-            "row_.day_id IN (SELECT dp.id FROM plans.day_prescriptions AS dp"
-            " JOIN plans.plan_revisions AS rev ON rev.id = dp.revision_id WHERE rev.plan_id = %s)",
-            (owned_plan,),
-        ),
-        "plans.exercise_slots": (
-            "row_.workout_unit_id IN (SELECT wu.id FROM plans.workout_unit_prescriptions AS wu"
-            " JOIN plans.day_prescriptions AS dp ON dp.id = wu.day_id"
-            " JOIN plans.plan_revisions AS rev ON rev.id = dp.revision_id WHERE rev.plan_id = %s)",
-            (owned_plan,),
-        ),
-    }
-    assert set(owned_plan_rows) <= set(plans_tables)
     before_owned = await snapshot_tables(db, list(owned_rows), where=owned_rows)
-    before_plan = await snapshot_tables(db, list(owned_plan_rows), where=owned_plan_rows)
+    # Not vacuous: the run has rows with every kind of plan reference except F5, F12, F13.
+    counts = {table: int(value.split(":", 1)[0]) for table, value in before_owned.items()}
+    assert all(
+        counts[table] > 0
+        for table in (
+            "exec.microcycles",
+            "exec.workout_sessions",
+            "exec.workout_unit_prescriptions",
+            "exec.exercise_unit_prescriptions",
+            "exec.set_prescriptions",
+            "exec.exercise_unit_performances",
+        )
+    ), counts
+    before_plan = await plan_snapshot(db, owned.plan_id)
+    before_orphan = await plan_snapshot(db, orphan_plan)
     before_labels = await fetch_all(
         db,
         """
@@ -924,8 +893,10 @@ async def test_mig_11_owned_runs_are_skipped_and_converted_runs_stay_readable(
 
     await convert(settings, tmp_path)
 
+    # The owned run and its run plan: every row hash unchanged.
     assert await snapshot_tables(db, list(owned_rows), where=owned_rows) == before_owned
-    assert await snapshot_tables(db, list(owned_plan_rows), where=owned_plan_rows) == before_plan
+    assert await plan_snapshot(db, owned.plan_id) == before_plan
+    assert await plan_snapshot(db, orphan_plan) == before_orphan
     mapped_runs = await fetch_all(
         db, "SELECT DISTINCT plan_run_id FROM public.agonez_0019_reference_map ORDER BY 1"
     )
@@ -939,8 +910,9 @@ async def test_mig_11_owned_runs_are_skipped_and_converted_runs_stay_readable(
         """,
     )
     assert after_labels == before_labels
-    # Today's read code answers for every converted run (T2.3 compares the payloads).
-    for run_id in legacy:
+    # Today's read code answers for every converted run and the owned one (T2.3 compares the
+    # payloads of the converted runs).
+    for run_id in (*legacy, owned.run_id):
         await read_models(client, run_id, clock)
 
 

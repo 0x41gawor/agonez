@@ -29,7 +29,7 @@ from builders import (
     table_names,
     training,
 )
-from conftest import FrozenClock
+from conftest import RUN_PLAN_CONVERSION, FrozenClock
 from psycopg import AsyncConnection, errors
 
 from agonez_api.modules.plans.fingerprint import definition_fingerprint
@@ -641,6 +641,8 @@ async def test_int_run_07_t_del_02_deleting_the_run_deletes_its_run_plan(
     expect(await client.get(f"/api/plans/{promoted['id']}/draft"))
 
 
+# Legacy runs exist only before 0019, which converts them and makes run_plan_id NOT NULL.
+@pytest.mark.before_migration(RUN_PLAN_CONVERSION)
 async def test_deleting_a_legacy_run_keeps_its_library_plan(
     client: httpx.AsyncClient,
     db: AsyncConnection,

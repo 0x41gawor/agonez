@@ -14,7 +14,6 @@ database a deploy of that migration starts from (``apply_migrations`` then runs 
 """
 
 import asyncio
-import importlib.util
 import os
 import re
 import shutil
@@ -299,57 +298,6 @@ def _create_from_dump(server: DatabaseServer, dump: Path, database: str) -> None
     _restore(server, dump, database)
 
 
-# Pre-T2.2 stand-in. Migration 0019 makes exec.plan_runs.run_plan_id and the tracks'
-# plan_lineage_key NOT NULL, and the run creation of master before T2.2 sets neither. Until this
-# branch is rebased onto T2.2, these triggers give such a run an empty run plan and its tracks
-# random lineage keys, so that the tests creating runs keep running on converted data; the runs
-# stay bound to library rows exactly as before. Inert for rows that carry the values. Installed
-# only while T2.2's module is absent; delete it together with ``_install_pre_t22_stand_in``
-# when rebasing onto T2.2 (handoff/T2.1.md).
-PRE_T22_STAND_IN = """
-CREATE FUNCTION public.agonez_it_pre_t22_run_plan() RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-    IF NEW.run_plan_id IS NULL THEN
-        INSERT INTO plans.workout_plans (name, description, accent, scope, source_plan_id)
-        SELECT plan.name, plan.description, plan.accent, 'run', plan.id
-        FROM plans.plan_revisions AS revision
-        JOIN plans.workout_plans AS plan ON plan.id = revision.plan_id
-        WHERE revision.id = NEW.initial_plan_revision_id
-        RETURNING id INTO NEW.run_plan_id;
-    END IF;
-    RETURN NEW;
-END;
-$$;
-CREATE FUNCTION public.agonez_it_pre_t22_track_key() RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-    NEW.plan_lineage_key := coalesce(NEW.plan_lineage_key, gen_random_uuid());
-    RETURN NEW;
-END;
-$$;
-CREATE TRIGGER agonez_it_pre_t22_run_plan BEFORE INSERT ON exec.plan_runs
-    FOR EACH ROW EXECUTE FUNCTION public.agonez_it_pre_t22_run_plan();
-CREATE TRIGGER agonez_it_pre_t22_track_key BEFORE INSERT ON exec.workout_unit_tracks
-    FOR EACH ROW EXECUTE FUNCTION public.agonez_it_pre_t22_track_key();
-CREATE TRIGGER agonez_it_pre_t22_track_key BEFORE INSERT ON exec.exercise_unit_tracks
-    FOR EACH ROW EXECUTE FUNCTION public.agonez_it_pre_t22_track_key();
-"""
-T22_MODULE = "agonez_api.modules.execution.run_plan_repository"  # 02 §3.2, created by T2.2
-
-
-def _install_pre_t22_stand_in(settings: Settings) -> None:
-    if importlib.util.find_spec(T22_MODULE) is not None:
-        return
-    with psycopg.connect(settings.database_dsn, autocommit=True) as connection:
-        required = connection.execute(
-            """
-            SELECT attnotnull FROM pg_attribute
-            WHERE attrelid = 'exec.plan_runs'::regclass AND attname = 'run_plan_id'
-            """
-        ).fetchone()
-        if required is not None and required[0]:
-            connection.execute(PRE_T22_STAND_IN)
-
-
 @pytest.fixture(scope="session")
 def template_database(
     database_server: DatabaseServer,
@@ -360,7 +308,6 @@ def template_database(
         _create_from_dump(database_server, _dump_path(), TEMPLATE_DATABASE)
         settings = database_server.settings(TEMPLATE_DATABASE, tmp_path_factory.mktemp("template"))
         asyncio.run(run_migrations(settings))
-        _install_pre_t22_stand_in(settings)
         yield TEMPLATE_DATABASE
     finally:
         with database_server.connect_admin() as admin:

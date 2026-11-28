@@ -22,7 +22,7 @@ from builders import (
     rest,
     training,
 )
-from conftest import FrozenClock
+from conftest import RUN_PLAN_CONVERSION, FrozenClock
 from plan_trees import (
     assert_regenerated_progression_ids,
     bodies,
@@ -201,10 +201,10 @@ async def test_api_plans_03_library_plan_with_runs_is_deleted(
     """T-API-PLANS-03: 204 for a plan whose runs were created through the API (T2.2).
 
     Such runs reference only their own run plan. A legacy run (``run_plan_id`` NULL, bound
-    to the library rows) still refuses the delete with 409 until migration 0019 converts it.
+    to the library rows) refuses the delete until migration 0019 converts it (next test).
     Deep checks of the run afterwards: T-DEL-01 in ``test_run_creation.py``.
     """
-    legacy = expect(await client.post(f"/api/plans/{library['id']}/duplicate"), 201)
+    unused = expect(await client.post(f"/api/plans/{library['id']}/duplicate"), 201)
     overview = await make_run(client, library["revision_id"], clock.today, 1)
     run_id = overview["run"]["plan_run_id"]
 
@@ -214,8 +214,23 @@ async def test_api_plans_03_library_plan_with_runs_is_deleted(
     after = expect(await client.get(f"/api/v1/exec/plan-runs/{run_id}/overview"))
     assert after["microcycles"] == overview["microcycles"]
 
-    # A legacy run, as every run created before T2.2: it references the library revision
-    # itself (initial_plan_revision_id, RESTRICT) and owns no run plan.
+    # A library plan without runs is deleted as before.
+    expect(await client.delete(f"/api/plans/{unused['id']}"), 204)
+    assert (await client.get(f"/api/plans/{unused['id']}")).status_code == 404
+
+
+# A legacy run exists only before 0019, which converts it and makes run_plan_id NOT NULL; that
+# its library plan can be deleted afterwards is T-MIG-07 in test_migration_0019.py.
+@pytest.mark.before_migration(RUN_PLAN_CONVERSION)
+async def test_api_plans_03_a_legacy_run_still_refuses_the_delete_before_0019(
+    client: httpx.AsyncClient,
+    db: AsyncConnection,
+    library: dict[str, Any],
+    clock: FrozenClock,
+) -> None:
+    """T-API-PLANS-03, legacy half: 409 while a run created before T2.2 uses the plan."""
+    # As every run created before T2.2: it references the library revision itself
+    # (initial_plan_revision_id, RESTRICT) and owns no run plan.
     await db.execute(
         """
         INSERT INTO exec.plan_runs (
@@ -223,17 +238,12 @@ async def test_api_plans_03_library_plan_with_runs_is_deleted(
             microcycle_duration_days
         ) VALUES ('Legacy run', %s, %s, 1, 3)
         """,
-        (legacy["revision_id"], clock.today),
+        (library["revision_id"], clock.today),
     )
-    response = await client.delete(f"/api/plans/{legacy['id']}")
+    response = await client.delete(f"/api/plans/{library['id']}")
     assert response.status_code == 409, response.text
-    assert response.json() == {"detail": f"Plan {legacy['id']} is still used by a plan run"}
-    assert expect(await client.get(f"/api/plans/{legacy['id']}/draft")) == legacy
-
-    # A library plan without runs is deleted as before.
-    unused = expect(await client.post(f"/api/plans/{legacy['id']}/duplicate"), 201)
-    expect(await client.delete(f"/api/plans/{unused['id']}"), 204)
-    assert (await client.get(f"/api/plans/{unused['id']}")).status_code == 404
+    assert response.json() == {"detail": f"Plan {library['id']} is still used by a plan run"}
+    assert expect(await client.get(f"/api/plans/{library['id']}/draft")) == library
 
 
 async def test_api_plans_04_run_plan_draft_round_trip(
