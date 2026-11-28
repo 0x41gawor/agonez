@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-28 — #6 (T2.1 + T2.3 + T6.2 docs, `e1a0dee`) **deployed** 17:18 UTC: 0019 applied, the 7 legacy runs own run plans P027…P033, post-deploy checks pass (reference map 7/8/63/45/322/322/683, no NULL `run_plan_id` or lineage key, read smoke 660 × 200). Next: T3.1 ∥ T5.1.
+Last updated: 2026-11-28 — #6 (T2.1 + T2.3 + T6.2 docs, `e1a0dee`) **deployed** 17:18 UTC: 0019 applied, the 7 legacy runs own run plans P027…P033, post-deploy checks pass (reference map 7/8/63/45/322/322/683, no NULL `run_plan_id` or lineage key, read smoke 660 × 200). Next: T3.1 ∥ T5.1. 2026-11-28: **T5.1 in review** (`impl/T5.1-promotion-duplicate`, `feb3cfb`).
 
 ---
 
@@ -13,7 +13,7 @@ Last updated: 2026-11-28 — #6 (T2.1 + T2.3 + T6.2 docs, `e1a0dee`) **deployed*
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
 | 1 | ~~Deploy #6~~ | — | Deployed 2026-11-28 17:18 UTC; checks per [handoff/T6.2.md](handoff/T6.2.md) passed. The runner's "Applying database migration" INFO line is not printed (logging is configured after the migration step); `agonez_schema_migrations` is the check. Rollback: redeploy `e79fc1d`, never older than `227d3ce`. |
-| 2 | **T5.1** promotion backend | T3.1 | In development (not on the numbered path). T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 use runs that own their plans (helpers `create_run`, `plan_snapshot` and the promoted-plan setup of `test_int_run_07_…` in `tests/integration/test_run_creation.py`). The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. Not on the merge path: merge when reviewed. |
+| 2 | **Review T5.1** promotion backend | T3.1 | In review: `impl/T5.1-promotion-duplicate`, `feb3cfb` ([handoff/T5.1.md](handoff/T5.1.md)). No migration; `04` unchanged. The Apply half of T-INT-PR-03 waits for T3.3 (E2E-05, T6.1). Not on the merge path: merge when reviewed (any order with T3.1; both may touch this file, T5.1 also edits `test_int_run_07_…`). |
 | 3 | **T3.1** (#7) | T5.1 | Ready now. Before changing code, save the golden baseline on `master` (handoff/T2.3.md "For the next tasks → T3.1"); re-run against it afterwards, only the additive fields of `04` §2 may differ. Mandatory review. |
 
 Update this table whenever a task finishes.
@@ -76,7 +76,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T4.4 | Apply dialog | T4.1 | todo | | | |
 | T4.5 | Peripheral Execution updates | T4.2, T3.5 | todo | | | |
 | T4.6 | Translations | T4.2–T4.5, T5.2 | todo | | | |
-| T5.1 | Promotion backend (duplicate with body) | T1.2, T2.2 merged | ready | | | 2026-11-28 |
+| T5.1 | Promotion backend (duplicate with body) | T1.2, T2.2 merged | review | `impl/T5.1-promotion-duplicate` | `feb3cfb` | 2026-11-28 |
 | T5.2 | Promote dialog | T5.1, T4.1, T4.2 | todo | | | |
 | T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | done | `impl/T6.2-rehearsal` (deleted) | merged in `e1a0dee` (#6) | 2026-11-28 |
 | T6.1 | Live lifecycle scenario (gate for #12) | T3.2–T3.5, T5.1 merged | todo | | | |
@@ -153,6 +153,9 @@ Finished tasks:
 - [T6.2](handoff/T6.2.md) — migration 0019 rehearsal: RB-01…RB-08 pass on the 2026-11-28 15:10
   dump (0019 ≈ 0.4 s with fsync; rollback to `e79fc1d` rehearsed; deploy steps for #6), 2026-11-28
   on `impl/T6.2-rehearsal`, **not merged**.
+- [T5.1](handoff/T5.1.md) — promotion backend: duplicate takes `{name?, source_revision_id?}`,
+  a duplicated run plan records `source_plan_id` (2026-11-28 on `impl/T5.1-promotion-duplicate`,
+  `feb3cfb`, awaiting review, **not merged**).
 
 ## Where things are recorded
 
@@ -223,6 +226,8 @@ writes it down here or in the design, in the same commit:
   68 passed, 1 skipped in about 3 min (the golden test takes about 2.5 min of it).
 - On the T6.2 branch (2026-11-28, docs only on top of T2.3): backend 189 passed, 69 skipped;
   `pytest -m integration` 68 passed, 1 skipped in 189 s; `ruff`, `mypy src` green.
+- On the T5.1 branch (2026-11-28, on `7678784`): backend 199 passed, 83 skipped;
+  `pytest -m integration` 82 passed, 1 skipped in 201 s; `ruff`, `mypy src` green.
 - The demo seed `migrations/seeds/0001_execution_demo.sql` has not run on the current schema since
   0009 (`client_uuid`); since T2.1 it also refuses to run once 0019 is recorded.
 - Integration tests: `eval "$(scripts/test_db.sh)"`, `pytest -m integration`, `scripts/test_db.sh stop`
