@@ -4,7 +4,7 @@ The **single source of truth for progress**. Every agent reads this file first a
 last step of its task. Humans pick the next task from "Next up" and paste the matching prompt from
 [AGENT_PROMPTS.md](AGENT_PROMPTS.md).
 
-Last updated: 2026-11-28 — T6.2 (migration 0019 rehearsal) in review on `impl/T6.2-rehearsal` (on `impl/T2.3-golden-comparison`): RB-01…RB-08 pass on the 15:10 dump, 0019 ≈ 0.4 s, rollback to `e79fc1d` works; two pre-existing defects outside 0019 found (handoff/T6.2.md). Next: merge #6 (T2.1 + T2.3 + T6.2 docs); T5.1.
+Last updated: 2026-11-28 — #6 merged (T2.1 + T2.3 + T6.2 docs, `master` = `e1a0dee`): migration 0019 converts the 7 legacy runs; rehearsal RB-01…RB-08 passed. **Not deployed yet:** the human deploys per [handoff/T6.2.md](handoff/T6.2.md) "Deploy #6". Next: T3.1 ∥ T5.1.
 
 ---
 
@@ -12,9 +12,9 @@ Last updated: 2026-11-28 — T6.2 (migration 0019 rehearsal) in review on `impl/
 
 | Order | Task | Can run in parallel with | Notes |
 | --- | --- | --- | --- |
-| 1 | **Merge #6** = T2.1 + T2.3 (+ T6.2 docs) | T5.1 | Gate passed (T6.2 in review). Fast-forward `master` to `impl/T6.2-rehearsal` (= `e79fc1d` + T2.1 + T2.3 + T6.2 docs) after review of T2.1's fix round, T2.3 and T6.2. The human deploys per [handoff/T6.2.md](handoff/T6.2.md) "Deploy #6": read-only preflight, `./db_backup.sh`, push, `./redeploy.sh`, read-only checks; rollback = redeploy `e79fc1d`, never past `227d3ce`. |
-| 2 | **T5.1** promotion backend | T2.1 development | Ready now (#5 merged). T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 use runs that own their plans (helpers `create_run`, `plan_snapshot` and the promoted-plan setup of `test_int_run_07_…` in `tests/integration/test_run_creation.py`). The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. Not on the merge path: merge when reviewed. |
-| — | Reviews: T2.1 fix round, T2.3, T6.2 | T5.1 | T2.1: the migration passed review; the fix commit `test(be): run the 0019 tests on T2.2's run creation` removed the pre-T2.2 stand-in. T2.3: test-only commit on top ([handoff/T2.3.md](handoff/T2.3.md)). T6.2: docs-only commit on top ([handoff/T6.2.md](handoff/T6.2.md)). All three merge together at #6. |
+| 1 | **Deploy #6** (the human) | T5.1 | `master` = `e1a0dee` (T2.1 + T2.3 + T6.2 docs). Steps in [handoff/T6.2.md](handoff/T6.2.md) "Deploy #6": read-only preflight, `db_backup.sh` (must not record 0019), push, `redeploy.sh`, read-only post-deploy checks. Rollback: redeploy `e79fc1d`, never older than `227d3ce`. |
+| 2 | **T5.1** promotion backend | T3.1 | In development (not on the numbered path). T-INT-PR-03, T-INT-PR-06 and T-DEL-03/04 use runs that own their plans (helpers `create_run`, `plan_snapshot` and the promoted-plan setup of `test_int_run_07_…` in `tests/integration/test_run_creation.py`). The Apply half of T-INT-PR-03 waits for T3.3 and is covered by E2E-05 (T6.1). Reuse `duplicate_plan` + `definition_fingerprint(…, include_progression_ids=False)`. Not on the merge path: merge when reviewed. |
+| 3 | **T3.1** (#7) | T5.1 | After #6 is deployed. Before changing code, save the golden baseline on `master` (handoff/T2.3.md "For the next tasks → T3.1"); re-run against it afterwards, only the additive fields of `04` §2 may differ. Mandatory review. |
 
 Update this table whenever a task finishes.
 
@@ -41,7 +41,7 @@ deploys with `./redeploy.sh` from `/home/agonez`; agents never deploy.
 | 3 | T1.1 | review | A | ✓ `e66f5b4` 2026-11-25 |
 | 4 | T1.2 | review | A | ✓ `64ce51f` 2026-11-25 |
 | 5 | T2.2 | review | B | ✓ `227d3ce` 2026-11-28 |
-| 6 | T2.1 + T2.3 (stacked, merged together; + T6.2 docs) | review + **T6.2** (passed 2026-11-28, [handoff/T6.2.md](handoff/T6.2.md)); take `db_backup.sh` before the first deploy containing 0019 | B | |
+| 6 | T2.1 + T2.3 (stacked, merged together; + T6.2 docs) | review + **T6.2** (passed, [handoff/T6.2.md](handoff/T6.2.md)) | B | ✓ `e1a0dee` 2026-11-28 |
 | 7 | T3.1 | review (mandatory) + T2.3 re-run | B | |
 | 8 | T3.5, T3.2 | review | C | |
 | 9 | T3.3 | review (mandatory) | C | |
@@ -62,9 +62,9 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T0.2 | Characterisation tests + preflight | T0.1 | done | `impl/T0.2-characterisation-preflight` (deleted) | `e99336e` | 2026-11-25 |
 | T1.1 | Migration 0018 + `plans.copy_revision_tree` | T0.1 | done | `impl/T1.1-run-plans-schema` (deleted) | `e66f5b4` | 2026-11-25 |
 | T1.2 | Plans module: loader, copy, fingerprint, scope guards | T1.1 | done | `impl/T1.2-plans-module` (deleted) | `64ce51f` | 2026-11-25 |
-| T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | review | `impl/T2.1-convert-legacy-runs` | rebased on `master` `e79fc1d`; 2 commits (migration + fix round) | 2026-11-28 |
+| T2.1 | Migration 0019: convert legacy runs | T1.1, T0.2, T2.2 (merge), T6.2 (merge) | done | `impl/T2.1-convert-legacy-runs` (deleted) | merged in `e1a0dee` (#6) | 2026-11-28 |
 | T2.2 | Run creation/deletion with run plans | T1.2 | done | `impl/T2.2-run-creation` (deleted) | `227d3ce` | 2026-11-28 |
-| T2.3 | Conversion golden comparison | T2.1 (stacked) | review | `impl/T2.3-golden-comparison` | on T2.1 `2ddaca5`; 1 commit (`test(be): golden comparison …`) | 2026-11-28 |
+| T2.3 | Conversion golden comparison | T2.1 (stacked) | done | `impl/T2.3-golden-comparison` (deleted) | merged in `e1a0dee` (#6) | 2026-11-28 |
 | T3.1 | Identity and binding refactor (+ run header fields) | T2.1 + T2.3 merged | todo | | | |
 | T3.2 | Run-plan state, revision read, discard | T3.1 merged | todo | | | |
 | T3.3 | Apply: sessions, tracks, validation, concurrency | T3.1, T3.2 | todo | | | |
@@ -78,7 +78,7 @@ Status values: `todo` · `ready` (dependencies done) · `in progress` · `review
 | T4.6 | Translations | T4.2–T4.5, T5.2 | todo | | | |
 | T5.1 | Promotion backend (duplicate with body) | T1.2, T2.2 merged | ready | | | 2026-11-28 |
 | T5.2 | Promote dialog | T5.1, T4.1, T4.2 | todo | | | |
-| T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | review | `impl/T6.2-rehearsal` | on T2.3 `55d281c`; 1 commit (`docs(plans): T6.2 rehearsal …`) | 2026-11-28 |
+| T6.2 | Migration 0019 rehearsal (gate for #6) | T0.2, T2.2 merged; T2.1 + T2.3 branch | done | `impl/T6.2-rehearsal` (deleted) | merged in `e1a0dee` (#6) | 2026-11-28 |
 | T6.1 | Live lifecycle scenario (gate for #12) | T3.2–T3.5, T5.1 merged | todo | | | |
 
 ---
@@ -199,10 +199,14 @@ writes it down here or in the design, in the same commit:
     `/home/agonez/be/src`. Lint: `/home/agonez/be/.venv/bin/ruff check .`, types:
     `/home/agonez/be/.venv/bin/mypy src`.
   - Frontend in a worktree: run `npm ci` in `<worktree>/web-fe` first (`node_modules` is not shared).
-- Baseline suites (2026-11-28, after T2.2, dump `agonez_db_backup_2026-11-28.sql`): backend 189
-  passed, 50 skipped (the integration tests, without the URL); `pytest -m integration` 49 passed,
-  1 skipped (T1.1's rollback test: the newest dump already records 0018), no xfails; web 166
-  passed. `ruff` and `mypy src` are green.
+- Baseline suites (2026-11-28, after #6 = T2.1 + T2.3, dump `agonez_db_backup_2026-11-28.sql`): backend
+  189 passed, 69 skipped (the integration tests, without the URL); `pytest -m integration` 68 passed,
+  1 skipped (T1.1's rollback test: the newest dump already records 0018), no xfails; the golden test
+  adds about 2.5 min. Web 166 passed. `ruff` and `mypy src` are green.
+- Pre-existing defects found by T6.2 (outside this feature, no task in this plan): run overview
+  answers 500 after a mobile-added exercise (`service.py:1596`, null `exercise_trace_id`; 0 such rows
+  in production on 2026-11-28); `live_mobile_execution_api_scenarios.py` is out of date (patch in
+  `handoff/T6.2-scripts/live_mobile_t62.diff`).
 - Library plan 6 (the demo plan "5x week, Push-Pull-Legs…", run 1 "Execution Demo"; revisions 6
   and RELEASED 25) has 5 DEFAULT variants without sets, so it is not executable: from T2.2 on, new
   runs cannot be started from it (run 1 keeps working). Every other library revision (plans 10, 14,
