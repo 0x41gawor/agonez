@@ -17,6 +17,7 @@ from agonez_api.modules.plans.schemas import (
     PlanDetail,
     PlanDraftArtifact,
     PlanDraftUpdate,
+    PlanDuplicateRequest,
     PlanImageWritten,
     PlanListResponse,
     ProgressionModelCatalogResponse,
@@ -86,12 +87,19 @@ async def list_progression_models(
     "/{plan_id}/duplicate",
     response_model=PlanDraftArtifact,
     status_code=status.HTTP_201_CREATED,
+    description=(
+        "Copy one revision of a plan (default: its draft) into a new library plan with fresh "
+        "progression ids and the same cover. The body is optional. Duplicating a run plan "
+        "saves it to My Plans: the new plan's source_plan_id is the run plan. A "
+        "source_revision_id that is not a revision of this plan is refused (422)."
+    ),
 )
 async def duplicate_plan(
     plan_id: PlanId,
     service: Annotated[PlanService, Depends(get_plan_service)],
+    payload: Annotated[PlanDuplicateRequest | None, Body()] = None,
 ) -> PlanDraftArtifact:
-    return await service.duplicate_plan(plan_id)
+    return await service.duplicate_plan(plan_id, payload)
 
 
 @router.get("/{plan_id}", response_model=PlanDetail)

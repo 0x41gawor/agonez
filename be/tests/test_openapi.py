@@ -121,6 +121,11 @@ def test_openapi_exposes_the_frontend_contract(tmp_path: Path) -> None:
     assert {"scope", "source_plan_id", "plan_run_id"} <= set(
         schemas["PlanDraftUpdate"]["properties"]
     )
+    # Promotion (T5.1): the duplicate body and each of its fields are optional.
+    duplicate_body = paths["/api/plans/{plan_id}/duplicate"]["post"]["requestBody"]
+    assert not duplicate_body.get("required", False)
+    assert set(schemas["PlanDuplicateRequest"]["properties"]) == {"name", "source_revision_id"}
+    assert "required" not in schemas["PlanDuplicateRequest"]
     assert set(schemas["NextPrescriptionState"]["enum"]) == {
         "editable",
         "blocked",

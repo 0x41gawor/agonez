@@ -457,6 +457,20 @@ class PlanCreate(APIModel):
         return _require_non_blank(value)
 
 
+class PlanDuplicateRequest(APIModel):
+    """Optional body of the duplicate endpoint; ``{}`` and no body mean the same."""
+
+    # Used as given (no uniqueness rule). Default: "<source plan name> copy".
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    # A revision of the duplicated plan, draft or applied. Default: its draft.
+    source_revision_id: int | None = Field(default=None, ge=1)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, value: str | None) -> str | None:
+        return None if value is None else _require_non_blank(value)
+
+
 class PlanSummary(APIModel):
     id: int
     name: str

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from agonez_api.modules.plans.schemas import PlanDraftUpdate
+from agonez_api.modules.plans.schemas import PlanDraftUpdate, PlanDuplicateRequest
 
 
 def draft_payload() -> dict[str, object]:
@@ -268,3 +268,35 @@ def test_non_deterministic_ordinals_are_rejected() -> None:
 
     with pytest.raises(ValidationError, match="Day ordinals"):
         PlanDraftUpdate.model_validate(payload)
+
+
+def test_duplicate_request_fields_are_optional() -> None:
+    request = PlanDuplicateRequest.model_validate({})
+
+    assert (request.name, request.source_revision_id) == (None, None)
+    assert PlanDuplicateRequest.model_validate({"name": None, "source_revision_id": None}) == (
+        request
+    )
+
+
+@pytest.mark.parametrize("name", ["X", "x" * 200, "  Spaced name  "])
+def test_duplicate_request_keeps_the_name_as_given(name: str) -> None:
+    request = PlanDuplicateRequest.model_validate({"name": name, "source_revision_id": 88})
+
+    assert (request.name, request.source_revision_id) == (name, 88)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"name": ""},
+        {"name": "   "},
+        {"name": "x" * 201},
+        {"source_revision_id": 0},
+        {"source_revision_id": -1},
+        {"source_plan_id": 41},
+    ],
+)
+def test_duplicate_request_rejects_invalid_fields(payload: dict[str, object]) -> None:
+    with pytest.raises(ValidationError):
+        PlanDuplicateRequest.model_validate(payload)

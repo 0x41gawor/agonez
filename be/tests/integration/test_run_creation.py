@@ -606,12 +606,9 @@ async def test_int_run_07_t_del_02_deleting_the_run_deletes_its_run_plan(
     other = await create_run(client, db, library["revision_id"], clock)
     library_before = await plan_snapshot(db, library["id"])
     other_before = (await plan_snapshot(db, other.plan_id), await run_snapshot(db, other.run_id))
-    # A plan promoted from the run plan (T5.1 sets source_plan_id; done by hand here).
+    # A plan promoted from the run plan.
     promoted = expect(await client.post(f"/api/plans/{run.plan_id}/duplicate"), 201)
-    await db.execute(
-        "UPDATE plans.workout_plans SET source_plan_id = %s WHERE id = %s",
-        (run.plan_id, promoted["id"]),
-    )
+    assert promoted["source_plan_id"] == run.plan_id
     promoted_fingerprint = await fingerprint(db, promoted["revision_id"])
 
     expect(await client.delete(f"{RUNS}/{run.run_id}"), 204)

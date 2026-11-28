@@ -11,6 +11,7 @@ from agonez_api.modules.plans.schemas import (
     PlanDetail,
     PlanDraftArtifact,
     PlanDraftUpdate,
+    PlanDuplicateRequest,
     PlanImageWritten,
     PlanListResponse,
     PlanSummary,
@@ -32,8 +33,19 @@ class PlanService:
     async def import_plan(self, payload: PlanAIImportDocument) -> PlanDraftArtifact:
         return self.assemble_draft(await self._repository.import_plan(payload))
 
-    async def duplicate_plan(self, plan_id: int) -> PlanDraftArtifact:
-        return self.assemble_draft(await self._repository.duplicate_plan(plan_id))
+    async def duplicate_plan(
+        self,
+        plan_id: int,
+        payload: PlanDuplicateRequest | None = None,
+    ) -> PlanDraftArtifact:
+        request = payload or PlanDuplicateRequest()
+        return self.assemble_draft(
+            await self._repository.duplicate_plan(
+                plan_id,
+                name=request.name,
+                source_revision_id=request.source_revision_id,
+            )
+        )
 
     async def list_plans(self) -> PlanListResponse:
         rows = await self._repository.list_plans()

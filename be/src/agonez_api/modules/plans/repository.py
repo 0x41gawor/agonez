@@ -249,13 +249,27 @@ class PlanRepository:
 
                 return await self._load_draft_rows(connection, cast(int, plan["id"]))
 
-    async def duplicate_plan(self, plan_id: int) -> DraftRows:
+    async def duplicate_plan(
+        self,
+        plan_id: int,
+        *,
+        name: str | None = None,
+        source_revision_id: int | None = None,
+    ) -> DraftRows:
+        """Copy one revision of a plan into a new library plan; returns the new draft.
+
+        ``source_revision_id`` (default: the DRAFT) must be a revision of ``plan_id``.
+        ``name`` is used as given; the default follows the "<name> copy" rule. The new plan
+        records ``source_plan_id`` only when ``plan_id`` is a run plan (promotion to My
+        Plans). Identity fields and the cover are the plan's current ones: they are not
+        revision-scoped.
+        """
         async with self._pool.connection() as connection:
             async with connection.transaction():
                 source_plan = await self._fetch_optional(
                     connection,
                     """
-                    SELECT id, name, description, accent::text AS accent
+                    SELECT id, name, description, accent::text AS accent, scope::text AS scope
                     FROM plans.workout_plans
                     WHERE id = %s
                     FOR SHARE
@@ -265,25 +279,37 @@ class PlanRepository:
                 if source_plan is None:
                     raise PlanNotFoundError(plan_id)
 
-                source_revision = await self._find_draft_revision(connection, plan_id)
-                # Run plans repeat their library plan's name and are not shown in My Plans,
-                # so only library names make a duplicate name taken.
-                existing_names = await self._fetch_all(
-                    connection,
-                    "SELECT name FROM plans.workout_plans WHERE scope = 'library'",
-                )
-                duplicate_name = self._duplicate_plan_name(
-                    cast(str, source_plan["name"]),
-                    [cast(str, row["name"]) for row in existing_names],
-                )
+                if source_revision_id is None:
+                    source_revision = await self._find_draft_revision(connection, plan_id)
+                else:
+                    source_revision = await self._find_plan_revision(
+                        connection, plan_id, source_revision_id
+                    )
+                if name is None:
+                    # Run plans repeat their library plan's name and are not shown in My
+                    # Plans, so only library names make a duplicate name taken.
+                    existing_names = await self._fetch_all(
+                        connection,
+                        "SELECT name FROM plans.workout_plans WHERE scope = 'library'",
+                    )
+                    name = self._duplicate_plan_name(
+                        cast(str, source_plan["name"]),
+                        [cast(str, row["name"]) for row in existing_names],
+                    )
                 plan = await self._fetch_one(
                     connection,
                     """
-                    INSERT INTO plans.workout_plans (name, description, accent, scope)
-                    VALUES (%s, %s, %s, 'library')
+                    INSERT INTO plans.workout_plans
+                        (name, description, accent, scope, source_plan_id)
+                    VALUES (%s, %s, %s, 'library', %s)
                     RETURNING id
                     """,
-                    (duplicate_name, source_plan["description"], source_plan["accent"]),
+                    (
+                        name,
+                        source_plan["description"],
+                        source_plan["accent"],
+                        plan_id if source_plan["scope"] == "run" else None,
+                    ),
                 )
                 revision = await self._fetch_one(
                     connection,
@@ -1099,6 +1125,23 @@ class PlanRepository:
         )
         if revision is None:
             raise PlanDraftNotFoundError(plan_id)
+        return revision
+
+    async def _find_plan_revision(self, connection: Any, plan_id: int, revision_id: int) -> Row:
+        """A revision of this plan; another plan's revision is refused like an unknown id."""
+        revision = await self._fetch_optional(
+            connection,
+            """
+            SELECT id
+            FROM plans.plan_revisions
+            WHERE id = %s AND plan_id = %s
+            """,
+            (revision_id, plan_id),
+        )
+        if revision is None:
+            raise PlanDomainValidationError(
+                f"source_revision_id {revision_id} does not belong to plan {plan_id}"
+            )
         return revision
 
     async def _load_draft_rows(self, connection: Any, plan_id: int) -> DraftRows:
